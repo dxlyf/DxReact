@@ -1,4 +1,5 @@
 node_modules/
 .vs/
-upload/
+/upload/
 .vscode/
+.DS_Store/
