@@ -42,16 +42,16 @@ export type BasicLayoutProps = {
 export type BasicLayoutContext = { [K in 'location']: BasicLayoutProps[K] } & {
   breadcrumbNameMap: Record<string, MenuDataItem>;
 };
-/**
- * use Authorized check all menu item
- */
 
 const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
   menuList.map((item) => {
     const localItem = {
       ...item,
-      children: item.children ? menuDataRender(item.children) : undefined,
+      children: item.children ? menuDataRender(item.children): undefined,
     };
+    if(localItem.children&&localItem.length<=0){
+       return null
+    }
     return Authorized.check(item.authority, localItem, null) as MenuDataItem;
   });
 

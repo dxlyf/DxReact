@@ -1,58 +1,43 @@
-import React from 'react';
+import React, { FC, useState, useLayoutEffect, useMemo } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
-import type { ConnectProps } from 'umi';
-import { Redirect, connect } from 'umi';
+import { Redirect, ConnectProps, connect,Dispatch,Loading } from 'umi';
 import { stringify } from 'querystring';
-import type { ConnectState } from '@/models/connect';
-import type { CurrentUser } from '@/models/user';
+import { UserModelState } from '@/models/user'
 
 type SecurityLayoutProps = {
-  loading?: boolean;
-  currentUser?: CurrentUser;
+  loading: boolean;
+  user: UserModelState;
+  dispatch:Dispatch
 } & ConnectProps;
 
-type SecurityLayoutState = {
-  isReady: boolean;
-};
 
-class SecurityLayout extends React.Component<SecurityLayoutProps, SecurityLayoutState> {
-  state: SecurityLayoutState = {
-    isReady: false,
-  };
-
-  componentDidMount() {
-    this.setState({
-      isReady: true,
-    });
-    const { dispatch } = this.props;
-    if (dispatch) {
-      dispatch({
-        type: 'user/fetchCurrent',
-      });
+const SecurityLayout: FC<SecurityLayoutProps> = ({ children, loading,location, user, dispatch }) => {
+  let currentUser = user.currentUser
+  const isLogin = !!currentUser;
+  let [isReady, setReady] = useState(isLogin ? true : false)// 默认请求
+  useLayoutEffect(() => {
+    if (isReady) {
+      return
     }
+    setReady(true)
+    dispatch({
+      type: "user/getUserInfo"
+    }).catch(()=>{})
+  }, [])
+  const queryString = useMemo(() => stringify({
+    redirect: window.location.pathname,
+  }), [window.location.pathname])
+  // 如果还没发起请求验证用户是否登录或在请求中，显示加载中
+  if ((!isLogin && loading) || !isReady) {
+    return <PageLoading />;
   }
-
-  render() {
-    const { isReady } = this.state;
-    const { children, loading, currentUser } = this.props;
-    // You can replace it to your authentication rule (such as check token exists)
-    // 你可以把它替换成你自己的登录认证规则（比如判断 token 是否存在）
-    const isLogin = currentUser && currentUser.userid;
-    const queryString = stringify({
-      redirect: window.location.href,
-    });
-
-    if ((!isLogin && loading) || !isReady) {
-      return <PageLoading />;
-    }
-    if (!isLogin && window.location.pathname !== '/user/login') {
-      return <Redirect to={`/user/login?${queryString}`} />;
-    }
-    return children;
+  if (!isLogin &&location.pathname !== "/login") {
+    return <Redirect to={`/login?${queryString}`} />;
   }
+  return children as any;
 }
 
-export default connect(({ user, loading }: ConnectState) => ({
-  currentUser: user.currentUser,
+export default connect(({ user, loading }: { user: UserModelState, loading: Loading }) => ({
+  user: user,
   loading: loading.models.user,
 }))(SecurityLayout);
