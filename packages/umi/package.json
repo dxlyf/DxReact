@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "env": "umi env",
     "start": "cross-env PORT=8900 umi dev",
     "start2": "cross-env PORT=8900 UMI_UI=1 umi dev",
     "build": "umi build",
@@ -32,11 +33,13 @@
     "umi": "^3.4.2"
   },
   "devDependencies": {
+    "@types/inquirer": "^7.3.1",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@umijs/preset-ui": "^2.2.9",
     "@umijs/test": "^3.4.2",
     "cross-env": "^7.0.3",
+    "inquirer": "^8.0.0",
     "lint-staged": "^10.0.7",
     "prettier": "^2.2.0",
     "react": "17.x",
