@@ -10,15 +10,14 @@ import type {
 } from '@ant-design/pro-layout';
 import ProLayout, { RouteContext,PageContainer  } from '@ant-design/pro-layout';
 import React, { useEffect, useMemo, useRef, useContext } from 'react';
-import type { Dispatch } from 'umi';
+import type { Dispatch,ConnectProps } from 'umi';
 import { Link, connect, history } from 'umi';
-import { GithubOutlined } from '@ant-design/icons';
-import { Result, Button } from 'antd';
-import { getMatchMenu, transformRoute } from '@umijs/route-utils';
 import Authorized, { checkAuthorize } from '@/components/Authorized'
 import RightContent from '@/components/RightContent'
 import  Status403 from '@/pages/exception/403'
 import  Status404 from '@/pages/exception/404'
+import type {GlobalModelState} from '@/models/global'
+import logo from '@/assets/images/128.png'
 
 export type BasicLayoutProps = {
   breadcrumbNameMap: Record<string, MenuDataItem>;
@@ -52,8 +51,7 @@ const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
     return localItem
   });
 
-const BasicLayout: React.FC<BasicLayoutProps> = (props) => {
-  const {children} = props;
+const BasicLayout: React.FC<{}> = ({children}) => {
   const { menuData, currentMenu,breadcrumb } = useContext(RouteContext)
   if(currentMenu&&currentMenu.redirect){
      return children as React.ReactElement
@@ -64,12 +62,15 @@ const BasicLayout: React.FC<BasicLayoutProps> = (props) => {
   return  <PageContainer title={false} extra={false}><Authorized authority={currentMenu?.authority} noMatch={<Status403></Status403>}>{children}</Authorized></PageContainer>
 };
 
-const BasicLayoutWrapper = (props: any) => {
+const BasicLayoutWrapper:React.FC<{settings:any}&ConnectProps> = ({settings,location,route,children,...restProps}) => {
   return <ProLayout
-    // logo={logo}
+    logo={logo}
     title="admin"
+  //  navTheme="light"
     className="basic-layout-wrapper"
-    {...props}
+    {...settings}
+    route={route}
+    location={location}
     onMenuHeaderClick={() => history.push('/')}
     menuItemRender={(menuItemProps, defaultDom) => {
       if (
@@ -95,8 +96,10 @@ const BasicLayoutWrapper = (props: any) => {
     postMenuData={postMenuDataRender}
     rightContentRender={() => <RightContent />}
   >
-    <BasicLayout {...props} ></BasicLayout>
+    <BasicLayout >{children}</BasicLayout>
   </ProLayout>
 }
 
-export default BasicLayoutWrapper;
+export default connect(({global}:{global:GlobalModelState})=>({
+  settings:global.settings
+}))(BasicLayoutWrapper);
