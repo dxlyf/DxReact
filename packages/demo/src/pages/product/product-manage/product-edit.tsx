@@ -45,10 +45,10 @@ interface ProductEntity{
     shopId:number// 店铺id
     categoryId:number// 分类ID
     categoryName:string//分类名称
-    categoryType:number//电商云商品类型(1-蛋糕类,2-面包类,3-成品类,4-饮品类,5-虚拟类)
+    categoryType:number//商品类型(1-蛋糕类,2-面包类,3-成品类,4-饮品类,5-虚拟类)
     type:number// 商品类型 1-单品, 2-组合
-    productNo:string // 电商云商品编码
-    name:string // 电商云商品名称
+    productNo:string // 商品编码
+    name:string // 商品名称
     productName:string//商品名称
     productDesc:string//商品卖点
     imageUrl:string // 商品图片，多个逗号隔开
