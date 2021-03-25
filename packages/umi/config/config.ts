@@ -3,6 +3,7 @@ import routes from './routes'
 import path from 'path'
 import envConfig from './env'
 export default defineConfig({
+  mock:false,
   nodeModulesTransform: {
     type: 'none',
   },
@@ -11,13 +12,7 @@ export default defineConfig({
      
   },
   theme:{
-    'font-size-base': '14px',
-    'badge-font-size': '12px',
-    'btn-font-size-lg': '@font-size-base',
-    'menu-dark-bg': '#fff',
-    'menu-dark-submenu-bg': '#fff',
-    'layout-sider-background': '#fff',
-    'layout-body-background': '#f0f2f5',
+
   },
   dva:{
     immer:true

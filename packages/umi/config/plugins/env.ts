@@ -1,5 +1,6 @@
 import { IApi } from '@umijs/types';
 import inquirer from 'inquirer'
+import {merge} from 'lodash'
 
 export default (api: IApi) => {
   
@@ -51,6 +52,7 @@ export default (api: IApi) => {
     }
     api.describe({
         key:"envConfig",
+        enableBy:api.EnableBy.config,// config 要配置启用 register默认启用 false禁用
         config:{
             schema(joi) {
                 return joi.object({
@@ -83,15 +85,24 @@ export default (api: IApi) => {
                         }
                 }
             ])
+
             api.modifyConfig((memo) => {
-                let newConfig=getConfig(res.env,envConfig[res.env])||{}
+                let newConfig = getConfig&&getConfig(res.env, envConfig[res.env]) || {};
                 return {
                   ...memo,
-                  ...newConfig
+                  ...newConfig,
                 };
-            });
-        }catch(e){}
+              });
+              let newConfig = getConfig&&getConfig(res.env, envConfig[res.env]) || {};
+              api.service.config=api.utils.mergeConfig(api.config,newConfig) as any
+        }catch(e){
+            api.logger.log('异常',e)
+        }
     })
+    // api.onDevCompileDone(()=>{
+    //     console.log('编译完成',api.config)
+    // })
+
     api.registerCommand({
         name:"env",
         fn:async ({args})=>{

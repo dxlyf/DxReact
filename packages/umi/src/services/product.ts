@@ -6,3 +6,9 @@ export function getProductList(data:any){
         data
     })
 }
+export function getDSYunProductList(data:any){
+    return request('product/getDSYunProductList',{
+        method:"POST",
+        data
+    })
+}

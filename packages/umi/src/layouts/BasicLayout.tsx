@@ -8,15 +8,15 @@ import type {
   BasicLayoutProps as ProLayoutProps,
   Settings,
 } from '@ant-design/pro-layout';
-import ProLayout, { RouteContext,PageContainer  } from '@ant-design/pro-layout';
+import ProLayout, { RouteContext, PageContainer } from '@ant-design/pro-layout';
 import React, { useEffect, useMemo, useRef, useContext } from 'react';
-import type { Dispatch,ConnectProps } from 'umi';
+import type { Dispatch, ConnectProps } from 'umi';
 import { Link, connect, history } from 'umi';
 import Authorized, { checkAuthorize } from '@/components/Authorized'
 import RightContent from '@/components/RightContent'
-import  Status403 from '@/pages/exception/403'
-import  Status404 from '@/pages/exception/404'
-import type {GlobalModelState} from '@/models/global'
+import Status403 from '@/pages/exception/403'
+import Status404 from '@/pages/exception/404'
+import type { GlobalModelState } from '@/models/global'
 import logo from '@/assets/images/128.png'
 
 export type BasicLayoutProps = {
@@ -38,7 +38,7 @@ const postMenuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
       children: item.children ? postMenuDataRender(item.children).filter(Boolean) : undefined,
     };
     if (localItem.children && localItem.children.length <= 0) {
-       return null as any
+      return null as any
     }
     return checkAuthorize(item.authority, localItem, null) as MenuDataItem;
   }).filter(Boolean);
@@ -46,27 +46,26 @@ const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
   menuList.map((item) => {
     const localItem = {
       ...item,
-      children: item.children ? menuDataRender(item.children): undefined,
+      children: item.children ? menuDataRender(item.children) : undefined,
     };
     return localItem
   });
 
-const BasicLayout: React.FC<{}> = ({children}) => {
-  const { menuData, currentMenu,breadcrumb } = useContext(RouteContext)
-  if(currentMenu&&currentMenu.redirect){
-     return children as React.ReactElement
+const BasicLayout: React.FC<{}> = ({ children }) => {
+  const { menuData, currentMenu, breadcrumb } = useContext(RouteContext)
+  if (currentMenu && currentMenu.redirect) {
+    return children as React.ReactElement
   }
-  if(!currentMenu||currentMenu&&!currentMenu.component){
-     return <Status404></Status404>
+  if (!currentMenu || currentMenu && !currentMenu.component) {
+    return <Status404></Status404>
   }
-  return  <PageContainer title={false} extra={false}><Authorized authority={currentMenu?.authority} noMatch={<Status403></Status403>}>{children}</Authorized></PageContainer>
+  return <PageContainer title={false} extra={false}><Authorized authority={currentMenu?.authority} noMatch={<Status403></Status403>}>{children}</Authorized></PageContainer>
 };
 
-const BasicLayoutWrapper:React.FC<{settings:any}&ConnectProps> = ({settings,location,route,children,...restProps}) => {
+const BasicLayoutWrapper: React.FC<{ settings: any } & ConnectProps> = ({ settings, location, route, children, ...restProps }) => {
   return <ProLayout
     logo={logo}
     title="admin"
-  //  navTheme="light"
     className="basic-layout-wrapper"
     {...settings}
     route={route}
@@ -84,10 +83,10 @@ const BasicLayoutWrapper:React.FC<{settings:any}&ConnectProps> = ({settings,loca
       return <Link to={menuItemProps.path}>{defaultDom}</Link>;
     }}
     breadcrumbRender={(routers = []) => routers}
-    itemRender={(route, params, routes, paths) => {
-      const first = routes.indexOf(route) === 0;
-      return first ? (
-        <Link to={paths.join('/')}>{route.breadcrumbName}</Link>
+    itemRender={(route:any, params, routes, paths) => {
+      const isNav = (route.component&&routes.indexOf(route)!==routes.length-1) || route.breadcrumbNav  // routes.indexOf(route) === 0;
+      return isNav ? (
+        <Link to={route.path}>{route.breadcrumbName}</Link>
       ) : (
         <span>{route.breadcrumbName}</span>
       );
@@ -100,6 +99,6 @@ const BasicLayoutWrapper:React.FC<{settings:any}&ConnectProps> = ({settings,loca
   </ProLayout>
 }
 
-export default connect(({global}:{global:GlobalModelState})=>({
-  settings:global.settings
+export default connect(({ global }: { global: GlobalModelState }) => ({
+  settings: global.settings
 }))(BasicLayoutWrapper);
