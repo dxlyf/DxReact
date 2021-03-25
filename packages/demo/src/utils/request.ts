@@ -5,6 +5,8 @@ import type {
 import { extend, ResponseError } from 'umi-request';
 import { history } from 'umi';
 import { message, notification } from 'antd';
+import app from './app'
+
 // 后台错误码
 enum CODE_TYPES {
   SUCCESS,
@@ -36,7 +38,6 @@ type ErrorInfoType = {
 
 const request = extend({
   timeout: 60000,
-  prefix: '/api/',
   getResponse: true,
   errorHandler(error: CustomeResonseError) {
     let { request, response, data } = error;
@@ -91,6 +92,20 @@ const request = extend({
     throw error;
   },
 });
+request.interceptors.request.use((url,options:any)=>{
+    if(!url.startsWith('http')){
+      url='/api/'+url
+    }
+    options=options||{}
+    if(!options.headers){
+      options.headers={}
+    }
+    options.headers.token=app.getToken()
+    return {
+       url,
+       options
+    }
+})
 request.use(async function (ctx, next) {
   await next();
   if (ctx.res.data.code === CODE_TYPES.SUCCESS) {

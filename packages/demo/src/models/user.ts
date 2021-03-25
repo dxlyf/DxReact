@@ -1,7 +1,7 @@
 import { Effect, ImmerReducer, Reducer } from 'umi';
 import * as userService from '@/services/user';
 import { setCurrentUserAuthority } from '@/components/Authorized';
-
+import app from '@/utils/app'
 export interface UserModelState {
   currentUser: any;
 }
@@ -24,9 +24,12 @@ const UserModel: UserModelType = {
     currentUser: null, //当前登录用户信息
   },
   effects: {
-    *getUserInfo({ payload }, { call, put }) {
+    *getUserInfo({ payload }, { call, put,all }) {
       try {
-        let data = yield call(userService.getCurrentUser);
+        let [data,config] = yield all([call(userService.getCurrentUser,{
+          appCode:app.clientType
+        }),call(userService.getResouceConfig)]);
+        app.resourceConfig=config
         yield put({
           type: 'setCurrentUser',
           payload: data,
@@ -42,7 +45,13 @@ const UserModel: UserModelType = {
     },
     *login({ payload }, { call, put }: { put: any; call: any }) {
       try {
-        let res = yield call(userService.login, payload);
+        let res = yield call(userService.login, {
+          ...payload,
+          loginType:1,// 登入类型：1-用户名密码、2-短信验证码
+          clientType:app.clientType,
+          needVerification:0,
+        });
+        app.setToken(res.token)
         yield put.resolve({
           type: 'getUserInfo',
         });
@@ -56,8 +65,11 @@ const UserModel: UserModelType = {
         let res = yield call(userService.logout);
         yield put({
           type: 'setCurrentUser',
-          payload: null,
+          payload: {
+             token:app.getToken()
+          },
         });
+        app.setToken(null)
         return res;
       } catch (e) {
         return Promise.reject(e);
@@ -66,8 +78,9 @@ const UserModel: UserModelType = {
   },
   reducers: {
     setCurrentUser(state, { payload }) {
-      setCurrentUserAuthority(payload?.permissions || []);
+      setCurrentUserAuthority(payload?.permissionCodeSet || []);
       state.currentUser = payload;
+      app.currentUser=payload
     },
   },
 };

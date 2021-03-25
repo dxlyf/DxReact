@@ -4,6 +4,7 @@ import inquirer from 'inquirer';
 export default (api: IApi) => {
   api.describe({
     key: 'envConfig',
+    enableBy:api.EnableBy.config,
     config: {
       schema(joi) {
         return joi.object({
@@ -37,12 +38,14 @@ export default (api: IApi) => {
         },
       ]);
       api.modifyConfig((memo) => {
-        let newConfig = getConfig(res.env, envConfig[res.env]) || {};
+        let newConfig = getConfig&&getConfig(res.env, envConfig[res.env]) || {};
         return {
           ...memo,
           ...newConfig,
         };
       });
+      let newConfig = getConfig&&getConfig(res.env, envConfig[res.env]) || {};
+      api.service.config =api.utils.mergeConfig({},api.config,newConfig) as any
     } catch (e) {}
   });
 };

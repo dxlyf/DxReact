@@ -59,7 +59,7 @@ const RightContent: React.FC<Partial<RightContentProps>> = ({
             alt="avatar"
           />
           <span className={`${styles.name} anticon`}>
-            {currentUser.userName}
+            {currentUser.firstName}
           </span>
         </span>
       </Dropdown>

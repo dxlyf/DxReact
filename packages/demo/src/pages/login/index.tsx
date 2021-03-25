@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
   const onSubmit = useCallback(
     (formData) => {
       dispatch!({
-        type: 'user/login',
+        type: 'user/login', 
         payload: {
           ...formData,
         },
@@ -30,7 +30,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
           if (e.isBusinessError && e.data.code == 1) {
             form.setFields([
               {
-                name: 'userName',
+                name: 'loginName',
                 errors: [e.data.message],
               },
             ]);
@@ -52,7 +52,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
             <div className={styles.formWrap}>
               <Form onFinish={onSubmit} form={form}>
                 <Form.Item
-                  name="userName"
+                  name="loginName"
                   required={false}
                   rules={[
                     {
