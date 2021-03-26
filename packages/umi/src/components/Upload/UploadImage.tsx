@@ -5,7 +5,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { pick } from 'lodash'
 import { useControllableValue } from 'ahooks'
-import { produce } from 'immer'
+import classNames from 'classnames'
 import styles from './index.less'
 
 const { Text } = Typography
@@ -16,9 +16,6 @@ type UploadImageProp = {
     onChange?: (fileList: any) => void
 } & UploadProps
 
-const DragImage = () => {
-    return
-}
 
 function getBase64(file: any) {
     return new Promise((resolve, reject) => {
@@ -34,39 +31,40 @@ const type = 'DragableUploadList';
 const DragableUploadListItem: React.FC<any> = ({ originNode, moveRow, file, fileList }) => {
     const ref = useRef<any>();
     const index = fileList.indexOf(file);
-    const [{ isOver, dropClassName }, drop] = useDrop(
-        () => ({
+    const [{ isOver }, drop] = useDrop({
             accept: type,
             collect: monitor => {
-                const { index: dragIndex }:any = monitor.getItem() || {};
-                if (dragIndex === index) {
-                    return {};
-                }
                 return {
                     isOver: monitor.isOver(),
-                    dropClassName: dragIndex < index ? styles.overDown : styles.overDown.overUp,
+                    //dropClassName: dragIndex < index ? styles.overDown : styles.overDown.overUp,
                 };
             },
-            drop: (item:any) => {
-                moveRow(item.index, index);
-            },
-        }),
-        [index],
-    );
-    const [, drag] = useDrag(
-        () => ({
+            hover:(dragItem:any,monitor:any)=>{
+                let dragIndex=dragItem.index
+                let hoverIndex=index
+                if(dragIndex===hoverIndex){
+                    return
+                }
+                moveRow(dragIndex, hoverIndex);
+                dragItem.index=hoverIndex
+            }
+     })
+    const [{isDragging}, drag] = useDrag({
             type,
-            item: { index },
+            item: { index},
             collect: monitor => ({
                 isDragging: monitor.isDragging(),
-            }),
-        }),[]);
+            })
+        });
     drop(drag(ref));
     const errorNode = <Tooltip title="Upload Error">{originNode.props.children}</Tooltip>;
+    const cls=classNames(styles.imageDragItem,{
+        [styles.dragging]:isDragging
+    })
     return (
         <div
             ref={ref}
-            className={`${styles.imageDragItem} ${isOver ? dropClassName : ''}`}
+            className={cls}
             style={{ cursor: 'move' }}
         >
             {file.status === 'error' ? errorNode : originNode}
@@ -123,18 +121,13 @@ const UploadImage: React.FC<UploadImageProp> = (props) => {
             <div style={{ marginTop: 8 }}>{uploadBtnText}</div>
         </div>
     ) : null;
-    const moveRow = useCallback(
-        (dragIndex, hoverIndex) => {
-            const dragRow = fileList[dragIndex];
-            setFileList(
-                produce(fileList, (newFileList) => {
-                    newFileList.splice(dragIndex, 1)
-                    newFileList.splice(hoverIndex, 0, dragRow)
-                })
-            );
-        },
-        [fileList],
-    );
+    const moveRow = useCallback((dragIndex, hoverIndex) => {
+            const newFileList=[...fileList]
+            const dragItem = newFileList[dragIndex];
+            newFileList.splice(dragIndex,1)
+            newFileList.splice(hoverIndex,0,dragItem)
+            setFileList(newFileList);
+        },[fileList]);
 
     const itemRender = useCallback((originNode, file, currFileList) => {
         return <DragableUploadListItem
@@ -143,7 +136,7 @@ const UploadImage: React.FC<UploadImageProp> = (props) => {
             fileList={currFileList}
             moveRow={moveRow}
         />
-    }, [])
+    }, [moveRow])
     return <DndProvider backend={HTML5Backend}>
         <div>
             <Upload {...restProps} onChange={onChangeHandle} itemRender={itemRender} maxCount={maxCount} onPreview={onPreviewHandle} fileList={fileList} listType="picture-card">{uploadButton}</Upload>

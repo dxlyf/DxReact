@@ -3,7 +3,6 @@ import routes from './routes'
 import path from 'path'
 import envConfig from './env'
 export default defineConfig({
-  mock:false,
   nodeModulesTransform: {
     type: 'none',
   },
