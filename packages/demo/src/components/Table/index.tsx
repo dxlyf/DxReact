@@ -1,3 +1,7 @@
+/**
+ * antd table 富应用
+ * @author fanyonglong
+ */
 import React, { FC, useMemo } from 'react';
 import type { TableProps, TableColumnType, TableColumnProps } from 'antd';
 import { Table } from 'antd';

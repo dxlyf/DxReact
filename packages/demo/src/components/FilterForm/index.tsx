@@ -194,7 +194,7 @@ const FilterForm = React.forwardRef<
         }
       });
     }, [onQuery, form, mergeFields]);
-    const renderSearch = useCallback(() => {
+    const renderSearch = () => {
       let isCanExpand =
         mergeFields.filter((d) => d.type !== QUERY_BUTTON).length > columnCount;
 
@@ -236,9 +236,8 @@ const FilterForm = React.forwardRef<
           })}
         </Row>
       );
-    }, [mergeFields, expand, onQueryHandle, onResetHandle, showExpand]);
-    const renderControl = useCallback(
-      (field: FilterFormField) => {
+    }
+    const renderControl =(field: FilterFormField) => {
         let render = field.render;
         if (field.type === QUERY_BUTTON) {
           return ctx.current!.wrapperComponent(renderSearch(), field);
@@ -251,11 +250,8 @@ const FilterForm = React.forwardRef<
           return ctx.current!.wrapperComponent(ret, field);
         }
         return ret;
-      },
-      [columnCount, renderSearch],
-    );
-    const renderFilterFields = useCallback(
-      (mergeFields: FilterRenderField[]) => {
+    }
+    const renderFilterFields = (mergeFields: FilterRenderField[]) => {
         let fields: FilterRenderField[][] = [];
         let renderList = [],
           currentSpan = 0;
@@ -289,12 +285,10 @@ const FilterForm = React.forwardRef<
           }
         }
         return renderList;
-      },
-      [renderControl, formSpan, showExpand, expand, columnCount],
-    );
+    }
 
-    ctx.current!.onQuery = onQueryHandle;
-    ctx.current!.onReset = onResetHandle;
+    ctx.current!.query = onQueryHandle;
+    ctx.current!.reset = onResetHandle;
     ctx.current!.form = form;
     useImperativeHandle(ref, () => ctx.current!, [ctx.current]);
     useEffect(() => {

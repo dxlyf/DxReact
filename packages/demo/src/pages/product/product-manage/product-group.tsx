@@ -1,96 +1,168 @@
-import React,{useState,useCallback,useMemo,useRef} from 'react'
-import {Tabs,Button,Card} from 'antd'
-import Table,{RichTableColumnType} from '@/components/Table'
-import FilterForm,{FilterFormFieldType,ControlContextType} from '@/components/FilterForm'
-import * as productService from '@/services/product'
-import useRequest from '@/common/hooks/useRequest'
-type ProductRecordDataType={
-    productName:string
-}
+/**
+ * 商品分组
+ * @author fanyonglong
+ */
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { Tabs, Button, Card, Space, message, Modal, Form, Input, FormProps } from 'antd';
+import Table, { RichTableColumnType } from '@/components/Table';
+import FilterForm, {
+  FilterFormFieldType
+} from '@/components/FilterForm';
+import * as productService from '@/services/product';
+import { useRequest, useModal } from '@/common/hooks';
+import { ConnectRC,Link } from 'umi';
+import { get } from 'lodash'
 
-let ProductManage=()=>{
-    let filterRef=useRef<ControlContextType>()
-    let [currentStatus,setStatus]=useState<string>('-1')
-    let [{tableProps},{query:showList}]=useRequest({
-        service:productService.getProductList,
-        transform:(res)=>{
-            return {
-                data:res.list,
-                total:res.total
-            }
-        }
-    })
-    const fields=useMemo<FilterFormFieldType[]>(()=>[{
-        type:"text",
-        name:"name",
-        label:"商品信息",
-        props:{
-            placeholder:"请输入商口名称或商品编号"
-        }
-    },{
-        type:"text",
-        name:"name5",
-        label:"商品信息",
-        props:{
-            placeholder:"请输入商口名称或商品编号"
-        }
-    },{
-        type:"list",
-        name:"name2",
-        label:"商品归属",
-        initialValue:-1,
-        data:[{text:"全部",value:-1},{text:"幸福送全国店",value:1},{text:"未分",value:2}]
-    },{
-        type:"list",
-        name:"name3",
-        label:"商品状态",
-        initialValue:-1,
-        data:[{text:"全部",value:-1},{text:"已上架",value:1},{text:"已下架",value:2}],
-        props:{
-            onChange:(value:string)=>{
-                setStatus(""+value)
-            }
-        }
-    }],[])
-    const columns=useMemo<RichTableColumnType<ProductRecordDataType>[]>(() =>[{
-        title:"商品信息",
-        dataIndex:"productidInfo",
-        render(text,record){
-            return record.productName
-        }
-    },{
-        title:"商品归属",
-        dataIndex:"belong"
-    },{
-        title:"商品状态",
-        dataIndex:"statusName"
-    },{
-        title:"操作"
-    }], [])
-    const onStatusTabChange=useCallback((value)=>{
-        console.log('value',value)
-        setStatus(""+value)
-        filterRef.current?.form.setFieldsValue({
-            name3:Number(value)
+const formLayoutProps: FormProps = {
+  wrapperCol: {
+    span: 18
+  },
+  labelCol: {
+    span: 6
+  }
+}
+let ProductGroup: ConnectRC<any> = ({ history }) => {
+  let [currentStatus, setStatus] = useState<string>('-1');
+  let [{ tableProps }, { query: showList }] = useRequest({
+    service: productService.getProductGroupList,
+    transform: (res: any) => {
+      return {
+        data: res.list,
+        total: res.total,
+      };
+    },
+  });
+  const fields = useMemo<FilterFormFieldType[]>(
+    () => [
+      {
+        type: 'text',
+        name: 'name',
+        label: '分组名称',
+        props: {
+          placeholder: '请输入商品分组名称',
+          maxLength: 50,
+        },
+      }
+    ],
+    [],
+  );
+  const onDelete = useCallback((id) => {
+    Modal.confirm({
+      title: "是否删除分组",
+      content: "删除后，商品会与分组解绑",
+      onOk: () => {
+        productService.deleteProductGroup({
+          id: id
+        }).then(() => {
+          message.success('删除成功')
+          showList(true)
         })
-    },[])
-    
-    return <>
-      <Card>
-        <FilterForm ref={filterRef as any} span={18} fields={fields} onQuery={showList} autoBind={true}>
-            <Button>上架</Button>
-            <Button>下架</Button>
-            <Button>删除</Button>
+      }
+    })
+  }, [])
+  let [groupForm] = Form.useForm()
+  let [groupModal, { show: showGroupModal,close:hideGroupModal, setStateOptions }] = useModal({
+    destroyOnClose: true,
+    onOk: () => {
+
+      groupForm.validateFields().then((formdata) => {
+        setStateOptions({ confirmLoading: true })
+        let dataItem = groupModal.state.dataItem
+        if (dataItem) {
+          productService.updateProductGroup({
+            id:dataItem.id,
+            ...formdata
+          }).then(() => {
+            message.success('修改成功')
+            showList(true)
+            hideGroupModal()
+          }).finally(() => {
+            setStateOptions({ confirmLoading: false })
+          })
+        } else {
+          productService.addProductGroup(formdata).then(() => {
+            message.success('添加成功')
+            showList(true)
+            hideGroupModal()
+          }).finally(() => {
+            setStateOptions({ confirmLoading: false })
+          })
+        }
+      })
+    }
+  })
+  const columns = useMemo<any>(
+    () => [
+      {
+        title: '商品分组名称',
+        dataIndex: 'name'
+      },
+      {
+        title: '分组备注',
+        dataIndex: 'remark',
+      },
+      {
+        title: '商品数量',
+        dataIndex: 'productNum',
+      },
+      {
+        title: '操作',
+        width: 220,
+        render: (record: any) => {
+          return (
+            <Space>
+              <a onClick={showGroupModal.bind(null, '编辑分组', record)}>编辑</a><a onClick={onDelete.bind(null, record.id)}>删除</a><Link  to={`/product/product-manage/group/manage/${record.id}/${encodeURIComponent(record.name)}`}>商品管理</Link>
+            </Space>
+          );
+        },
+      },
+    ],
+    [onDelete, showGroupModal],
+  );
+
+  const onDeleteProduct = useCallback((id) => {
+    Modal.confirm({
+      title: "温馨提示",
+      content: `您确认删除所选中商品?`,
+      onOk: () => {
+
+      }
+    })
+  }, [showList])
+
+  return (
+    <Space direction="vertical" className="m-list-wrapper">
+      <Card className="m-filter-wrapper">
+        <FilterForm
+          span={18}
+          fields={fields}
+          onQuery={showList}
+          autoBind={true}
+        >
+          <Button type="primary" onClick={() => showGroupModal('添加分组')}>
+            添加分组
+          </Button>
         </FilterForm>
+      </Card>
+      <Card className="m-table-wrapper">
+        <Table
+          columns={columns}
+          rowKey="id"
+          {...tableProps}
+        ></Table>
+      </Card>
+      <Modal {...groupModal.props}>
+        <Form name="groupModal" preserve={false} form={groupForm} {...formLayoutProps}>
+          <Form.Item label="分组名称" name="name" initialValue={get(groupModal.state.dataItem, 'name')} rules={[{ required: true, message: "请输入主题名称！", whitespace: true }]}>
+            <Input maxLength={50}></Input>
+          </Form.Item>
+          <Form.Item label="分组备注" name="remark" initialValue={get(groupModal.state.dataItem, 'remark')}>
+            <Input maxLength={50}></Input>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </Space>
+  );
+};
 
-        <Tabs activeKey={currentStatus} onChange={onStatusTabChange}>
-            <Tabs.TabPane tab="全部" key="-1"></Tabs.TabPane>
-            <Tabs.TabPane tab="已上架" key="1"></Tabs.TabPane>
-            <Tabs.TabPane tab="已下架" key="2"></Tabs.TabPane>
-        </Tabs>
-        <Table bordered columns={columns} rowKey="id" {...tableProps}></Table>
-    </Card>
-    </>
-}
-
-export default ProductManage 
+export default ProductGroup;

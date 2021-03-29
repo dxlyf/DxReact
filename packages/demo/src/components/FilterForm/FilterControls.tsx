@@ -4,11 +4,13 @@
  */
 import React from 'react';
 import { Input, Select, FormInstance } from 'antd';
+import { trim } from 'lodash';
+import {PRODUCT} from '@/common/constants'
 
 export type ControlContext = {
   wrapperComponent: (element: any, field: FilterFormField) => any;
-  onQuery: () => void;
-  onReset: () => void;
+  query: () => void;
+  reset: () => void;
   form: FormInstance;
 };
 export interface FilterFormField {
@@ -62,11 +64,14 @@ const { create, controls } = createFilterControl({
   wrapper: true,
   render() {},
   isValidValue(value: any) {
-    return value !== undefined;
+    return value !== undefined && value!==null &&value!=='';
   },
 });
 
 create('text', {
+  transform(value:any,fieldItem:FilterRenderField){
+    return fieldItem.isValidValue!(value,fieldItem)?trim(value):value
+  },
   render(field) {
     return <Input {...field.props}></Input>;
   },
@@ -89,5 +94,18 @@ create('list', {
     );
   },
 });
+create('productCategory',{
+  render(field) {
+    return (
+      <Select {...field.props}>
+          <Select.Option value={-1} key={-1}>全部</Select.Option>
+         {PRODUCT.CATEGORY_TYPES.map((d:any)=>{
+           if(!d)return
+           return <Select.Option value={d.value} key={d.value}>{d.text}</Select.Option>
+         })}
+      </Select>
+    );
+  }
+})
 
 export default controls;

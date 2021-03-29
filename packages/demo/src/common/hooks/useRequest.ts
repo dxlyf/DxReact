@@ -1,3 +1,7 @@
+/**
+ * 请求钩子
+ * @author fanyonglong
+ */
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { PaginationProps } from 'antd';
 
@@ -45,31 +49,41 @@ export default function useRequest<T>(
     transform,
     onQuery,
     params = {},
-    pagination = {},
+    pagination,
     isPagination = true,
-  } = options;
+  } = options || {};
   let contextRef = useRef<RequestContext<T> | null>(null);
   let context = contextRef.current as RequestContext<T>;
   const [, forceUpdate] = useState(0);
   if (!contextRef.current) {
     context = contextRef.current = {
-      pagination: pagination,
+      pagination: {
+        current: 1,
+        pageSize: 10,
+        total: 0,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '30', '50', '70', '100'],
+      },
       defaultParams: params,
       service: service,
       onQuery: onQuery,
       transform: transform,
       params: {},
       dataSource: [],
-      total: 0,
       loading: false,
       update: () => {
         forceUpdate((d) => d + 1);
       },
       tableProps: {},
-    };
+    } as any;
   }
   useMemo(() => {
-    context.pagination = pagination;
+    if (pagination) {
+      context.pagination = {
+        ...context.pagination,
+        ...pagination,
+      };
+    }
     context.defaultParams = params;
     context.service = service;
     context.onQuery = onQuery;
@@ -112,6 +126,7 @@ export default function useRequest<T>(
       if (isPagination && newParmas.hasOwnProperty(pageSizeField)) {
         context.pagination!.pageSize = newParmas[pageSizeField];
       }
+      context.params = newParmas;
       if (context.service) {
         context.loading = true;
         context.update();
@@ -122,7 +137,7 @@ export default function useRequest<T>(
               d = context.transform(d);
             }
             context.dataSource = d.data;
-            context.total = d.total as number;
+            context.pagination!.total = d.total as number;
           })
           .finally(() => {
             context.loading = false;
@@ -131,7 +146,6 @@ export default function useRequest<T>(
       } else if (context.onQuery) {
         context.onQuery(newParmas, context);
       }
-      context.params = newParmas;
     },
     [context, isPagination, pageIndexField, pageSizeField],
   );
@@ -151,6 +165,7 @@ export default function useRequest<T>(
   context.tableProps.dataSource = context.dataSource;
   context.tableProps.onChange = onTableChange;
   context.tableProps.loading = context.loading;
+  context.tableProps.pagination = context.pagination;
 
   useEffect(() => {
     if (autoBind) {

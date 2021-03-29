@@ -1,34 +1,17 @@
 .ant-upload-draggable-list-item {
-    border-top: 2px dashed rgba(0, 0, 0, 0);
-    border-bottom: 2px dashed rgba(0, 0, 0, 0);
-  }
+  border-top: 2px dashed rgba(0, 0, 0, 0);
+  border-bottom: 2px dashed rgba(0, 0, 0, 0);
+}
 .ant-upload-draggable-list-item.drop-over-downward {
-    border-bottom-color: #1890ff;
-  }
+  border-bottom-color: #1890ff;
+}
 .ant-upload-draggable-list-item.drop-over-upward {
-    border-top-color: #1890ff;
-  }
-.imageDragItem{
+  border-top-color: #1890ff;
+}
+.imageDragItem {
   position: relative;
   height: 100%;
 }
-.overDown::after{
-    content: "";
-    display: block;
-    height: 100%;
-    width: 1px;
-    background-color: #1890ff;
-    position: absolute;
-    right: 0;
-    top:0
-  }
-.overUp::after{
-    content: "";
-    display: block;
-    height: 100%;
-    width: 1px;
-    background-color: #1890ff;
-    position: absolute;
-    left: 0;
-    top:0
+.dragging {
+  opacity: 0;
 }

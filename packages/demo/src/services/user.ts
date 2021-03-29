@@ -1,12 +1,14 @@
 import request from '@/utils/request';
 
-export function getResouceConfig(){
-   return request('baseinfo/backend/baseResource/getBaseResource',{method:"POST"})
+export function getResouceConfig() {
+  return request('baseinfo/backend/baseResource/getBaseResource', {
+    method: 'POST',
+  });
 }
-export function getCurrentUser(data:any) {
+export function getCurrentUser(data: any) {
   return request('uc/backend/user/permissions', {
     skipErrorHandler: true,
-    params:data
+    params: data,
   });
 }
 export function getUserList(data: any) {

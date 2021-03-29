@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
   const onSubmit = useCallback(
     (formData) => {
       dispatch!({
-        type: 'user/login', 
+        type: 'user/login',
         payload: {
           ...formData,
         },

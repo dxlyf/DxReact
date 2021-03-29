@@ -1,3 +1,7 @@
+/**
+ * 头部右上角个人中心
+ * @author fanyonglong
+ */
 import { Tag, Space, Menu, Dropdown, Avatar } from 'antd';
 import {
   QuestionCircleOutlined,
