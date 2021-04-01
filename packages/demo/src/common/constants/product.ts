@@ -1,5 +1,6 @@
+import {valuesKeyMap} from '@/utils/util'
 
-export const CATEGORY_TYPES=[{
+export const CATEGORY_TYPES=valuesKeyMap([{
     value:1,
     text:'现做蛋糕',
     type:"生产类"
@@ -19,4 +20,4 @@ export const CATEGORY_TYPES=[{
     value:5,
     text:'虚拟商品',
     type:"虚拟类"
-}]
+}],'value')

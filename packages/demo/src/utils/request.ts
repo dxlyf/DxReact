@@ -1,3 +1,7 @@
+/**
+ * api请求
+ * @author fanyonglong
+*/
 import type {
   ResponseError as ResponseErrorType,
   RequestOptionsInit,

@@ -79,7 +79,7 @@ const FilterForm = React.forwardRef<
                 {...field.formItemProps}
                 initialValue={field.initialValue}
                 label={field.label}
-                name={field.name}
+                name={field.fieldName}
               >
                 {element}
               </Form.Item>
@@ -122,6 +122,7 @@ const FilterForm = React.forwardRef<
       newFields = newFields.map((field) => {
         let fieldConfig = (FilterControls.get(field.type as string) ||
           {}) as FilterRenderField;
+        let fieldName = Array.isArray(field.name) ? field.name.join('_') : field.name
         let newField = merge<
           object,
           FilterFormField,
@@ -129,7 +130,8 @@ const FilterForm = React.forwardRef<
           Omit<FilterFormField, 'name'>
         >(
           {
-            key: Array.isArray(field.name) ? field.name.join('_') : field.name,
+            key: fieldName,
+            fieldName: fieldName,
             props: {},
             formItemProps: {
               colon: false,
@@ -159,33 +161,34 @@ const FilterForm = React.forwardRef<
           if (fieldItem?.skipQuery) {
             return;
           }
-          let names = Array.isArray(fieldItem.name)
-            ? fieldItem.name
-            : [fieldItem.name];
+
           if (!isValidate) {
             return;
           }
-          if (fieldItem.compose) {
-            filterParams = fieldItem.compose(filterParams, values, fieldItem);
+
+          let currentValue = values[fieldItem.fieldName];
+
+          let newfieldItem = {
+            ...fieldItem,
+            currentValue: currentValue,
+            fieldIndex: 0
+          };
+          let isValid = fieldItem.isValidValue!(newfieldItem.currentValue, newfieldItem);
+          newfieldItem.currentValue = isValid && fieldItem.transform
+            ? fieldItem.transform?.(newfieldItem.currentValue, newfieldItem)
+            : newfieldItem.currentValue;
+
+          if (fieldItem.validate?.(newfieldItem.currentValue, newfieldItem)) {
+            isValidate = false;
           }
-          for (let i = 0, len = names.length; i < len; i++) {
-            let name = names[i] as string | number;
-            let originalValue = values[name];
-            let newfieldItem = {
-              ...fieldItem,
-              originalValue: originalValue,
-              name: name,
-              fieldIndex: i,
-            };
-            let value = fieldItem.transform
-              ? fieldItem.transform?.(originalValue, newfieldItem)
-              : originalValue;
-            let isValid = fieldItem.isValidValue!(value, newfieldItem);
-            if (fieldItem.validate?.(value, newfieldItem)) {
-              isValidate = false;
-            }
-            if (isValid && isValidate) {
-              filterParams[name] = value;
+          if (isValid && isValidate) {
+            if (fieldItem.compose) {
+              let newFilterParams = fieldItem.compose(filterParams, values, newfieldItem);
+              if(newFilterParams!==undefined){
+                filterParams=newFilterParams
+              }
+            } else {
+              filterParams[fieldItem.fieldName] = newfieldItem.currentValue;
             }
           }
         });
@@ -237,54 +240,54 @@ const FilterForm = React.forwardRef<
         </Row>
       );
     }
-    const renderControl =(field: FilterFormField) => {
-        let render = field.render;
-        if (field.type === QUERY_BUTTON) {
-          return ctx.current!.wrapperComponent(renderSearch(), field);
-        }
-        if (!render) {
-          throw `找不到${field.name}定义的${field.type}类型控件`;
-        }
-        let ret = render(field, ctx.current!);
-        if (field.wrapper) {
-          return ctx.current!.wrapperComponent(ret, field);
-        }
-        return ret;
+    const renderControl = (field: FilterFormField) => {
+      let render = field.render;
+      if (field.type === QUERY_BUTTON) {
+        return ctx.current!.wrapperComponent(renderSearch(), field);
+      }
+      if (!render) {
+        throw `找不到${field.name}定义的${field.type}类型控件`;
+      }
+      let ret = render(field, ctx.current!);
+      if (field.wrapper) {
+        return ctx.current!.wrapperComponent(ret, field);
+      }
+      return ret;
     }
     const renderFilterFields = (mergeFields: FilterRenderField[]) => {
-        let fields: FilterRenderField[][] = [];
-        let renderList = [],
-          currentSpan = 0;
-        mergeFields.forEach((field, index) => {
-          if (
-            showExpand &&
-            !expand &&
-            index >= columnCount &&
-            field.type !== QUERY_BUTTON
-          ) {
-            return;
-          }
-          currentSpan += field.span!;
-          let rowIndex = Math.ceil(currentSpan / formSpan) - 1;
-          let rowList = fields[rowIndex] || (fields[rowIndex] = []);
-          rowList.push(field);
-        });
-
-        for (let r = 0, rlen = fields.length; r < rlen; r++) {
-          let cols = [];
-          for (let c = 0, clen = fields[r].length; c < clen; c++) {
-            let field = fields[r][c];
-            cols.push(
-              <Col key={field.key} span={field.span}>
-                {renderControl(field)}
-              </Col>,
-            );
-          }
-          if (cols.length > 0) {
-            renderList.push(<Row key={r}>{cols}</Row>);
-          }
+      let fields: FilterRenderField[][] = [];
+      let renderList = [],
+        currentSpan = 0;
+      mergeFields.forEach((field, index) => {
+        if (
+          showExpand &&
+          !expand &&
+          index >= columnCount &&
+          field.type !== QUERY_BUTTON
+        ) {
+          return;
         }
-        return renderList;
+        currentSpan += field.span!;
+        let rowIndex = Math.ceil(currentSpan / formSpan) - 1;
+        let rowList = fields[rowIndex] || (fields[rowIndex] = []);
+        rowList.push(field);
+      });
+
+      for (let r = 0, rlen = fields.length; r < rlen; r++) {
+        let cols = [];
+        for (let c = 0, clen = fields[r].length; c < clen; c++) {
+          let field = fields[r][c];
+          cols.push(
+            <Col key={field.key} span={field.span}>
+              {renderControl(field)}
+            </Col>,
+          );
+        }
+        if (cols.length > 0) {
+          renderList.push(<Row key={r}>{cols}</Row>);
+        }
+      }
+      return renderList;
     }
 
     ctx.current!.query = onQueryHandle;

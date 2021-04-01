@@ -18,3 +18,24 @@
 .hidden {
   display: none;
 }
+.skuTableColumn {
+  margin-top: -20px;
+}
+.skuTable {
+  :global {
+    .ant-table-tbody > tr > td.ant-table-cell {
+      padding: 2px;
+      line-height: normal;
+      vertical-align: middle;
+      > .ant-form-item {
+      }
+      .ant-upload.ant-upload-select-picture-card,
+      .ant-upload-list-picture-card-container {
+        width: 64px;
+        height: 64px;
+        margin-right: 2px;
+        margin-bottom: 2px;
+      }
+    }
+  }
+}

@@ -54,7 +54,7 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
         initialValue: -1,
         data: [
           { text: '全部', value: -1 },
-          { text: '幸福送全国店', value: 1 },
+          { text: '送全国店', value: 1 },
           { text: '未分', value: 2 },
         ],
       },

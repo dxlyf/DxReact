@@ -11,7 +11,7 @@ export default {
             productName: '芒果连连',
             skuName: '芒果连连',
             specName: '2磅',
-            belong: '幸福送',
+            belong: '送',
             statusName: '已上架',
           },
         ],

@@ -2,13 +2,14 @@
  * 上传图片
  * @author fanyonglong
  */
-import React, { useCallback, useState, useRef,useMemo } from 'react';
+import React, { useCallback, useState, useRef, useMemo } from 'react';
 import { Upload, Modal, Typography, UploadProps, Tooltip } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useControllableValue } from 'ahooks';
 import classNames from 'classnames';
+import { uploadRequest, buindTodayUplaodDir } from './request';
 import styles from './index.less';
 
 const { Text } = Typography;
@@ -79,12 +80,14 @@ const DragableUploadListItem: React.FC<any> = ({
 export const UploadImage: React.FC<UploadImageProp> = (props) => {
   let {
     uploadBtnText = '添加',
-    maxCount=Infinity,
+    maxCount = Infinity,
     onChange,
     defaultFileList: propDefaultFileList,
     fileList: propFileList,
     draggleSort = true,
     descption,
+    children,
+    data,
     ...restProps
   } = props;
 
@@ -131,11 +134,16 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
     return <img alt="example" style={{ width: '100%' }} src={url} />;
   }, [previewModal]);
 
-  const uploadButton =maxCount> fileList.length ? (
-      <div>
-        <PlusOutlined />
-        <div style={{ marginTop: 8 }}>{uploadBtnText}</div>
-      </div>
+  const uploadButton =
+    maxCount > fileList.length ? (
+      children ? (
+        children
+      ) : (
+        <div>
+          <PlusOutlined />
+          <div style={{ marginTop: 8 }}>{uploadBtnText}</div>
+        </div>
+      )
     ) : null;
   const moveRow = useCallback(
     (dragIndex, hoverIndex) => {
@@ -167,7 +175,12 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
     <DndProvider backend={HTML5Backend}>
       <div>
         <Upload
+          customRequest={uploadRequest}
           {...restProps}
+          data={{
+            customVars: data,
+            uploadDir: buindTodayUplaodDir({ beforeDir: 'diy/images' }),
+          }}
           onChange={onChangeHandle}
           itemRender={itemRender}
           maxCount={maxCount}
@@ -191,53 +204,68 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
   );
 };
 
-export const useUplaodImage:(options?:any)=>any=(options:any={})=>{
-  let {limitCount=1,initialValue=[]}=options
-  let rules=useMemo(()=>[{
-      required: true,
-      type: "array",
-      message: `请至少上传${limitCount}张图片！`
-  }, {
-      type: "array",
-      validator: (rule:any, fileList:any[]) => {
-          let files=[],errors=[],uploading=[]
-          fileList.forEach(file => {
-              if (file.response && file.status === 'error') {
-                  errors.push(file)
-                  return
-              }
-              if (file.response && file.status === 'uploading') {
-                  uploading.push(file)
-                  return
-              }
-              files.push(file)
-          })
-          if(errors.length>0){
-              return Promise.reject('请先删除上传失败的图片！')
-          } else if(uploading.length>0){
-              return Promise.reject('图片还在上传中！')
-          }else if(files.length<=0){
-              return Promise.resolve(`请至少上传${limitCount}张图片!`)
+export const useUplaodImage: (options?: any) => any = (options: any = {}) => {
+  let { limitCount = 1, initialValue = [], message } = options;
+  let rules = useMemo(
+    () => [
+      {
+        required: true,
+        type: 'array',
+        message: message ? message : `请至少上传${limitCount}张图片！`,
+      },
+      {
+        type: 'array',
+        validator: (rule: any, fileList: any[]) => {
+          let files = [],
+            errors = [],
+            uploading = [];
+          fileList.forEach((file) => {
+            if (file.response && file.status === 'error') {
+              errors.push(file);
+              return;
+            }
+            if (file.response && file.status === 'uploading') {
+              uploading.push(file);
+              return;
+            }
+            files.push(file);
+          });
+          if (errors.length > 0) {
+            return Promise.reject('请先删除上传失败的图片！');
+          } else if (uploading.length > 0) {
+            return Promise.reject('图片还在上传中！');
+          } else if (files.length <= 0) {
+            return Promise.resolve(`请至少上传${limitCount}张图片!`);
           }
-          return Promise.resolve()
-      }
-  }],[limitCount])
-  const transform=useCallback((fileList,callback)=>{
-      return fileList.map((file:any)=>{
-          if(file.response){
-              return {
-                  uid:file.uid,
-                  name:file.name,
-                  url:file.reponse.data.path
-              }
-          }
-          return file
-      }).map(callback)
-  },[])
-  let formItemProps={
-      valuePropName:"fileList",
-      initialValue:initialValue,
-      rules:rules
-  }
-  return [{formItemProps:formItemProps},{transform}]
-}
+          return Promise.resolve();
+        },
+      },
+    ],
+    [limitCount],
+  );
+  const transform = useCallback((fileList, callback) => {
+    if (!Array.isArray(fileList)) {
+      return [];
+    }
+    return fileList
+      .map((file: any) => {
+        if (file.response) {
+          return {
+            uid: file.uid,
+            name: file.name,
+            url: file.response.url,
+          };
+        }
+        return file;
+      })
+      .map((file: any) => {
+        return callback ? callback(file) : file;
+      });
+  }, []);
+  let formItemProps = {
+    valuePropName: 'fileList',
+    initialValue: initialValue,
+    rules: rules,
+  };
+  return [{ formItemProps: formItemProps }, { transform }];
+};

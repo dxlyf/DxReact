@@ -5,7 +5,9 @@
 import React from 'react';
 import { Input, Select, FormInstance } from 'antd';
 import { trim } from 'lodash';
-import {PRODUCT} from '@/common/constants'
+import { PRODUCT } from '@/common/constants';
+import ModelGroupCascader from './components/ModelGroup';
+import ShopSelect from './components/Shop';
 
 export type ControlContext = {
   wrapperComponent: (element: any, field: FilterFormField) => any;
@@ -40,6 +42,7 @@ export interface FilterFormField {
 }
 export type FilterRenderField = {
   fieldIndex?: number;
+  fieldName: string;
   key: string | number;
 } & FilterFormField;
 export type FilterControlType = {
@@ -64,13 +67,13 @@ const { create, controls } = createFilterControl({
   wrapper: true,
   render() {},
   isValidValue(value: any) {
-    return value !== undefined && value!==null &&value!=='';
+    return value !== undefined && value !== null && value !== '';
   },
 });
 
 create('text', {
-  transform(value:any,fieldItem:FilterRenderField){
-    return fieldItem.isValidValue!(value,fieldItem)?trim(value):value
+  transform(value: any, fieldItem: FilterRenderField) {
+    return trim(value);
   },
   render(field) {
     return <Input {...field.props}></Input>;
@@ -94,18 +97,47 @@ create('list', {
     );
   },
 });
-create('productCategory',{
+create('productCategory', {
   render(field) {
     return (
       <Select {...field.props}>
-          <Select.Option value={-1} key={-1}>全部</Select.Option>
-         {PRODUCT.CATEGORY_TYPES.map((d:any)=>{
-           if(!d)return
-           return <Select.Option value={d.value} key={d.value}>{d.text}</Select.Option>
-         })}
+        <Select.Option value={-1} key={-1}>
+          全部
+        </Select.Option>
+        {PRODUCT.CATEGORY_TYPES.values.map((d: any) => {
+          return (
+            <Select.Option value={d.value} key={d.value}>
+              {d.text}
+            </Select.Option>
+          );
+        })}
       </Select>
     );
-  }
-})
+  },
+});
+create('shop', {
+  isValidValue(value: any) {
+    return value !== undefined && value !== -1;
+  },
+  render(field) {
+    return <ShopSelect {...field.props}></ShopSelect>;
+  },
+});
+create('modelGroup', {
+  isValidValue(value: any) {
+    return Array.isArray(value) && value.length > 0 ? true : false;
+  },
+  compose(filterParams: any, values: any, fieldItem: any) {
+    if (fieldItem.currentValue.length > 0) {
+      filterParams[fieldItem.name[0]] = fieldItem.currentValue[0];
+    }
+    if (fieldItem.currentValue.length > 1) {
+      filterParams[fieldItem.name[1]] = fieldItem.currentValue[1];
+    }
+  },
+  render(field) {
+    return <ModelGroupCascader {...field.props}></ModelGroupCascader>;
+  },
+});
 
 export default controls;

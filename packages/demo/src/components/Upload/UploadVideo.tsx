@@ -6,8 +6,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { Upload, Modal, Typography, UploadProps, Tooltip } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useControllableValue } from 'ahooks';
-import classNames from 'classnames';
-import styles from './index.less';
+import { uploadRequest, buindTodayUplaodDir } from './request';
 
 const { Text } = Typography;
 type UploadVideoeProps = {
@@ -19,9 +18,11 @@ type UploadVideoeProps = {
 export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
   let {
     uploadBtnText = '添加',
-    maxCount=Infinity,
+    maxCount = Infinity,
     onChange,
     descption,
+    data,
+    children,
     ...restProps
   } = props;
 
@@ -39,17 +40,27 @@ export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
     [onChange],
   );
 
-  const uploadButton = maxCount > fileList.length ? (
-      <div>
-        <PlusOutlined />
-        <div style={{ marginTop: 8 }}>{uploadBtnText}</div>
-      </div>
+  const uploadButton =
+    maxCount > fileList.length ? (
+      children ? (
+        children
+      ) : (
+        <div>
+          <PlusOutlined />
+          <div style={{ marginTop: 8 }}>{uploadBtnText}</div>
+        </div>
+      )
     ) : null;
 
   return (
     <div>
       <Upload
+        customRequest={uploadRequest}
         {...restProps}
+        data={{
+          customVars: data,
+          uploadDir: buindTodayUplaodDir({ beforeDir: 'diy/images' }),
+        }}
         onChange={onChangeHandle}
         maxCount={maxCount}
         fileList={fileList}

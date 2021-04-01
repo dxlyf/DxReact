@@ -11,17 +11,19 @@ import FilterForm, {
 } from '@/components/FilterForm';
 import * as productService from '@/services/product';
 import { useRequest, useTableSelection } from '@/common/hooks';
-import { ConnectRC } from 'umi';
+import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
-import { useControllableValue } from 'ahooks';
-
 type ProductManage = {};
 type ProductRecordDataType = {
   productName: string;
+  product: any;
 };
 
 let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
-  let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection({ keep: true });
+  let [
+    { rowSelection, selectedRows },
+    { clearAllSelection },
+  ] = useTableSelection({ keep: true });
   let filterRef = useRef<ControlContextType>();
   let [currentStatus, setStatus] = useState<string>('-1');
   let [{ tableProps }, { query: showList }] = useRequest({
@@ -45,13 +47,13 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
         },
       },
       {
-        type: 'list',
+        type: 'shop',
         name: 'shopId',
         label: '商品归属',
         initialValue: -1,
         data: [
           { text: '全部', value: -1 },
-          { text: '幸福送全国店', value: 1 },
+          { text: '送全国店', value: 1 },
           { text: '未分', value: 2 },
         ],
       },
@@ -81,15 +83,16 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
         title: '商品信息',
         dataIndex: 'productidInfo',
         render(text, record: any) {
+          let firstImage = record.imageUrl.split(',')[0];
           return (
             <Space>
               <ImageView
                 width={60}
                 height={40}
-                src={record.imageUrl + '?imageView2/1/w/60/h/40'}
+                src={firstImage + '?imageView2/1/w/60/h/40'}
               ></ImageView>
               <Space direction="vertical" align="start">
-                <div>{record.name}</div>
+                <div>{record.productName}</div>
                 <div>{record.productNo}</div>
               </Space>
             </Space>
@@ -103,9 +106,9 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
       {
         title: '上架状态',
         dataIndex: 'status',
-        render(value:number){
-          return value==1?'上架':value==2?'下架':'--'
-        }
+        render(value: number) {
+          return value == 1 ? '上架' : value == 2 ? '下架' : '--';
+        },
       },
       {
         title: '商品分类',
@@ -113,10 +116,12 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
       },
       {
         title: '操作',
-        render: () => {
+        render: (record: any) => {
           return (
             <Space>
-              <a>编辑</a>
+              <Link to={`/product/product-manage/list/edit/${record.id}`}>
+                编辑
+              </Link>
             </Space>
           );
         },
@@ -134,44 +139,49 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
   const onPublishProduct = useCallback(() => {
     history.push('/product/product-manage/list/edit');
   }, []);
-  const updateProductStatus = useCallback((status:number) => {
-    if (selectedRows!.length <= 0) {
-      message.warn('请先勾选商品！')
-      return
-    }
-    let typeName=status===1?'上架':'下架'
-    Modal.confirm({
-      title: "温馨提示",
-      content: `是否确认${typeName}?`,
-      onOk: () => {
-        productService.batchStatus({
-          ids: selectedRows?.map(d => d.id),
-          status: 2
-        }).then(() => {
-          message.success(`${typeName}成功`)
-          clearAllSelection!()
-          showList(true)
-        })
+  const updateProductStatus = useCallback(
+    (status: number) => {
+      if (selectedRows!.length <= 0) {
+        message.warn('请先勾选商品！');
+        return;
       }
-    })
-  }, [selectedRows, clearAllSelection, showList])
-  const onDeleteProduct= useCallback(() => {
+      let typeName = status === 1 ? '上架' : '下架';
+      Modal.confirm({
+        title: '温馨提示',
+        content: `是否确认${typeName}?`,
+        onOk: () => {
+          productService
+            .batchStatus({
+              ids: selectedRows?.map((d) => d.id),
+              status: 2,
+            })
+            .then(() => {
+              message.success(`${typeName}成功`);
+              clearAllSelection!();
+              showList(true);
+            });
+        },
+      });
+    },
+    [selectedRows, clearAllSelection, showList],
+  );
+  const onDeleteProduct = useCallback(() => {
     if (selectedRows!.length <= 0) {
-      message.warn('请先勾选商品！')
-      return
+      message.warn('请先勾选商品！');
+      return;
     }
     Modal.confirm({
-      title: "是否确认删除？",
+      title: '是否确认删除？',
       content: `删除商品，请谨慎操作`,
       onOk: () => {
-        productService.batchDelete(selectedRows?.map(d => d.id)).then(() => {
-          message.success(`删除成功`)
-          clearAllSelection!()
-          showList(true)
-        })
-      }
-    })
-  }, [selectedRows, clearAllSelection, showList])
+        productService.batchDelete(selectedRows?.map((d) => d.id)).then(() => {
+          message.success(`删除成功`);
+          clearAllSelection!();
+          showList(true);
+        });
+      },
+    });
+  }, [selectedRows, clearAllSelection, showList]);
   return (
     <Space direction="vertical" className="m-list-wrapper">
       <Card className="m-filter-wrapper">
@@ -185,12 +195,12 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
           <Button type="primary" onClick={onPublishProduct}>
             发布商品
           </Button>
-          <Button onClick={()=>updateProductStatus(1)}>上架</Button>
-          <Button onClick={()=>updateProductStatus(2)}>下架</Button>
+          <Button onClick={() => updateProductStatus(1)}>上架</Button>
+          <Button onClick={() => updateProductStatus(2)}>下架</Button>
           <Button onClick={onDeleteProduct}>删除</Button>
         </FilterForm>
-        </Card>
-        <Card className="m-table-wrapper">
+      </Card>
+      <Card className="m-table-wrapper">
         <Tabs activeKey={currentStatus} onChange={onStatusTabChange}>
           <Tabs.TabPane tab="全部" key="-1"></Tabs.TabPane>
           <Tabs.TabPane tab="已上架" key="1"></Tabs.TabPane>
