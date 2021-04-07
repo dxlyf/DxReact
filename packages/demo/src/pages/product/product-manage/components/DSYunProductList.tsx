@@ -10,7 +10,7 @@
  import useRequest from '@/common/hooks/useRequest';
  import { getDSYunProductList } from '@/services/product';
  import { ImageView } from '@/components/Image';
- import {useTableSelection} from '@/common/hooks'
+ import  {PRODUCT} from '@/common/constants'
  
  export let DSYunProductList: React.FC<any> = ({dataItem,onChange}) => {
 
@@ -30,7 +30,7 @@
      () => [
        {
          type: 'text',
-         name: 'name',
+         name: 'strText',
          label: '商品信息',
          props: {
            placeholder: '请输入商口名称或商品编号',
@@ -38,22 +38,25 @@
          },
        },
        {
-        type: 'productCategory',
-        name: 'category',
+        type: 'dsyunProductCategory',
+        name: 'categoryId',
         label: '商品分类',
-        initialValue:-1
+        transform(value){
+           return value[value.length-1]
+        },
+        props:{
+          changeOnSelect:true
+        }
       },
        {
          type: 'list',
-         name: 'shopId',
+         name: 'productType',
          label: '商品类型',
          initialValue: 1,
          props:{
           disabled:true
         },
-         data: [
-           { text: '单品', value: 1 }
-         ],
+         data: PRODUCT.PRODUCT_TYPES.values
        },
        {
          type: 'list',
@@ -63,9 +66,7 @@
          props:{
            disabled:true
          },
-         data: [
-           { text: '在售', value: 1 }
-         ]
+         data:PRODUCT.PRODUCT_STATUS.values
        },
      ],
      [],
@@ -79,10 +80,10 @@
            return (
              <Space>
                <ImageView
-                 preview={false}
                  width={60}
                  height={40}
-                 src={record.imageUrl + '?imageView2/1/w/60/h/40'}
+                 src={record.imageUrl}
+                 srcSuffix="?imageView2/1/w/60/h/40"
                ></ImageView>
                <Space direction="vertical" align="start">
                  <div>{record.name}</div>
@@ -93,22 +94,29 @@
          },
        },
        {
-         title: '商品归属',
-         dataIndex: 'shopName',
+         title: '商品分类',
+         dataIndex: 'categoryText',
+       }
+       ,
+       {
+         title: '商品类型',
+         dataIndex: 'saleType',
+         width:100,
+         render(saleType:number){
+          return saleType==1?'单品':'组合'
+      }
        },
        {
          title: '商品状态',
          dataIndex: 'status',
-         render(value:number){
-             return value==1?'上架':value==2?'下架':'--'
+         width:100,
+         render(status:number){
+             return status==1?'在售':'停售'
          }
        },
        {
-         title: '商品分类',
-         dataIndex: 'categoryText',
-       },
-       {
          title:"操作",
+         width:80,
          render:(record:any)=>{
             return <a onClick={()=>{
               onChange(record)

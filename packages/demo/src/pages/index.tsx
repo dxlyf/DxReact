@@ -1,9 +1,9 @@
 import styles from './index.less';
-
+import {Card} from 'antd'
 export default function IndexPage() {
   return (
-    <div>
-      <h1 className={styles.title}>Page index</h1>
-    </div>
+    <Card>
+      Welcome！
+    </Card>
   );
 }

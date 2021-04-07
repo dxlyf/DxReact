@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "start": "cross-env PORT=3021 umi dev",
+    "start": "cross-env UMI_ENV=dev PORT=3021 umi dev",
     "build": "umi build",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
@@ -20,6 +20,9 @@
     ]
   },
   "dependencies": {
+    "@ant-design/compatible": "^1.0.8",
+    "@ant-design/pro-card": "^1.11.4",
+    "@ant-design/pro-form": "^1.18.4",
     "@ant-design/pro-layout": "^6.5.0",
     "@types/classnames": "^2.2.11",
     "@types/lodash": "^4.14.168",
@@ -27,14 +30,18 @@
     "ahooks": "^2.10.0",
     "braft-editor": "^2.3.9",
     "classnames": "^2.2.6",
+    "file-extension": "^4.0.5",
     "lodash": "4.17.21",
     "qiniu-js": "^3.1.2",
     "react": "17.x",
     "react-dev-inspector": "^1.5.0",
     "react-dnd": "^14.0.2",
     "react-dnd-html5-backend": "^14.0.0",
-    "react-dom": "17.x",
-    "umi": "^3.4.2"
+    "react-dom": "^17.x",
+    "three": "^0.124.0",
+    "umi": "^3.4.2",
+    "use-immer": "^0.5.1",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/inquirer": "^7.3.1",

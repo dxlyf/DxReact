@@ -27,8 +27,8 @@ let ProductGroupSelect = React.memo(React.forwardRef((props:any,ref) => {
     const handleChange  = useCallback((value) => {
         setValue(value);
     },[])
-    //const options = data.map(d => <Select.Option key={d.id} value={d.id+""}>{d.name}</Select.Option>);
-    const options=data.map((d:any)=>({label:d.name,value:d.id+""}))
+    const options = data.map((d:any) => <Select.Option key={d.id} value={d.name+""}>{d.name}</Select.Option>);
+ 
     return <Select
         mode="tags"
         showSearch
@@ -42,9 +42,8 @@ let ProductGroupSelect = React.memo(React.forwardRef((props:any,ref) => {
         onChange={handleChange}
         notFoundContent={null}
         {...restProps}
-        options={options}
     >
-     
+     {options}
     </Select>
 }))
 

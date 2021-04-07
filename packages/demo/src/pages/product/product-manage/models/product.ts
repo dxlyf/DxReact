@@ -263,6 +263,7 @@ const ProductModel: ProductModelType = {
     },
     // 商品详情绑定
     setDetailToFormDetail(state, { payload: { product, category } }) {
+      state.detail.id=product.id
       state.detail.shopId = product.shopId;
       state.detail.categoryType = product.categoryType;
       state.detail.categoryTypeName = PRODUCT.CATEGORY_TYPES.get(
@@ -283,8 +284,8 @@ const ProductModel: ProductModelType = {
         ? [normalizeFile(product.videoUrl)]
         : [];
       state.detail.propertyStr = product.propertyStr;
-      state.detail.linePrice = product.linePrice;
-      state.detail.productGroupNameStr = product.productGroupNameStr.split(',');
+      state.detail.linePrice =isNaN(parseFloat( product.linePrice))?'':parseFloat(product.linePrice)*0.01+"";
+      state.detail.productGroupNameStr =product.productGroupNameStr!==undefined?product.productGroupNameStr.split(','):[];
       state.detail.diyModelId = product.diyModelId;
 
       state.detail.propertyList = product.propertyList.map(
@@ -318,6 +319,8 @@ const ProductModel: ProductModelType = {
           );
           return {
             ...spec,
+            recommendedPrice: spec.recommendedPrice*0.01, // 建议零售价
+            price: spec.price*0.01, //销售价格
             imageUrl: spec.imageUrl ? [normalizeFile(spec.imageUrl)] : [],
             shopProductPropertyList: shopProductPropertyList,
             shopProductPropertyListFieldMap: keyBy(
@@ -383,14 +386,14 @@ const ProductModel: ProductModelType = {
             };
           });
           return {
-            id: product.id || rowIndex,
+            id: d.id || rowIndex,
             productItemNo: d.productItemNo, // 商品规格编码
             imageUrl: [], // 规格图片
-            recommendedPrice: d.recommendedPrice, // 建议零售价
-            price: d.price, //销售价格
+            recommendedPrice: d.recommendedPrice*0.01, // 建议零售价
+            price: d.price*0.01, //销售价格
             stockNum: '', // 库存数量
             maxStockNum: Infinity,
-            isEnable: 1, // 是否启用 0否 1是
+            isEnable: 0, // 是否启用 0否 1是
             diyModelId: '', // 模型id
             shopProductPropertyList: shopProductPropertyList,
             shopProductPropertyListFieldMap: keyBy(

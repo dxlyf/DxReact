@@ -1,0 +1,48 @@
+.envMapTil {
+  display: block;
+  text-align: center;
+}
+.keepCheckbox {
+  line-height: 40px;
+}
+.btnGroup {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translate(-68px, (-300px - 40%));
+  z-index: 10;
+  .btn {
+    width: 150px;
+    text-align: center;
+  }
+}
+
+.unit {
+  margin: 0 10px 0 10px;
+  color: #999;
+}
+
+.grid {
+  width: 600px;
+  height: 600px;
+  position: absolute;
+  pointer-events: none;
+}
+.grid div {
+  float: left;
+  width: 199px;
+  height: 199px;
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  pointer-events: none;
+}
+.grid div:nth-child(3n + 3) {
+  border-right: none;
+  width: 200px;
+}
+.grid div:nth-child(7),
+.grid div:nth-child(8),
+.grid div:last-child {
+  border-bottom: none;
+  height: 200px;
+}

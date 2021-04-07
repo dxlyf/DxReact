@@ -18,7 +18,7 @@ interface TableSelectionType {
     nativeEvent: any,
   ) => void;
   onChange?: (selectedRowKeys: any[], selectedRows: any[]) => void;
-  onSelectAll?:(selected:any, selectedRows:any, changeRows:any)=>void;
+  onSelectAll?: (selected: any, selectedRows: any, changeRows: any) => void;
   onAllChange?: (selectedRows: any[]) => void;
   keep?: boolean;
 }
@@ -55,10 +55,10 @@ export default function useTableSelection<T extends { [key: string]: any }>(
           newSelectedRows.splice(index, 1);
         }
       });
-      onAllChange&&onAllChange(newSelectedRows)
+      onAllChange && onAllChange(newSelectedRows);
       setSelectedRows(newSelectedRows);
     },
-    [selectedRows, rowKey,onAllChange],
+    [selectedRows, rowKey, onAllChange],
   );
   const onChangehandle = useCallback(
     (selectedRowKeys, selectedRows) => {
@@ -74,10 +74,13 @@ export default function useTableSelection<T extends { [key: string]: any }>(
     },
     [onSelect, selectDataRows],
   );
-  const onSelectAllHandle=useCallback((selected, selectedRows, changeRows)=>{
-    selectDataRows(selected, changeRows);
-    onSelectAll && onSelectAll(selected, selectedRows, changeRows);
-  },[onSelectAll,selectDataRows])
+  const onSelectAllHandle = useCallback(
+    (selected, selectedRows, changeRows) => {
+      selectDataRows(selected, changeRows);
+      onSelectAll && onSelectAll(selected, selectedRows, changeRows);
+    },
+    [onSelectAll, selectDataRows],
+  );
   let rowSelection = useMemo(() => {
     if (!keep) {
       return {
@@ -91,13 +94,23 @@ export default function useTableSelection<T extends { [key: string]: any }>(
         type: 'checkbox',
         selectedRowKeys: selectedRows?.map((d: any) => d[rowKey]) ?? [],
         onSelect: onSelecthandle,
-        onSelectAll:onSelectAllHandle,
+        onSelectAll: onSelectAllHandle,
         ...config,
       };
     }
-  }, [selectedRows, onSelecthandle,onSelectAllHandle, onChangehandle, keep, rowKey]);
-  const clearAllSelection=useCallback(()=>{
-    setSelectedRows([])
-  },[])
-  return [{ rowSelection, selectedRows }, { clearAllSelection,setSelectedRows }];
+  }, [
+    selectedRows,
+    onSelecthandle,
+    onSelectAllHandle,
+    onChangehandle,
+    keep,
+    rowKey,
+  ]);
+  const clearAllSelection = useCallback(() => {
+    setSelectedRows([]);
+  }, []);
+  return [
+    { rowSelection, selectedRows },
+    { clearAllSelection, setSelectedRows },
+  ];
 }

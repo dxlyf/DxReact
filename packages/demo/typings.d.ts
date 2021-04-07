@@ -41,3 +41,4 @@ declare let ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION:
 declare const REACT_APP_ENV: 'test' | 'dev' | 'pre' | false;
 
 declare const LOGIN_PAGE_ROUTE: string;
+declare const SYSTEM_REQUEST_PREFIX:string

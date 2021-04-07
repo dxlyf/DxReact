@@ -1,0 +1,65 @@
+.titleBox {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.btnBox {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  height: 24px;
+  transform: translateY(-50%);
+  transition: all 0.2s;
+}
+.iconBtn {
+  // float: right;
+  display: inline-block;
+  width: 24px;
+  line-height: 25px;
+}
+
+.subTree {
+  :global {
+    .ant-tree .ant-tree-treenode {
+      width: 100%;
+    }
+    .ant-tree .ant-tree-node-content-wrapper {
+      line-height: 24px;
+      position: relative;
+      width: calc(100% - 28px);
+
+      // .ant-tree-title {
+      //   display: inline-block;
+      //   width: 100%;
+      // }
+    }
+    .ant-tree-node-selected {
+      color: #fff !important;
+      font-weight: bold;
+      background-color: #98ccfc !important;
+    }
+    .ant-empty-description {
+      color: #555;
+    }
+  }
+}
+
+.emptyDesc {
+  :global {
+    .ant-empty-description {
+      color: #555;
+    }
+  }
+}
+
+.selected {
+  color: #fff;
+  font-weight: bold;
+  background-color: #98ccfc;
+}
+
+.notSelected {
+  color: rgba(0, 0, 0, 0.65);
+}

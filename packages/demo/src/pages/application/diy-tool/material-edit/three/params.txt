@@ -1,0 +1,90 @@
+-----模型参数
+  url: string; //模型路径
+  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | ''; //类别
+  name: string; //名称
+  deep: number; //最大下沉深度
+  canMove: boolean; //能否移动
+  canRotate: boolean;  //能否旋转
+  canSwing: boolean; //能否摆动
+  canVeneer: boolean; //能否贴面
+  canSelect: boolean; //能否点选
+  isMult: boolean; //是否重复添加
+  
+  shape?: string; //形状
+  specs?: string; //规格
+  text?: string; //文本
+  font?: string; //字体  
+  
+  x?: number; //gPxz位置X
+  y?: number; //gRy位置y
+  z?: number; //gPxz位置Z
+  cover?: string; //模型套 "box"|"cylinder"|"sphere"
+  scale?: number[] | number; //缩放
+  size?: number[]; //指定大小
+  materials?: MaterialParamsJson[]; //材质参数
+
+-----材质参数
+  target?: string; //网格物名
+  replace?: boolean; //是否替换新材质 原有材质为MeshStandardMaterial类, 新材质为MeshPhongMaterial类,  
+  keep?: string[]; //保留原材质
+
+  alphaMap?: string; //透明贴图
+  alphaMapRepeat?: number;  //透明贴图密度
+  bumpMap?: string; //凹凸贴图
+  bumpScale?: number; //凹凸贴图影响
+  bumpMapRepeat?: number;  //凹凸贴图密度
+  color?: number; //表面颜色
+  emissive?: number; //自发光
+  envMap?: [string*6]; //环境贴图
+  envMapIntensity?: number; //环境贴图强度（对新材质无效--在replace=false时使用）
+  map?: string; //贴图
+  mapRepeat?: number; //贴图密度
+  metalness?: number; //金属（对新材质无效--在replace=false时使用）
+  opacity?: number; //透明度
+  reflectivity?: number; //反射率
+  refractionRatio?: number; //折射率
+  roughness?: number; //粗糙（对新材质无效--在replace=false时使用）
+  shininess?: number; //光泽（对原材质无效--在replace=true时使用）
+  side?: boolean; //双面贴图
+  transparent?: boolean; //开启透明
+
+-----keep参数
+  'alphaMap' //透明贴图
+  'bumpMap' //凹凸贴图
+  'envMap' //环境贴图
+  'map' //贴图
+
+
+-----类别与操作 模型类型:1-蛋糕胚，2-围边 3-贴面 4-摆件 5-插牌 6-底盘 7-淋边 8-字牌
+底盘：不能动
+蛋糕：不能动
+摆件：移动,旋转,摆动
+插牌：移动,旋转,摆动,下沉(1/2杆高),不能出蛋糕
+淋边：不能动(对应形状)
+围边：不能动(对应形状)
+贴面：贴面(异形蛋糕无效)
+字牌：移动,旋转,摆动
+
+
+-----可操作类型 true|false
+deep:下沉(最大-80, 最小0)
+canMove:移动
+canRotate:旋转
+canSwing:摆动
+canVeneer:贴面(沿边沿上下左右移动)
+canSelect:点选
+isMult:重复添加
+
+-----shape形状
+圆形(默认)
+方形
+心形
+四叶草
+...
+
+-----specs规格
+6寸
+7寸
+8寸(默认)
+9寸
+...

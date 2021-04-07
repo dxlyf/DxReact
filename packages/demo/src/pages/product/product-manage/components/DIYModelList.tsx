@@ -54,11 +54,12 @@ export let DIYModelList: React.FC<any> = ({ dataItem, onChange }) => {
                 title: '模型预览图',
                 dataIndex: 'productidInfo',
                 render(text: any, record: any) {
-                    return <ImageView preview={true} width={60} height={40} src={record.imageUrl + '?imageView2/1/w/60/h/40'}></ImageView>
+                    return <ImageView preview={true}  width={60} height={40} src={record.imageUrl} srcSuffix="?imageView2/1/w/60/h/40"></ImageView>
                 },
             },
             {
                 title: "操作",
+                width:100,
                 render: (record: any) => {
                     return <a onClick={() => {
                         onChange(record)

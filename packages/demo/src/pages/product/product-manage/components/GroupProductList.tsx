@@ -11,6 +11,7 @@ import useRequest from '@/common/hooks/useRequest';
 import { getGroupProductList } from '@/services/product';
 import { ImageView } from '@/components/Image';
 import {useTableSelection} from '@/common/hooks'
+import {PRODUCT} from '@/common/constants'
 
 export let GroupProductList: React.FC<any> = ({dataItem,onChange}) => {
 let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection({ 
@@ -48,15 +49,10 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
         },
       },
       {
-        type: 'list',
+        type: 'shop',
         name: 'shopId',
         label: '商品归属',
-        initialValue: -1,
-        data: [
-          { text: '全部', value: -1 },
-          { text: '送全国店', value: 1 },
-          { text: '未分', value: 2 },
-        ],
+        props:{selectedIndex:1}
       },
       {
         type: 'list',
@@ -83,10 +79,11 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
               <ImageView
                 width={60}
                 height={40}
-                src={record.imageUrl + '?imageView2/1/w/60/h/40'}
+                src={record.imageUrl}
+                srcSuffix="?imageView2/1/w/60/h/40"
               ></ImageView>
               <Space direction="vertical" align="start">
-                <div>{record.name}</div>
+                <div>{record.productName}</div>
                 <div>{record.productNo}</div>
               </Space>
             </Space>
@@ -101,7 +98,7 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
         title: '商品状态',
         dataIndex: 'status',
         render(value:number){
-            return value==1?'上架':value==2?'下架':'--'
+            return PRODUCT.PRODUCT_SCALE_STATUS.get(value,'text')
         }
       },
       {

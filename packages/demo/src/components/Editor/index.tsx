@@ -1,3 +1,7 @@
+/**
+ * 包装一下，让它支持Form表单
+ * @author fanyonglong
+ */
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import BraftEditor from 'braft-editor';
 import 'braft-editor/dist/index.css';

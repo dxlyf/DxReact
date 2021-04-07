@@ -9,7 +9,7 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "baseUrl": "./",
-    "strict": true,
+    "strict": false,
     "paths": {
       "@/*": ["src/*"],
       "@@/*": ["src/.umi/*"]

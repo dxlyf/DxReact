@@ -1,5 +1,20 @@
 import request from '@/utils/request';
 
+// 商品分类 - 列表查询
+export function getDSYunCategoryList(data: any) {
+  return request('prd/backend/category/pageFindChildren', {
+    method: 'GET',
+    params: data,
+  });
+}
+// 商品分类 - 根据id获取详情
+export function getDSYunCategoryById(id: any) {
+  return request('prd/backend/category/pageFindChildren', {
+    method: 'GET',
+    params: { id },
+  });
+}
+
 export function addProduct(data: any) {
   return request('blisscake/backend/shopProduct/add', {
     method: 'POST',

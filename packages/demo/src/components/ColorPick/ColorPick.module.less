@@ -1,0 +1,63 @@
+.popover {
+  position: absolute;
+  z-index: 2;
+  &.left {
+    left: 0;
+  }
+  &.right {
+    right: 0;
+  }
+}
+.colorBox {
+  position: relative;
+  input {
+    line-height: 1;
+  }
+  span {
+    line-height: 1;
+  }
+  input {
+    box-sizing: content-box;
+  }
+}
+
+.swatch {
+  width: 110px;
+  padding: 3px 5px;
+  background: #fff;
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.hex {
+  font-size: 12px;
+}
+
+.color {
+  width: 25px;
+  height: 25px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 1);
+  margin-left: 10px;
+}
+
+.cover {
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+}
+
+.small {
+  .swatch {
+    width: 100px;
+  }
+  .color {
+    width: 20px;
+    height: 20px;
+  }
+}

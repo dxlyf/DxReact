@@ -8,8 +8,10 @@ import { trim } from 'lodash';
 import { PRODUCT } from '@/common/constants';
 import ModelGroupCascader from './components/ModelGroup';
 import ShopSelect from './components/Shop';
+import DsyunProductCategory from './components/DsyunProductCategory';
 
 export type ControlContext = {
+  [key:string]:any
   wrapperComponent: (element: any, field: FilterFormField) => any;
   query: () => void;
   reset: () => void;
@@ -43,6 +45,7 @@ export interface FilterFormField {
 export type FilterRenderField = {
   fieldIndex?: number;
   fieldName: string;
+  hidden?:boolean
   key: string | number;
 } & FilterFormField;
 export type FilterControlType = {
@@ -76,7 +79,7 @@ create('text', {
     return trim(value);
   },
   render(field) {
-    return <Input {...field.props}></Input>;
+    return <Input maxLength={50} {...field.props}></Input>;
   },
 });
 create('list', {
@@ -97,7 +100,21 @@ create('list', {
     );
   },
 });
+create('dsyunProductCategory', {
+  isValidValue(value: any) {
+    return Array.isArray(value)&&value.length>0
+  },
+  render(field) {
+    return (
+      <DsyunProductCategory field={field} {...field.props}>
+      </DsyunProductCategory>
+    );
+  },
+});
 create('productCategory', {
+  isValidValue(value: any) {
+    return value !== undefined && value !== -1;
+  },
   render(field) {
     return (
       <Select {...field.props}>
@@ -120,7 +137,7 @@ create('shop', {
     return value !== undefined && value !== -1;
   },
   render(field) {
-    return <ShopSelect {...field.props}></ShopSelect>;
+    return <ShopSelect field={field} {...field.props}></ShopSelect>;
   },
 });
 create('modelGroup', {

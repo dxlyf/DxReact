@@ -1,13 +1,15 @@
 import { defineConfig } from 'umi';
 import routes from './routes';
 import path from 'path';
-import envConfig from './env';
 
 export default defineConfig({
+  outputPath:"build",
   nodeModulesTransform: {
     type: 'none',
   },
-  envConfig: envConfig,
+  define:{
+    SYSTEM_REQUEST_PREFIX:"/apis/"
+  },
   dva: {
     immer: true,
   },

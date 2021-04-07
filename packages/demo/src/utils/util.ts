@@ -78,3 +78,30 @@ export const transformFilesToUrls = (fileList: any) => {
     return file.originalUrl || file.url;
   });
 };
+
+export function getFileExtension(filename: string, opts?: any) {
+  if (!opts) opts = {};
+  if (!filename) return '';
+  var ext = (/[^./\\]*$/.exec(filename) || [''])[0];
+  return opts.preserveCase ? ext : ext.toLowerCase();
+}
+export function uuid() {
+  var random = () => {
+    return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+  };
+  return (
+    random() +
+    random() +
+    '-' +
+    random() +
+    '-' +
+    random() +
+    '-' +
+    random() +
+    '-' +
+    random() +
+    random() +
+    random()
+  );
+}
+

@@ -39,7 +39,6 @@ const SKUTable = React.memo(
           render(imageUrl: any, record: any) {
             return (
               <Form.Item
-                {...formItemProps}
                 initialValue={imageUrl}
                 name={['skus', record.id + '', 'imageUrl']}
               >
@@ -71,7 +70,7 @@ const SKUTable = React.memo(
                 ]}
                 name={['skus', record.id + '', 'recommendedPrice']}
               >
-                <InputNumber min={0}></InputNumber>
+                <InputNumber min={0} precision={2}></InputNumber>
               </Form.Item>
             );
           },
@@ -96,7 +95,7 @@ const SKUTable = React.memo(
                 ]}
                 name={['skus', record.id + '', 'price']}
               >
-                <InputNumber min={0}></InputNumber>
+                <InputNumber min={0} precision={2}></InputNumber>
               </Form.Item>
             );
           },

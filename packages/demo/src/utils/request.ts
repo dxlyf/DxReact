@@ -9,12 +9,19 @@ import type {
 import { extend, ResponseError } from 'umi-request';
 import { history } from 'umi';
 import { message, notification } from 'antd';
+import { stringify } from 'querystring';
 import app from './app';
 
 // 后台错误码
 enum CODE_TYPES {
   SUCCESS,
   ERROR,
+   // 无token请求，token错误
+  TOKEN_ERROR=1001,
+   // token过期
+  TOKEN_EXPIRE=1002,
+   // token失效
+  TOKEN_FAIL= 1025,
 }
 // 错误处理类型
 enum ERROR_TYPE {
@@ -48,6 +55,12 @@ const request = extend({
     let errorInfo: ErrorInfoType;
     if (error.type === 'ResponseError') {
       error.isBusinessError = true;
+      if(data.code==CODE_TYPES.TOKEN_ERROR||data.code==CODE_TYPES.TOKEN_EXPIRE||data.code==CODE_TYPES.TOKEN_FAIL){
+        history.push(`/login?${stringify({
+          redirect: window.location.pathname,
+        })}`)
+        return new Promise(()=>{})
+      }
       // 业务错误
       if (request.options.skipErrorHandler == true) {
         errorInfo = {
@@ -74,23 +87,23 @@ const request = extend({
           break;
         case ERROR_TYPE.ERROR:
           message.error(errorInfo.message);
-          break;
+          throw errorInfo.message
         case ERROR_TYPE.WARN:
           message.error(errorInfo.message);
-          break;
+          throw errorInfo.message
         case ERROR_TYPE.NOTIFICATION:
           notification.open({
             message: errorInfo.message,
           });
-          break;
+          throw errorInfo.message
         case ERROR_TYPE.REDIRECT:
           history.push({
             pathname: errorInfo.url,
           });
-          break;
+          throw errorInfo.message
         default:
           message.error(errorInfo.message);
-          break;
+          throw errorInfo.message
       }
     }
     throw error;
@@ -98,7 +111,7 @@ const request = extend({
 });
 request.interceptors.request.use((url, options: any) => {
   if (!url.startsWith('http')) {
-    url = '/api/' + url;
+    url = SYSTEM_REQUEST_PREFIX + url;
   }
   options = options || {};
   if (!options.headers) {
@@ -126,5 +139,7 @@ request.use(async function (ctx, next) {
   );
 });
 export default (url: string, options: CustomeRequestOptions = {}) => {
-  return request(url, options);
+  return Promise.resolve().then(()=>{
+    return request(url, options)
+  })
 };

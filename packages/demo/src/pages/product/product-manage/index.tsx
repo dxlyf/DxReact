@@ -13,13 +13,10 @@ import * as productService from '@/services/product';
 import { useRequest, useTableSelection } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
-type ProductManage = {};
-type ProductRecordDataType = {
-  productName: string;
-  product: any;
-};
+import { get } from 'lodash';
+import { PRODUCT } from '@/common/constants';
 
-let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
+let ProductManage: ConnectRC<any> = ({ history }) => {
   let [
     { rowSelection, selectedRows },
     { clearAllSelection },
@@ -51,11 +48,6 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
         name: 'shopId',
         label: '商品归属',
         initialValue: -1,
-        data: [
-          { text: '全部', value: -1 },
-          { text: '送全国店', value: 1 },
-          { text: '未分', value: 2 },
-        ],
       },
       {
         type: 'list',
@@ -77,19 +69,19 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
     ],
     [],
   );
-  const columns = useMemo<RichTableColumnType<ProductRecordDataType>[]>(
+  const columns = useMemo<RichTableColumnType<any>[]>(
     () => [
       {
         title: '商品信息',
         dataIndex: 'productidInfo',
         render(text, record: any) {
-          let firstImage = record.imageUrl.split(',')[0];
           return (
             <Space>
               <ImageView
                 width={60}
                 height={40}
-                src={firstImage + '?imageView2/1/w/60/h/40'}
+                src={get(record.imageUrl.split(','), 0)}
+                srcSuffix="?imageView2/1/w/60/h/40"
               ></ImageView>
               <Space direction="vertical" align="start">
                 <div>{record.productName}</div>
@@ -107,7 +99,7 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
         title: '上架状态',
         dataIndex: 'status',
         render(value: number) {
-          return value == 1 ? '上架' : value == 2 ? '下架' : '--';
+          return PRODUCT.PRODUCT_SCALE_STATUS.get(value, 'text');
         },
       },
       {
@@ -153,7 +145,7 @@ let ProductManage: ConnectRC<ProductManage> = ({ history }) => {
           productService
             .batchStatus({
               ids: selectedRows?.map((d) => d.id),
-              status: 2,
+              status: status,
             })
             .then(() => {
               message.success(`${typeName}成功`);

@@ -25,7 +25,13 @@ import type {
   FilterRenderField,
 } from './FilterControls';
 import FilterControls from './FilterControls';
+import classNames from 'classnames';
+import { FilterContext } from './FilterContext';
 
+interface MiddlewareType {
+  onQuery?: any;
+  onReset?: any;
+}
 interface FilterFormProps {
   columnCount?: number;
   fields: FilterFormField[];
@@ -62,10 +68,19 @@ const FilterForm = React.forwardRef<
     ref,
   ) => {
     const [form] = Form.useForm();
-    const ctx = useRef<ControlContext | null>(null);
+    const ctx = useRef<any>(null);
     const [expand, setExpand] = useState(defaultExpand);
     if (!ctx.current) {
       ctx.current = {
+        middlewares: [],
+        addMiddleware: (middleware: MiddlewareType) => {
+          ctx.current.middlewares.push(middleware);
+          return () => {
+            ctx.current.middlewares = ctx.current.middlewares.filter(
+              (m: MiddlewareType) => m !== middleware,
+            );
+          };
+        },
         wrapperComponent: (element: any, field: FilterFormField) => {
           if (field.skipQuery) {
             return (
@@ -86,7 +101,7 @@ const FilterForm = React.forwardRef<
             );
           }
         },
-      } as ControlContext;
+      };
     }
 
     const onResetHandle = useCallback(() => {
@@ -122,7 +137,9 @@ const FilterForm = React.forwardRef<
       newFields = newFields.map((field) => {
         let fieldConfig = (FilterControls.get(field.type as string) ||
           {}) as FilterRenderField;
-        let fieldName = Array.isArray(field.name) ? field.name.join('_') : field.name
+        let fieldName = Array.isArray(field.name)
+          ? field.name.join('_')
+          : field.name;
         let newField = merge<
           object,
           FilterFormField,
@@ -154,47 +171,63 @@ const FilterForm = React.forwardRef<
       return [newFields];
     }, [fields, columnCount, labelWidth, formSpan]);
     const onQueryHandle = useCallback(() => {
-      form.validateFields().then((values) => {
-        let filterParams: any = {},
-          isValidate = true;
-        mergeFields.forEach((fieldItem: FilterRenderField) => {
-          if (fieldItem?.skipQuery) {
-            return;
-          }
-
-          if (!isValidate) {
-            return;
-          }
-
-          let currentValue = values[fieldItem.fieldName];
-
-          let newfieldItem = {
-            ...fieldItem,
-            currentValue: currentValue,
-            fieldIndex: 0
-          };
-          let isValid = fieldItem.isValidValue!(newfieldItem.currentValue, newfieldItem);
-          newfieldItem.currentValue = isValid && fieldItem.transform
-            ? fieldItem.transform?.(newfieldItem.currentValue, newfieldItem)
-            : newfieldItem.currentValue;
-
-          if (fieldItem.validate?.(newfieldItem.currentValue, newfieldItem)) {
-            isValidate = false;
-          }
-          if (isValid && isValidate) {
-            if (fieldItem.compose) {
-              let newFilterParams = fieldItem.compose(filterParams, values, newfieldItem);
-              if(newFilterParams!==undefined){
-                filterParams=newFilterParams
-              }
-            } else {
-              filterParams[fieldItem.fieldName] = newfieldItem.currentValue;
+      let middlewares = ctx.current.middlewares.reduce(
+        (p: any, m: MiddlewareType) => {
+          return p.then(() => m.onQuery());
+        },
+        Promise.resolve(),
+      );
+      middlewares.then(() => {
+        form.validateFields().then((values) => {
+          let filterParams: any = {},
+            isValidate = true;
+          mergeFields.forEach((fieldItem: FilterRenderField) => {
+            if (fieldItem?.skipQuery) {
+              return;
             }
+
+            if (!isValidate) {
+              return;
+            }
+
+            let currentValue = values[fieldItem.fieldName];
+
+            let newfieldItem = {
+              ...fieldItem,
+              currentValue: currentValue,
+              fieldIndex: 0,
+            };
+            let isValid = fieldItem.isValidValue!(
+              newfieldItem.currentValue,
+              newfieldItem,
+            );
+            newfieldItem.currentValue =
+              isValid && fieldItem.transform
+                ? fieldItem.transform?.(newfieldItem.currentValue, newfieldItem)
+                : newfieldItem.currentValue;
+
+            if (fieldItem.validate?.(newfieldItem.currentValue, newfieldItem)) {
+              isValidate = false;
+            }
+            if (isValid && isValidate) {
+              if (fieldItem.compose) {
+                let newFilterParams = fieldItem.compose(
+                  filterParams,
+                  values,
+                  newfieldItem,
+                );
+                if (newFilterParams !== undefined) {
+                  filterParams = newFilterParams;
+                }
+              } else {
+                filterParams[fieldItem.fieldName] = newfieldItem.currentValue;
+              }
+            }
+          });
+          if (isValidate) {
+            onQuery(filterParams);
           }
         });
-        if (isValidate) {
-          onQuery(filterParams);
-        }
       });
     }, [onQuery, form, mergeFields]);
     const renderSearch = () => {
@@ -239,7 +272,7 @@ const FilterForm = React.forwardRef<
           })}
         </Row>
       );
-    }
+    };
     const renderControl = (field: FilterFormField) => {
       let render = field.render;
       if (field.type === QUERY_BUTTON) {
@@ -253,42 +286,62 @@ const FilterForm = React.forwardRef<
         return ctx.current!.wrapperComponent(ret, field);
       }
       return ret;
-    }
+    };
     const renderFilterFields = (mergeFields: FilterRenderField[]) => {
       let fields: FilterRenderField[][] = [];
       let renderList = [],
         currentSpan = 0;
       mergeFields.forEach((field, index) => {
+        let isHidde = false;
         if (
           showExpand &&
           !expand &&
           index >= columnCount &&
           field.type !== QUERY_BUTTON
         ) {
-          return;
+          isHidde = true;
         }
         currentSpan += field.span!;
         let rowIndex = Math.ceil(currentSpan / formSpan) - 1;
         let rowList = fields[rowIndex] || (fields[rowIndex] = []);
-        rowList.push(field);
+        rowList.push({ ...field, hidden: isHidde });
       });
 
       for (let r = 0, rlen = fields.length; r < rlen; r++) {
         let cols = [];
+        let isHiddenCount = 0;
         for (let c = 0, clen = fields[r].length; c < clen; c++) {
           let field = fields[r][c];
           cols.push(
-            <Col key={field.key} span={field.span}>
+            <Col
+              key={field.key}
+              span={field.span}
+              className={classNames({
+                hidden: field.hidden,
+              })}
+            >
               {renderControl(field)}
             </Col>,
           );
+          if (field.hidden) {
+            isHiddenCount++;
+          }
         }
         if (cols.length > 0) {
-          renderList.push(<Row key={r}>{cols}</Row>);
+          renderList.push(
+            <Row
+              key={r}
+              className={classNames({
+                hidden: isHiddenCount >= cols.length,
+              })}
+            >
+              {cols}
+            </Row>,
+          );
         }
       }
       return renderList;
-    }
+    };
 
     ctx.current!.query = onQueryHandle;
     ctx.current!.reset = onResetHandle;
@@ -300,9 +353,11 @@ const FilterForm = React.forwardRef<
       }
     }, []);
     return (
-      <Form {...restProps} form={form}>
-        {renderFilterFields(mergeFields)}
-      </Form>
+      <FilterContext.Provider value={ctx.current}>
+        <Form {...restProps} form={form}>
+          {renderFilterFields(mergeFields)}
+        </Form>
+      </FilterContext.Provider>
     );
   },
 );

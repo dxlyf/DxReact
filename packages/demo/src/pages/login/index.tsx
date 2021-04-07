@@ -2,43 +2,134 @@
  * 登录
  * @author fanyonglong
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { connect, ConnectProps, history } from 'umi';
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button, message, Space ,Typography} from 'antd';
 import { UserModelState } from '@/models/user';
+import { useInterval } from 'ahooks'
 import styles from './index.less';
+import app from '@/utils/app';
+
+
+
 type LoginProps = {
   user: UserModelState;
 } & ConnectProps<{}, {}, { redirect?: string }>;
 const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
   const [form] = Form.useForm();
+  const [needVerification, setNeedVerification] = useState(false)
+  const [sendState, setSendState] = useState<any>({
+    status: "idle",
+    interval: null
+  });
+  let [arrivalTime, setArrivalTime] = useState(120)
+  let [codePlaceholder,setCodePlaceholder]=useState('验证码')
+  useInterval(() => {
+    let value = arrivalTime - 1
+    setArrivalTime(value)
+    if (value <= 0) {
+      setSendState({
+        status: "again",
+        interval: null
+      })
+      setCodePlaceholder('验证码')
+    }
+  }, sendState.interval)
+  const onSendVerifyCode = useCallback(() => {
+    form.validateFields(['loginName']).then(values => {
+      setArrivalTime(120)
+      setSendState({
+        status: "pedding",
+        interval: 1000
+      })
+      dispatch!({
+        type: "user/sendToSpecifiedMobile",
+        payload: {
+          clientId: app.clientType,
+          loginName: values.loginName,
+          typeCode: 'retailAdminLogin',
+        }
+      }).then((data:any) => {       
+        setCodePlaceholder(`已发送至:${data}`)
+      }).catch(() => {
+        message.error('发送失败，请重新发送')
+        setArrivalTime(120)
+        setSendState({
+          status: "again",
+          interval: null
+        })
+      })
+    })
+
+  }, [sendState])
   const onSubmit = useCallback(
     (formData) => {
+      let loginData = {
+        ...formData,
+        ifVerifyCode: needVerification ? 1 : 0,
+      }
       dispatch!({
         type: 'user/login',
-        payload: {
-          ...formData,
-        },
+        payload: loginData
       })
-        .then(() => {
+        .then((res: any) => {
           let redirect = location.query?.redirect;
           history.push({
             pathname: redirect || '/',
           });
+
         })
         .catch((e: any) => {
-          if (e.isBusinessError && e.data.code == 1) {
+          if (e.isBusinessError && e.data.code == 15417) {
+            if (/5/.test(e.data.message)) {
+              form.setFields([
+                {
+                  name: 'loginName',
+                  errors: ['连续输错5次将会被锁定30分钟，30分钟后可重试', '如需急用，请联系重置密码'],
+                },
+              ]);
+            } else {
+              form.setFields([
+                {
+                  name: 'loginName',
+                  errors: [e.data.message],
+                },
+              ]);
+            }
+          }
+          else if (e.isBusinessError && e.data.code == 15418) {
+            setNeedVerification(true)// 需要验证码
+            form.setFields([
+              {
+                name: 'loginName',
+                errors: [e.data.message],
+              }
+            ]);
+          } else if (e.isBusinessError) {
             form.setFields([
               {
                 name: 'loginName',
                 errors: [e.data.message],
               },
             ]);
+          } else {
+            message.error(e.message || '服务出错')
           }
         });
     },
-    [dispatch, form],
+    [dispatch, form,needVerification],
   );
+  const renderSendButtonText = () => {
+    switch (sendState.status) {
+      case "idle":
+        return '获取验证码'
+      case "pedding":
+        return '重新发送' + "(" + arrivalTime + "S)"
+      case "again":
+        return '获取验证码'
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
@@ -63,7 +154,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
                   ]}
                   label={<div style={{ width: 80 }}>用户名</div>}
                 >
-                  <Input></Input>
+                  <Input style={{ width: 220 }} placeholder="请输入用户名"></Input>
                 </Form.Item>
                 <Form.Item
                   name="password"
@@ -77,13 +168,22 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
                   ]}
                   label={<div style={{ width: 80 }}>密码</div>}
                 >
-                  <Input.Password></Input.Password>
+                  <Input.Password style={{ width: 220 }} placeholder="请输入用户密码"></Input.Password>
                 </Form.Item>
+                {needVerification && <Form.Item label={<div style={{ width: 80 }}>验证码</div>} name="verifyCode">
+                  <Space>
+                    <Form.Item noStyle name="verifyCode" rules={[{
+                      required: true,
+                      message: "请输入验证码"
+                    }]}><Input style={{ width: 100 }} placeholder={codePlaceholder}></Input></Form.Item>
+                    <Button onClick={onSendVerifyCode} disabled={sendState.status == 'pedding'}>{renderSendButtonText()}</Button>
+                  </Space>
+                </Form.Item>}
                 <Form.Item
                   label={<div style={{ width: 80 }}>&nbsp;</div>}
                   colon={false}
                 >
-                  <Button type="primary" htmlType="submit">
+                  <Button type="primary" htmlType="submit" style={{ width: 120 }}>
                     登录
                   </Button>
                 </Form.Item>

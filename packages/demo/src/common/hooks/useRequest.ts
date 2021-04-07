@@ -4,6 +4,7 @@
  */
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { PaginationProps } from 'antd';
+import { has } from 'lodash';
 
 interface ServiceResult<DataItem> {
   data: DataItem[];
@@ -138,6 +139,9 @@ export default function useRequest<T>(
             }
             context.dataSource = d.data;
             context.pagination!.total = d.total as number;
+            if(has(d,'pageSize')){
+              context.pagination!.pageSize=d.pageSize
+            }
           })
           .finally(() => {
             context.loading = false;

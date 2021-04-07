@@ -21,3 +21,26 @@ export const CATEGORY_TYPES=valuesKeyMap([{
     text:'虚拟商品',
     type:"虚拟类"
 }],'value')
+
+export const PRODUCT_TYPES=valuesKeyMap([{
+    value:1,
+    text:'单品'
+},{
+    value:2,
+    text:'组合'
+}],'value')
+
+export const PRODUCT_STATUS=valuesKeyMap([{
+    value:1,
+    text:'在售'
+},{
+    value:2,
+    text:'停售'
+}],'value')
+export const PRODUCT_SCALE_STATUS=valuesKeyMap([{
+    value:1,
+    text:'已上架'
+},{
+    value:2,
+    text:'已下架'
+}],'value')
