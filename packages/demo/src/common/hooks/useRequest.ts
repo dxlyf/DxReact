@@ -139,8 +139,8 @@ export default function useRequest<T>(
             }
             context.dataSource = d.data;
             context.pagination!.total = d.total as number;
-            if(has(d,'pageSize')){
-              context.pagination!.pageSize=d.pageSize
+            if (has(d, 'pageSize')) {
+              context.pagination!.pageSize = d.pageSize;
             }
           })
           .finally(() => {

@@ -1,4 +1,4 @@
-import {ImmerReducer } from 'umi';
+import { ImmerReducer } from 'umi';
 export interface GlobalModelState {
   settings: any;
 }
@@ -22,7 +22,7 @@ const UserModel: GlobalModelType = {
       contentWidth: 'Fluid', // 内容的布局 Fixed 为定宽到1200px ，Fluid 为流式布局。
       fixedHeader: false, // 固定页头
       autoHideHeader: false, // 下滑时自动隐藏页头
-      fixSiderbar: false, // 固定菜单
+      fixSiderbar: true, // 固定菜单
     },
   },
   effects: {},

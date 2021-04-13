@@ -17,7 +17,7 @@ type UploadImageProp = {
   uploadBtnText?: string;
   descption?: any;
   draggleSort?: boolean;
-  uploadDir?:string,
+  uploadDir?: string;
   onChange?: (fileList: any) => void;
 } & UploadProps;
 
@@ -89,7 +89,7 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
     descption,
     children,
     data,
-    uploadDir='',
+    uploadDir = '',
     ...restProps
   } = props;
 
@@ -181,7 +181,10 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
           {...restProps}
           data={{
             customVars: data,
-            uploadDir: buindTodayUplaodDir({ beforeDir: 'diy/images',afterDir:uploadDir }),
+            uploadDir: buindTodayUplaodDir({
+              beforeDir: 'diy/images',
+              afterDir: uploadDir,
+            }),
           }}
           onChange={onChangeHandle}
           itemRender={itemRender}

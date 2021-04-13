@@ -24,32 +24,35 @@ type BasicMaterialParams = {
   replace?: boolean; //是否替换新材质
   keep?: string[]; //保留原材质
 
+  alphaMapRepeat?: number;  //透明贴图密度
   bumpScale?: number; //凹凸贴图影响
+  bumpMapRepeat?: number;  //凹凸贴图密度
+  envMapIntensity?: number; //环境贴图强度（对新材质无效--在replace=false时使用）
+  mapRepeat?: number; //贴图密度
+  metalness?: number; //金属（对新材质无效--在replace=false时使用）
+  opacity?: number; //透明度
   reflectivity?: number; //反射率
   refractionRatio?: number; //折射率
-  mapRepeat?: number; //贴图密度
-  bumpMapRepeat?: number; //凹凸贴图密度
-  alphaMapRepeat?: number; //透明贴图密度
+  roughness?: number; //粗糙（对新材质无效--在replace=false时使用）
+  shininess?: number; //光泽（对原材质无效--在replace=true时使用）
   transparent?: boolean; //开启透明
-  opacity?: number; //透明度
-  shininess?: number; //光泽
 };
 type MaterialParamsJson = BasicMaterialParams & {
-  emissive?: number; //自发光
+  alphaMap?: string;
+  bumpMap?: string; //凹凸贴图
   color?: number; //表面颜色
+  emissive?: number; //自发光
   envMap?: string[]; //环境贴图
   map?: string; //贴图
-  bumpMap?: string; //凹凸贴图
-  alphaMap?: string;
   side?: boolean; //双面贴图
 };
 type MaterialParams = BasicMaterialParams & {
-  emissive?: Color; //自发光
+  alphaMap?: Texture;
+  bumpMap?: Texture; //凹凸贴图
   color?: Color; //表面颜色
+  emissive?: Color; //自发光
   envMap?: CubeTexture; //环境贴图
   map?: Texture; //贴图
-  bumpMap?: Texture; //凹凸贴图
-  alphaMap?: Texture;
   side?: Side; //双面贴图
 };
 
@@ -133,8 +136,7 @@ export async function setMeshParams(
               new CubeTextureLoader().load(
                 url as string[],
                 (texture: CubeTexture) => {
-                  if (refractionRatio)
-                    texture.mapping = CubeRefractionMapping;
+                  if (refractionRatio) texture.mapping = CubeRefractionMapping;
                   result[type] = texture;
                   resolve(null);
                 },
@@ -172,12 +174,7 @@ export async function setMeshParams(
     }
     return result;
   }
-  let {
-    scale,
-    size,
-    materials,
-    ...other
-  } = data;
+  let { scale, size, materials, ...other } = data;
   if (!materials) materials = [];
   let scaleV: Vector3, sizeV: Vector3 | undefined;
   if (scale) {
@@ -329,7 +326,6 @@ export function selectAnimation(
   speed = speed ? speed : 3 / radian;
   height = height ? height : 20;
   if (!group) {
-    console.log('Object is null');
   } else {
     function run() {
       const gRy = group.getObjectByName('gRy')!,

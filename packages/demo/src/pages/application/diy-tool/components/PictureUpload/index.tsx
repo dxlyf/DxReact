@@ -79,10 +79,6 @@ const PictureUpload = (props) => {
   const handleChange = ({ fileList }) => {
     const newFileList = fileList.map((file) => {
       if (file.response) {
-        console.log(
-          '🚀 ~ file: PictureUpload.tsx ~ line 81 ~ newFileList ~ file',
-          file,
-        );
         file.url = `https://rf.blissmall.net/${file.response}`;
         file.name = `${file.response}`;
         file.thumbUrl = file.thumbUrl;

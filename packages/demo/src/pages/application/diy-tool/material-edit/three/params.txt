@@ -36,15 +36,15 @@
   color?: number; //表面颜色
   emissive?: number; //自发光
   envMap?: [string*6]; //环境贴图
-  envMapIntensity?: number; //环境贴图强度（对新材质无效--在replace=false时使用）
+  envMapIntensity?: number; //环境贴图强度（对新材质无效--在replace=false时使用） !!! replace === true 隐藏，不传值
   map?: string; //贴图
   mapRepeat?: number; //贴图密度
-  metalness?: number; //金属（对新材质无效--在replace=false时使用）
+  metalness?: number; //金属（对新材质无效--在replace=false时使用） !!! replace === true 隐藏，不传值
   opacity?: number; //透明度
   reflectivity?: number; //反射率
   refractionRatio?: number; //折射率
-  roughness?: number; //粗糙（对新材质无效--在replace=false时使用）
-  shininess?: number; //光泽（对原材质无效--在replace=true时使用）
+  roughness?: number; //粗糙（对新材质无效--在replace=false时使用） !!! replace === true 隐藏，不传值
+  shininess?: number; //光泽（对原材质无效--在replace=true时使用） !!! replace === false 隐藏，不传值
   side?: boolean; //双面贴图
   transparent?: boolean; //开启透明
 
@@ -88,3 +88,90 @@ isMult:重复添加
 8寸(默认)
 9寸
 ...
+
+
+
+
+1 蛋糕 淋边 围边   1、2、7
+  url: string; //模型路径
+  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | ''; //类别
+  name: string; //名称
+  deep: number; //最大下沉深度  ！设置为0，默认不显示
+  canMove: boolean; //能否移动     ！设置为false，默认不显示
+  canRotate: boolean;  //能否旋转    ！设置为false，默认不显示
+  canSwing: boolean; //能否摆动    ！设置为false，默认不显示
+  canVeneer: boolean; //能否贴面    ！设置为false，默认不显示
+  canSelect: boolean; //能否点选    ！设置为false，默认不显示
+  isMult: boolean; //是否重复添加    ！设置为false，默认不显示
+  
+  shape?: string; //形状   !设置为圆形，默认显示，不可选
+  specs?: string; //规格  !设置为8寸，默认显示，不可选
+  text?: string; //文本
+  font?: string; //字体  
+  
+  x?: number; //gPxz位置X  ！不传值，默认不显示
+  y?: number; //gRy位置y  ！不传值，默认不显示
+  z?: number; //gPxz位置Z  ！不传值，默认不显示
+  cover?: string; //模型套 "box"|"cylinder"|"sphere"  ！不传值，默认不显示
+  scale?: number[] | number; //缩放
+  size?: number[]; //指定大小
+  materials?: MaterialParamsJson[]; //材质参数
+
+
+2 摆件 插牌 4、5
+  url: string; //模型路径
+  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | ''; //类别
+  name: string; //名称
+  deep: number; //最大下沉深度  ！默认为0，默认显示, 能编辑
+  canMove: boolean; //能否移动     ！设置为true，默认显示, 能编辑
+  canRotate: boolean;  //能否旋转    ！设置为true，默认显示, 能编辑
+  ！！！
+  如果是摆件
+    canSwing: boolean; //能否摆动    ！设置为true，默认不显示, 能编辑
+  如果是插牌  
+    canSwing: boolean; //能否摆动    ！设置为false，默认不显示
+  ！！！
+  canVeneer: boolean; //能否贴面    ！设置为false，默认不显示
+  canSelect: boolean; //能否点选    ！设置为true，默认显示, 能编辑
+  isMult: boolean; //是否重复添加    ！设置为true，默认显示, 能编辑
+  
+  shape?: string; //形状   !不传值，默认不显示
+  specs?: string; //规格  !不传值，默认不显示
+  text?: string; //文本
+  font?: string; //字体  
+  
+  x?: number; //gPxz位置X  ！默认值为空，能编辑
+  y?: number; //gRy位置y  ！！默认值为空，能编辑
+  z?: number; //gPxz位置Z  ！！默认值为空，能编辑
+  cover?: string; //模型套 "box"|"cylinder"|"sphere"  ！默认值为空，能编辑
+  scale?: number[] | number; //缩放
+  size?: number[]; //指定大小
+  materials?: MaterialParamsJson[]; //材质参数
+
+
+
+  3 贴面 3
+  url: string; //模型路径
+  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | ''; //类别
+  name: string; //名称
+  deep: number; //最大下沉深度  ！默认为1，默认显示
+  canMove: boolean; //能否移动     ！设置为true，不显示
+  canRotate: boolean;  //能否旋转    ！设置为true，默认显示, 能编辑
+  canSwing: boolean; //能否摆动    ！设置为true，默认不显示, 能编辑
+  
+  canVeneer: boolean; //能否贴面    ！设置为true，默认不显示
+  canSelect: boolean; //能否点选    ！设置为true，默认显示, 能编辑
+  isMult: boolean; //是否重复添加    ！设置为true，默认显示, 能编辑
+  
+  shape?: string; //形状   !设置为圆形，默认显示，不可选
+  specs?: string; //规格  !设置为8寸，默认显示，不可选
+  text?: string; //文本
+  font?: string; //字体  
+  
+  x?: number; //gPxz位置X  ！不传值，默认不显示
+  y?: number; //gRy位置y  ！不传值，默认不显示
+  z?: number; //gPxz位置Z  ！不传值，默认不显示
+ cover?: string; //模型套 "box"|"cylinder"|"sphere"  ！默认值为空，能编辑
+  scale?: number[] | number; //缩放
+  size?: number[]; //指定大小
+  materials?: MaterialParamsJson[]; //材质参数

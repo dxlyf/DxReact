@@ -39,7 +39,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
         name: 'name',
         label: '商品信息',
         props: {
-          placeholder: '请输入商口名称或商品编号',
+          placeholder: '请输入商品名称或商品编号',
           maxLength: 50,
         },
       },
@@ -103,7 +103,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
         },
       },
       {
-        title: '商品分类',
+        title: '电商云商品分类',
         dataIndex: 'categoryName',
       },
       {

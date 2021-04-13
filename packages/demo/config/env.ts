@@ -9,9 +9,9 @@ export default {
         '/apis/': {
           target: envValue,
           changeOrigin: true,
-          pathRewrite: { '^/apis': '' }
+          pathRewrite: { '^/apis': '' },
         },
-      }
+      },
     };
   },
 };

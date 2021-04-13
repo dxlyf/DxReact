@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 
-const keyArr = ['url', 'map', 'bumpMap', 'imageUrl', 'alphaMap', 'envMap'];
+const keyArr = ['url', 'imageUrl', 'map', 'bumpMap', 'alphaMap', 'envMap'];
+
 // 过滤空数据
 export const handleNull = (data) => {
   return _.omitBy(
@@ -34,7 +35,7 @@ export const handlePicConverter = (data) => {
 
   Object.entries(data).forEach(([k, v]) => {
     let picVal: any = v;
-    if (keyArr.includes(k)) {
+    if (picVal && keyArr.includes(k)) {
       if (picVal.length === 0) {
         picVal = '';
       } else if (picVal.length > 1) {

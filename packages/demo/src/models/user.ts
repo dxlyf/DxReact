@@ -13,7 +13,7 @@ export interface UserModelType {
     getUserInfo: Effect;
     login: Effect;
     logout: Effect;
-    sendToSpecifiedMobile:Effect;
+    sendToSpecifiedMobile: Effect;
   };
   reducers: {
     setCurrentUser: ImmerReducer<UserModelState>;
@@ -52,7 +52,7 @@ const UserModel: UserModelType = {
         let res = yield call(userService.login, {
           ...payload,
           loginType: 1, // 登入类型：1-用户名密码、2-短信验证码
-          clientType: app.clientType
+          clientType: app.clientType,
         });
         app.setToken(res.token);
         yield put.resolve({
@@ -68,7 +68,7 @@ const UserModel: UserModelType = {
         let res = yield call(userService.logout);
         yield put({
           type: 'setCurrentUser',
-          payload:null
+          payload: null,
         });
         app.setToken(null);
         return res;
@@ -76,14 +76,17 @@ const UserModel: UserModelType = {
         return Promise.reject(e);
       }
     },
-    *sendToSpecifiedMobile({payload}, { call, put }: { put: any; call: any }){
+    *sendToSpecifiedMobile(
+      { payload },
+      { call, put }: { put: any; call: any },
+    ) {
       try {
-        let res = yield call(userService.sendToSpecifiedMobile,payload);
+        let res = yield call(userService.sendToSpecifiedMobile, payload);
         return res;
       } catch (e) {
         return Promise.reject(e);
       }
-    }
+    },
   },
   reducers: {
     setCurrentUser(state, { payload }) {

@@ -28,6 +28,9 @@ import FilterControls from './FilterControls';
 import classNames from 'classnames';
 import { FilterContext } from './FilterContext';
 
+interface FieldInfoType {
+  name: string;
+}
 interface MiddlewareType {
   onQuery?: any;
   onReset?: any;
@@ -72,6 +75,13 @@ const FilterForm = React.forwardRef<
     const [expand, setExpand] = useState(defaultExpand);
     if (!ctx.current) {
       ctx.current = {
+        fieldInfo: new Map<string, FieldInfoType>(),
+        registerField: (field: FieldInfoType) => {
+          ctx.current.fieldInfo.set(field.name, field);
+          return () => {
+            ctx.current.fieldInfo.delete(field.name);
+          };
+        },
         middlewares: [],
         addMiddleware: (middleware: MiddlewareType) => {
           ctx.current.middlewares.push(middleware);
@@ -84,7 +94,14 @@ const FilterForm = React.forwardRef<
         wrapperComponent: (element: any, field: FilterFormField) => {
           if (field.skipQuery) {
             return (
-              <Form.Item {...field.formItemProps} label={field.label}>
+              <Form.Item
+                {...field.formItemProps}
+                label={
+                  field.label ? (
+                    <div style={{ width: field.labelWidth }}>{field.label}</div>
+                  ) : null
+                }
+              >
                 {element}
               </Form.Item>
             );
@@ -93,7 +110,11 @@ const FilterForm = React.forwardRef<
               <Form.Item
                 {...field.formItemProps}
                 initialValue={field.initialValue}
-                label={field.label}
+                label={
+                  field.label ? (
+                    <div style={{ width: field.labelWidth }}>{field.label}</div>
+                  ) : null
+                }
                 name={field.fieldName}
               >
                 {element}
@@ -116,20 +137,18 @@ const FilterForm = React.forwardRef<
         ...d,
       }));
       if (newFields.length > 0) {
-        newFields.push({
+        let searchField: any = {
           skipQuery: true,
           visible: true,
           type: QUERY_BUTTON,
           key: QUERY_BUTTON,
           span:
-            newFields.length < columnCount
-              ? Math.floor(formSpan / columnCount)
-              : formSpan,
+            newFields.length < columnCount ? Math.floor(24 / columnCount) : 24,
           order: 99,
-          labelWidth: newFields.length < columnCount ? 20 : labelWidth,
           label: <span>&nbsp;</span>,
           ...searchProps,
-        });
+        };
+        newFields.push(searchField);
       }
       newFields = newFields
         .filter((d: FilterRenderField) => d.visible)
@@ -137,15 +156,9 @@ const FilterForm = React.forwardRef<
       newFields = newFields.map((field) => {
         let fieldConfig = (FilterControls.get(field.type as string) ||
           {}) as FilterRenderField;
-        let fieldName = Array.isArray(field.name)
-          ? field.name.join('_')
-          : field.name;
-        let newField = merge<
-          object,
-          FilterFormField,
-          FilterFormField,
-          Omit<FilterFormField, 'name'>
-        >(
+        let name = field.name || fieldConfig.name;
+        let fieldName = Array.isArray(name) ? name.join('_') : name;
+        let newField = merge<object, FilterFormField, FilterFormField>(
           {
             key: fieldName,
             fieldName: fieldName,
@@ -154,22 +167,15 @@ const FilterForm = React.forwardRef<
               colon: false,
             },
             wrapper: true,
-            span: Math.floor(formSpan / columnCount),
+            span: Math.floor(24 / columnCount),
           },
           fieldConfig,
           field,
-          {
-            label: field.label ? (
-              <div style={{ width: field.labelWidth }}>{field.label}</div>
-            ) : (
-              field.label
-            ),
-          },
         ) as FilterRenderField;
         return newField;
       });
       return [newFields];
-    }, [fields, columnCount, labelWidth, formSpan]);
+    }, [fields, columnCount, labelWidth]);
     const onQueryHandle = useCallback(() => {
       let middlewares = ctx.current.middlewares.reduce(
         (p: any, m: MiddlewareType) => {
@@ -189,38 +195,57 @@ const FilterForm = React.forwardRef<
             if (!isValidate) {
               return;
             }
+            let fieldNames = Array.isArray(fieldItem.name)
+              ? fieldItem.name
+              : [fieldItem.name];
 
-            let currentValue = values[fieldItem.fieldName];
+            for (let i = 0; i < fieldNames.length; i++) {
+              let fieldName = fieldNames[i];
+              let currentValue = values[fieldName];
 
-            let newfieldItem = {
-              ...fieldItem,
-              currentValue: currentValue,
-              fieldIndex: 0,
-            };
-            let isValid = fieldItem.isValidValue!(
-              newfieldItem.currentValue,
-              newfieldItem,
-            );
-            newfieldItem.currentValue =
-              isValid && fieldItem.transform
-                ? fieldItem.transform?.(newfieldItem.currentValue, newfieldItem)
-                : newfieldItem.currentValue;
+              let newfieldItem = {
+                ...fieldItem,
+                fieldName: fieldName as string,
+                currentValue: currentValue,
+                fieldIndex: i,
+              };
+              newfieldItem.currentValue=fieldItem.normalize?fieldItem.normalize(newfieldItem.currentValue,newfieldItem,values):newfieldItem.currentValue
+              let isValid = fieldItem.isValidValue!(
+                newfieldItem.currentValue,
+                newfieldItem,
+                values,
+              );
+              newfieldItem.currentValue =
+                isValid && fieldItem.transform
+                  ? fieldItem.transform?.(
+                      newfieldItem.currentValue,
+                      newfieldItem,
+                      values,
+                    )
+                  : newfieldItem.currentValue;
 
-            if (fieldItem.validate?.(newfieldItem.currentValue, newfieldItem)) {
-              isValidate = false;
-            }
-            if (isValid && isValidate) {
-              if (fieldItem.compose) {
-                let newFilterParams = fieldItem.compose(
-                  filterParams,
-                  values,
+              if (
+                fieldItem.validate?.(
+                  newfieldItem.currentValue,
                   newfieldItem,
-                );
-                if (newFilterParams !== undefined) {
-                  filterParams = newFilterParams;
+                  values,
+                )
+              ) {
+                isValidate = false;
+              }
+              if (isValid && isValidate) {
+                if (fieldItem.compose) {
+                  let newFilterParams = fieldItem.compose(
+                    filterParams,
+                    values,
+                    newfieldItem,
+                  );
+                  if (newFilterParams !== undefined) {
+                    filterParams = newFilterParams;
+                  }
+                } else {
+                  filterParams[fieldName] = newfieldItem.currentValue;
                 }
-              } else {
-                filterParams[fieldItem.fieldName] = newfieldItem.currentValue;
               }
             }
           });
@@ -273,10 +298,13 @@ const FilterForm = React.forwardRef<
         </Row>
       );
     };
-    const renderControl = (field: FilterFormField) => {
+    const renderControl = (field: FilterFormField, colIndex: number) => {
       let render = field.render;
       if (field.type === QUERY_BUTTON) {
-        return ctx.current!.wrapperComponent(renderSearch(), field);
+        return ctx.current!.wrapperComponent(renderSearch(), {
+          ...field,
+          labelWidth: colIndex == 0 ? labelWidth : 20,
+        });
       }
       if (!render) {
         throw `找不到${field.name}定义的${field.type}类型控件`;
@@ -302,7 +330,7 @@ const FilterForm = React.forwardRef<
           isHidde = true;
         }
         currentSpan += field.span!;
-        let rowIndex = Math.ceil(currentSpan / formSpan) - 1;
+        let rowIndex = Math.ceil(currentSpan / 24) - 1;
         let rowList = fields[rowIndex] || (fields[rowIndex] = []);
         rowList.push({ ...field, hidden: isHidde });
       });
@@ -320,7 +348,7 @@ const FilterForm = React.forwardRef<
                 hidden: field.hidden,
               })}
             >
-              {renderControl(field)}
+              {renderControl(field, c)}
             </Col>,
           );
           if (field.hidden) {
@@ -355,7 +383,9 @@ const FilterForm = React.forwardRef<
     return (
       <FilterContext.Provider value={ctx.current}>
         <Form {...restProps} form={form}>
-          {renderFilterFields(mergeFields)}
+          <Row>
+            <Col span={formSpan}> {renderFilterFields(mergeFields)}</Col>
+          </Row>
         </Form>
       </FilterContext.Provider>
     );

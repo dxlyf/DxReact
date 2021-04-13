@@ -23,6 +23,18 @@ function DragControls(_objects, _camera, _domElement) {
   var _radianY = 0;
   var _om = new Vector2(0, 0);
   var touches = undefined;
+  function setSelectedMatrix() {
+    _selected.position.y = 0;
+    _selected.updateWorldMatrix(false, true);
+    _inverseMatrix.copy(_selected.parent.matrixWorld).invert();
+    _offset
+      .copy(_intersection)
+      .sub(_worldPosition.setFromMatrixPosition(_selected.matrixWorld));
+    const pan = scope.heightObjects.find((item) => {
+      return item.data.type === '底盘';
+    });
+    if (pan) _selected.position.y = pan.position.y;
+  }
   function setRadianY() {
     let x = _camera.position.x;
     let y = _camera.position.z;
@@ -85,7 +97,7 @@ function DragControls(_objects, _camera, _domElement) {
   function move(vector, object) {
     //移动
     if (_selected.data.type === '蛋糕') {
-      const y = (_mouse.y - _om.y) * 100;
+      const y = (_mouse.y - _om.y) * _camera.position.length() / 4.2;
       _selected.parent.children.forEach((object) => {
         if (object.isGroup) {
           object.position.y += y;
@@ -204,6 +216,7 @@ function DragControls(_objects, _camera, _domElement) {
     touches['org'] = touches['now'];
     delete touches['now'];
   }
+
   function setObject() {
     if (touches) {
       gesture(touches, _selected);
@@ -233,6 +246,10 @@ function DragControls(_objects, _camera, _domElement) {
       }
       _om.copy(_mouse);
     }
+    const pan = scope.heightObjects.find((item) => {
+      return item.data.type === '底盘';
+    });
+    if (pan) _selected.position.y = pan.position.y;
   }
   function find() {
     var obj = null;
@@ -309,12 +326,7 @@ function DragControls(_objects, _camera, _domElement) {
         } else if (touches && e.identifier === touches['org'][1].id) {
           touches = undefined;
           if (_selected) {
-            _inverseMatrix.copy(_selected.parent.matrixWorld).invert();
-            _offset
-              .copy(_intersection)
-              .sub(
-                _worldPosition.setFromMatrixPosition(_selected.matrixWorld),
-              );
+            setSelectedMatrix();
           }
         }
         break;
@@ -379,16 +391,10 @@ function DragControls(_objects, _camera, _domElement) {
   function onMouseMove(event) {
     _mouse = getPoint(event);
 
-    // var rect = _domElement.getBoundingClientRect();
-
-    // _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    // _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
     _raycaster.setFromCamera(_mouse, _camera);
 
     if (_selected && scope.enabled) {
       if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-        //_selected.position.copy(_intersection.sub(_offset).applyMatrix4(_inverseMatrix));
         setObject();
       }
 
@@ -403,7 +409,6 @@ function DragControls(_objects, _camera, _domElement) {
     _raycaster.intersectObjects(_objects, true, _intersections);
 
     if (_intersections.length > 0 || _lock) {
-      //var object = _intersections[0].object;
       var object = find();
       if (object === null) return;
 
@@ -452,16 +457,12 @@ function DragControls(_objects, _camera, _domElement) {
     _raycaster.intersectObjects(_objects, true, _intersections);
 
     if (_intersections.length > 0 || _lock) {
-      //_selected = (scope.transformGroup === true) ? _objects[0] : _intersections[0].object;
       var object = find();
       if (object === null) return;
       else _selected = object;
 
       if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-        _inverseMatrix.copy(_selected.parent.matrixWorld).invert();
-        _offset
-          .copy(_intersection)
-          .sub(_worldPosition.setFromMatrixPosition(_selected.matrixWorld));
+        setSelectedMatrix();
         setRadianY();
       }
 
@@ -502,21 +503,13 @@ function DragControls(_objects, _camera, _domElement) {
 
   function onTouchMove(event) {
     event.preventDefault();
-    //event = event.changedTouches[0];
     event = getTouchEvent(event);
     if (!event) return;
     _mouse = getPoint(event);
-
-    // var rect = _domElement.getBoundingClientRect();
-
-    // _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    // _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
     _raycaster.setFromCamera(_mouse, _camera);
 
     if (_selected && scope.enabled) {
       if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-        //_selected.position.copy(_intersection.sub(_offset).applyMatrix4(_inverseMatrix));
         setObject();
       }
 
@@ -528,15 +521,9 @@ function DragControls(_objects, _camera, _domElement) {
 
   function onTouchStart(event) {
     event.preventDefault();
-    //event = event.changedTouches[0];
     event = getTouchEvent(event);
     if (!event) return;
     _mouse = getPoint(event);
-
-    // var rect = _domElement.getBoundingClientRect();
-
-    // _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    // _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     _intersections.length = 0;
 
@@ -544,7 +531,6 @@ function DragControls(_objects, _camera, _domElement) {
     _raycaster.intersectObjects(_objects, true, _intersections);
 
     if (_intersections.length > 0 || _lock) {
-      //_selected = (scope.transformGroup === true) ? _objects[0] : _intersections[0].object;
       var object = find();
       if (object === null) return;
       else _selected = object;
@@ -555,10 +541,7 @@ function DragControls(_objects, _camera, _domElement) {
       );
 
       if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-        _inverseMatrix.copy(_selected.parent.matrixWorld).invert();
-        _offset
-          .copy(_intersection)
-          .sub(_worldPosition.setFromMatrixPosition(_selected.matrixWorld));
+        setSelectedMatrix();
         setRadianY();
       }
 

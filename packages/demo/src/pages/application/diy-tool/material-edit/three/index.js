@@ -30,16 +30,14 @@ import {
 import {
   setObjectHeight,
   getHeight,
-  getMeshInfo,
-  getVeneerPoint,
   setVeneer,
   setCakeVeneer,
 } from './collision';
-import G from './globalValues';
+import G, { panInfo, cursorInfo } from './globalValues';
 
 function ThreeObject(params) {
-  const { getMeshParams, type, width, height } = params,
-    HostUrl = window.location.origin,
+  const
+    { getMeshParams, type, width, height, cakeInfo } = params,
     isBack = type === 'back',
     isFront = type === 'front',
     isShowcase = type === 'showcase',
@@ -59,8 +57,9 @@ function ThreeObject(params) {
     selected = null,
     orgMaterials = null,
     cakeSize = G.CakeDiam,
-    textCard = `${HostUrl}/Card.glb`,
-    textFont = `${HostUrl}/FZSTK.TTF`;
+    cakeColor = -1,
+    textCard = `${G.HostUrl}/Card.glb`,
+    textFont = `${G.HostUrl}/FZSTK.TTF`;
 
   //场景
   const scene = new Scene();
@@ -90,9 +89,9 @@ function ThreeObject(params) {
   const camera = new PerspectiveCamera(30, width / height, 1, far);
   if (isBack) {
     //设置相机位置
-    camera.position.set(0, 0, 400);
+    camera.position.set(0, 0, 600);
   } else {
-    camera.position.set(0, 800, 800);
+    camera.position.set(0, 800, 800); //--
   }
   camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
 
@@ -114,6 +113,7 @@ function ThreeObject(params) {
   controls.autoRotate = false;
   controls.autoRotateSpeed = 8;
   controls.enablePan = false;
+  controls.zoomSpeed = 0.5;
   controls.minDistance = 700; //设置相机距离原点的最远距离
   controls.maxDistance = 2000; //设置相机距离原点的最远距离
   if (isBack) {
@@ -129,7 +129,7 @@ function ThreeObject(params) {
     camera,
     renderer.domElement,
   );
-  dragControls.heightObject = heightObjects;
+  dragControls.heightObjects = heightObjects;
   dragControls.transformGroup = true;
   dragControls.type = 'move';
   dragControls.enabled = !isShowcase;
@@ -175,16 +175,11 @@ function ThreeObject(params) {
     renderer.render(scene, camera);
   }
 
-  //启动
-  function start(success, error) {
-    if (ready) {
-      animate();
-      if (success) success();
-      return;
-    }
+
+  function loadPan(success, error) {
     loadModel(
       {
-        modelImageUrl: `${HostUrl}/dizuo.glb`,
+        url: `${G.HostUrl}/dizuo.glb`,
         name: 'pan',
       },
       (group) => {
@@ -192,87 +187,75 @@ function ThreeObject(params) {
         pan.rotation.y = Math.PI / 4;
         scene.add(pan);
         heightObjects.push(pan);
-        if (!isFront) {
-          animate();
-          if (success) success();
-          ready = true;
-        } else {
-          loadModel(
-            {
-              modelImageUrl: `${HostUrl}/point.glb`,
-              name: 'cursor',
-            },
-            (group) => {
-              cursor = group;
-              selectAnimation(cursor);
-              scene.add(cursor);
-              cursor.visible = false;
-              cursor.getObjectByName('gPy').position.y =
-                G.CakeDeep + G.CakeHeight;
-              animate();
-              if (success) success();
-              ready = true;
-            },
-            () => {
-              if (error) error('加载光标失败');
-            },
-            {
-              scale: 50,
-              x: 0,
-              y: 0,
-              z: 0,
-              materials: [
-                {
-                  emissive: 0xff2200,
-                  envMap: [
-                    'textures/cube/pxs1.jpg',
-                    'textures/cube/pxs1.jpg',
-                    'textures/cube/pxs1.jpg',
-                    'textures/cube/pxs1.jpg',
-                    'textures/cube/pxs1.jpg',
-                    'textures/cube/pxs1.jpg',
-                  ],
-                  reflectivity: 1.4,
-                  replace: true,
-                },
-              ],
-
-              url: `${HostUrl}/point.glb`,
-              type: '光标',
-              name: 'cursor',
-              deep: 0,
-              canMove: false,
-              canRotate: false,
-              canSwing: false,
-              canVeneer: false,
-              canSelect: false,
-              isMult: false,
-            },
-          );
-        }
+        success();
       },
       () => {
         if (error) error('加载底座失败');
       },
-      {
-        size: [280, 5, 280],
-        x: 0,
-        y: G.CakeDeep - 5,
-        z: 0,
-        materials: [{ color: 0xf5ebda }],
-
-        url: `${HostUrl}/dizuo.glb`,
-        type: '底盘',
-        name: 'pan',
-        deep: 0,
-        canMove: false,
-        canRotate: false,
-        canSwing: false,
-        canVeneer: false,
-        canSelect: false,
-        isMult: false,
-      },
+      panInfo
     );
+  }
+  function loadCursor(success, error) {
+    loadModel(
+      {
+        url: `${G.HostUrl}/point.glb`,
+        name: 'cursor',
+      },
+      (group) => {
+        cursor = group;
+        selectAnimation(cursor);
+        scene.add(cursor);
+        cursor.visible = false;
+        cursor.getObjectByName('gPy').position.y = G.CakeDeep + G.CakeHeight;
+        if (success) success();
+      },
+      () => {
+        if (error) error('加载光标失败');
+      },
+      cursorInfo
+    );
+  }
+  function loadBasicCake(success, error) {
+    if (cakeInfo) {
+      loadModel(
+        cakeInfo,
+        () => {
+          animate();
+          if (success) success();
+        },
+        (err) => { if (error) error(err); }
+      )
+    } else {
+      animate();
+      if (success) success();
+    }
+  }
+  //启动
+  function start(success, error) {
+    if (ready) {
+      loadBasicCake(success, error);
+      return;
+    }
+    loadPan(
+      () => {
+        if (isBack) {
+          ready = true;
+          loadBasicCake(success, error);
+        } else if (isFront) {
+          ready = true;
+          loadCursor(
+            () => {
+              loadBasicCake(success, error);
+            },
+            error
+          );
+        } else {
+          animate();
+          if (success) success();
+        }
+      },
+      error
+    )
   }
 
   //显示背景
@@ -338,7 +321,7 @@ function ThreeObject(params) {
         );
         logo.position.y = y;
         logo.data = data;
-        scene.add(logo);        
+        scene.add(logo);
         if (isBack) animate();
         if (success) success(logo);
       },
@@ -357,14 +340,12 @@ function ThreeObject(params) {
   function loadModel(info, success, error, data) {
     if (!data) data = getMeshParams(info);
     const objectType = data.type;
-    if (
-      !data.isMult &&
-      objectType !== '蛋糕' &&
-      objectType !== '围边' &&
-      objectType !== '淋边'
-    ) {
+    if (!data.isMult) {
       const arr = findObjects({ name: data.name });
-      if (arr.length > 0) return;
+      if (arr.length > 0) {
+        success(arr[0]);
+        return;
+      }
     }
     new GLTFLoader().load(
       data.url,
@@ -373,39 +354,18 @@ function ThreeObject(params) {
         setMeshParams(model, info, data)
           .then((group) => {
             let remove = [];
+            if (pan) group.position.y = pan.position.y;
             if (objectType === '蛋糕') {
               remove = findObjects({ type: objectType });
             } else if (objectType === '围边') {
               remove = findObjects({ type: ['围边', '淋边', '贴面'] });
               setOtherSize(group, cakeSize / G.CakeDiam);
-            } else if (objectType === '淋边' || objectType === '贴面') {
-              remove = findObjects({ type: ['围边'] });
+            } else if (objectType === '淋边') {
+              remove = findObjects({ type: ['围边', '淋边'] });
               setOtherSize(group, cakeSize / G.CakeDiam);
-              if (objectType === '贴面') {
-                for (var i in heightObjects) {
-                  const cake = heightObjects[i];
-                  if (cake.data.type === '蛋糕') {
-                    const v = camera.position.clone();
-                    const { distance, size } = getMeshInfo(group);
-                    v.y = size.y / 2 + G.CakeDeep;
-                    const point = getVeneerPoint(v, distance, cake);
-                    if (point) {
-                      group.position.set(point.x, 0, point.z);
-                      const gRy = group.getObjectByName('gRy'),
-                        gPy = group.getObjectByName('gPy'),
-                        vector = new Vector3(
-                          group.position.x - cake.position.x,
-                          0,
-                          group.position.z - cake.position.z,
-                        );
-                      vector.setLength(1000);
-                      gRy.lookAt(vector);
-                      gPy.position.y = G.CakeDeep;
-                    }
-                    break;
-                  }
-                }
-              }
+            } else if (objectType === '贴面') {
+              remove = findObjects({ type: ['围边'] });
+              stickFromCameraToCake(group); 
             } else if (ready) {
               setObjectHeight(group, heightObjects);
             }
@@ -419,10 +379,7 @@ function ThreeObject(params) {
                 setSceneHeight();
               });
             }
-            if (
-              group.data.canSelect ||
-              (isBack && objectType === '蛋糕')
-            ) {
+            if (group.data.canSelect || (isBack && objectType === '蛋糕')) {
               dragObjects.push(group);
               if (cursor)
                 requestAnimationFrame(() => {
@@ -441,19 +398,18 @@ function ThreeObject(params) {
                 });
                 orgMaterials = ms;
                 animate();
+                if (isBack) animate();
               }
             }
             selected = group;
             if (success) success(group);
           })
           .catch((err) => {
-            console.error('err', err);
             if (error) error('加载材质失败');
           });
       },
       undefined,
       function (err) {
-        console.error('err', err);
         if (error) error('模型加载失败');
       },
     );
@@ -702,6 +658,7 @@ function ThreeObject(params) {
     store.forEach((object) => {
       const gRy = object.getObjectByName('gRy'),
         gRxz = object.getObjectByName('gRxz'),
+        group = gRxz.children[0],
         { info, data } = object;
       objectsInfo.push({
         info,
@@ -712,33 +669,40 @@ function ThreeObject(params) {
           z: object.position.z,
         },
         rotation: { x: gRxz.rotation.x, y: gRy.rotation.y, z: gRxz.rotation.z },
+        scale: group.scale.clone()
       });
     });
     return {
       backgroundInfo,
       logoInfo,
       objectsInfo,
+      size: cakeSize,
+      color: cakeColor,
+      cameraPosition: [camera.position.x, camera.position.y, camera.position.z]
     };
   }
   //还原场景
   function setSceneData(json, success, error) {
     clearScene(true);
-    const { backgroundInfo, logoInfo, objectsInfo } = json;
+    pan.position.y = 0;
+    const { backgroundInfo, logoInfo, objectsInfo, size, color, cameraPosition } = json;
     function nextStep1() {
       showLogo(logoInfo, nextStep2, (err) => {
-        console.error(err);
         nextStep2();
       });
     }
     function nextStep2() {
       const objects = [...objectsInfo];
-      function setLocaltion(group, object) {
-        const gRy = group.getObjectByName('gRy'),
-          gRxz = group.getObjectByName('gRxz');
-        group.position.set(object.position.x, 0, object.position.z);
-        gRy.position.y = object.position.y;
-        gRy.rotation.y = object.rotation.y;
-        gRxz.rotation.set(object.rotation.x, 0, object.rotation.z);
+      function setLocaltion(object, info) {
+        const
+          gRy = object.getObjectByName('gRy'),
+          gRxz = object.getObjectByName('gRxz'),
+          group = gRxz.children[0];
+        object.position.set(info.position.x, 0, info.position.z);
+        gRy.position.y = info.position.y;
+        gRy.rotation.y = info.rotation.y;
+        gRxz.rotation.set(info.rotation.x, 0, info.rotation.z);
+        group.scale.copy(info.scale);
         load();
       }
       function load() {
@@ -768,14 +732,18 @@ function ThreeObject(params) {
             );
           }
         } else {
+          camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+          cakeSize = size;
+          if (color !== -1) setCakeColor(color);
           setSceneHeight();
+          controls.update();
+          animate();
           if (success) success();
         }
       }
       load();
     }
     showBackgroud(backgroundInfo, nextStep1, (err) => {
-      console.error(err);
       nextStep1();
     });
   }
@@ -809,22 +777,57 @@ function ThreeObject(params) {
       });
     });
     deleteObject(object);
-    setMeshParams(group, info, data)
-      .then((group) => {
-        if (group.data.type === '蛋糕') {
-          heightObjects.push(group);
-        }
-        dragObjects.push(group);
-        scene.add(group);
-        store.push(group);
-        selected = group;
-        setSceneHeight();
-        if (success) success(group);
-      })
-      .catch(() => {
-        error('加载材质失败');
-        animate();
-      });
+    let changeType = object.data.type !== data.type;
+    if (changeType) {
+      if (data.type === '蛋糕') {
+        const cake = findObjects({ type: '蛋糕' });
+        if(cake.length > 0) deleteObject(cake[0]);
+      }
+      if (object.data.type === '蛋糕') {
+        loadBasicCake(
+          () => {
+            formatObject();
+          },
+          error
+        );
+      } else {
+        formatObject();
+      }
+    } else {
+      formatObject();
+    }
+    function formatObject() {
+      setMeshParams(group, info, data)
+        .then((group) => {
+          group.position.copy(object.position);
+          const objectType = group.data.type;
+          if (objectType === '蛋糕' || objectType === '围边' || objectType === '淋边') {
+          } else if (objectType === '贴面') {
+            if (changeType) {
+              stickFromCameraToCake(group);
+            } else {
+              group.getObjectByName('gRy').rotation.y = object.getObjectByName('gRy').rotation.y;
+              group.getObjectByName('gPy').position.y = object.getObjectByName('gPy').position.y;
+            }
+          } else {
+            setObjectHeight(group, heightObjects);
+          }
+          if (group.data.type === '蛋糕') {
+            heightObjects.push(group);
+          }
+          dragObjects.push(group);
+          scene.add(group);
+          store.push(group);
+          selected = group;
+          animate();
+          if (isBack) animate();
+          if (success) success(group);
+        })
+        .catch(() => {
+          error('加载材质失败');
+          animate();
+        });
+    }
   }
   //更改蛋糕尺寸
   function setCakeSize(size) {
@@ -859,6 +862,7 @@ function ThreeObject(params) {
   //更改蛋糕颜色
   function setCakeColor(color) {
     const arr = findObjects({ type: '蛋糕' });
+    cakeColor = color;
     for (let key in arr) {
       forMesh(arr[key], (mesh) => {
         mesh.material.color = new Color(color);
@@ -868,12 +872,19 @@ function ThreeObject(params) {
     if (isBack) animate();
   }
   //把物件贴在蛋糕旁边
-  function stickToCake(object) {
+  function stickToCake(object, outside) {
     if (!object) object = selected;
     if (object) {
-      setCakeVeneer(object, heightObjects);
-    }    
+      setCakeVeneer(object, heightObjects, outside);
+    }
     if (isBack) animate();
+  }
+  //把物件以相机方向贴在蛋糕旁边
+  function stickFromCameraToCake(object, outside) {
+    setObjectHeight(object, [pan]);
+    object.position.set(camera.position.x, pan.position.y, camera.position.z);
+    object.updateWorldMatrix(false, true);
+    stickToCake(object, outside);
   }
 
   Object.defineProperties(this, {
@@ -909,7 +920,7 @@ function ThreeObject(params) {
     loadTextCard: { value: loadTextCard },
     loadTextFont: { value: loadTextFont },
     showLogo: { value: showLogo },
-    showBackgroud: { value: showBackgroud },    
+    showBackgroud: { value: showBackgroud },
     animate: { value: animate },
     start: { value: start },
     loadModel: { value: loadModel },
@@ -975,6 +986,7 @@ function ThreeObject(params) {
     setCakeSize: { value: setCakeSize },
     setCakeColor: { value: setCakeColor },
     stickToCake: { value: stickToCake },
+    stickFromCameraToCake: { value: stickFromCameraToCake }
   });
 }
 

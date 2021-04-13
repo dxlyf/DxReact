@@ -1,0 +1,46 @@
+.productInfoWrap {
+  .productInfoItem:nth-child(n + 2) {
+    margin-top: 5px;
+  }
+}
+.productInfoItem {
+  display: flex;
+  align-items: center;
+  > div:nth-child(n + 2) {
+    margin-left: 8px;
+  }
+  > div:nth-child(2) {
+    flex-grow: 1;
+  }
+  .productInfoPrice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+.productInfoHeadWrap {
+  display: flex;
+
+  align-items: center;
+  :global {
+    .ant-descriptions {
+      width: auto !important;
+      flex: 1;
+    }
+  }
+  > div:last-child {
+    width: 100px;
+    text-align: center;
+    margin-right: 2px;
+  }
+}
+.receiverWrap {
+  margin: 0;
+  padding: 0;
+  > li {
+    list-style: none;
+  }
+}
+.goodsItem2 {
+  flex-grow: 1;
+}

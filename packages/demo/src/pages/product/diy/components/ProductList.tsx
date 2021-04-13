@@ -2,32 +2,35 @@
  * 商品分组-添加商品-商品列表
  * @author fanyonglong
  */
-import React, { useCallback, useEffect, useMemo,useState } from 'react';
-import { Modal,Space } from 'antd';
-import { useControllableValue,useUpdateEffect } from 'ahooks';
-import FilterForm,{FilterFormFieldType} from '@/components/FilterForm';
-import Table,{RichTableColumnType} from '@/components/Table';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Modal, Space } from 'antd';
+import { useControllableValue, useUpdateEffect } from 'ahooks';
+import FilterForm, { FilterFormFieldType } from '@/components/FilterForm';
+import Table, { RichTableColumnType } from '@/components/Table';
 import useRequest from '@/common/hooks/useRequest';
 import { getGroupProductList } from '@/services/product';
 import { ImageView } from '@/components/Image';
-import {useTableSelection} from '@/common/hooks'
-import {PRODUCT} from '@/common/constants'
+import { useTableSelection } from '@/common/hooks';
+import { PRODUCT } from '@/common/constants';
 
-export let ProductList: React.FC<any> = ({dataItem,onChange}) => {
-let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection({ 
+export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
+  let [
+    { rowSelection, selectedRows },
+    { clearAllSelection },
+  ] = useTableSelection({
     keep: true,
-    onAllChange:onChange,
-    getCheckboxProps(record:any){
+    onAllChange: onChange,
+    getCheckboxProps(record: any) {
       return {
-          disabled:!!record.isOptional
-      }
-   }
- });
-  const [{ tableProps,dataSource }, { query: showList }] = useRequest({
+        disabled: !!record.isOptional,
+      };
+    },
+  });
+  const [{ tableProps, dataSource }, { query: showList }] = useRequest({
     service: getGroupProductList,
-    params:{
-      relId:dataItem.id, // 关联分组ID
-      relType:dataItem.relType //商品关联类型 1.商品分组 2.diy分组
+    params: {
+      relId: dataItem.id, // 关联分组ID
+      relType: dataItem.relType, //商品关联类型 1.商品分组 2.diy分组
     },
     transform: (d) => {
       return {
@@ -36,7 +39,10 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
       };
     },
   });
-  const alreaySelected=useMemo(()=>dataSource.filter((d:any)=>!!d.isOptional).map((d:any)=>d.id),[dataSource])
+  const alreaySelected = useMemo(
+    () => dataSource.filter((d: any) => !!d.isOptional).map((d: any) => d.id),
+    [dataSource],
+  );
   const fields = useMemo<FilterFormFieldType[]>(
     () => [
       {
@@ -52,8 +58,8 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
         type: 'shop',
         name: 'shopId',
         label: '商品归属',
-        props:{selectedIndex:1,disabled:true}
-      }
+        props: { selectedIndex: 1, disabled: true },
+      },
     ],
     [],
   );
@@ -62,13 +68,13 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
       {
         title: '商品信息',
         dataIndex: 'productidInfo',
-        render(text:any, record: any) {
+        render(text: any, record: any) {
           return (
             <Space>
               <ImageView
                 width={60}
                 height={40}
-                src={record.imageUrl} 
+                src={(record.imageUrl + '').split(',')[0]}
                 srcSuffix="?imageView2/1/w/60/h/40"
               ></ImageView>
               <Space direction="vertical" align="start">
@@ -86,30 +92,36 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
       {
         title: '商品状态',
         dataIndex: 'status',
-        render(value:number){
-            return PRODUCT.PRODUCT_SCALE_STATUS.get(value,'text')
-        }
+        render(value: number) {
+          return PRODUCT.PRODUCT_SCALE_STATUS.get(value, 'text');
+        },
       },
       {
-        title: '商品分类',
+        title: '电商云商品分类',
         dataIndex: 'categoryName',
-      }
+      },
     ],
     [],
   );
   return (
     <div>
       <FilterForm fields={fields} autoBind onQuery={showList}></FilterForm>
-      <Table scroll={{y:"calc(100vh - 500px)"}} rowKey="id" columns={columns} {...tableProps} rowSelection={{
+      <Table
+        scroll={{ y: 'calc(100vh - 500px)' }}
+        rowKey="id"
+        columns={columns}
+        {...tableProps}
+        rowSelection={{
           ...rowSelection,
-          selectedRowKeys:rowSelection?.selectedRowKeys.concat(alreaySelected)
-      }}></Table>
+          selectedRowKeys: rowSelection?.selectedRowKeys.concat(alreaySelected),
+        }}
+      ></Table>
     </div>
   );
 };
 let ProductListModal: React.FC<any> = (props) => {
-  let {dataItem,onOk}=props
-  let [selectedRows,setSelectedRows]=useState<any[]>([])
+  let { dataItem, onOk } = props;
+  let [selectedRows, setSelectedRows] = useState<any[]>([]);
   let [visible, setVisible] = useControllableValue(props, {
     defaultValue: false,
     defaultValuePropName: 'defaultVisible',
@@ -119,20 +131,22 @@ let ProductListModal: React.FC<any> = (props) => {
   const onCancelHandle = useCallback(() => {
     setVisible(false);
   }, []);
-  const onChangeHandle = useCallback((selectedRows:any[]) => {
-        setSelectedRows([...selectedRows])
+  const onChangeHandle = useCallback((selectedRows: any[]) => {
+    setSelectedRows([...selectedRows]);
   }, []);
-  const onOkHandle=useCallback(()=>{
-    if(onOk){
-        onOk([...selectedRows])
+  const onOkHandle = useCallback(() => {
+    if (onOk) {
+      onOk([...selectedRows]);
     }
-  },[onOk,selectedRows,onCancelHandle])
-  useUpdateEffect(()=>{
-    if(!visible){
-       setSelectedRows([])
+  }, [onOk, selectedRows, onCancelHandle]);
+  useUpdateEffect(() => {
+    if (!visible) {
+      setSelectedRows([]);
     }
-  },[visible])
-  let okText=`确认选择${selectedRows.length?`(${selectedRows.length})`:''}`
+  }, [visible]);
+  let okText = `确认选择${
+    selectedRows.length ? `(${selectedRows.length})` : ''
+  }`;
   return (
     <Modal
       width="70%"

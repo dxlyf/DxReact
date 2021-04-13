@@ -1,7 +1,7 @@
 /**
  * api请求
  * @author fanyonglong
-*/
+ */
 import type {
   ResponseError as ResponseErrorType,
   RequestOptionsInit,
@@ -16,12 +16,12 @@ import app from './app';
 enum CODE_TYPES {
   SUCCESS,
   ERROR,
-   // 无token请求，token错误
-  TOKEN_ERROR=1001,
-   // token过期
-  TOKEN_EXPIRE=1002,
-   // token失效
-  TOKEN_FAIL= 1025,
+  // 无token请求，token错误
+  TOKEN_ERROR = 1001,
+  // token过期
+  TOKEN_EXPIRE = 1002,
+  // token失效
+  TOKEN_FAIL = 1025,
 }
 // 错误处理类型
 enum ERROR_TYPE {
@@ -55,11 +55,17 @@ const request = extend({
     let errorInfo: ErrorInfoType;
     if (error.type === 'ResponseError') {
       error.isBusinessError = true;
-      if(data.code==CODE_TYPES.TOKEN_ERROR||data.code==CODE_TYPES.TOKEN_EXPIRE||data.code==CODE_TYPES.TOKEN_FAIL){
-        history.push(`/login?${stringify({
-          redirect: window.location.pathname,
-        })}`)
-        return new Promise(()=>{})
+      if (
+        data.code == CODE_TYPES.TOKEN_ERROR ||
+        data.code == CODE_TYPES.TOKEN_EXPIRE ||
+        data.code == CODE_TYPES.TOKEN_FAIL
+      ) {
+        history.push(
+          `/login?${stringify({
+            redirect: window.location.pathname,
+          })}`,
+        );
+        return new Promise(() => {});
       }
       // 业务错误
       if (request.options.skipErrorHandler == true) {
@@ -87,23 +93,23 @@ const request = extend({
           break;
         case ERROR_TYPE.ERROR:
           message.error(errorInfo.message);
-          throw errorInfo.message
+          throw errorInfo.message;
         case ERROR_TYPE.WARN:
           message.error(errorInfo.message);
-          throw errorInfo.message
+          throw errorInfo.message;
         case ERROR_TYPE.NOTIFICATION:
           notification.open({
             message: errorInfo.message,
           });
-          throw errorInfo.message
+          throw errorInfo.message;
         case ERROR_TYPE.REDIRECT:
           history.push({
             pathname: errorInfo.url,
           });
-          throw errorInfo.message
+          throw errorInfo.message;
         default:
           message.error(errorInfo.message);
-          throw errorInfo.message
+          throw errorInfo.message;
       }
     }
     throw error;
@@ -139,7 +145,7 @@ request.use(async function (ctx, next) {
   );
 });
 export default (url: string, options: CustomeRequestOptions = {}) => {
-  return Promise.resolve().then(()=>{
-    return request(url, options)
-  })
+  return Promise.resolve().then(() => {
+    return request(url, options);
+  });
 };

@@ -1,4 +1,4 @@
-import { uniqueId } from 'lodash';
+import { uniqueId, has } from 'lodash';
 import app from './app';
 /**
  * 常用方法
@@ -36,6 +36,7 @@ import app from './app';
  * ```
  * 
 */
+
 export const valuesKeyMap = <
   T extends { [key: string]: any },
   K extends keyof T
@@ -43,8 +44,29 @@ export const valuesKeyMap = <
   values: T[],
   ...names: K[]
 ) => {
+  let enums: { [key: string]: T } & {
+    value0?: T;
+    value1?: T;
+    value2?: T;
+    value3?: T;
+    value4?: T;
+    value5?: T;
+    value6?: T;
+    value7?: T;
+    value8?: T;
+    value9?: T;
+    value10?: T;
+  } = {};
+  values.forEach((d, i: number) => {
+    if (has(d, 'enum')) {
+      enums[d['enum']] = d;
+    } else {
+      enums['value' + i] = d;
+    }
+  });
   return {
     values: values,
+    enums: enums,
     map: new Map<string | number, T>(
       names.reduce<any[]>((memo, name: K) => {
         return memo.concat(values.map((d) => [d[name], d]));
@@ -104,4 +126,3 @@ export function uuid() {
     random()
   );
 }
-

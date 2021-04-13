@@ -2,7 +2,7 @@
  * 全局应用配置
  * 全局单例实例
  * @author fanyonglong
-*/
+ */
 const SYSTEM_USER_DATA = 'SYSTEM_USER_DATA';
 class StorgaData<T> {
   data: { [key in string]: any };
@@ -59,7 +59,10 @@ class App {
     return this.resourceConfig.imageUrl;
   }
   toImageUrl(relativeUrl: string) {
-    return this.imageDomain + relativeUrl;
+    return (
+      this.imageDomain +
+      ((relativeUrl + '')[0] == '/' ? relativeUrl : '/' + relativeUrl)
+    );
   }
   setToken(token: any) {
     this.storage.set('token', token);

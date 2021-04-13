@@ -41,6 +41,7 @@ const SKUTable = React.memo(
               <Form.Item
                 initialValue={imageUrl}
                 name={['skus', record.id + '', 'imageUrl']}
+                valuePropName="fileList"
               >
                 <UploadImage maxCount={1}>
                   <a>上传</a>
@@ -70,7 +71,7 @@ const SKUTable = React.memo(
                 ]}
                 name={['skus', record.id + '', 'recommendedPrice']}
               >
-                <InputNumber min={0} precision={2}></InputNumber>
+                <InputNumber min={0.01} precision={2}></InputNumber>
               </Form.Item>
             );
           },
@@ -95,7 +96,7 @@ const SKUTable = React.memo(
                 ]}
                 name={['skus', record.id + '', 'price']}
               >
-                <InputNumber min={0} precision={2}></InputNumber>
+                <InputNumber min={0.01} precision={2}></InputNumber>
               </Form.Item>
             );
           },

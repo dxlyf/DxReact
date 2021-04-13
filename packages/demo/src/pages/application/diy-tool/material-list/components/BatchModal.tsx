@@ -82,10 +82,6 @@ const BatchModal = (props) => {
           ids,
         });
         message.success('修改成功！');
-        console.log(
-          '🚀 ~ file: BatchModal.tsx ~ line 55 ~ BatchModal ~ callback',
-          callback,
-        );
         if (callback) {
           callback();
         }

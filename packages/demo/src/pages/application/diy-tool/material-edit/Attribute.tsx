@@ -42,19 +42,23 @@ const openNotification = (type, message, description?) => {
 };
 
 const Attribute = (props) => {
-  const { data = [], formRef } = props;
+  const { name: modelName, data = [], formRef } = props;
 
   const [state, setState]: any = useImmer({
     data: [],
     dataKey: '',
+    activeKey: '0',
   });
 
   useEffect(() => {
     setState((draft) => {
-      draft.data = data;
-      draft.dataKey = uuid();
+      if (data.length > 0) {
+        draft.data = data;
+        draft.dataKey = uuid();
+        draft.activeKey = '0';
+      }
     });
-  }, [data.length]);
+  }, [data]);
 
   const handleEnvMapChange = (value, target) => {
     let fieldsValue = {};
@@ -90,14 +94,22 @@ const Attribute = (props) => {
     reader.readAsText(file);
     reader.onload = (e: any) => {
       try {
-        const result = JSON.parse(e.target.result);
+        let result = JSON.parse(e.target.result);
 
         // 重置材质表单的ref和form
         formRef.current = createRef<FormInstance>();
         setState((draft) => {
           draft.data[index] = result;
+          draft.data[index].target = state.data[index].target;
+          draft.data[index].material = state.data[index].material;
           draft.dataKey = uuid();
         });
+
+        // setTimeout(() => {
+        //   setState((draft) => {
+        //     draft.activeKey = state.activeKey;
+        //   });
+        // }, 300);
 
         openNotification(
           'success',
@@ -115,13 +127,19 @@ const Attribute = (props) => {
   };
 
   // 处理导出
-  const onExport = async (target) => {
+  const onExport = async (target, index) => {
     const TabFormData = await formRef.current!.validateFields();
     try {
       const data = TabFormData[target];
       data.version = version;
-      const str = JSON.stringify(data);
-      const name = `${TabFormData[target].target}@${version}.txt`;
+      const str = JSON.stringify(data, null, 2);
+      const date = new Date();
+      const dateStr = [
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      ].join('-');
+      const name = `${modelName}@$素材${index}@${dateStr}@${version}.txt`;
       const urlObject: any = window.URL || window.webkitURL || window;
       const export_blob = new Blob([str]);
       const save_link: any = document.createElementNS(
@@ -136,15 +154,23 @@ const Attribute = (props) => {
         `导出配置文件成功!`,
         <>
           <div>
-            文件名：{TabFormData[target].target}@{version}.txt
+            文件名：{TabFormData[target].target}@{dateStr}@{version}.txt
           </div>
-          <div>版本：{version}</div>
+          <div>
+            版本：{version}_{dateStr}
+          </div>
         </>,
       );
     } catch (error) {
       openNotification('error', `导出配置文件失败！!`);
       console.error(error);
     }
+  };
+
+  const handleTabClick = (key) => {
+    setState((draft) => {
+      draft.activeKey = key;
+    });
   };
 
   return (
@@ -155,7 +181,12 @@ const Attribute = (props) => {
       wrapperCol={{ span: 20 }}
       key={String(state.dataKey)}
     >
-      <Tabs defaultActiveKey="0" animated={false}>
+      <Tabs
+        animated={false}
+        defaultActiveKey="0"
+        activeKey={state.activeKey}
+        onTabClick={handleTabClick}
+      >
         {state.data.map(
           (
             {
@@ -169,6 +200,7 @@ const Attribute = (props) => {
               emissive,
               color,
               envMap,
+              envMapIntensity,
               reflectivity,
               refractionRatio,
               map,
@@ -178,6 +210,7 @@ const Attribute = (props) => {
               side,
               bumpMap,
               alphaMap,
+              alphaMapRepeat,
               bumpScale,
               bumpMapRepeat,
             },
@@ -210,7 +243,7 @@ const Attribute = (props) => {
                       </Upload>
                       <Button
                         icon={<DownloadOutlined />}
-                        onClick={() => onExport(target)}
+                        onClick={() => onExport(target, index)}
                       >
                         导出
                       </Button>
@@ -388,6 +421,13 @@ const Attribute = (props) => {
                         <PictureUpload maxFiles={6} multiple />
                       </Form.Item>
                     </Form.Item>
+                    <Form.Item
+                      label="环境贴图强度"
+                      name={[target, 'envMapIntensity']}
+                      initialValue={envMapIntensity}
+                    >
+                      <InputNumber style={{ width: 200 }} precision={2} />
+                    </Form.Item>
 
                     <Form.Item
                       label="反射率"
@@ -451,9 +491,15 @@ const Attribute = (props) => {
                       valuePropName="fileList"
                       getValueFromEvent={normFile}
                       initialValue={alphaMap}
-                      // extra="建议单个图片大小不超过600KB"
                     >
                       <PictureUpload maxFiles={1} />
+                    </Form.Item>
+                    <Form.Item
+                      label="透明度密度"
+                      name={[target, 'alphaMapRepeat']}
+                      initialValue={alphaMapRepeat}
+                    >
+                      <InputNumber style={{ width: 200 }} precision={2} />
                     </Form.Item>
                   </ProCard>
 

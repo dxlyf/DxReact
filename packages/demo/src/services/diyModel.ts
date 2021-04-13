@@ -41,3 +41,10 @@ export function detailModel(data) {
     params: data,
   });
 }
+
+export function copyModel(data) {
+  return request('blisscake/backend/diyModel/copyModel', {
+    method: 'GET',
+    params: data,
+  });
+}

@@ -3,6 +3,7 @@ import G from './globalValues';
 
 //取得网格物参数(通过api获得?)
 export function getMeshParams(info: any): MeshParamsJson {
+  // console.log("🚀 ~ file: convert.ts ~ line 6 ~ getMeshParams ~ info", info)
   var params: MeshParamsJson = {
     ...info,
   };
@@ -11,9 +12,7 @@ export function getMeshParams(info: any): MeshParamsJson {
       break;
   }
 
-
-  if (params.type === '蛋糕') {
-    params.size = [G.CakeDiam, G.CakeHeight, G.CakeDiam];
+  if (['蛋糕', '淋边', '围边'].includes(params.type)) {
     params.y = G.CakeDeep;
   }
   return params;

@@ -8,6 +8,7 @@ type ThreeObjectParams = {
   type: 'front' | 'showcase' | 'back';
   width: number;
   height: number;
+  cakeInfo?: any;
 }
 type Error = (err: string) => void;
 type LoadSuccess = (object: Group) => void;
@@ -29,6 +30,9 @@ type SceneData = {
   "backgroundInfo"?: string[] | null;
   "logoInfo"?: LogoInfo | null;
   "objectsInfo": any;
+  "size": number;
+  "color": number;
+  "cameraPosition": number[];
 }
 type MeshNames = {
   mesh: string;
@@ -75,5 +79,6 @@ export default class ThreeObject {
   heightObjects: Group[];
   setCakeSize: (size: number) => void;
   setCakeColor: (color: number) => void;
-  stickToCake: (object?: Group | null) => void;
+  stickToCake: (object?: Group | null, outside?: boolean) => void;
+  stickFromCameraToCake: (object: Group, outside?: boolean) => void;
 }

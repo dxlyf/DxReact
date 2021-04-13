@@ -3,81 +3,85 @@
  * @author fanyonglong
  */
 import React, { useCallback, useState } from 'react';
-import { connect, ConnectProps, history } from 'umi';
-import { Form, Input, Button, message, Space ,Typography} from 'antd';
+import { connect, ConnectProps, history, Loading } from 'umi';
+import { Form, Input, Button, message, Space, Typography } from 'antd';
 import { UserModelState } from '@/models/user';
-import { useInterval } from 'ahooks'
+import { useInterval } from 'ahooks';
 import styles from './index.less';
 import app from '@/utils/app';
-
-
+import Icon from '@ant-design/icons';
+import classNames from 'classnames';
 
 type LoginProps = {
   user: UserModelState;
+  loginLoading: boolean;
 } & ConnectProps<{}, {}, { redirect?: string }>;
-const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
+const Login: React.FC<LoginProps> = ({ dispatch, location, loginLoading }) => {
   const [form] = Form.useForm();
-  const [needVerification, setNeedVerification] = useState(false)
+  const [needVerification, setNeedVerification] = useState(false);
   const [sendState, setSendState] = useState<any>({
-    status: "idle",
-    interval: null
+    status: 'idle',
+    interval: null,
   });
-  let [arrivalTime, setArrivalTime] = useState(120)
-  let [codePlaceholder,setCodePlaceholder]=useState('验证码')
+  let [arrivalTime, setArrivalTime] = useState(120);
+  let [codePlaceholder, setCodePlaceholder] = useState('验证码');
   useInterval(() => {
-    let value = arrivalTime - 1
-    setArrivalTime(value)
+    let value = arrivalTime - 1;
+    setArrivalTime(value);
     if (value <= 0) {
       setSendState({
-        status: "again",
-        interval: null
-      })
-      setCodePlaceholder('验证码')
+        status: 'again',
+        interval: null,
+      });
+      setCodePlaceholder('验证码');
     }
-  }, sendState.interval)
+  }, sendState.interval);
   const onSendVerifyCode = useCallback(() => {
-    form.validateFields(['loginName']).then(values => {
-      setArrivalTime(120)
+    form.validateFields(['loginName']).then((values) => {
+      setArrivalTime(120);
       setSendState({
-        status: "pedding",
-        interval: 1000
-      })
+        status: 'pedding',
+        interval: 1000,
+      });
       dispatch!({
-        type: "user/sendToSpecifiedMobile",
+        type: 'user/sendToSpecifiedMobile',
         payload: {
           clientId: app.clientType,
           loginName: values.loginName,
           typeCode: 'retailAdminLogin',
-        }
-      }).then((data:any) => {       
-        setCodePlaceholder(`已发送至:${data}`)
-      }).catch(() => {
-        message.error('发送失败，请重新发送')
-        setArrivalTime(120)
-        setSendState({
-          status: "again",
-          interval: null
-        })
+        },
       })
-    })
-
-  }, [sendState])
+        .then((data: any) => {
+          setCodePlaceholder(`已发送至:${data}`);
+        })
+        .catch(() => {
+          message.error('发送失败，请重新发送');
+          setArrivalTime(120);
+          setSendState({
+            status: 'again',
+            interval: null,
+          });
+        });
+    });
+  }, [sendState]);
   const onSubmit = useCallback(
     (formData) => {
       let loginData = {
         ...formData,
         ifVerifyCode: needVerification ? 1 : 0,
-      }
+      };
       dispatch!({
         type: 'user/login',
-        payload: loginData
+        payload: loginData,
       })
         .then((res: any) => {
           let redirect = location.query?.redirect;
+          if (redirect === '/login') {
+            redirect = '/';
+          }
           history.push({
             pathname: redirect || '/',
           });
-
         })
         .catch((e: any) => {
           if (e.isBusinessError && e.data.code == 15417) {
@@ -85,7 +89,10 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
               form.setFields([
                 {
                   name: 'loginName',
-                  errors: ['连续输错5次将会被锁定30分钟，30分钟后可重试', '如需急用，请联系重置密码'],
+                  errors: [
+                    '连续输错5次将会被锁定30分钟，30分钟后可重试',
+                    '如需急用，请联系重置密码',
+                  ],
                 },
               ]);
             } else {
@@ -96,14 +103,13 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
                 },
               ]);
             }
-          }
-          else if (e.isBusinessError && e.data.code == 15418) {
-            setNeedVerification(true)// 需要验证码
+          } else if (e.isBusinessError && e.data.code == 15418) {
+            setNeedVerification(true); // 需要验证码
             form.setFields([
               {
                 name: 'loginName',
                 errors: [e.data.message],
-              }
+              },
             ]);
           } else if (e.isBusinessError) {
             form.setFields([
@@ -113,88 +119,116 @@ const Login: React.FC<LoginProps> = ({ dispatch, location }) => {
               },
             ]);
           } else {
-            message.error(e.message || '服务出错')
+            message.error(e.message || '服务出错');
           }
         });
     },
-    [dispatch, form,needVerification],
+    [dispatch, form, needVerification],
   );
   const renderSendButtonText = () => {
     switch (sendState.status) {
-      case "idle":
-        return '获取验证码'
-      case "pedding":
-        return '重新发送' + "(" + arrivalTime + "S)"
-      case "again":
-        return '获取验证码'
+      case 'idle':
+        return '获取验证码';
+      case 'pedding':
+        return '重新发送' + '(' + arrivalTime + 'S)';
+      case 'again':
+        return '获取验证码';
     }
-  }
+  };
 
   return (
     <div className={styles.container}>
-      <div className={styles.wrapper}>
-        <div className={styles.content}>
-          <div className={styles.left}>
-            <div>
-              <div className={styles.logo}></div>
-            </div>
-          </div>
-          <div className={styles.right}>
-            <div className={styles.formWrap}>
-              <Form onFinish={onSubmit} form={form}>
+      <div className={styles.bg}></div>
+      <div className={styles.loginWrap}>
+        <div className={styles.logo}></div>
+        <Form onFinish={onSubmit} form={form}>
+          <Form.Item
+            name="loginName"
+            required={false}
+            rules={[
+              {
+                required: true,
+                message: '用户名不能为空',
+                whitespace: true,
+              },
+            ]}
+            className={classNames(styles.userNameFormItem, {
+              [styles.notNeedVerification]: !needVerification,
+            })}
+          >
+            <Input
+              prefix={<span className={styles.userNameIcon}></span>}
+              className={styles.userName}
+              placeholder="请输入用户名"
+            ></Input>
+          </Form.Item>
+          <Form.Item
+            name="password"
+            required={false}
+            className={styles.pwdFormItem}
+            rules={[
+              {
+                required: true,
+                message: '密码不能为空',
+                whitespace: true,
+              },
+            ]}
+          >
+            <Input.Password
+              prefix={<span className={styles.passwordIcon}></span>}
+              className={styles.password}
+              placeholder="请输入用户密码"
+            ></Input.Password>
+          </Form.Item>
+          {needVerification && (
+            <Form.Item name="verifyCode">
+              <Space>
                 <Form.Item
-                  name="loginName"
-                  required={false}
+                  noStyle
+                  name="verifyCode"
                   rules={[
                     {
                       required: true,
-                      message: '用户名不能为空',
-                      whitespace: true,
+                      message: '请输入验证码',
                     },
                   ]}
-                  label={<div style={{ width: 80 }}>用户名</div>}
                 >
-                  <Input style={{ width: 220 }} placeholder="请输入用户名"></Input>
+                  <Input
+                    className={styles.verifyCode}
+                    placeholder={codePlaceholder}
+                  ></Input>
                 </Form.Item>
-                <Form.Item
-                  name="password"
-                  required={false}
-                  rules={[
-                    {
-                      required: true,
-                      message: '密码不能为空',
-                      whitespace: true,
-                    },
-                  ]}
-                  label={<div style={{ width: 80 }}>密码</div>}
+                <Button
+                  className={styles.verifyCodeBtn}
+                  onClick={onSendVerifyCode}
+                  disabled={sendState.status == 'pedding'}
                 >
-                  <Input.Password style={{ width: 220 }} placeholder="请输入用户密码"></Input.Password>
-                </Form.Item>
-                {needVerification && <Form.Item label={<div style={{ width: 80 }}>验证码</div>} name="verifyCode">
-                  <Space>
-                    <Form.Item noStyle name="verifyCode" rules={[{
-                      required: true,
-                      message: "请输入验证码"
-                    }]}><Input style={{ width: 100 }} placeholder={codePlaceholder}></Input></Form.Item>
-                    <Button onClick={onSendVerifyCode} disabled={sendState.status == 'pedding'}>{renderSendButtonText()}</Button>
-                  </Space>
-                </Form.Item>}
-                <Form.Item
-                  label={<div style={{ width: 80 }}>&nbsp;</div>}
-                  colon={false}
-                >
-                  <Button type="primary" htmlType="submit" style={{ width: 120 }}>
-                    登录
-                  </Button>
-                </Form.Item>
-              </Form>
-            </div>
-          </div>
-        </div>
+                  {renderSendButtonText()}
+                </Button>
+              </Space>
+            </Form.Item>
+          )}
+          <Form.Item colon={false}>
+            <Button
+              loading={loginLoading}
+              type="primary"
+              htmlType="submit"
+              danger
+              className={classNames(styles.btnLogin, {
+                [styles.needVerification]: needVerification,
+              })}
+            >
+              登录
+            </Button>
+          </Form.Item>
+        </Form>
       </div>
     </div>
   );
 };
-export default connect(({ user }: { user: UserModelState }) => ({
-  user: user,
-}))(Login);
+export default connect(
+  ({ user, loading }: { user: UserModelState; loading: Loading }) => ({
+    user: user,
+    loginLoading: !!loading.effects['user/login'],
+  }),
+)(Login);

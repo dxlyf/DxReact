@@ -6,12 +6,16 @@ import React from 'react';
 import { Input, Select, FormInstance } from 'antd';
 import { trim } from 'lodash';
 import { PRODUCT } from '@/common/constants';
+import moment from 'moment';
 import ModelGroupCascader from './components/ModelGroup';
 import ShopSelect from './components/Shop';
 import DsyunProductCategory from './components/DsyunProductCategory';
+import SelectInput from './components/SelectInput';
+import DateRange from './components/DateRange';
+import SourceChannel from './components/SourceChannel';
 
 export type ControlContext = {
-  [key:string]:any
+  [key: string]: any;
   wrapperComponent: (element: any, field: FilterFormField) => any;
   query: () => void;
   reset: () => void;
@@ -22,7 +26,7 @@ export interface FilterFormField {
   controlType?: string;
   type?: string;
   span?: number;
-  labelWidth?: number;
+  labelWidth?: number | string;
   visible?: boolean;
   name?: string | number | (string | number)[];
   label?: any;
@@ -38,19 +42,20 @@ export interface FilterFormField {
     formValues: any,
     field: FilterRenderField,
   ) => any;
-  transform?: (value: any, field: FilterRenderField) => any;
-  isValidValue?: (value: any, field: FilterRenderField) => boolean;
-  validate?: (value: any, field: FilterRenderField) => boolean;
+  transform?: (value: any, field: FilterRenderField, values: any) => any;
+  isValidValue?: (value: any, field: FilterRenderField, values: any) => boolean;
+  validate?: (value: any, field: FilterRenderField, values: any) => boolean;
+  normalize?:(value: any, field: FilterRenderField, values: any) => any;
 }
 export type FilterRenderField = {
   fieldIndex?: number;
   fieldName: string;
-  hidden?:boolean
+  hidden?: boolean;
   key: string | number;
 } & FilterFormField;
 export type FilterControlType = {
   render: (field: FilterFormField, ctx: ControlContext) => any;
-} & Omit<FilterFormField, 'type' | 'name' | 'label'>;
+} & Partial<FilterFormField>;
 
 const createFilterControl = (defaultConfig: FilterControlType) => {
   let controls = new Map<string, FilterControlType>();
@@ -73,14 +78,13 @@ const { create, controls } = createFilterControl({
     return value !== undefined && value !== null && value !== '';
   },
 });
-
 create('text', {
-  transform(value: any, fieldItem: FilterRenderField) {
-    return trim(value);
+  normalize(value:any){
+     return typeof value==='string'?trim(value):value
   },
   render(field) {
     return <Input maxLength={50} {...field.props}></Input>;
-  },
+  }
 });
 create('list', {
   isValidValue(value: any) {
@@ -102,12 +106,14 @@ create('list', {
 });
 create('dsyunProductCategory', {
   isValidValue(value: any) {
-    return Array.isArray(value)&&value.length>0
+    return Array.isArray(value) && value.length > 0;
   },
   render(field) {
     return (
-      <DsyunProductCategory field={field} {...field.props}>
-      </DsyunProductCategory>
+      <DsyunProductCategory
+        field={field}
+        {...field.props}
+      ></DsyunProductCategory>
     );
   },
 });
@@ -142,18 +148,72 @@ create('shop', {
 });
 create('modelGroup', {
   isValidValue(value: any) {
-    return Array.isArray(value) && value.length > 0 ? true : false;
+    return true;
   },
   compose(filterParams: any, values: any, fieldItem: any) {
-    if (fieldItem.currentValue.length > 0) {
-      filterParams[fieldItem.name[0]] = fieldItem.currentValue[0];
-    }
-    if (fieldItem.currentValue.length > 1) {
-      filterParams[fieldItem.name[1]] = fieldItem.currentValue[1];
+    if (fieldItem.fieldIndex == 0) {
+      let fieldName = fieldItem.name.join('_');
+      let value = values[fieldName];
+      if (Array.isArray(value) && value.length > 0) {
+        if (value.length > 0) {
+          filterParams[fieldItem.name[0]] = value[0];
+        }
+        if (value.length > 1) {
+          filterParams[fieldItem.name[1]] = value[1];
+        }
+      }
     }
   },
   render(field) {
     return <ModelGroupCascader {...field.props}></ModelGroupCascader>;
+  },
+});
+
+create('selectInput', {
+  wrapper: false,
+  name: 'selectInput',
+  compose(memo, values) {
+    if (values.selectInput) {
+      Object.keys(values.selectInput).forEach((name) => {
+        let value = values.selectInput[name];
+        if (value !== '' && value !== undefined) {
+          memo[name] = values.selectInput[name];
+        }
+      });
+    }
+  },
+  render(field) {
+    return <SelectInput field={field} {...field.props}></SelectInput>;
+  },
+});
+create('dateRange', {
+  wrapper: false,
+  span: 24,
+  isValidValue() {
+    return true;
+  },
+  compose(memo, values, field) {
+    let fieldName = (field.name as string[]).join('_');
+    let value = values[fieldName];
+    if (
+      field.fieldIndex == 0 &&
+      value &&
+      Array.isArray(value) &&
+      value.length == 2
+    ) {
+      let value = values[fieldName];
+      memo[field.name[0]] = value[0].format('YYYY-MM-DD');
+      memo[field.name[1]] = value[1].format('YYYY-MM-DD');
+    }
+  },
+  render(field) {
+    return <DateRange field={field} {...field.props}></DateRange>;
+  },
+});
+create('sourceChannel', {
+  wrapper: false,
+  render(field) {
+    return <SourceChannel field={field} {...field.props}></SourceChannel>;
   },
 });
 

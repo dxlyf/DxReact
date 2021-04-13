@@ -12,7 +12,7 @@ const { Text } = Typography;
 type UploadVideoeProps = {
   uploadBtnText?: string;
   descption?: any;
-  uploadDir?:string,
+  uploadDir?: string;
   onChange?: (fileList: any) => void;
 } & UploadProps;
 
@@ -24,7 +24,7 @@ export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
     descption,
     data,
     children,
-    uploadDir='',
+    uploadDir = '',
     ...restProps
   } = props;
 
@@ -61,7 +61,10 @@ export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
         {...restProps}
         data={{
           customVars: data,
-          uploadDir: buindTodayUplaodDir({ beforeDir: 'diy/images',afterDir:uploadDir }),
+          uploadDir: buindTodayUplaodDir({
+            beforeDir: 'diy/images',
+            afterDir: uploadDir,
+          }),
         }}
         onChange={onChangeHandle}
         maxCount={maxCount}

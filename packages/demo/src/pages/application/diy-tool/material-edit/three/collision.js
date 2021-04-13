@@ -47,9 +47,9 @@ export function getVeneerPoint(center, offset, target) {
     return null;
   }
 }
-export function setVeneer(object, target) {
+export function setVeneer(object, target, outside) {
   const { center, distance } = getMeshInfo(object);
-  const point = getVeneerPoint(center, distance, target);
+  const point = getVeneerPoint(center, outside ? distance : 0, target);
   if (point) {
     point.y = object.position.y;
     object.position.copy(point);
@@ -58,16 +58,16 @@ export function setVeneer(object, target) {
       gPy = object.getObjectByName('gPy'),
       vector = new Vector3(object.position.x - target.position.x, 0, object.position.z - target.position.z);
     vector.setLength(1000);
-    vector.y = gPy.position.y + gRy.position.y;
+    vector.y = gPy.position.y + gRy.position.y + object.position.y;
     gRy.lookAt(vector);
   } else {
     console.log('没有物件');
   }
 }
-export function setCakeVeneer(object, target) {
+export function setCakeVeneer(object, target, outside) {
   for (var i in target) {
     if (target[i].data && target[i].data.type === '蛋糕') {
-      setVeneer(object, target[i]);
+      setVeneer(object, target[i], outside);
       return;
     }
   }
@@ -108,6 +108,7 @@ export function setObjectHeight(object, target) {
   gPy.position.y = cy.height;
   const group = findGroup(cy.object);
   if (group && group.data) {
+    gPy.position.y -= group.position.y;
     if (group.data.type === '底盘') {
       if (gRy.position.y !== 0) {
         gRy.orgY = gRy.position.y;

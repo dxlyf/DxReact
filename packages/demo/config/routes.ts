@@ -78,9 +78,36 @@ export default [
                       {
                         name: '分类商品',
                         hideInMenu: true,
-                        path:'/product/diy/theme/category/:themeId/goods/:categoryId',
+                        path:
+                          '/product/diy/theme/category/:themeId/goods/:categoryId',
                         component: 'product/diy/category-goods',
                         parentKeys: ['diyTheme'],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: '订单',
+                path: '/order',
+                routes: [
+                  {
+                    name: '订单查询',
+                    path: '/order/order-search',
+                    routes: [
+                      {
+                        name: '订单查询',
+                        key: 'orderList',
+                        path: '/order/order-search/order-list',
+                        component: 'order/order-search/list/order-list',
+                      },
+                      {
+                        name: '订单详情',
+                        path:
+                          '/order/order-search/order-list/order-detail/:orderId',
+                        component: 'order/order-search/order-detail',
+                        hideInMenu: true,
+                        parentKeys: ['orderList'],
                       },
                     ],
                   },
@@ -139,17 +166,21 @@ export default [
                 ],
               },
               {
-                name:"订单",
-                path:"/order",
-                routes:[{
-                   name:"订单查询",
-                   path:"/order/manage",
-                   routes:[{
-                      name:"订单查询",
-                      path:"/order/manage/list",
-                      component:"order/manage/order-list"
-                   }]
-                }]
+                name: '设置',
+                path: '/setting',
+                routes: [
+                  {
+                    name: '店铺设置',
+                    path: '/setting/store-set',
+                    routes: [
+                      {
+                        name: '交易设置',
+                        path: '/setting/store-set/transaction',
+                        component: 'setting/store-set/transaction',
+                      },
+                    ],
+                  },
+                ],
               },
               {
                 path: '*',

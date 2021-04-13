@@ -1,66 +1,115 @@
-@bg: '../../assets/images/snow.jpg';
-@logo: '../../assets/images/512.png';
+@bg: '../../assets/images/bg.png';
+@logo: '../../assets/images/pic_logo_n@1x.png';
+
+@icon_user: '../../assets/images/icon_user.png';
+@icon_pwd: '../../assets/images/icon_pwd.png';
 
 .container {
   height: 100vh;
   width: 100vw;
-  background-color: #ddd;
-  background-image: url(@bg);
+
+  position: relative;
 }
-.wrapper {
-  width: 70%;
-  margin: 0 auto;
+
+.bg {
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  .content {
-    height: 400px;
-    width: 720px;
-    border-radius: 6px;
-    box-shadow: 1px 0 21px rgba(0, 0, 0, 0.17);
-    .left,
-    .right {
-      box-sizing: border-box;
-      border: 0;
-      float: left;
-    }
-    .left {
-      width: 50%;
-      height: 100%;
-      background-color: rgba(26, 144, 255, 0.73);
-      border-top-left-radius: 6px;
-      border-bottom-left-radius: 6px;
-      > div {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        .logo {
-          background-image: url(@logo);
-          background-repeat: no-repeat;
-          background-size: contain;
-          width: 100%;
-          height: 100%;
-          position: absolute;
-          left: 0;
-          top: 0;
-        }
-      }
-    }
-    .right {
-      width: 50%;
-      height: 100%;
-      background-color: #fff;
-      border-top-right-radius: 6px;
-      border-bottom-right-radius: 6px;
-      display: flex;
-      align-items: center;
-      .formWrap {
-      }
+  width: 100%;
+  position: absolute;
+  background-image: url(@bg);
+  z-index: 1;
+  background-size: cover;
+  background-position: center 0;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  zoom: 1;
+}
+.logo {
+  background-image: url(@logo);
+  width: 100%;
+  height: 230px;
+  background-size: 220px 220px;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}
+.loginWrap {
+  width: 550px;
+  height: 642px;
+  padding: 0 60px;
+  border-radius: 12px;
+  background: #f6f9fc;
+  box-shadow: 0 0 12px 0 #bfbfbf;
+  position: absolute;
+  right: 138px;
+  top: 214px;
+  z-index: 2;
+}
+
+.userNameFormItem.notNeedVerification:not(:global(.ant-form-item-with-help)) {
+  margin-bottom: 40px;
+}
+.userNameFormItem.notNeedVerification {
+  :global {
+    .ant-form-item-explain {
+      min-height: 40px;
     }
   }
+}
+.userNameIcon {
+  display: block;
+  background-image: url(@icon_user);
+  width: 35px;
+  height: 35px;
+}
+.passwordIcon {
+  display: block;
+  background-image: url(@icon_pwd);
+  width: 35px;
+  height: 35px;
+}
+.userName {
+  height: 70px;
+  width: 430px;
+  background: #ffffff;
+  border: 1px solid #d2d3db;
+  border-radius: 12px;
+  > input {
+    font-size: 24px;
+    color: #666666;
+  }
+}
+.password {
+  height: 70px;
+  width: 430px;
+  background: #ffffff;
+  border: 1px solid #d2d3db;
+  border-radius: 12px;
+  > input {
+    font-size: 24px;
+    color: #666666;
+  }
+}
+.verifyCode {
+  height: 70px;
+  width: 230px;
+  background: #ffffff;
+  border: 1px solid #d2d3db;
+  border-radius: 12px;
+  font-size: 24px;
+  color: #666666;
+}
+.verifyCodeBtn {
+  width: 190px;
+  height: 70px;
+  font-size: 24px;
+  border-radius: 12px;
+}
+.btnLogin {
+  width: 100%;
+  border-radius: 12px;
+  color: #fff;
+  height: 70px;
+  font-size: 24px;
+}
+.btnLogin:not(.needVerification) {
+  margin-top: 56px;
 }

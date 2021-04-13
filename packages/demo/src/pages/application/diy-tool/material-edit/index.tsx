@@ -10,7 +10,16 @@ import {
 } from '@ant-design/icons';
 import ProCard from '@ant-design/pro-card';
 import '@ant-design/compatible/assets/index.css';
-import { Select, Input, message, InputNumber, Button, Affix, Form } from 'antd';
+import {
+  Select,
+  Input,
+  message,
+  InputNumber,
+  Button,
+  Affix,
+  Form,
+  Dropdown,
+} from 'antd';
 import { Anchor } from 'antd';
 import { useRequest, useMount, useUnmount } from 'ahooks';
 import { FormInstance } from 'antd/lib/form';
@@ -29,39 +38,60 @@ import { ProFormRadio } from '@ant-design/pro-form';
 import { handleDict, normFile, WrapTipText } from '../components/utils';
 import FileUpload from '../components/FileUpload';
 import PictureUpload from '../components/PictureUpload';
-import { getModelGroupById } from '@/services/material';
+import { getModelGroupById, getQiniuToken } from '@/services/material';
 import { useImmer } from 'use-immer';
 import { detailModel, addModel, editModel } from '@/services/diyModel';
+import { v4 as uuid } from 'uuid';
+import G from './three/globalValues';
 
 const three = new Three({
   type: 'back',
   width: 600,
   height: 600,
   getMeshParams,
+  cakeInfo: {
+    id: '830439381476909056',
+    modelGroupId: 37,
+    topModelGroupId: 2,
+    topModelGroupName: '第三方',
+    modelGroupName: '勿动',
+    name: '粉色蛋糕',
+    imageUrl:
+      'https://rf.blissmall.net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
+    modelType: 1,
+    url: 'https://rf.blissmall.net/31088d56-7664-430f-9388-a1de4627a367.glb',
+    shape: '圆形',
+    specs: '8寸',
+    canMove: false,
+    canRotate: false,
+    canSwing: false,
+    isMult: false,
+    canVeneer: false,
+    canSelect: false,
+    type: '蛋糕',
+    materials: [
+      {
+        target: 'cake_001',
+        material: 'lambert20SG_0',
+        roughness: 1,
+        color: '#FEDAD8',
+        emissive: '#0B0200',
+        envMap: [
+          'https://rf.blissmall.net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
+          'https://rf.blissmall.net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
+          'https://rf.blissmall.net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
+          'https://rf.blissmall.net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
+          'https://rf.blissmall.net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
+          'https://rf.blissmall.net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
+        ],
+        envMapIntensity: 0.4,
+      },
+    ],
+    y: G.CakeDeep,
+  },
 });
 
 const { Link } = Anchor;
-
-const infoData = {
-  url: 'https://rf.blissmall.net/c6dd6d1a-a6c8-432b-b26e-f500679f4766.glb',
-  type: '蛋糕',
-  name: 'Cake4',
-  deep: 0,
-  canMove: false,
-  canRotate: false,
-  canSwing: false,
-  canVeneer: false,
-  canSelect: false,
-  isMult: false,
-  materials: [
-    {
-      color: 16166578,
-      replace: true,
-    },
-  ],
-  y: -80,
-  size: [200, 80, 200],
-};
 
 const dict = handleDict({
   type: {
@@ -113,6 +143,11 @@ const MaterialEdit = (props) => {
   // 素材id
   const { materialId } = match.params;
   const isCreate = route.type === 'create';
+
+  if (isCreate) {
+    three.start();
+  }
+
   const reqDetailModel = useRequest(detailModel, {
     manual: true,
     initialData: {},
@@ -128,7 +163,13 @@ const MaterialEdit = (props) => {
       }
       let resultData = { ...rest, ...json };
 
-      resultData.type = resultData.modelType;
+      // 历史数据处理，为0的情况置空
+      resultData.type =
+        resultData.modelType === 0 ? undefined : resultData.modelType;
+
+      // 历史数据处理，为none的情况置空
+      resultData.cover =
+        resultData.cover === 'none' ? undefined : resultData.cover;
 
       resultData.orignData = { ...resultData };
 
@@ -142,12 +183,26 @@ const MaterialEdit = (props) => {
       return resultData;
     },
     onSuccess: (data: any) => {
+      // topModelGroupId,
+      // topModelGroupName,
+      // modelGroupId,
+      // modelGroupName,
+
       setState((draft) => {
         draft.materialsData = data.materials;
+        draft.topModelGroupData = [
+          {
+            label: data.topModelGroupName,
+            value: String(data.topModelGroupId),
+          },
+        ];
+        draft.modelGroupData = [
+          { label: data.modelGroupName, value: String(data.modelGroupId) },
+        ];
       });
 
-      three.start(() => {
-        three.loadModel(infoData, () => {
+      three.start(
+        () => {
           let loadModelParms: any = {
             ...handleFetchConverter(data.orignData),
             type: dict.type.valObj[String(data.orignData.modelType)],
@@ -161,8 +216,11 @@ const MaterialEdit = (props) => {
           if (data.orignData.url) {
             three.loadModel(loadModelParms);
           }
-        });
-      });
+        },
+        (err) => {
+          console.log(err);
+        },
+      );
 
       if (data.topModelGroupId) {
         reqGetModelGroupById.run({
@@ -200,20 +258,13 @@ const MaterialEdit = (props) => {
       }, 2000);
     },
   });
+
   const updateDiyMaterialValue = useRequest(editModel, {
     manual: true,
     onSuccess: () => {
       message.success('修改成功！');
-      setTimeout(() => {
-        // history.push(`/web/product/diy/material/goods/${categoryId}`);
-      }, 2000);
     },
   });
-
-  // console.log(
-  //   '🚀 ~ file: index.tsx ~ line 249 ~ MaterialEdit ~ reqDetailModel.data',
-  //   reqDetailModel.data,
-  // );
 
   const {
     name,
@@ -291,13 +342,9 @@ const MaterialEdit = (props) => {
       handlePicConverter(item),
     );
     resultData.materials = materials;
-    // console.log(
-    //   '🚀 ~ file: index.tsx ~ line 417 ~ handlePreview ~ resultData',
-    //   resultData,
-    // );
 
     resultData.type = dict.type.valObj[String(resultData.type)];
-    // three.clearScene();
+
     three.changMeshParams(resultData, () => {});
   };
 
@@ -318,19 +365,21 @@ const MaterialEdit = (props) => {
     const materials = Object.values(values_attribute).map((item) =>
       handleImgeConverter(item),
     );
+
     resultData = {
       topModelGroupId,
       modelGroupId,
       name,
       imageUrl,
-      type,
+      modelType: type,
+      modelToolJson: JSON.stringify({
+        ...restValues,
+        name: name,
+        type: dict.type.valObj[String(type)],
+        materials,
+      }),
     };
-    resultData.modelToolJson = JSON.stringify({
-      ...restValues,
-      materials,
-    });
-    resultData.modelType = resultData.type;
-    // console.log(resultData);
+
     if (isCreate) {
       addDiyMaterialValue.run(resultData);
     } else {
@@ -354,40 +403,38 @@ const MaterialEdit = (props) => {
 
       three.clearScene(true);
 
-      three.loadModel(infoData, () => {
-        three.loadModel(resultData, () => {
-          const meshArr = three.getMeshNames(three.selected);
+      three.loadModel(resultData, () => {
+        const meshArr = three.getMeshNames(three.selected);
 
-          setState((draft) => {
-            const oldMeshNameArr = state.materialsData.map(
-              ({ target }) => target,
-            );
-            const tipArr = [];
-            const newMaterials = meshArr.map(({ mesh, material }) => {
-              if (oldMeshNameArr.includes(mesh)) {
-                tipArr.push(mesh);
-                const cData = state.materialsData.find(({ target }) => {
-                  return target === mesh;
-                });
-                return {
-                  ...cData,
-                  material: material,
-                };
-              }
+        setState((draft) => {
+          const oldMeshNameArr = state.materialsData.map(
+            ({ target }) => target,
+          );
+          const tipArr = [];
+          const newMaterials = meshArr.map(({ mesh, material }) => {
+            if (oldMeshNameArr.includes(mesh)) {
+              tipArr.push(mesh);
+              const cData = state.materialsData.find(({ target }) => {
+                return target === mesh;
+              });
               return {
+                ...cData,
                 material: material,
-                target: mesh,
               };
-            });
-            if (tipArr.length > 0) {
-              message.warn(
-                `发现相同材质名称：${tipArr.join(
-                  ', ',
-                )}将保留设置，点击预览可查看最新效果！`,
-              );
             }
-            draft.materialsData = newMaterials;
+            return {
+              material: material,
+              target: mesh,
+            };
           });
+          if (tipArr.length > 0) {
+            message.warn(
+              `发现相同材质名称：${tipArr.join(
+                ', ',
+              )}将保留设置，点击预览可查看最新效果！`,
+            );
+          }
+          draft.materialsData = newMaterials;
         });
       });
     }
@@ -396,7 +443,7 @@ const MaterialEdit = (props) => {
   //<Skeleton loading={reqDetailModel.loading}>
   /* 编辑状态，确保请求数据后才显示form */
   // {
-
+  // console.log([1, 2, 7].includes( Number(baseForm.getFieldValue('type'))
   return (
     <>
       {(isCreate || (!isCreate && topModelGroupId)) && (
@@ -424,7 +471,7 @@ const MaterialEdit = (props) => {
                 y,
                 z,
                 canVeneer: isCreate ? false : canVeneer,
-                // deep: isCreate ? undefined : deep,
+                deep: isCreate ? undefined : deep,
                 canMove: isCreate ? false : canMove,
                 canRotate: isCreate ? false : canRotate,
                 canSwing: isCreate ? false : canSwing,
@@ -456,6 +503,7 @@ const MaterialEdit = (props) => {
                     allowClear
                   ></Select>
                 </Form.Item>
+
                 <Form.Item
                   name="modelGroupId"
                   label="第二级分组"
@@ -559,13 +607,17 @@ const MaterialEdit = (props) => {
               </ProCard>
 
               <ProCard title="模型缩放与位置" id="scaling_position">
-                <WrapTipText label="缩放比例" text="支持正负，小数点后保留2位">
+                <WrapTipText label="缩放比例" text="分别输入x,y,z的字符串">
                   <Form.Item name="scale" noStyle>
-                    <InputNumber style={{ width: 200 }} precision={2} />
+                    <Input
+                      style={{ width: 200 }}
+                      allowClear
+                      placeholder="缩放比例"
+                    />
                   </Form.Item>
-                  <span className={styles.unit}>%</span>
+                  {/* <span className={styles.unit}>%</span> */}
                 </WrapTipText>
-                <WrapTipText label="缩放尺寸" text="分别输入x、y、z的长度">
+                <WrapTipText label="缩放尺寸" text="分别输入x,y,z的字符串">
                   <Form.Item
                     name="size"
                     noStyle
@@ -576,9 +628,13 @@ const MaterialEdit = (props) => {
                       },
                     ]}
                   >
-                    <InputNumber style={{ width: 200 }} precision={2} />
+                    <Input
+                      style={{ width: 200 }}
+                      allowClear
+                      placeholder="缩放尺寸"
+                    />
                   </Form.Item>
-                  <span className={styles.unit}>cm</span>
+                  {/* <span className={styles.unit}>cm</span> */}
                 </WrapTipText>
                 <WrapTipText
                   label="模型默认位置X"
@@ -605,8 +661,19 @@ const MaterialEdit = (props) => {
                   </Form.Item>
                 </WrapTipText>
                 <WrapTipText label="模型深度" text="小于0，小数点后保留2位">
+                  {/* <Form.Item name="deep" noStyle dependencies={['type']}> */}
                   <Form.Item name="deep" noStyle>
-                    <InputNumber style={{ width: 200 }} precision={2} />
+                    {/* {() => {
+                      return ( */}
+                    <InputNumber
+                      style={{ width: 200 }}
+                      precision={2}
+                      // disabled={[1, 2, 7].includes(
+                      //   Number(baseForm.getFieldValue('type')),
+                      // )}
+                    />
+                    {/* );
+                    }} */}
                   </Form.Item>
                 </WrapTipText>
               </ProCard>
@@ -700,7 +767,11 @@ const MaterialEdit = (props) => {
             </Form>
 
             <ProCard title="材质属性" id="attribute">
-              <Attribute data={state.materialsData} formRef={attributeForm} />
+              <Attribute
+                name={name}
+                data={state.materialsData}
+                formRef={attributeForm}
+              />
             </ProCard>
           </ProCard>
 
@@ -719,12 +790,11 @@ const MaterialEdit = (props) => {
                     type="primary"
                     onClick={handleOnSubmit}
                     size="large"
-                    icon={<SaveOutlined />}
                   >
                     保存
                   </Button>
+
                   <Button
-                    icon={<CameraOutlined />}
                     className={styles.btn}
                     onClick={() => {
                       const link = document.createElement('a');
@@ -738,7 +808,51 @@ const MaterialEdit = (props) => {
                   </Button>
 
                   <Button
-                    icon={<BorderInnerOutlined />}
+                    className={styles.btn}
+                    onClick={async () => {
+                      const token: any = await getQiniuToken();
+                      let pic = three.getImage(true);
+                      pic = pic.replace('data:image/png;base64,', '');
+                      const keyName = `${uuid()}.png`;
+                      const url = `https://upload-z2.qiniup.com/putb64/-1/key/${window.btoa(
+                        keyName,
+                      )}`;
+                      const xhr = new XMLHttpRequest();
+                      xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4) {
+                          let o: any = {};
+                          try {
+                            o = JSON.parse(xhr.responseText);
+                          } catch (e) {
+                            message.error('设置失败');
+                          }
+                          if (o.key) {
+                            baseForm.setFieldsValue({
+                              imageUrl: [
+                                {
+                                  status: 'done',
+                                  url: `https://rf.blissmall.net/${o.key}`,
+                                  name: o.key,
+                                },
+                              ],
+                            });
+                          }
+                        }
+                      };
+                      xhr.open('POST', url, true);
+                      xhr.setRequestHeader(
+                        'Content-Type',
+                        'application/octet-stream',
+                      );
+                      xhr.setRequestHeader('Authorization', `UpToken ${token}`);
+                      xhr.send(pic);
+                    }}
+                    size="large"
+                  >
+                    设置预览图
+                  </Button>
+
+                  <Button
                     className={styles.btn}
                     onClick={() => {
                       setState((draft) => {
@@ -751,7 +865,6 @@ const MaterialEdit = (props) => {
                   </Button>
 
                   <Button
-                    icon={<EyeOutlined />}
                     className={styles.btn}
                     onClick={handlePreview}
                     size="large"
@@ -773,6 +886,15 @@ const MaterialEdit = (props) => {
                     <div></div>
                   </div>
                   <div id="prewContent" ref={prewContentRef}></div>
+                  <Button
+                    className={styles.btn}
+                    onClick={() => {
+                      history.goBack();
+                    }}
+                    size="large"
+                  >
+                    返回
+                  </Button>
                 </div>
               </Affix>
             </div>

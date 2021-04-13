@@ -5,7 +5,7 @@
 import { upload } from 'qiniu-js';
 import { getUploadToken } from '@/services/common';
 import moment from 'moment';
-import {getFileExtension,uuid} from '@/utils/util'
+import { getFileExtension, uuid } from '@/utils/util';
 
 export const buindTodayUplaodDir = ({
   beforeDir = 'files',
@@ -64,10 +64,9 @@ export const uploadRequest = ({
           onError(err);
         },
         complete(res) {
-          console.log('success', res);
           onSuccess({
             ...res,
-            url: '/' + res.key,
+            url: res.key,
             filename: newFileName,
           });
         },

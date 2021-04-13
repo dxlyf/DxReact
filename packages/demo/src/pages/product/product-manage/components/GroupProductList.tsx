@@ -2,32 +2,35 @@
  * 商品分组-添加商品-商品列表
  * @author fanyonglong
  */
-import React, { useCallback, useMemo,useState } from 'react';
-import { Modal,Space } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Modal, Space } from 'antd';
 import { useControllableValue } from 'ahooks';
-import FilterForm,{FilterFormFieldType} from '@/components/FilterForm';
-import Table,{RichTableColumnType} from '@/components/Table';
+import FilterForm, { FilterFormFieldType } from '@/components/FilterForm';
+import Table, { RichTableColumnType } from '@/components/Table';
 import useRequest from '@/common/hooks/useRequest';
 import { getGroupProductList } from '@/services/product';
 import { ImageView } from '@/components/Image';
-import {useTableSelection} from '@/common/hooks'
-import {PRODUCT} from '@/common/constants'
+import { useTableSelection } from '@/common/hooks';
+import { PRODUCT } from '@/common/constants';
 
-export let GroupProductList: React.FC<any> = ({dataItem,onChange}) => {
-let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection({ 
+export let GroupProductList: React.FC<any> = ({ dataItem, onChange }) => {
+  let [
+    { rowSelection, selectedRows },
+    { clearAllSelection },
+  ] = useTableSelection({
     keep: true,
-    onAllChange:onChange,
-    getCheckboxProps(record:any){
-        return {
-            disabled:!!record.isOptional
-        }
-    }
- });
-  const [{ tableProps,dataSource }, { query: showList }] = useRequest({
+    onAllChange: onChange,
+    getCheckboxProps(record: any) {
+      return {
+        disabled: !!record.isOptional,
+      };
+    },
+  });
+  const [{ tableProps, dataSource }, { query: showList }] = useRequest({
     service: getGroupProductList,
-    params:{
-        relId:dataItem.id, // 关联分组ID
-        relType:dataItem.relType //商品关联类型 1.商品分组 2.diy分组
+    params: {
+      relId: dataItem.id, // 关联分组ID
+      relType: dataItem.relType, //商品关联类型 1.商品分组 2.diy分组
     },
     transform: (d) => {
       return {
@@ -36,7 +39,10 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
       };
     },
   });
-  const alreaySelected=useMemo(()=>dataSource.filter((d:any)=>!!d.isOptional).map((d:any)=>d.id),[dataSource])
+  const alreaySelected = useMemo(
+    () => dataSource.filter((d: any) => !!d.isOptional).map((d: any) => d.id),
+    [dataSource],
+  );
   const fields = useMemo<FilterFormFieldType[]>(
     () => [
       {
@@ -52,7 +58,7 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
         type: 'shop',
         name: 'shopId',
         label: '商品归属',
-        props:{selectedIndex:1}
+        props: { selectedIndex: 1 },
       },
       {
         type: 'list',
@@ -63,7 +69,7 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
           { text: '全部', value: -1 },
           { text: '已上架', value: 1 },
           { text: '已下架', value: 2 },
-        ]
+        ],
       },
     ],
     [],
@@ -73,13 +79,13 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
       {
         title: '商品信息',
         dataIndex: 'productidInfo',
-        render(text:any, record: any) {
+        render(text: any, record: any) {
           return (
             <Space>
               <ImageView
                 width={60}
                 height={40}
-                src={record.imageUrl}
+                src={(record.imageUrl + '').split(',')[0]}
                 srcSuffix="?imageView2/1/w/60/h/40"
               ></ImageView>
               <Space direction="vertical" align="start">
@@ -97,30 +103,36 @@ let [{ rowSelection, selectedRows }, { clearAllSelection }] = useTableSelection(
       {
         title: '商品状态',
         dataIndex: 'status',
-        render(value:number){
-            return PRODUCT.PRODUCT_SCALE_STATUS.get(value,'text')
-        }
+        render(value: number) {
+          return PRODUCT.PRODUCT_SCALE_STATUS.get(value, 'text');
+        },
       },
       {
-        title: '商品分类',
+        title: '电商云商品分类',
         dataIndex: 'categoryName',
-      }
+      },
     ],
     [],
   );
   return (
     <div>
       <FilterForm fields={fields} autoBind onQuery={showList}></FilterForm>
-      <Table scroll={{y:"calc(100vh - 500px)"}} rowKey="id" columns={columns} {...tableProps} rowSelection={{
+      <Table
+        scroll={{ y: 'calc(100vh - 500px)' }}
+        rowKey="id"
+        columns={columns}
+        {...tableProps}
+        rowSelection={{
           ...rowSelection,
-          selectedRowKeys:rowSelection?.selectedRowKeys.concat(alreaySelected)
-      }}></Table>
+          selectedRowKeys: rowSelection?.selectedRowKeys.concat(alreaySelected),
+        }}
+      ></Table>
     </div>
   );
 };
 let GroupProductListModal: React.FC<any> = (props) => {
-  let {dataItem,onOk}=props
-  let [selectedRows,setSelectedRows]=useState<any[]>([])
+  let { dataItem, onOk } = props;
+  let [selectedRows, setSelectedRows] = useState<any[]>([]);
   let [visible, setVisible] = useControllableValue(props, {
     defaultValue: false,
     defaultValuePropName: 'defaultVisible',
@@ -129,18 +141,20 @@ let GroupProductListModal: React.FC<any> = (props) => {
   });
   const onCancelHandle = useCallback(() => {
     setVisible(false);
-    setSelectedRows([])
+    setSelectedRows([]);
   }, []);
-  const onChangeHandle = useCallback((selectedRows:any[]) => {
-        setSelectedRows([...selectedRows])
+  const onChangeHandle = useCallback((selectedRows: any[]) => {
+    setSelectedRows([...selectedRows]);
   }, []);
-  const onOkHandle=useCallback(()=>{
-    if(onOk){
-        onOk([...selectedRows])
-        onCancelHandle()
+  const onOkHandle = useCallback(() => {
+    if (onOk) {
+      onOk([...selectedRows]);
+      onCancelHandle();
     }
-  },[onOk,selectedRows,onCancelHandle])
-  let okText=`确认选择${selectedRows.length?`(${selectedRows.length})`:''}`
+  }, [onOk, selectedRows, onCancelHandle]);
+  let okText = `确认选择${
+    selectedRows.length ? `(${selectedRows.length})` : ''
+  }`;
   return (
     <Modal
       width="70%"
@@ -151,7 +165,10 @@ let GroupProductListModal: React.FC<any> = (props) => {
       okText={okText}
       title=" 添加商品"
     >
-      <GroupProductList dataItem={dataItem} onChange={onChangeHandle}></GroupProductList>
+      <GroupProductList
+        dataItem={dataItem}
+        onChange={onChangeHandle}
+      ></GroupProductList>
     </Modal>
   );
 };

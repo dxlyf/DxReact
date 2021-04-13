@@ -20,8 +20,8 @@ import {
 import { UploadImage, UploadVideo, useUplaodImage } from '@/components/Upload';
 import classNames from 'classnames';
 import DSYunProductListModal from './components/DSYunProductList';
-import { connect, ConnectRC, Loading,history } from 'umi';
-import { get,throttle } from 'lodash';
+import { connect, ConnectRC, Loading, history } from 'umi';
+import { get, throttle } from 'lodash';
 import { transformFilesToUrls } from '@/utils/util';
 import Editor from '@/components/Editor';
 import type {
@@ -122,18 +122,20 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
         imageUrl: transformFilesToUrls(formData.imageUrl).join(','),
         videoUrl: transformFilesToUrls(formData.videoUrl).join(''),
         propertyStr: detail.propertyStr,
-        linePrice:!isNaN(parseFloat(formData.linePrice))
-            ? Number(formData.linePrice)*100
-            : undefined,
-        productGroupNameStr:Array.isArray(formData.productGroupNameStr)?formData.productGroupNameStr.join(','):'',
+        linePrice: !isNaN(parseFloat(formData.linePrice))
+          ? Number(formData.linePrice) * 100
+          : undefined,
+        productGroupNameStr: Array.isArray(formData.productGroupNameStr)
+          ? formData.productGroupNameStr.join(',')
+          : '',
         diyModelId: formData.diyModelId,
         shopProductItemList: detail.shopProductItemList.map((spec: any) => {
           let specFormItem = skuData.skus[spec.id];
           let specData: any = {
             productItemNo: spec.productItemNo,
             imageUrl: transformFilesToUrls(specFormItem.imageUrl).join(''),
-            recommendedPrice: Number(specFormItem.recommendedPrice)*100,
-            price: Number(specFormItem.price)*100,
+            recommendedPrice: Number(specFormItem.recommendedPrice) * 100,
+            price: Number(specFormItem.price) * 100,
             stockNum: specFormItem.stockNum,
             isEnable: specFormItem.isEnable,
             diyModelId: specFormItem.diyModelId,
@@ -188,7 +190,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
             payload: finalSubmitData,
           }).then(() => {
             message.success('修改商品成功！');
-            history.push('/product/product-manage/list')
+            history.push('/product/product-manage/list');
           });
         } else {
           dispatch({
@@ -196,7 +198,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
             payload: finalSubmitData,
           }).then(() => {
             message.success('添加商品成功！');
-            history.push('/product/product-manage/list')
+            history.push('/product/product-manage/list');
           });
         }
       }
@@ -210,7 +212,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
         categoryName: detail.categoryName,
         categoryTypeName: detail.categoryTypeName,
         name: detail.name,
-        imageUrl: detail.imageUrl
+        imageUrl: detail.imageUrl,
       });
     },
     [],
@@ -296,14 +298,16 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
     <>
       <Card
         title={
-          !productEditId&&<Button
-            type="primary"
-            onClick={() => {
-              setVisibleDSYunModal(true);
-            }}
-          >
-            选择商品
-          </Button>
+          !productEditId && (
+            <Button
+              type="primary"
+              onClick={() => {
+                setVisibleDSYunModal(true);
+              }}
+            >
+              选择商品
+            </Button>
+          )
         }
       >
         <Steps style={{ width: 400, margin: '0 auto' }} current={currentStep}>
@@ -361,10 +365,18 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
                     >
                       <Input disabled></Input>
                     </Form.Item>
-                    <Form.Item label="商品分类" initialValue={detail.categoryName} name="categoryName">
+                    <Form.Item
+                      label="商品分类"
+                      initialValue={detail.categoryName}
+                      name="categoryName"
+                    >
                       <Input disabled></Input>
                     </Form.Item>
-                    <Form.Item label="商品名称" initialValue={detail.name} name="name">
+                    <Form.Item
+                      label="商品名称"
+                      initialValue={detail.name}
+                      name="name"
+                    >
                       <Input disabled></Input>
                     </Form.Item>
                     <Form.Item
@@ -381,7 +393,11 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
                     >
                       <Input maxLength={50}></Input>
                     </Form.Item>
-                    <Form.Item label="商品卖点" name="productDesc" initialValue={detail.productDesc}>
+                    <Form.Item
+                      label="商品卖点"
+                      name="productDesc"
+                      initialValue={detail.productDesc}
+                    >
                       <Input maxLength={50}></Input>
                     </Form.Item>
                     <Form.Item
@@ -408,14 +424,21 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
                       ></UploadVideo>
                     </Form.Item>
 
-                    <Form.Item label="DIY商品模型" initialValue={detail.diyModelId}>
+                    <Form.Item
+                      label="DIY商品模型"
+                      initialValue={detail.diyModelId}
+                    >
                       <Input.Group>
                         <Form.Item name="diyModelId">
                           <DIYModelSelect></DIYModelSelect>
                         </Form.Item>
                       </Input.Group>
                     </Form.Item>
-                    <Form.Item label="商品分组" name="productGroupNameStr" initialValue={detail.productGroupNameStr}>
+                    <Form.Item
+                      label="商品分组"
+                      name="productGroupNameStr"
+                      initialValue={detail.productGroupNameStr}
+                    >
                       <ProductGroupSelect></ProductGroupSelect>
                     </Form.Item>
                   </Card>
@@ -462,23 +485,30 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
                       <Input
                         prefix={<span>￥</span>}
                         style={{ width: 120 }}
-                        onBlur={()=>{
-                             let linePrice=formDetail.getFieldValue('linePrice')
-                             let isNumber=regexp_number.test(linePrice)
-                            formDetail.setFieldsValue({
-                              linePrice:!isNumber||(isNumber&&Number(linePrice)<=0)?'':Number(linePrice).toFixed(2)
-                            })
+                        onBlur={() => {
+                          let linePrice = formDetail.getFieldValue('linePrice');
+                          let isNumber = regexp_number.test(linePrice);
+                          formDetail.setFieldsValue({
+                            linePrice:
+                              !isNumber || (isNumber && Number(linePrice) <= 0)
+                                ? ''
+                                : Number(linePrice).toFixed(2),
+                          });
                         }}
                       ></Input>
                     </Form.Item>
                   </Card>
                   <Form.Item label={<span></span>} colon={false}>
-                    <Button htmlType="submit" type="primary" onClick={(e)=>{
-                              if(detail.productNo===''){
-                                message.error('请先选择商品')
-                                e.preventDefault()
-                              }
-                    }}>
+                    <Button
+                      htmlType="submit"
+                      type="primary"
+                      onClick={(e) => {
+                        if (detail.productNo === '') {
+                          message.error('请先选择商品');
+                          e.preventDefault();
+                        }
+                      }}
+                    >
                       下一步
                     </Button>
                   </Form.Item>
