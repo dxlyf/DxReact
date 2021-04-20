@@ -256,8 +256,11 @@ function DragControls(_objects, _camera, _domElement) {
     if (_lock) obj = _lock;
     else if (scope.transformGroup === true) {
       obj = _intersections[0].object;
-      if (!obj.parent) return null;
-      while (!(obj.parent instanceof Scene)) obj = obj.parent;
+      if (!obj || !obj.parent) return null;
+      while (!(obj.parent instanceof Scene)) {
+        if (!obj.parent) return null;
+        else obj = obj.parent;
+      }
     } else {
       obj = _intersections[0].object;
     }

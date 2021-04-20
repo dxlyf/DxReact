@@ -9,6 +9,8 @@ type ThreeObjectParams = {
   width: number;
   height: number;
   cakeInfo?: any;
+  cardInfo?: any;
+  font?: string;
 }
 type Error = (err: string) => void;
 type LoadSuccess = (object: Group) => void;
@@ -44,11 +46,11 @@ export default class ThreeObject {
 
   domElement: HTMLCanvasElement;
   onClickModel: (object?: Group | null, from?: number) => void;
-  ready: boolean;
   font: Font;
   card: Group;
+  ready: boolean;
   initText: (success?: InitTextSuccess, error?: Error) => void;
-  loadTextCard: (url: string, scale: number, success?: LoadSuccess, error?: Error) => void;
+  loadTextCard: (info: any, success?: LoadSuccess, error?: Error) => void;
   loadTextFont: (url: string, success?: FontSuccess, error?: Error) => void;
   showLogo: (data: LogoInfo, success?: LoadSuccess, error?: Error) => void;
   showBackgroud: (urls: string[], success?: BackupSuccess, error?: Error) => void;
@@ -73,7 +75,7 @@ export default class ThreeObject {
   resetObject: (group: Group | null) => void;
   setSceneHeight: () => void;
   changMeshParams: (info: any, success?: LoadSuccess, error?: Error, object?: Group) => void;
-  getMeshNames: (group: Group) => MeshNames[];  
+  getMeshNames: (group: Group) => MeshNames[];
   store: Group[];
   dragObjects: Group[];
   heightObjects: Group[];

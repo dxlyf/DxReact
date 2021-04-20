@@ -69,10 +69,11 @@ const BasicLayoutWrapper: React.FC<{ settings: any } & ConnectProps> = ({
   children,
   ...restProps
 }) => {
+  
   return (
     <ProLayout
       logo={logo}
-      title="admin"
+      title="商家管理后台"
       className="basic-layout-wrapper"
       {...settings}
       route={route}

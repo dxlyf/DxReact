@@ -19,6 +19,7 @@ import {
   Affix,
   Form,
   Dropdown,
+  Upload,
 } from 'antd';
 import { Anchor } from 'antd';
 import { useRequest, useMount, useUnmount } from 'ahooks';
@@ -26,6 +27,7 @@ import { FormInstance } from 'antd/lib/form';
 import styles from './materialEdit.module.less';
 import { history } from 'umi';
 import Three from './three';
+import { Box3, Vector3 } from 'three';
 import { getMeshParams } from './three/convert';
 import Attribute from './Attribute';
 import {
@@ -57,9 +59,9 @@ const three = new Three({
     modelGroupName: '勿动',
     name: '粉色蛋糕',
     imageUrl:
-      'https://rf.blissmall.net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
+      'https://rf..net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
     modelType: 1,
-    url: 'https://rf.blissmall.net/31088d56-7664-430f-9388-a1de4627a367.glb',
+    url: 'https://rf..net/31088d56-7664-430f-9388-a1de4627a367.glb',
     shape: '圆形',
     specs: '8寸',
     canMove: false,
@@ -77,12 +79,12 @@ const three = new Three({
         color: '#FEDAD8',
         emissive: '#0B0200',
         envMap: [
-          'https://rf.blissmall.net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
-          'https://rf.blissmall.net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
-          'https://rf.blissmall.net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
-          'https://rf.blissmall.net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
-          'https://rf.blissmall.net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
-          'https://rf.blissmall.net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
+          'https://rf..net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
+          'https://rf..net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
+          'https://rf..net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
+          'https://rf..net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
+          'https://rf..net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
+          'https://rf..net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
         ],
         envMapIntensity: 0.4,
       },
@@ -92,6 +94,16 @@ const three = new Three({
 });
 
 const { Link } = Anchor;
+
+const getSize = (group) => {
+  const box = new Box3();
+  box.setFromObject(group);
+  const size = box.getSize(new Vector3());
+  const arr = Object.values(size).map((item) => {
+    return item.toFixed(2);
+  });
+  return arr.join(', ');
+};
 
 const dict = handleDict({
   type: {
@@ -138,6 +150,7 @@ const MaterialEdit = (props) => {
     modelGroupData: [],
     materialsData: [],
     gridFlag: false,
+    size: '',
   });
 
   // 素材id
@@ -214,7 +227,11 @@ const MaterialEdit = (props) => {
           }
 
           if (data.orignData.url) {
-            three.loadModel(loadModelParms);
+            three.loadModel(loadModelParms, (group) => {
+              setState((draft) => {
+                draft.size = getSize(group);
+              });
+            });
           }
         },
         (err) => {
@@ -345,7 +362,11 @@ const MaterialEdit = (props) => {
 
     resultData.type = dict.type.valObj[String(resultData.type)];
 
-    three.changMeshParams(resultData, () => {});
+    three.changMeshParams(resultData, (group) => {
+      setState((draft) => {
+        draft.size = getSize(group);
+      });
+    });
   };
 
   // 保存提交
@@ -401,9 +422,13 @@ const MaterialEdit = (props) => {
 
       resultData.type = dict.type.valObj[String(resultData.type)];
 
-      three.clearScene(true);
+      three.clearScene();
 
-      three.loadModel(resultData, () => {
+      three.loadModel(resultData, (group) => {
+        setState((draft) => {
+          draft.size = getSize(group);
+        });
+
         const meshArr = three.getMeshNames(three.selected);
 
         setState((draft) => {
@@ -567,6 +592,14 @@ const MaterialEdit = (props) => {
                     maxCount={1}
                     accept=".glb, .gilb"
                     onChange={handleFileUpload}
+                    beforeUpload={async () => {
+                      try {
+                        await baseForm.validateFields();
+                        return true;
+                      } catch (e) {
+                        return Upload.LIST_IGNORE;
+                      }
+                    }}
                   />
                 </Form.Item>
 
@@ -831,7 +864,7 @@ const MaterialEdit = (props) => {
                               imageUrl: [
                                 {
                                   status: 'done',
-                                  url: `https://rf.blissmall.net/${o.key}`,
+                                  url: `https://rf..net/${o.key}`,
                                   name: o.key,
                                 },
                               ],
@@ -895,6 +928,12 @@ const MaterialEdit = (props) => {
                   >
                     返回
                   </Button>
+                  <Input
+                    size="large"
+                    className={styles.text}
+                    value={state.size}
+                    disabled
+                  />
                 </div>
               </Affix>
             </div>

@@ -79,7 +79,7 @@ const PictureUpload = (props) => {
   const handleChange = ({ fileList }) => {
     const newFileList = fileList.map((file) => {
       if (file.response) {
-        file.url = `https://rf.blissmall.net/${file.response}`;
+        file.url = `https://rf..net/${file.response}`;
         file.name = `${file.response}`;
         file.thumbUrl = file.thumbUrl;
       }

@@ -57,7 +57,7 @@ const QiniuFileUpload = (props) => {
     // );
     const newFileList = fileList.map((file) => {
       if (file.response) {
-        file.url = `https://rf.blissmall.net/${file.response}`;
+        file.url = `https://rf..net/${file.response}`;
         file.name = file.response;
       }
       return file;
@@ -79,6 +79,7 @@ const QiniuFileUpload = (props) => {
         onChange={handleChange}
         multiple={props.multiple}
         maxCount={props.maxCount}
+        beforeUpload={props.beforeUpload}
       >
         <Button icon={<UploadOutlined />}>上传文件</Button>
       </Upload>

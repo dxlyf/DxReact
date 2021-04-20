@@ -291,7 +291,9 @@
              return { props: { colSpan: 0 } };
            }
            switch (record.status) {
-             case ORDER.ORDER_STATUS.enums.value0.value:
+             case ORDER.ORDER_STATUS.enums.value5.value:
+              return { props: { colSpan: 0 } }; 
+             default:
                return <a onClick={onCancelOrder.bind(null, record)}>取消订单</a>;
            }
          },

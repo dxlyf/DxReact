@@ -115,7 +115,7 @@ const RenderList = ({ modelListData, isSelected, toggle, handleCopy }) => {
             }}
             width={130}
             height={130}
-            src={`https://rf.blissmall.net/${imageUrl}?imageView2/1/w/150/h/150`}
+            src={`https://rf..net/${imageUrl}?imageView2/1/w/150/h/150`}
             fallback={imgFaillBack}
           />
           <div className={styles.toolsBox}>

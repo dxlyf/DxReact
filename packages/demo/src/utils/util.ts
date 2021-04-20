@@ -11,6 +11,7 @@ import app from './app';
  *  const CATEGORY_TYPES=valuesKeyMap([{
         value:1,
         text:'现做蛋糕',
+        enum:"xianzuodagao"
         type:"生产类"
     },{
         value:2,
@@ -31,8 +32,15 @@ import app from './app';
     }],'value')
 
     CATEGORY_TYPES.values.map(d=><Item><Item>)
-    CATEGORY_TYPES.get(1,'text','defaultValue')
-    CATEGORY_TYPES.map.get(1).type
+    CATEGORY_TYPES.values // result T[]
+    CATEGORY_TYPES.get(1,'text','defaultValue') // result:现做蛋糕
+    CATEGORY_TYPES.map.get(1).type //result:生产类
+    CATEGORY_TYPES.enums.xianzuodagao.value //result:1
+    CATEGORY_TYPES.enums.value1.value  // result:2
+
+    if(status===CATEGORY_TYPES.enums.xianzuodagao.value){
+        // code
+    }
  * ```
  * 
 */

@@ -3,7 +3,7 @@
  * @author fanyonglong
  */
 import React, { useCallback, useState } from 'react';
-import { connect, ConnectProps, history, Loading } from 'umi';
+import { connect, ConnectProps, history, Loading,Helmet } from 'umi';
 import { Form, Input, Button, message, Space, Typography } from 'antd';
 import { UserModelState } from '@/models/user';
 import { useInterval } from 'ahooks';
@@ -48,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location, loginLoading }) => {
         payload: {
           clientId: app.clientType,
           loginName: values.loginName,
-          typeCode: 'retailAdminLogin',
+          typeCode: 'AdminLogin',
         },
       })
         .then((data: any) => {
@@ -138,6 +138,9 @@ const Login: React.FC<LoginProps> = ({ dispatch, location, loginLoading }) => {
 
   return (
     <div className={styles.container}>
+      <Helmet>
+        <title>登录 - 商家管理后台</title>
+      </Helmet>
       <div className={styles.bg}></div>
       <div className={styles.loginWrap}>
         <div className={styles.logo}></div>

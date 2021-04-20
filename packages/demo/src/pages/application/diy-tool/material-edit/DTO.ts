@@ -17,14 +17,14 @@ export const handleNull = (data) => {
 };
 
 export const handleRemovePathName = (v) => {
-  return v.replace('https://rf.blissmall.net', '');
+  return v.replace('https://rf..net', '');
 };
 
 export const handleAddPathName = (v) => {
   const url = v.replace(/^\//g, '');
   return /(http|https):\/\/([\w.]+\/?)\S*/gi.test(url)
     ? url
-    : `https://rf.blissmall.net/${url}`;
+    : `https://rf..net/${url}`;
 };
 
 /**

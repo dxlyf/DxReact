@@ -36,8 +36,7 @@ import {
 import G, { panInfo, cursorInfo } from './globalValues';
 
 function ThreeObject(params) {
-  const
-    { getMeshParams, type, width, height, cakeInfo } = params,
+  const { getMeshParams, type, width, height, cakeInfo } = params,
     isBack = type === 'back',
     isFront = type === 'front',
     isShowcase = type === 'showcase',
@@ -46,7 +45,9 @@ function ThreeObject(params) {
     store = [],
     dragObjects = [], //可拖曳物件
     heightObjects = [];
+
   let ready = false,
+    skyTypeList = [],
     onClickModel = null,
     pan = null,
     cursor = null,
@@ -58,8 +59,10 @@ function ThreeObject(params) {
     orgMaterials = null,
     cakeSize = G.CakeDiam,
     cakeColor = -1,
-    textCard = `${G.HostUrl}/Card.glb`,
-    textFont = `${G.HostUrl}/FZSTK.TTF`;
+    cardInfo = params.cardInfo
+      ? params.cardInfo
+      : { url: `${G.HostUrl}/Card.glb`, type: '字牌', name: '字牌' }, //--
+    textFont = params.font ? params.font : `${G.HostUrl}/FZSTK.TTF`; //--
 
   //场景
   const scene = new Scene();
@@ -91,7 +94,7 @@ function ThreeObject(params) {
     //设置相机位置
     camera.position.set(0, 0, 600);
   } else {
-    camera.position.set(0, 800, 800); //--
+    camera.position.set(0, 800, 800);
   }
   camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
 
@@ -120,6 +123,7 @@ function ThreeObject(params) {
     controls.minDistance = 50;
     controls.addEventListener('change', animate);
   } else if (isShowcase) {
+    controls.addEventListener('change', animate);
     controls.autoRotateSpeed = 3;
   }
 
@@ -160,7 +164,7 @@ function ThreeObject(params) {
       default:
         break;
     }
-    if (isBack) animate();
+    if (!isFront) animate();
   }
   dragControls.addEventListener('dragstart', dragHandle);
   dragControls.addEventListener('drag', dragHandle);
@@ -168,13 +172,12 @@ function ThreeObject(params) {
 
   // 场景渲染
   function animate() {
-    if (!isBack) {
+    if (isFront) {
       requestAnimationFrame(animate);
       controls.update();
     }
     renderer.render(scene, camera);
   }
-
 
   function loadPan(success, error) {
     loadModel(
@@ -192,7 +195,7 @@ function ThreeObject(params) {
       () => {
         if (error) error('加载底座失败');
       },
-      panInfo
+      panInfo,
     );
   }
   function loadCursor(success, error) {
@@ -212,7 +215,7 @@ function ThreeObject(params) {
       () => {
         if (error) error('加载光标失败');
       },
-      cursorInfo
+      cursorInfo,
     );
   }
   function loadBasicCake(success, error) {
@@ -223,8 +226,8 @@ function ThreeObject(params) {
           animate();
           if (success) success();
         },
-        (err) => { if (error) error(err); }
-      )
+        error,
+      );
     } else {
       animate();
       if (success) success();
@@ -236,28 +239,22 @@ function ThreeObject(params) {
       loadBasicCake(success, error);
       return;
     }
-    loadPan(
-      () => {
-        if (isBack) {
-          ready = true;
+    loadPan(() => {
+      ready = true;
+      if (isBack) {
+        loadBasicCake(success, error);
+      } else if (isFront) {
+        loadCursor(() => {
           loadBasicCake(success, error);
-        } else if (isFront) {
-          ready = true;
-          loadCursor(
-            () => {
-              loadBasicCake(success, error);
-            },
-            error
-          );
-        } else {
-          animate();
-          if (success) success();
-        }
-      },
-      error
-    )
+        }, error);
+      } else {
+        if (success) success();
+      }
+    }, error);
   }
-
+  function getSkuTypeList(arr) {
+    skyTypeList = arr;
+  }
   //显示背景
   function showBackgroud(urls, success, error) {
     if (!urls) {
@@ -269,7 +266,7 @@ function ThreeObject(params) {
       (map) => {
         scene.background = map;
         scene.data = urls;
-        if (isBack) animate();
+        if (!isFront) animate();
         if (success) success(map);
       },
       undefined,
@@ -322,13 +319,11 @@ function ThreeObject(params) {
         logo.position.y = y;
         logo.data = data;
         scene.add(logo);
-        if (isBack) animate();
+        if (!isFront) animate();
         if (success) success(logo);
       },
       undefined,
-      (message) => {
-        if (error) error(message);
-      },
+      error,
     );
   }
   //更改背景透明度
@@ -365,7 +360,7 @@ function ThreeObject(params) {
               setOtherSize(group, cakeSize / G.CakeDiam);
             } else if (objectType === '贴面') {
               remove = findObjects({ type: ['围边'] });
-              stickFromCameraToCake(group); 
+              stickFromCameraToCake(group);
             } else if (ready) {
               setObjectHeight(group, heightObjects);
             }
@@ -398,7 +393,7 @@ function ThreeObject(params) {
                 });
                 orgMaterials = ms;
                 animate();
-                if (isBack) animate();
+                if (!isFront) animate();
               }
             }
             selected = group;
@@ -418,29 +413,25 @@ function ThreeObject(params) {
   // 初始化字牌
   function initText(success, error) {
     loadTextCard(
-      textCard,
-      1200,
+      cardInfo,
       () => {
         loadTextFont(
           textFont,
           () => {
             if (success) success({ card, font });
           },
-          (err) => {
-            if (error) error(err);
-          },
+          error,
         );
       },
-      (err) => {
-        if (error) error(err);
-      },
+      error,
     );
   }
-  function loadTextCard(url, scale, success, error) {
-    loadCard(url, scale)
+  function loadTextCard(info, success, error) {
+    cardInfo = info;
+    const data = getMeshParams(cardInfo);
+    loadCard(data.url, data.scale)
       .then((c) => {
         card = c;
-        textCard = url;
         if (success) success(c);
       })
       .catch(() => {
@@ -448,11 +439,11 @@ function ThreeObject(params) {
       });
   }
   function loadTextFont(url, success, error) {
+    textFont = url;
     loadFont(url)
       .then((f) => {
         font = f;
         textFont = url;
-        if (isBack) animate();
         if (success) success(f);
       })
       .catch(() => {
@@ -460,28 +451,11 @@ function ThreeObject(params) {
       });
   }
   //展示字牌
-  function showText(txt, imageUrl, success, error) {
-    if (font === null && error) error('字体未始化');
-    const info = {
-      shopProductId: '021983893242444433',
-      categoryType: 99090,
-      imageUrl,
-      text: txt,
-    };
-    const data = {
-      url: textCard,
-      type: '字牌',
-      name: '字牌',
-      deep: 0,
-      canMove: true,
-      canRotate: true,
-      canSwing: false,
-      canVeneer: false,
-      canSelect: true,
-      isMult: false,
-      text: txt,
-      font: textFont,
-    };
+  function showText(txt, success, error) {
+    if ((font === null || card === null) && error) error('字体未始化');
+    const data = getMeshParams(cardInfo);
+    data.text = txt;
+    data.textFont = textFont;
 
     if (text) {
       deleteObject(text);
@@ -503,7 +477,7 @@ function ThreeObject(params) {
       }
       try {
         text = createText(txt, font, card);
-        text = Object.assign(text, { data, info });
+        text = Object.assign(text, { data, info: cardInfo });
         let gPy = text.getObjectByName('gPy'),
           gRy = text.getObjectByName('gRy'),
           gRxz = text.getObjectByName('gRxz');
@@ -517,7 +491,7 @@ function ThreeObject(params) {
         scene.add(text);
         store.push(text);
         dragObjects.push(text);
-        if (isBack) animate();
+        if (!isFront) animate();
         if (success) success(text);
       } catch (err) {
         if (error) error('字牌创建失败');
@@ -541,7 +515,7 @@ function ThreeObject(params) {
     group.getObjectByName('gRy').position.y = group.data.y;
     group.getObjectByName('gRxz').rotation.x = 0;
     group.getObjectByName('gRxz').rotation.z = 0;
-    if (isBack) animate();
+    if (!isFront) animate();
   }
   //刷新场景模型的Y轴
   function setSceneHeight() {
@@ -550,7 +524,12 @@ function ThreeObject(params) {
         setObjectHeight(g, heightObjects);
       }
     });
-    if (isBack) animate();
+    if (!isFront) animate();
+  }
+  function findSkuObjects(from) {
+    let data = this.getSceneObjectWithoutCake(),
+      cake = this.findObjects({ type: '蛋糕' });
+    return [data, cake];
   }
   //查找模型
   function findObjects(data, without, array) {
@@ -607,7 +586,7 @@ function ThreeObject(params) {
         }
       }
     }
-    if (!withoutRender && isBack) animate();
+    if (!withoutRender && !isFront) animate();
   }
   //清空场景
   function clearScene(withCake) {
@@ -623,7 +602,7 @@ function ThreeObject(params) {
       heightObjects.push(cake);
       if (isBack) dragObjects.push(cake);
     }
-    if (isBack) animate();
+    if (!isFront) animate();
   }
   //截图
   function getImage(withoutBackgroud) {
@@ -669,7 +648,7 @@ function ThreeObject(params) {
           z: object.position.z,
         },
         rotation: { x: gRxz.rotation.x, y: gRy.rotation.y, z: gRxz.rotation.z },
-        scale: group.scale.clone()
+        scale: group.scale.clone(),
       });
     });
     return {
@@ -678,14 +657,21 @@ function ThreeObject(params) {
       objectsInfo,
       size: cakeSize,
       color: cakeColor,
-      cameraPosition: [camera.position.x, camera.position.y, camera.position.z]
+      cameraPosition: [camera.position.x, camera.position.y, camera.position.z],
     };
   }
   //还原场景
   function setSceneData(json, success, error) {
     clearScene(true);
     pan.position.y = 0;
-    const { backgroundInfo, logoInfo, objectsInfo, size, color, cameraPosition } = json;
+    const {
+      backgroundInfo,
+      logoInfo,
+      objectsInfo,
+      size,
+      color,
+      cameraPosition,
+    } = json;
     function nextStep1() {
       showLogo(logoInfo, nextStep2, (err) => {
         nextStep2();
@@ -694,8 +680,7 @@ function ThreeObject(params) {
     function nextStep2() {
       const objects = [...objectsInfo];
       function setLocaltion(object, info) {
-        const
-          gRy = object.getObjectByName('gRy'),
+        const gRy = object.getObjectByName('gRy'),
           gRxz = object.getObjectByName('gRxz'),
           group = gRxz.children[0];
         object.position.set(info.position.x, 0, info.position.z);
@@ -711,13 +696,11 @@ function ThreeObject(params) {
           if (object.data.text && object.data.text !== '') {
             showText(
               object.data.text,
-              object.info.imageUrl,
+              object.info,
               (group) => {
                 setLocaltion(group, object);
               },
-              (err) => {
-                if (error) error(err);
-              },
+              error,
             );
           } else {
             loadModel(
@@ -725,14 +708,16 @@ function ThreeObject(params) {
               (group) => {
                 setLocaltion(group, object);
               },
-              (err) => {
-                if (error) error(err);
-              },
+              error,
               object.data,
             );
           }
         } else {
-          camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+          camera.position.set(
+            cameraPosition[0],
+            cameraPosition[1],
+            cameraPosition[2],
+          );
           cakeSize = size;
           if (color !== -1) setCakeColor(color);
           setSceneHeight();
@@ -781,15 +766,12 @@ function ThreeObject(params) {
     if (changeType) {
       if (data.type === '蛋糕') {
         const cake = findObjects({ type: '蛋糕' });
-        if(cake.length > 0) deleteObject(cake[0]);
+        if (cake.length > 0) deleteObject(cake[0]);
       }
       if (object.data.type === '蛋糕') {
-        loadBasicCake(
-          () => {
-            formatObject();
-          },
-          error
-        );
+        loadBasicCake(() => {
+          formatObject();
+        }, error);
       } else {
         formatObject();
       }
@@ -801,13 +783,21 @@ function ThreeObject(params) {
         .then((group) => {
           group.position.copy(object.position);
           const objectType = group.data.type;
-          if (objectType === '蛋糕' || objectType === '围边' || objectType === '淋边') {
+          if (
+            objectType === '蛋糕' ||
+            objectType === '围边' ||
+            objectType === '淋边'
+          ) {
           } else if (objectType === '贴面') {
             if (changeType) {
               stickFromCameraToCake(group);
             } else {
-              group.getObjectByName('gRy').rotation.y = object.getObjectByName('gRy').rotation.y;
-              group.getObjectByName('gPy').position.y = object.getObjectByName('gPy').position.y;
+              group
+                .getObjectByName('gPy')
+                .position.copy(object.getObjectByName('gPy').position);
+              group
+                .getObjectByName('gRy')
+                .rotation.copy(object.getObjectByName('gRy').rotation);
             }
           } else {
             setObjectHeight(group, heightObjects);
@@ -820,7 +810,7 @@ function ThreeObject(params) {
           store.push(group);
           selected = group;
           animate();
-          if (isBack) animate();
+          if (!isFront) animate();
           if (success) success(group);
         })
         .catch(() => {
@@ -869,7 +859,7 @@ function ThreeObject(params) {
         return false;
       });
     }
-    if (isBack) animate();
+    if (!isFront) animate();
   }
   //把物件贴在蛋糕旁边
   function stickToCake(object, outside) {
@@ -877,7 +867,7 @@ function ThreeObject(params) {
     if (object) {
       setCakeVeneer(object, heightObjects, outside);
     }
-    if (isBack) animate();
+    if (!isFront) animate();
   }
   //把物件以相机方向贴在蛋糕旁边
   function stickFromCameraToCake(object, outside) {
@@ -921,6 +911,7 @@ function ThreeObject(params) {
     loadTextFont: { value: loadTextFont },
     showLogo: { value: showLogo },
     showBackgroud: { value: showBackgroud },
+    getSkuTypeList: { value: getSkuTypeList },
     animate: { value: animate },
     start: { value: start },
     loadModel: { value: loadModel },
@@ -965,6 +956,7 @@ function ThreeObject(params) {
       },
     },
     resetObject: { value: resetObject },
+    findSkuObjects: { value: findSkuObjects },
     setSceneHeight: { value: setSceneHeight },
     changMeshParams: { value: changMeshParams },
     getMeshNames: { value: getMeshNames },
@@ -986,7 +978,7 @@ function ThreeObject(params) {
     setCakeSize: { value: setCakeSize },
     setCakeColor: { value: setCakeColor },
     stickToCake: { value: stickToCake },
-    stickFromCameraToCake: { value: stickFromCameraToCake }
+    stickFromCameraToCake: { value: stickFromCameraToCake },
   });
 }
 

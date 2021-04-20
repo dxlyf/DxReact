@@ -53,7 +53,7 @@ const OrderDetail = (props) => {
             <Image
               src={
                 text.picUrl
-                  ? `https://rf.blissmall.net/${text.picUrl}?imageView2/1/w/150/h/150`
+                  ? `https://rf..net/${text.picUrl}?imageView2/1/w/150/h/150`
                   : imgFaillBack
               }
               className={styles.tableImage}
