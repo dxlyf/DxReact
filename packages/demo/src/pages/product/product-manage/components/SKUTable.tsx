@@ -165,6 +165,20 @@ const SKUTable = React.memo(
             );
           },
         },
+        {
+          title: '夹心模型',
+          dataIndex: 'sandwichModelId',
+          render: (value: any, record: any) => {
+            return (
+              <Form.Item
+                initialValue={value}
+                name={['skus', record.id + '', 'sandwichModelId']}
+              >
+                <DIYModelSelect></DIYModelSelect>
+              </Form.Item>
+            );
+          },
+        },
       ],
       [propertyColumn],
     );

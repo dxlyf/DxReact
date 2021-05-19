@@ -1,13 +1,7 @@
 /**
  * @description DIY管理 - 配件素材-新增或修改素材
  */
-import { useEffect, useCallback, createRef } from 'react';
-import {
-  SaveOutlined,
-  CameraOutlined,
-  EyeOutlined,
-  BorderInnerOutlined,
-} from '@ant-design/icons';
+import { useEffect, createRef, useRef } from 'react';
 import ProCard from '@ant-design/pro-card';
 import '@ant-design/compatible/assets/index.css';
 import {
@@ -19,10 +13,11 @@ import {
   Affix,
   Form,
   Dropdown,
+  Radio,
   Upload,
 } from 'antd';
 import { Anchor } from 'antd';
-import { useRequest, useMount, useUnmount } from 'ahooks';
+import { useRequest, useMount, useUnmount, useDebounceFn } from 'ahooks';
 import { FormInstance } from 'antd/lib/form';
 import styles from './materialEdit.module.less';
 import { history } from 'umi';
@@ -32,12 +27,19 @@ import { getMeshParams } from './three/convert';
 import Attribute from './Attribute';
 import {
   handleImgStrToValObj,
-  handlePicConverter,
-  handleImgeConverter,
-  handleFetchConverter,
+  handleFormToThreeData,
+  handleFormToFetchData,
+  handleFetchToThreeData,
+  handleStrToArr,
+  getBaseFormInitialValues,
 } from './DTO';
 import { ProFormRadio } from '@ant-design/pro-form';
-import { handleDict, normFile, WrapTipText } from '../components/utils';
+import {
+  handleDict,
+  includesType,
+  normFile,
+  WrapTipText,
+} from '../components/utils';
 import FileUpload from '../components/FileUpload';
 import PictureUpload from '../components/PictureUpload';
 import { getModelGroupById, getQiniuToken } from '@/services/material';
@@ -45,6 +47,7 @@ import { useImmer } from 'use-immer';
 import { detailModel, addModel, editModel } from '@/services/diyModel';
 import { v4 as uuid } from 'uuid';
 import G from './three/globalValues';
+import { checkAuthorize } from '@/components/Authorized';
 
 const three = new Three({
   type: 'back',
@@ -59,11 +62,11 @@ const three = new Three({
     modelGroupName: '勿动',
     name: '粉色蛋糕',
     imageUrl:
-      'https://rf..net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
+      'https://rf.blissmall.net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
     modelType: 1,
-    url: 'https://rf..net/31088d56-7664-430f-9388-a1de4627a367.glb',
+    url: 'https://rf.blissmall.net/31088d56-7664-430f-9388-a1de4627a367.glb',
     shape: '圆形',
-    specs: '8寸',
+    specs: '20*6cm',
     canMove: false,
     canRotate: false,
     canSwing: false,
@@ -79,17 +82,18 @@ const three = new Three({
         color: '#FEDAD8',
         emissive: '#0B0200',
         envMap: [
-          'https://rf..net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
-          'https://rf..net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
-          'https://rf..net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
-          'https://rf..net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
-          'https://rf..net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
-          'https://rf..net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
+          'https://rf.blissmall.net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
+          'https://rf.blissmall.net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
+          'https://rf.blissmall.net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
+          'https://rf.blissmall.net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
+          'https://rf.blissmall.net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
+          'https://rf.blissmall.net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
         ],
         envMapIntensity: 0.4,
       },
     ],
     y: G.CakeDeep,
+    scale: [1, 0.75, 1],
   },
 });
 
@@ -110,21 +114,21 @@ const dict = handleDict({
     raw: {
       '1': { label: '蛋糕', value: 1 },
       '2': { label: '围边', value: 2 },
-      '3': { label: '贴面', value: 3 },
-      '4': { label: '摆件', value: 4 },
+      '7': { label: '淋边', value: 7 }, // 淋边
       '5': { label: '插牌', value: 5 },
-      '6': { label: '底盘', value: 6 },
-      '7': { label: '淋边', value: 7 },
+      '4': { label: '摆件', value: 4 },
+      '9': { label: '大摆件', value: 9 },
+      // '6': { label: '底盘', value: 6 },
+      '3': { label: '贴面', value: 3 },
       '8': { label: '字牌', value: 8 },
     },
   },
   specs: {
     raw: {
-      '6': { label: '6寸', value: '6寸' },
-      '7': { label: '7寸', value: '7寸' },
-      '8': { label: '8寸', value: '8寸' },
-      '9': { label: '9寸', value: '9寸' },
-      '10': { label: '10寸', value: '10寸' },
+      '1': { label: '16*6cm', value: '16*6cm' },
+      '2': { label: '22*6cm', value: '22*6cm' },
+      '3': { label: '25*6cm', value: '25*6cm' },
+      '4': { label: '27*6cm', value: '27*6cm' },
     },
   },
   shape: {
@@ -135,6 +139,18 @@ const dict = handleDict({
       '4': { label: '四叶草', value: '四叶草' },
     },
   },
+  flag: {
+    raw: {
+      true: {
+        label: '是',
+        value: true,
+      },
+      false: {
+        label: '否',
+        value: false,
+      },
+    },
+  },
 });
 
 const MaterialEdit = (props) => {
@@ -143,7 +159,7 @@ const MaterialEdit = (props) => {
   const prewContentRef: any = createRef();
 
   const [baseForm] = Form.useForm();
-  const attributeForm = createRef<FormInstance>();
+  const attributeForm = useRef<FormInstance>();
 
   const [state, setState]: any = useImmer({
     topModelGroupData: [],
@@ -151,7 +167,18 @@ const MaterialEdit = (props) => {
     materialsData: [],
     gridFlag: false,
     size: '',
+    modelName: '', //模型名字
+    modelType: '', //素材类型
   });
+
+  const { run: setModelName } = useDebounceFn(
+    (value) => {
+      setState((draft) => {
+        draft.modelName = value;
+      });
+    },
+    { wait: 500 },
+  );
 
   // 素材id
   const { materialId } = match.params;
@@ -166,6 +193,7 @@ const MaterialEdit = (props) => {
     initialData: {},
     formatResult(data: any) {
       const { modelToolJson, ...rest } = data;
+      // const { modelToolJson, ...rest } = _mockData;
       let json = {};
       try {
         if (modelToolJson) {
@@ -196,6 +224,7 @@ const MaterialEdit = (props) => {
       return resultData;
     },
     onSuccess: (data: any) => {
+      // data = _mockData;
       // topModelGroupId,
       // topModelGroupName,
       // modelGroupId,
@@ -212,17 +241,19 @@ const MaterialEdit = (props) => {
         draft.modelGroupData = [
           { label: data.modelGroupName, value: String(data.modelGroupId) },
         ];
+        draft.modelType = data.modelType;
+        draft.modelName = data.name;
       });
 
       three.start(
         () => {
           let loadModelParms: any = {
-            ...handleFetchConverter(data.orignData),
+            ...handleFetchToThreeData(data.orignData),
             type: dict.type.valObj[String(data.orignData.modelType)],
           };
           if (data.orignData.materials) {
             loadModelParms.materials = data.orignData.materials.map((item) =>
-              handleFetchConverter(item),
+              handleFetchToThreeData(item),
             );
           }
 
@@ -251,14 +282,19 @@ const MaterialEdit = (props) => {
     manual: true,
     onSuccess: (data: any = [], params) => {
       let keyName = 'modelGroupData';
+      let arr: any = [...data];
 
       // pid为0是第一层数据
       if (params[0].pid === '0') {
         keyName = 'topModelGroupData';
+        // 使用第三方模型制作权限账号不让编辑标准库
+        if (!checkAuthorize(['admin'])) {
+          arr = arr.filter((item) => item.id === 2);
+        }
       }
 
       setState((draft) => {
-        draft[keyName] = data.map(({ id, name }) => ({
+        draft[keyName] = arr.map(({ id, name }) => ({
           value: String(id),
           label: name,
         }));
@@ -283,30 +319,7 @@ const MaterialEdit = (props) => {
     },
   });
 
-  const {
-    name,
-    topModelGroupId,
-    modelGroupId,
-    imageUrl,
-    url,
-    modelToolJson,
-    type,
-    shape,
-    specs,
-    cover,
-    scale,
-    size,
-    x,
-    y,
-    z,
-    deep,
-    canVeneer,
-    canMove,
-    canRotate,
-    canSwing,
-    isMult,
-    canSelect,
-  } = reqDetailModel.data;
+  const { topModelGroupId } = reqDetailModel.data;
 
   const onKeyDown = (e) => {
     switch (e.keyCode) {
@@ -353,10 +366,10 @@ const MaterialEdit = (props) => {
 
     let resultData: any = {};
 
-    resultData = handlePicConverter(values_base);
+    resultData = handleFormToThreeData(values_base);
 
     const materials = Object.values(values_attribute).map((item) =>
-      handlePicConverter(item),
+      handleFormToThreeData(item),
     );
     resultData.materials = materials;
 
@@ -374,6 +387,11 @@ const MaterialEdit = (props) => {
     const values_base = await baseForm.validateFields();
     const values_attribute = await attributeForm.current.validateFields();
 
+    // 没有值就设置为0
+    if (includesType([1, 2, 4, 7, 8], values_base.type) && !values_base.deep) {
+      values_base.deep = 0;
+    }
+
     let resultData: any = {};
     const {
       topModelGroupId,
@@ -382,9 +400,9 @@ const MaterialEdit = (props) => {
       imageUrl,
       type,
       ...restValues
-    } = handleImgeConverter(values_base);
+    } = handleFormToFetchData(values_base);
     const materials = Object.values(values_attribute).map((item) =>
-      handleImgeConverter(item),
+      handleFormToFetchData(item),
     );
 
     resultData = {
@@ -396,6 +414,7 @@ const MaterialEdit = (props) => {
       modelToolJson: JSON.stringify({
         ...restValues,
         name: name,
+
         type: dict.type.valObj[String(type)],
         materials,
       }),
@@ -416,7 +435,7 @@ const MaterialEdit = (props) => {
 
       let resultData: any = {};
 
-      resultData = handlePicConverter(values_base);
+      resultData = handleFormToThreeData(values_base);
 
       resultData.materials = [];
 
@@ -432,18 +451,26 @@ const MaterialEdit = (props) => {
         const meshArr = three.getMeshNames(three.selected);
 
         setState((draft) => {
-          const oldMeshNameArr = state.materialsData.map(
-            ({ target }) => target,
-          );
+          let oldMeshNameArr = [];
+          let oldMaterialNameArr = [];
+
+          state.materialsData.forEach(({ target, material }) => {
+            oldMeshNameArr.push(target);
+            oldMaterialNameArr.push(material);
+          });
           const tipArr = [];
           const newMaterials = meshArr.map(({ mesh, material }) => {
-            if (oldMeshNameArr.includes(mesh)) {
+            if (
+              oldMeshNameArr.includes(mesh) &&
+              oldMaterialNameArr.includes(material)
+            ) {
               tipArr.push(mesh);
               const cData = state.materialsData.find(({ target }) => {
                 return target === mesh;
               });
               return {
                 ...cData,
+                target: mesh,
                 material: material,
               };
             }
@@ -456,7 +483,8 @@ const MaterialEdit = (props) => {
             message.warn(
               `发现相同材质名称：${tipArr.join(
                 ', ',
-              )}将保留设置，点击预览可查看最新效果！`,
+              )} 将保留设置，点击预览可查看最新效果！`,
+              8,
             );
           }
           draft.materialsData = newMaterials;
@@ -479,30 +507,11 @@ const MaterialEdit = (props) => {
               name="base"
               labelCol={{ span: 4 }}
               wrapperCol={{ span: 20 }}
-              initialValues={{
-                topModelGroupId: isCreate ? undefined : String(topModelGroupId),
-                modelGroupId: isCreate ? undefined : String(modelGroupId),
-                name,
-                imageUrl,
-                url,
-                modelToolJson,
-                type,
-                shape: isCreate ? '圆形' : shape,
-                specs: isCreate ? '8寸' : specs,
-                cover,
-                scale,
-                size,
-                x,
-                y,
-                z,
-                canVeneer: isCreate ? false : canVeneer,
-                deep: isCreate ? undefined : deep,
-                canMove: isCreate ? false : canMove,
-                canRotate: isCreate ? false : canRotate,
-                canSwing: isCreate ? false : canSwing,
-                isMult: isCreate ? false : isMult,
-                canSelect: isCreate ? false : canSelect,
-              }}
+              initialValues={getBaseFormInitialValues(
+                isCreate,
+                reqDetailModel.data,
+              )}
+              scrollToFirstError
             >
               <ProCard title="基础信息" id="basic_information">
                 <Form.Item
@@ -554,6 +563,9 @@ const MaterialEdit = (props) => {
                     style={{ width: 200 }}
                     allowClear
                     placeholder="请输入模型名称"
+                    onChange={(e) => {
+                      setModelName(e.target.value);
+                    }}
                   />
                 </Form.Item>
 
@@ -575,9 +587,84 @@ const MaterialEdit = (props) => {
                 >
                   <Select
                     style={{ width: 200 }}
-                    options={dict.type.list}
+                    options={dict.type.list.map(({ label, value }) => {
+                      // 显示的时候为淋面、传值为淋边
+                      return { label: value === 7 ? '淋面' : label, value };
+                    })}
                     placeholder="请选择素材类型"
                     allowClear
+                    onChange={(type) => {
+                      let param: any = {
+                        // deep: undefined,
+                        // canMove: undefined,
+                        // canRotate: undefined,
+                        // canSwing: undefined,
+                        // canVeneer: undefined,
+                        // canSelect: undefined,
+                        // isMult: undefined,
+                        // shape: undefined,
+                        // specs: undefined
+                      };
+                      if (includesType([1, 2, 7], type)) {
+                        param = {
+                          deep: 0,
+                          canMove: false,
+                          canRotate: false,
+                          canSwing: false,
+                          canVeneer: false,
+                          canSelect: false,
+                          isMult: false,
+                          shape: '圆形',
+                          specs: '20*6cm',
+                          x: undefined,
+                          y: undefined,
+                          z: undefined,
+                          cover: undefined,
+                        };
+                      } else if (includesType([4, 5, 8], type)) {
+                        param = {
+                          canMove: true,
+                          canRotate: true,
+                          canVeneer: false,
+                          canSelect: true,
+                          isMult: true,
+                          x: undefined,
+                          y: undefined,
+                          z: undefined,
+                          shape: undefined,
+                          specs: undefined,
+                          cover: undefined,
+                        };
+                        if (type === 4) {
+                          param.deep = 0;
+                        } else {
+                          param.deep = undefined;
+                        }
+                        //如果是摆件 设置为true
+                        param.canSwing = type === 5;
+                      } else if (includesType([3], type)) {
+                        param = {
+                          deep: undefined,
+                          canMove: false,
+                          canRotate: false,
+                          canSwing: false,
+                          canVeneer: true,
+                          canSelect: true,
+                          isMult: true,
+                          shape: '圆形',
+                          specs: '20*6cm',
+                          x: undefined,
+                          y: undefined,
+                          z: undefined,
+                          cover: undefined,
+                        };
+                      }
+                      baseForm.setFieldsValue(param);
+
+                      setState((draft) => {
+                        draft.modelType = Number(type);
+                      });
+                    }}
                   />
                 </Form.Item>
 
@@ -603,40 +690,123 @@ const MaterialEdit = (props) => {
                   />
                 </Form.Item>
 
-                <Form.Item name="shape" label="形状">
-                  <Select
-                    style={{ width: 200 }}
-                    placeholder="请选择形状"
-                    options={dict.shape.list}
-                    allowClear
-                  ></Select>
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      !includesType(
+                        [3, 4, 5, 8],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <Form.Item label="形状" name="shape">
+                          <Select
+                            style={{ width: 200 }}
+                            placeholder="请选择形状"
+                            options={dict.shape.list}
+                            allowClear
+                            disabled={includesType(
+                              [1, 2, 3, 7],
+                              Number(baseForm.getFieldValue('type')),
+                            )}
+                          />
+                        </Form.Item>
+                      )
+                    );
+                  }}
                 </Form.Item>
 
-                <Form.Item name="specs" label="规格">
-                  <Select
-                    style={{ width: 200 }}
-                    placeholder="请选择规格"
-                    options={dict.specs.list}
-                    allowClear
-                  ></Select>
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      !includesType(
+                        [3, 4, 5, 8],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <Form.Item label="规格" name="specs">
+                          <Select
+                            style={{ width: 200 }}
+                            placeholder="请选择规格"
+                            options={dict.shape.list}
+                            allowClear
+                            disabled={includesType(
+                              [1, 2, 3, 7],
+                              Number(baseForm.getFieldValue('type')),
+                            )}
+                          />
+                        </Form.Item>
+                      )
+                    );
+                  }}
                 </Form.Item>
 
-                <WrapTipText
-                  label="模型套"
-                  text="镂空的模型加上模型套，方便选中"
-                >
-                  <Form.Item name="cover" noStyle>
-                    <Select
-                      style={{ width: 200 }}
-                      placeholder="请选择模型套"
-                      allowClear
-                    >
-                      <Select.Option value="box">盒</Select.Option>
-                      <Select.Option value="cylinder">圆柱</Select.Option>
-                      <Select.Option value="sphere">球</Select.Option>
-                    </Select>
-                  </Form.Item>
-                </WrapTipText>
+                {/* <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      includesType(
+                        [1, 2, 9],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <Form.Item
+                          name="outside"
+                          label="外圈"
+                          rules={[{ required: true, message: '请输入外圈!' }]}
+                        >
+                          <InputNumber style={{ width: 200 }} precision={2} />
+                        </Form.Item>
+                      )
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      includesType(
+                        [1, 2, 9],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <Form.Item
+                          name="inside"
+                          label="内圈"
+                          rules={[{ required: true, message: '请输入内圈!' }]}
+                        >
+                          <InputNumber style={{ width: 200 }} precision={2} />
+                        </Form.Item>
+                      )
+                    );
+                  }}
+                </Form.Item> */}
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      !includesType(
+                        [1, 2, 7],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <WrapTipText
+                          label="模型套"
+                          text="镂空的模型加上模型套，方便选中"
+                        >
+                          <Form.Item label="模型套" noStyle>
+                            <Form.Item name="cover" noStyle>
+                              <Select
+                                style={{ width: 200 }}
+                                placeholder="请选择模型套"
+                                allowClear
+                              >
+                                <Select.Option value="box">盒</Select.Option>
+                                <Select.Option value="cylinder">
+                                  圆柱
+                                </Select.Option>
+                                <Select.Option value="sphere">球</Select.Option>
+                              </Select>
+                            </Form.Item>
+                          </Form.Item>
+                        </WrapTipText>
+                      )
+                    );
+                  }}
+                </Form.Item>
               </ProCard>
 
               <ProCard title="模型缩放与位置" id="scaling_position">
@@ -648,161 +818,202 @@ const MaterialEdit = (props) => {
                       placeholder="缩放比例"
                     />
                   </Form.Item>
-                  {/* <span className={styles.unit}>%</span> */}
                 </WrapTipText>
+
                 <WrapTipText label="缩放尺寸" text="分别输入x,y,z的字符串">
-                  <Form.Item
-                    name="size"
-                    noStyle
-                    rules={[
-                      {
-                        pattern: /^([1-9][0-9]*)+$/,
-                        message: '只能输入大于0的整数',
-                      },
-                    ]}
-                  >
+                  <Form.Item name="size" noStyle>
                     <Input
                       style={{ width: 200 }}
                       allowClear
                       placeholder="缩放尺寸"
                     />
                   </Form.Item>
-                  {/* <span className={styles.unit}>cm</span> */}
                 </WrapTipText>
-                <WrapTipText
-                  label="模型默认位置X"
-                  text="支持正负，小数点后保留2位"
-                >
-                  <Form.Item name="x" noStyle>
-                    <InputNumber style={{ width: 200 }} precision={2} />
-                  </Form.Item>
-                </WrapTipText>
-                <WrapTipText
-                  label="模型默认位置Y"
-                  text="支持正负，小数点后保留2位"
-                >
-                  <Form.Item name="y" noStyle>
-                    <InputNumber style={{ width: 200 }} precision={2} />
-                  </Form.Item>
-                </WrapTipText>
-                <WrapTipText
-                  label="模型默认位置Z"
-                  text="支持正负，小数点后保留2位"
-                >
-                  <Form.Item name="z" noStyle>
-                    <InputNumber style={{ width: 200 }} precision={2} />
-                  </Form.Item>
-                </WrapTipText>
-                <WrapTipText label="模型深度" text="小于0，小数点后保留2位">
-                  {/* <Form.Item name="deep" noStyle dependencies={['type']}> */}
-                  <Form.Item name="deep" noStyle>
-                    {/* {() => {
-                      return ( */}
-                    <InputNumber
-                      style={{ width: 200 }}
-                      precision={2}
-                      // disabled={[1, 2, 7].includes(
-                      //   Number(baseForm.getFieldValue('type')),
-                      // )}
-                    />
-                    {/* );
-                    }} */}
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      !includesType(
+                        [1, 2, 3, 7],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <WrapTipText
+                          label="模型默认位置X"
+                          text="支持正负，小数点后保留2位"
+                        >
+                          <Form.Item name="x" noStyle>
+                            <InputNumber style={{ width: 200 }} precision={2} />
+                          </Form.Item>
+                        </WrapTipText>
+                      )
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      !includesType(
+                        [1, 2, 3, 7],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <WrapTipText
+                          label="模型默认位置Y"
+                          text="支持正负，小数点后保留2位"
+                        >
+                          <Form.Item name="y" noStyle>
+                            <InputNumber style={{ width: 200 }} precision={2} />
+                          </Form.Item>
+                        </WrapTipText>
+                      )
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      !includesType(
+                        [1, 2, 3, 7],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <WrapTipText
+                          label="模型默认位置Z"
+                          text="支持正负，小数点后保留2位"
+                        >
+                          <Form.Item name="z" noStyle>
+                            <InputNumber style={{ width: 200 }} precision={2} />
+                          </Form.Item>
+                        </WrapTipText>
+                      )
+                    );
+                  }}
+                </Form.Item>
+
+                <WrapTipText label="模型深度" text="支持正负，小数点后保留2位">
+                  <Form.Item shouldUpdate noStyle>
+                    {() => {
+                      return (
+                        <Form.Item name="deep" noStyle>
+                          <InputNumber
+                            style={{ width: 200 }}
+                            precision={2}
+                            disabled={includesType(
+                              [1, 2, 7],
+                              Number(baseForm.getFieldValue('type')),
+                            )}
+                          />
+                        </Form.Item>
+                      );
+                    }}
                   </Form.Item>
                 </WrapTipText>
               </ProCard>
 
               <ProCard title="模型操作" id="operation">
-                <ProFormRadio.Group
-                  name="canMove"
-                  label="是否可以移动"
-                  options={[
-                    {
-                      label: '是',
-                      value: true,
-                    },
-                    {
-                      label: '否',
-                      value: false,
-                    },
-                  ]}
-                />
-                <ProFormRadio.Group
-                  name="canRotate"
-                  label="是否可以旋转"
-                  options={[
-                    {
-                      label: '是',
-                      value: true,
-                    },
-                    {
-                      label: '否',
-                      value: false,
-                    },
-                  ]}
-                />
-                <ProFormRadio.Group
-                  name="canSwing"
-                  label="是否可以摆动"
-                  options={[
-                    {
-                      label: '是',
-                      value: true,
-                    },
-                    {
-                      label: '否',
-                      value: false,
-                    },
-                  ]}
-                />
-                <ProFormRadio.Group
-                  name="isMult"
-                  label="是否允许重复添加"
-                  options={[
-                    {
-                      label: '是',
-                      value: true,
-                    },
-                    {
-                      label: '否',
-                      value: false,
-                    },
-                  ]}
-                />
-                <ProFormRadio.Group
-                  name="canVeneer"
-                  label="是否贴面"
-                  options={[
-                    {
-                      label: '是',
-                      value: true,
-                    },
-                    {
-                      label: '否',
-                      value: false,
-                    },
-                  ]}
-                />
-                <ProFormRadio.Group
-                  name="canSelect"
-                  label="是否允许点选"
-                  options={[
-                    {
-                      label: '是',
-                      value: true,
-                    },
-                    {
-                      label: '否',
-                      value: false,
-                    },
-                  ]}
-                />
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      <Form.Item label="是否可以移动" name="canMove">
+                        <Radio.Group
+                          options={dict.flag.list}
+                          disabled={includesType(
+                            [1, 2, 3, 7],
+                            Number(baseForm.getFieldValue('type')),
+                          )}
+                        ></Radio.Group>
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      <Form.Item label="是否可以旋转" name="canRotate">
+                        <Radio.Group
+                          options={dict.flag.list}
+                          disabled={includesType(
+                            [1, 2, 3, 7],
+                            Number(baseForm.getFieldValue('type')),
+                          )}
+                        ></Radio.Group>
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      <Form.Item label="是否可以摆动" name="canSwing">
+                        <Radio.Group
+                          options={dict.flag.list}
+                          disabled={includesType(
+                            [1, 2, 3, 7],
+                            Number(baseForm.getFieldValue('type')),
+                          )}
+                        ></Radio.Group>
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item label="是否允许重复添加" shouldUpdate>
+                  {() => {
+                    return (
+                      <Form.Item name="isMult" noStyle>
+                        <Radio.Group
+                          options={dict.flag.list}
+                          disabled={includesType(
+                            [1, 2, 7],
+                            Number(baseForm.getFieldValue('type')),
+                          )}
+                        ></Radio.Group>
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      <Form.Item label="是否贴面" name="canVeneer">
+                        <Radio.Group
+                          options={dict.flag.list}
+                          disabled={includesType(
+                            [1, 2, 3, 7],
+                            Number(baseForm.getFieldValue('type')),
+                          )}
+                        ></Radio.Group>
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item label="是否允许点选" shouldUpdate>
+                  {() => {
+                    return (
+                      <Form.Item name="canSelect" noStyle>
+                        <Radio.Group
+                          options={dict.flag.list}
+                          disabled={includesType(
+                            [1, 2, 3, 7],
+                            Number(baseForm.getFieldValue('type')),
+                          )}
+                        ></Radio.Group>
+                      </Form.Item>
+                    );
+                  }}
+                </Form.Item>
               </ProCard>
             </Form>
 
             <ProCard title="材质属性" id="attribute">
               <Attribute
-                name={name}
+                modelName={state.modelName}
                 data={state.materialsData}
+                modelType={state.modelType}
                 formRef={attributeForm}
               />
             </ProCard>
@@ -810,6 +1021,7 @@ const MaterialEdit = (props) => {
 
           <ProCard colSpan="400px">
             {/* <Anchor>
+                      console.log("🚀 ~ file: index.tsx ~ line 1025 ~ options={dict.type.list.map ~ item", item)
             <Link href="#basic_information" title="基础信息" />
             <Link href="#scaling_position" title="模型缩放与位置" />
             <Link href="#operation" title="模型操作" />
@@ -864,7 +1076,7 @@ const MaterialEdit = (props) => {
                               imageUrl: [
                                 {
                                   status: 'done',
-                                  url: `https://rf..net/${o.key}`,
+                                  url: `https://rf.blissmall.net/${o.key}`,
                                   name: o.key,
                                 },
                               ],

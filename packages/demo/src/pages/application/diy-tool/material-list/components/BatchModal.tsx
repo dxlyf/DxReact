@@ -7,6 +7,7 @@ import { useRequest } from 'ahooks';
 import { useImmer } from 'use-immer';
 import { useResetFormOnCloseModal } from '../../components/utils';
 import { batchUpdateGroup } from '@/services/diyModel';
+import { checkAuthorize } from '@/components/Authorized';
 
 function handleValueEnum(data) {
   const valueEnum: any = {};
@@ -33,16 +34,21 @@ const BatchModal = (props) => {
   const reqGetModelGroupById = useRequest(getModelGroupById, {
     manual: true,
     refreshDeps: [form.getFieldValue('topModelGroupId')],
-    onSuccess: (data, params) => {
+    onSuccess: (data: any, params) => {
       let keyName = 'modelGroupId';
+      let arr: any = [...data];
 
       // pid为0是第一层数据
       if (params[0].pid === '0') {
         keyName = 'topModelGroupId';
+        // 使用第三方模型制作权限账号不让编辑标准库
+        if (!checkAuthorize(['admin'])) {
+          arr = arr.filter((item) => item.id === 2);
+        }
       }
 
       setState((draft) => {
-        draft[keyName].data = data ? handleValueEnum(data) : [];
+        draft[keyName].data = arr ? handleValueEnum(arr) : [];
       });
     },
   });

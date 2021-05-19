@@ -129,7 +129,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
     filterRef.current?.query();
   }, []);
   const onPublishProduct = useCallback(() => {
-    history.push('/product/product-manage/list/edit');
+    history.push('/product/product-manage/list/add');
   }, []);
   const updateProductStatus = useCallback(
     (status: number) => {

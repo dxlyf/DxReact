@@ -6,7 +6,7 @@ export default [
       {
         path: '/login',
         exact: true,
-        component: 'login'
+        component: 'login',
       },
       {
         path: '/',
@@ -36,9 +36,16 @@ export default [
                         component: 'product/product-manage',
                       },
                       {
-                        name: '发布商品',
+                        name: '新增发布商品',
                         hideInMenu: true,
-                        path: '/product/product-manage/list/edit/:id?',
+                        path: '/product/product-manage/list/add',
+                        component: 'product/product-manage/product-edit',
+                        parentKeys: ['productManage'],
+                      },
+                      {
+                        name: '编辑发布商品',
+                        hideInMenu: true,
+                        path: '/product/product-manage/list/edit/:id',
                         component: 'product/product-manage/product-edit',
                         parentKeys: ['productManage'],
                       },
@@ -131,8 +138,61 @@ export default [
                 ],
               },
               {
+                name: '内容',
+                path: '/content',
+                routes: [
+                  {
+                    name: '广告管理',
+                    path: '/content/advertisement',
+                    routes: [
+                      {
+                        name: '首页Banner',
+                        path: '/content/advertisement/home-banner',
+                        component: 'content/advertisement/home-banner',
+                        key: 'homeHanner'
+                      },
+                      {
+                        name: '新增首页Banner',
+                        hideInMenu: true,
+                        path: '/content/advertisement/home-banner/add',
+                        component: 'content/advertisement/home-banner/edit',
+                        parentKeys: ['homeHanner'],
+                      },
+                      {
+                        name: '编辑首页Banner',
+                        hideInMenu: true,
+                        path: '/content/advertisement/home-banner/edit/:id',
+                        component: 'content/advertisement/home-banner/edit',
+                        parentKeys: ['homeHanner'],
+                      }
+                    ],
+                  },
+                  {
+                    name:"首页魔方",
+                    path:'/content/home-magic-cube',
+                    component:'content/home-magic-cube',
+                    key:"homeMagicCube"
+                  },
+                  {
+                    name:"新增魔方",
+                    hideInMenu: true,
+                    parentKeys: ['homeMagicCube'],
+                    path:'/content/home-magic-cube/add',
+                    component:'content/home-magic-cube/edit'
+                  },
+                  {
+                    name:"编辑魔方",
+                    hideInMenu: true,
+                    parentKeys: ['homeMagicCube'],
+                    path:'/content/home-magic-cube/edit/:id',
+                    component:'content/home-magic-cube/edit'
+                  }
+                ],
+              },
+              {
                 name: '应用',
                 path: '/application',
+                authority: ['admin', 'thirdParty'],
                 routes: [
                   {
                     name: 'DIY工具',

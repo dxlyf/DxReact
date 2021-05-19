@@ -1,7 +1,7 @@
 const G = {
   HostUrl: window.location.origin,
   CakeDeep: -130,
-  CakeHeight: 80,
+  CakeHeight: 60,
   CakeDiam: 200,
 }
 export const panInfo = {

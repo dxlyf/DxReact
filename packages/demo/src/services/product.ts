@@ -152,6 +152,6 @@ export function getDSYunPropertyByCategoryId(categoryId: any) {
 export function deleteGroupGoods(params: any) {
   return request('blisscake/backend/productGroupRel/delete', {
     method: 'GET',
-    params
+    params,
   });
 }

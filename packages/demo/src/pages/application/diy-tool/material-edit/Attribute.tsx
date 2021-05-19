@@ -1,4 +1,4 @@
-import React, { createRef, useEffect } from 'react';
+import React, { createRef, useReducer, useEffect } from 'react';
 import {
   Input,
   Checkbox,
@@ -31,7 +31,7 @@ import { FormInstance } from 'antd/lib/form';
 const FormItem = Form.Item;
 const { TabPane } = Tabs;
 
-const version = 2.0;
+const version = 3.0;
 
 const openNotification = (type, message, description?) => {
   notification[type]({
@@ -42,13 +42,15 @@ const openNotification = (type, message, description?) => {
 };
 
 const Attribute = (props) => {
-  const { name: modelName, data = [], formRef } = props;
+  const { modelName, data = [], formRef } = props;
 
   const [state, setState]: any = useImmer({
     data: [],
     dataKey: '',
     activeKey: '0',
   });
+
+  // const [ignored, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
     setState((draft) => {
@@ -96,20 +98,16 @@ const Attribute = (props) => {
       try {
         let result = JSON.parse(e.target.result);
 
-        // 重置材质表单的ref和form
-        formRef.current = createRef<FormInstance>();
-        setState((draft) => {
-          draft.data[index] = result;
-          draft.data[index].target = state.data[index].target;
-          draft.data[index].material = state.data[index].material;
-          draft.dataKey = uuid();
-        });
+        delete result.target;
+        delete result.material;
 
-        // setTimeout(() => {
-        //   setState((draft) => {
-        //     draft.activeKey = state.activeKey;
-        //   });
-        // }, 300);
+        for (const [k, v] of Object.entries(result)) {
+          result[k] = v === null ? undefined : v;
+        }
+
+        formRef.current!.setFieldsValue({
+          [state.data[index].target]: result,
+        });
 
         openNotification(
           'success',
@@ -129,10 +127,18 @@ const Attribute = (props) => {
   // 处理导出
   const onExport = async (target, index) => {
     const TabFormData = await formRef.current!.validateFields();
+
     try {
       const data = TabFormData[target];
       data.version = version;
-      const str = JSON.stringify(data, null, 2);
+      // stringify 会把undefined值的项忽略 所以转为 null
+      const str = JSON.stringify(
+        data,
+        function (_, v) {
+          return v === undefined ? null : v;
+        },
+        2,
+      );
       const date = new Date();
       const dateStr = [
         date.getFullYear(),
@@ -180,6 +186,7 @@ const Attribute = (props) => {
       labelCol={{ span: 4 }}
       wrapperCol={{ span: 20 }}
       key={String(state.dataKey)}
+      scrollToFirstError
     >
       <Tabs
         animated={false}
@@ -192,7 +199,7 @@ const Attribute = (props) => {
             {
               target,
               material,
-              replace,
+              replace = false,
               shininess,
               metalness,
               roughness,
@@ -217,12 +224,7 @@ const Attribute = (props) => {
             index,
           ) => {
             return (
-              <TabPane
-                tab={`素材${index}`}
-                // key={String(`${target}_${state.dataKey}`)}
-                key={String(index)}
-                forceRender
-              >
+              <TabPane tab={`素材${index}`} key={String(index)} forceRender>
                 <ProCard gutter={[24, 16]} split="horizontal">
                   <ProCard>
                     <WrapTipText label="模型文件名" text="字段名称-mesh">
@@ -272,33 +274,80 @@ const Attribute = (props) => {
                       </Radio.Group>
                     </Form.Item>
 
-                    <WrapTipText label="光泽" text="建议0-100之间">
-                      <Form.Item
-                        name={[target, 'shininess']}
-                        noStyle
-                        initialValue={shininess}
-                      >
-                        <InputNumber style={{ width: 200 }} precision={2} />
-                      </Form.Item>
-                    </WrapTipText>
-                    <WrapTipText label="金属" text="建议0-1之间">
-                      <Form.Item
-                        name={[target, 'metalness']}
-                        noStyle
-                        initialValue={metalness}
-                      >
-                        <InputNumber style={{ width: 200 }} precision={2} />
-                      </Form.Item>
-                    </WrapTipText>
-                    <WrapTipText label="粗糙" text="建议0-1之间">
-                      <Form.Item
-                        name={[target, 'roughness']}
-                        noStyle
-                        initialValue={roughness}
-                      >
-                        <InputNumber style={{ width: 200 }} precision={2} />
-                      </Form.Item>
-                    </WrapTipText>
+                    <Form.Item shouldUpdate noStyle>
+                      {() => {
+                        return (
+                          formRef.current &&
+                          formRef.current!.getFieldValue([
+                            target,
+                            'replace',
+                          ]) !== false && (
+                            <WrapTipText label="光泽" text="建议0-100之间">
+                              <Form.Item
+                                name={[target, 'shininess']}
+                                noStyle
+                                initialValue={shininess}
+                              >
+                                <InputNumber
+                                  style={{ width: 200 }}
+                                  precision={2}
+                                />
+                              </Form.Item>
+                            </WrapTipText>
+                          )
+                        );
+                      }}
+                    </Form.Item>
+
+                    <Form.Item shouldUpdate noStyle>
+                      {() => {
+                        return (
+                          formRef.current &&
+                          formRef.current!.getFieldValue([
+                            target,
+                            'replace',
+                          ]) !== true && (
+                            <WrapTipText label="金属" text="建议0-1之间">
+                              <Form.Item
+                                name={[target, 'metalness']}
+                                noStyle
+                                initialValue={metalness}
+                              >
+                                <InputNumber
+                                  style={{ width: 200 }}
+                                  precision={2}
+                                />
+                              </Form.Item>
+                            </WrapTipText>
+                          )
+                        );
+                      }}
+                    </Form.Item>
+
+                    <Form.Item shouldUpdate noStyle>
+                      {() => {
+                        return (
+                          formRef.current &&
+                          formRef.current!.getFieldValue([
+                            target,
+                            'replace',
+                          ]) !== true && (
+                            <WrapTipText label="粗糙" text="建议0-1之间">
+                              <Form.Item
+                                name={[target, 'roughness']}
+                                noStyle
+                                initialValue={roughness}
+                              >
+                                <InputNumber
+                                  style={{ width: 200 }}
+                                  precision={2}
+                                />
+                              </Form.Item>
+                            </WrapTipText>
+                          )
+                        );
+                      }}
+                    </Form.Item>
 
                     <Form.Item
                       name={[target, 'keep']}
@@ -421,12 +470,27 @@ const Attribute = (props) => {
                         <PictureUpload maxFiles={6} multiple />
                       </Form.Item>
                     </Form.Item>
-                    <Form.Item
-                      label="环境贴图强度"
-                      name={[target, 'envMapIntensity']}
-                      initialValue={envMapIntensity}
-                    >
-                      <InputNumber style={{ width: 200 }} precision={2} />
+
+                    <Form.Item shouldUpdate noStyle>
+                      {() => {
+                        return (
+                          formRef.current!.getFieldValue([
+                            target,
+                            'replace',
+                          ]) !== true && (
+                            <Form.Item
+                              label="环境贴图强度"
+                              name={[target, 'envMapIntensity']}
+                              initialValue={envMapIntensity}
+                            >
+                              <InputNumber
+                                style={{ width: 200 }}
+                                precision={2}
+                              />
+                            </Form.Item>
+                          )
+                        );
+                      }}
                     </Form.Item>
 
                     <Form.Item

@@ -20,9 +20,9 @@ type HeightCollision = {
 export function getCollisions(params: CollisionsParams): Intersection[] | null | undefined;
 export function getFirstCollision(params: CollisionsParams): Intersection | null | undefined;
 export function getMeshInfo(object: Group): MeshInfo;
-export function getVeneerPoint(center: Vector3, offset: number, target: Group): Vector3 | null;
-export function setVeneer(object: Group, target: Group, outside?: boolean): void;
-export function setCakeVeneer(object: Group, target: Group, outside?: boolean): void;
+export function getVeneerPoint(center: Vector3, offset: number, target: Group[]): Vector3 | null;
+export function setVeneer(object: Group, target: Group[], outside?: boolean): void;
+export function setCakeVeneer(object: Group, target: Group[], outside?: boolean): void;
 export function getHeightCollision(vector: Vector3, target: Group[]): Vector3 | null;
 export function getHeight(vector: Vector3, target: Group[]): number;
 export function getCollisionGroup(vector: Vector3, target: Group[]): Group;

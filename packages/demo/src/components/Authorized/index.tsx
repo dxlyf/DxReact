@@ -6,6 +6,7 @@ import React, { FC } from 'react';
 
 type authorityList = any[];
 let CURRENT_USER_AUTHORITY: authorityList = []; // 当前登录用户权限列表
+
 export const checkPermissions = <T, K>(
   authority: authorityList,
   currentAuthority: any,
@@ -18,7 +19,7 @@ export const checkPermissions = <T, K>(
   if (Array.isArray(currentAuthority)) {
     if (
       currentAuthority.length > 0 &&
-      !currentAuthority.some((auth) => authority.indexOf(auth) === -1)
+      currentAuthority.some((auth) => authority.indexOf(auth) !== -1)
     ) {
       return yesAuthority;
     }
@@ -56,6 +57,7 @@ export const setCurrentUserAuthority = (
 ) => {
   CURRENT_USER_AUTHORITY = currentUserAuthority;
 };
+
 export const checkAuthorize = (
   currentAuthority: any,
   yesAuthority: any = true,

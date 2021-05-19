@@ -3,7 +3,7 @@
  * @author fanyonglong
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { Space, Card, Descriptions, Button, message,Modal } from 'antd';
+import { Space, Card, Descriptions, Button, message, Modal } from 'antd';
 import { ConnectProps, Link } from 'umi';
 import FilterForm, { FilterFormFieldType } from '@/components/FilterForm';
 import Table, { RichTableColumnType } from '@/components/Table';
@@ -35,23 +35,26 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
     ],
     [],
   );
-  const onDelete = useCallback((record) => {
-    Modal.confirm({
-      title: '是否删除?',
-      content: '删除后，商品会与分组解绑',
-      onOk: () => {
-        productService
-          .deleteGroupGoods({
-            id: record.id,
-            groupId:groupId
-          })
-          .then(() => {
-            message.success('删除成功');
-            showList(true);
-          });
-      },
-    });
-  }, [groupId]);
+  const onDelete = useCallback(
+    (record) => {
+      Modal.confirm({
+        title: '是否删除?',
+        content: '删除后，商品会与分组解绑',
+        onOk: () => {
+          productService
+            .deleteGroupGoods({
+              id: record.id,
+              groupId: groupId,
+            })
+            .then(() => {
+              message.success('删除成功');
+              showList(true);
+            });
+        },
+      });
+    },
+    [groupId],
+  );
   const columns = useMemo<RichTableColumnType<any>[]>(
     () => [
       {
@@ -80,11 +83,12 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
       {
         title: '操作',
         render: (record) => {
-          return (<Space>
-            <Link to={`/product/product-manage/list/edit/${record.id}`}>
-              编辑
-            </Link>
-            <a onClick={onDelete.bind(null,record)}>删除</a>
+          return (
+            <Space>
+              <Link to={`/product/product-manage/list/edit/${record.id}`}>
+                编辑
+              </Link>
+              <a onClick={onDelete.bind(null, record)}>删除</a>
             </Space>
           );
         },

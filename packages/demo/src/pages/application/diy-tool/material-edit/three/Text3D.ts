@@ -22,13 +22,11 @@ export async function loadFont(
         resolve(new Font(json));
       },
       undefined,
-      () => {
-        reject(null);
-      },
+      reject
     );
   });
   if (font) return font;
-  else throw new Error('加载失败');
+  else throw new Error('加载字体失败');
 }
 
 //加载字牌
@@ -47,13 +45,11 @@ export async function loadCard(
         resolve(card);
       },
       undefined,
-      () => {
-        reject(null);
-      },
+      reject
     );
   });
   if (group) return group;
-  else throw new Error('加载失败');
+  else throw new Error('加载字牌失败');
 }
 
 //创建字牌

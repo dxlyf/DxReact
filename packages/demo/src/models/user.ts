@@ -90,7 +90,17 @@ const UserModel: UserModelType = {
   },
   reducers: {
     setCurrentUser(state, { payload }) {
-      setCurrentUserAuthority(payload?.permissionCodeSet || []);
+      let permissionCodeSet = payload?.permissionCodeSet
+        ? [...payload?.permissionCodeSet]
+        : [];
+      let isThirdparty = payload ? /^model_/i.test(payload.loginName) : false; // 是否第三方
+
+      if (isThirdparty && permissionCodeSet) {
+        permissionCodeSet.push('thirdParty');
+      } else if (!isThirdparty && permissionCodeSet) {
+        permissionCodeSet.push('admin');
+      }
+      setCurrentUserAuthority(permissionCodeSet);
       state.currentUser = payload;
       app.currentUser = payload;
     },

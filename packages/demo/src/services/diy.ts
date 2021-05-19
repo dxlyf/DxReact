@@ -103,3 +103,16 @@ export function addCategoryGroupProductRef(data: any) {
     },
   );
 }
+export function getAllDiyTheme() {
+  return request('blisscake/backend/diyTheme/findDiyThemeList', {
+    method: 'GET',
+  });
+}
+export function updateThemeCategoryGoodSort(data: any) {
+  return request('blisscake/backend/diyCategoryProductRel/updateSort',
+    {
+      method: 'GET',
+      params:data,
+    },
+  );
+}

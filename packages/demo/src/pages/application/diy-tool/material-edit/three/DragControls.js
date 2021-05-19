@@ -54,45 +54,42 @@ function DragControls(_objects, _camera, _domElement) {
     }
   };
   this.heightObjects = [];
+  this.veneerObjects = [];
   function veneer(vector, object) {
     //贴面
-    if (!object.data.canVeneer) return;
-    for (var i in scope.heightObjects) {
-      const cake = scope.heightObjects[i];
-      if (cake.data && cake.data.type === '蛋糕') {
-        const
-          gRy = object.getObjectByName('gRy'),
-          gPy = object.getObjectByName('gPy');
-        // 处理X轴
-        const x = vector.x - _om.x;
-        const { center, size } = getMeshInfo(object);
-        const r = getVeneerPoint(center, 0, cake).length();
-        const a = (x / r) * 200;
-        let v = new Vector3(object.position.x, 0, object.position.z);
-        v.applyAxisAngle(new Vector3(0, 1, 0), a);
-        object.position.copy(v);
-        // 处理Y轴
-        if (object.data.deep !== 0) {
-          const y = vector.y - _om.y;
-          const keep = 3 / 4;
-          let yy = gPy.position.y + y * 100;
-          if (yy + size.y * keep > G.CakeHeight + G.CakeDeep)
-            yy = G.CakeHeight + G.CakeDeep - size.y * keep;
-          if (yy < G.CakeDeep) yy = G.CakeDeep;
-          gPy.position.y = yy;
-        }
-        // 处理方向
-        v = new Vector3(
-          object.position.x - cake.position.x,
-          0,
-          object.position.z - cake.position.z,
-        );
-        v.setLength(1000);
-        v.y = gPy.position.y + gRy.position.y;
-        gRy.lookAt(v);
-        return;
-      }
+    if (!object.data.canVeneer || scope.veneerObjects.length < 1) return;
+    const cake = scope.veneerObjects[0];
+    const
+      gRy = object.getObjectByName('gRy'),
+      gPy = object.getObjectByName('gPy');
+    // 处理X轴
+    const x = vector.x - _om.x;
+    const { center, size } = getMeshInfo(object);
+    const r = getVeneerPoint(center, 0, scope.veneerObjects).length();
+    const a = (x / r) * 200;
+    let v = new Vector3(object.position.x, 0, object.position.z);
+    v.applyAxisAngle(new Vector3(0, 1, 0), a);
+    object.position.copy(v);
+    // 处理Y轴
+    if (object.data.deep !== 0) {
+      const y = vector.y - _om.y;
+      const keep = 3 / 4;
+      let yy = gRy.position.y + y * 100;
+      if (yy + size.y * keep + gPy.position.y > G.CakeHeight + G.CakeDeep)
+        yy = G.CakeHeight + G.CakeDeep - size.y * keep - gPy.position.y;
+      if (yy < 0) yy = 0;
+      gRy.position.y = yy;
     }
+    // 处理方向
+    v = new Vector3(
+      object.position.x - cake.position.x,
+      0,
+      object.position.z - cake.position.z,
+    );
+    v.setLength(1000);
+    v.y = gRy.position.y + gPy.position.y;
+    gRy.lookAt(v);
+    return;
   }
   function move(vector, object) {
     //移动
@@ -174,6 +171,7 @@ function DragControls(_objects, _camera, _domElement) {
         y = (vector.y - _om.y) * 160;
         if (gRy.position.y + y > 0) y = 0 - gRy.position.y;
         if (gRy.position.y + y < deep) y = deep - gRy.position.y;
+        if (gPy.position.y + gRy.position.y + y < G.CakeDeep) y = G.CakeDeep - gPy.position.y - gRy.position.y;
         if (cursor) cursor.position.y += y;
         gRy.position.y += y;
       }

@@ -38,11 +38,15 @@ const postMenuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
       if (localItem.children && localItem.children.length <= 0) {
         return null as any;
       }
-      return checkAuthorize(item.authority, localItem, null) as MenuDataItem;
+      return checkAuthorize(
+        item.authority ?? ['admin'],
+        localItem,
+        null,
+      ) as MenuDataItem;
     })
     .filter(Boolean);
 
-const BasicLayout: React.FC<{}> = ({ children }) => {
+const BasicLayout: React.FC<any> = ({ children }) => {
   const { menuData, currentMenu, breadcrumb } = useContext(RouteContext);
   if (currentMenu && currentMenu.redirect) {
     return children as React.ReactElement;
@@ -50,10 +54,11 @@ const BasicLayout: React.FC<{}> = ({ children }) => {
   if (!currentMenu || (currentMenu && !currentMenu.component)) {
     return <Status404></Status404>;
   }
+
   return (
     <PageContainer title={false} extra={false}>
       <Authorized
-        authority={currentMenu?.authority}
+        authority={currentMenu.authority ?? ['admin']}
         noMatch={<Status403></Status403>}
       >
         {children}
@@ -69,7 +74,6 @@ const BasicLayoutWrapper: React.FC<{ settings: any } & ConnectProps> = ({
   children,
   ...restProps
 }) => {
-  
   return (
     <ProLayout
       logo={logo}

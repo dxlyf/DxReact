@@ -24,6 +24,7 @@ export class DragControls extends EventDispatcher {
 		}
 	}
 	heightObjects: Object3D[];
+	veneerObjects: Object3D[];
 	getSelectedObjects: () => Object3D;
 	setLockObject: (lockObject: Object3D) => void;
 	getLockObject: () => Object3D;

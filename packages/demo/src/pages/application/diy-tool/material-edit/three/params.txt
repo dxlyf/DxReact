@@ -122,14 +122,19 @@ isMult:重复添加
   url: string; //模型路径
   type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | ''; //类别
   name: string; //名称
-  deep: number; //最大下沉深度  ！默认为0，默认显示, 能编辑
+   ！！！
+  如果是摆件
+    deep: 0; // 可见，能编辑
+  如果是插牌  
+    deep: undefind;  // 可见，能编辑
+  ！！！
   canMove: boolean; //能否移动     ！设置为true，默认显示, 能编辑
   canRotate: boolean;  //能否旋转    ！设置为true，默认显示, 能编辑
   ！！！
   如果是摆件
-    canSwing: boolean; //能否摆动    ！设置为true，默认不显示, 能编辑
-  如果是插牌  
     canSwing: boolean; //能否摆动    ！设置为false，默认不显示
+  如果是插牌  
+    canSwing: boolean; //能否摆动    ！设置为true，默认不显示
   ！！！
   canVeneer: boolean; //能否贴面    ！设置为false，默认不显示
   canSelect: boolean; //能否点选    ！设置为true，默认显示, 能编辑
@@ -154,17 +159,18 @@ isMult:重复添加
   url: string; //模型路径
   type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | ''; //类别
   name: string; //名称
-  deep: number; //最大下沉深度  ！默认为1，默认显示
-  canMove: boolean; //能否移动     ！设置为true，不显示
-  canRotate: boolean;  //能否旋转    ！设置为true，默认显示, 能编辑
-  canSwing: boolean; //能否摆动    ！设置为true，默认不显示, 能编辑
+  deep: number; //最大下沉深度  ！默认为空值，默认显示
+
+  canMove: boolean; //能否移动     ！设置为false，不能编辑
+  canRotate: boolean;  //能否旋转    ！设置为false，不能编辑
+  canSwing: boolean; //能否摆动    ！设置为false，不能编辑
   
-  canVeneer: boolean; //能否贴面    ！设置为true，默认不显示
-  canSelect: boolean; //能否点选    ！设置为true，默认显示, 能编辑
-  isMult: boolean; //是否重复添加    ！设置为true，默认显示, 能编辑
+  canVeneer: boolean; //能否贴面    ！设置为true，不能编辑
+  canSelect: boolean; //能否点选    ！设置为true，不能编辑
+  isMult: boolean; //是否重复添加    ！设置为true，可编辑
   
-  shape?: string; //形状   !设置为圆形，默认显示，不可选
-  specs?: string; //规格  !设置为8寸，默认显示，不可选
+  shape?: string; //形状   !不传值，不可选
+  specs?: string; //规格  !不传值，不可选
   text?: string; //文本
   font?: string; //字体  
   

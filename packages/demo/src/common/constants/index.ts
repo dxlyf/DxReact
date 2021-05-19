@@ -4,3 +4,4 @@
  */
 export * as PRODUCT from './product';
 export * as ORDER from './order';
+export * as ADVERTISEMENT from './advertisement';

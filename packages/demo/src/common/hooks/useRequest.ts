@@ -63,6 +63,8 @@ export default function useRequest<T>(
         pageSize: 10,
         total: 0,
         showSizeChanger: true,
+        showTotal: (total, range) =>
+          `共${total}条记录，当前显示第${range[0]}-${range[1]}条记录`,
         pageSizeOptions: ['10', '30', '50', '70', '100'],
       },
       defaultParams: params,

@@ -24,11 +24,11 @@ type BasicMaterialParams = {
   replace?: boolean; //是否替换新材质
   keep?: string[]; //保留原材质
 
-  alphaMapRepeat?: number;  //透明贴图密度
+  alphaMapRepeat?: number[] | number;  //透明贴图密度
   bumpScale?: number; //凹凸贴图影响
-  bumpMapRepeat?: number;  //凹凸贴图密度
+  bumpMapRepeat?: number[] | number;  //凹凸贴图密度
   envMapIntensity?: number; //环境贴图强度（对新材质无效--在replace=false时使用）
-  mapRepeat?: number; //贴图密度
+  mapRepeat?: number[] | number; //贴图密度
   metalness?: number; //金属（对新材质无效--在replace=false时使用）
   opacity?: number; //透明度
   reflectivity?: number; //反射率
@@ -61,15 +61,17 @@ type BasicMeshParams = {
   y?: number; //gRy位置y
   z?: number; //gPxz位置Z
   cover?: string; //模型套 "box"|"cylinder"|"sphere"
+  outside?: number; //外圈
+  inside?: number; //内圈
 };
 export type MeshParamsJson = BasicMeshParams & {
   scale?: number[] | number; //缩放
-  size?: number[]; //指定大小
+  size?: number[] | number; //指定大小
   materials?: MaterialParamsJson[]; //材质  
 
   //模型控制参数
   url: string;
-  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | '';
+  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | '大摆件' | '';
   name: string;
   deep: number;
   canMove: boolean;
@@ -82,10 +84,12 @@ export type MeshParamsJson = BasicMeshParams & {
   specs?: string;
   text?: string;
   font?: string;
+  exclude?: any;
+  include?: any;
 };
 type MeshParams = BasicMeshParams & {
   scale: Vector3; //缩放
-  size?: Vector3; //指定大小
+  size: Vector3; //指定大小
   materials?: MaterialParams[]; //材质
 };
 
@@ -120,7 +124,7 @@ export async function setMeshParams(
       url?: string[] | string;
       name?: string;
       type: keyof MaterialParams;
-      repeat?: number;
+      repeat?: number[] | number;
     }[] = [
         { url: envMap, type: 'envMap' },
         { url: map, type: 'map', repeat: mapRepeat },
@@ -138,15 +142,13 @@ export async function setMeshParams(
                 (texture: CubeTexture) => {
                   if (refractionRatio) texture.mapping = CubeRefractionMapping;
                   result[type] = texture;
-                  resolve(null);
+                  resolve(texture);
                 },
                 undefined,
-                () => {
-                  reject();
-                },
+                reject
               );
             } catch (ex) {
-              reject();
+              reject(ex);
             }
           } else {
             try {
@@ -154,17 +156,19 @@ export async function setMeshParams(
                 url as string,
                 (texture: Texture) => {
                   texture.wrapS = texture.wrapT = RepeatWrapping;
-                  if (repeat) texture.repeat.set(repeat, repeat);
+                  if (repeat) {
+                    if (typeof repeat === 'number') texture.repeat.set(repeat, repeat);
+                    else if (repeat.length >= 2) texture.repeat.set(repeat[0], repeat[1]);
+                    else if (repeat.length > 0) texture.repeat.set(repeat[0], repeat[0]);
+                  }
                   result[type] = texture;
-                  resolve(null);
+                  resolve(texture);
                 },
                 undefined,
-                () => {
-                  reject();
-                },
+                reject
               );
             } catch (ex) {
-              reject();
+              reject(ex);
             }
           }
         } else {
@@ -176,14 +180,23 @@ export async function setMeshParams(
   }
   let { scale, size, materials, ...other } = data;
   if (!materials) materials = [];
-  let scaleV: Vector3, sizeV: Vector3 | undefined;
+  let scaleV: Vector3, sizeV: Vector3;
   if (scale) {
-    if (scale instanceof Array) scaleV = new Vector3(scale[0], scale[1], scale[2]);
-    else scaleV = new Vector3(scale, scale, scale);
+    if (typeof scale === 'number') scaleV = new Vector3(scale, scale, scale);
+    else if (scale.length >= 3) scaleV = new Vector3(scale[0], scale[1], scale[2]);
+    else if (scale.length > 0) scaleV = new Vector3(scale[0], scale[0], scale[0]);
+    else scaleV = new Vector3(1, 1, 1);
   } else {
     scaleV = new Vector3(1, 1, 1);
   }
-  if (size) sizeV = new Vector3(size[0], size[1], size[2]);
+  if (size) {
+    if (typeof size === 'number') sizeV = new Vector3(size, size, size);
+    else if (size.length >= 3) sizeV = new Vector3(size[0], size[1], size[2]);
+    else if (size.length > 0) sizeV = new Vector3(size[0], size[0], size[0]);
+    else sizeV = new Vector3(-1, -1, -1);
+  }else{
+    sizeV = new Vector3(-1, -1, -1);
+  }
   const mps: MaterialParams[] = [];
   for (let i = 0; i < materials.length; i++) {
     //处理Color参数
@@ -249,11 +262,12 @@ function formatMesh(group: Group, meshParams: MeshParams, info: any, data: MeshP
         transparent,
         ...others //其它参数
       } = materials[i];
-      if (
-        !target ||
-        (child.name === '' && target === '') ||
-        child.name.match(target)
-      ) {
+      // if (
+      //   !target ||
+      //   (child.name === '' && target === '') ||
+      //   child.name.match(target)
+      // ) {
+      if (child.name === target) {
         let m = replace ? new MeshPhongMaterial() : child.material;
         if (keep)
           keep.forEach((item: string) => {
@@ -270,21 +284,23 @@ function formatMesh(group: Group, meshParams: MeshParams, info: any, data: MeshP
       }
     }
   });
-  group.scale.set(scale.x, scale.y, scale.z);
-  group.updateWorldMatrix(false, true);
-  gRxz.add(group);
-
   let gRxzSize, gRxzCenter;
   let box = new Box3();
+  group.scale.set(scale.x, scale.y, scale.z);
+  group.updateWorldMatrix(false, true);  
   box.expandByObject(group);
   gRxzSize = box.getSize(new Vector3());
   gRxzCenter = box.getCenter(new Vector3());
-  if (size) {
-    const sx = size.x === -1 ? 1 : size.x / gRxzSize.x;
-    const sy = size.y === -1 ? 1 : size.y / gRxzSize.y;
-    const sz = size.z === -1 ? 1 : size.z / gRxzSize.z;
-    group.scale.set(sx, sy, sz);
-  }
+  const sx = size.x === -1 ? group.scale.x : size.x / gRxzSize.x * group.scale.x;
+  const sy = size.y === -1 ? group.scale.y : size.y / gRxzSize.y * group.scale.y;
+  const sz = size.z === -1 ? group.scale.z : size.z / gRxzSize.z * group.scale.z;
+  group.scale.set(sx, sy, sz);
+  group.updateWorldMatrix(false, true);
+  gRxz.add(group);
+  box = new Box3();
+  box.expandByObject(gRxz);
+  gRxzSize = box.getSize(new Vector3());
+  gRxzCenter = box.getCenter(new Vector3());
   if (cover) {
     let mesh = null;
     let material = new MeshBasicMaterial({
@@ -308,7 +324,6 @@ function formatMesh(group: Group, meshParams: MeshParams, info: any, data: MeshP
       gRxz.add(mesh);
     }
   }
-
   gRy.position.y = y;
   gPxz.position.set(x, 0, z);
   Object.assign(gRxz, { gRxzCenter, gRxzSize });

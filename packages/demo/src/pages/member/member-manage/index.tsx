@@ -16,7 +16,7 @@ let MemberList: ConnectRC<any> = ({ history, match, location }) => {
   let [{ tableProps }, { query: showList }] = useRequest({
     service: memberService.getMemberList,
     params: {
-      channelId:1104
+      channelId: 1104,
     },
     transform: (res: any) => {
       return {

@@ -3,6 +3,7 @@ import {
   Vector3,
   Box3
 } from 'three';
+import G from './globalValues';
 import {
   findGroup
 } from './tools'
@@ -25,17 +26,21 @@ export function getMeshInfo(object) {
 export function getVeneerPoint(center, offset, target) {
   let vector = center.clone();
   vector.y = 0;
-  let tagCenter = getMeshInfo(target).center;
+  const info = getMeshInfo(target[0]),
+    size = info.size,
+    tagCenter = info.center;
   tagCenter.y = 0;
   vector.sub(tagCenter);
   if (vector.x === 0 && vector.y === 0 && vector.z === 0) vector.z = -1000;
   else vector.setLength(vector.length() + 1000);
   let direction = vector.clone().normalize().negate();
   vector.add(tagCenter);
-  vector.y = center.y;
+  const max = size.y + G.CakeDeep + target[0].position.y
+  if (center.y > max) vector.y = max - size.y / 2;
+  else vector.y = center.y;
   let data = {
     vector,
-    objects: [target],
+    objects: target,
     direction
   }
   let collision = getFirstCollision(data);
@@ -56,7 +61,7 @@ export function setVeneer(object, target, outside) {
     const
       gRy = object.getObjectByName('gRy'),
       gPy = object.getObjectByName('gPy'),
-      vector = new Vector3(object.position.x - target.position.x, 0, object.position.z - target.position.z);
+      vector = new Vector3(object.position.x - target[0].position.x, 0, object.position.z - target[0].position.z);
     vector.setLength(1000);
     vector.y = gPy.position.y + gRy.position.y + object.position.y;
     gRy.lookAt(vector);
@@ -64,16 +69,6 @@ export function setVeneer(object, target, outside) {
     console.log('没有物件');
   }
 }
-export function setCakeVeneer(object, target, outside) {
-  for (var i in target) {
-    if (target[i].data && target[i].data.type === '蛋糕') {
-      setVeneer(object, target[i], outside);
-      return;
-    }
-  }
-  console.log('没有蛋糕');
-}
-
 
 export function getHeightCollision(vector, target) {
   const v = vector.clone();

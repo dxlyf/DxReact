@@ -37,7 +37,6 @@ export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
     ({ file, fileList, event }) => {
       let newFileList = [...fileList];
       setFileList(newFileList);
-      onChange && onChange(newFileList);
     },
     [onChange],
   );

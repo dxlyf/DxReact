@@ -11,14 +11,14 @@ import { useRequest } from '@/common/hooks';
 import { ImageView } from '@/components/Image';
 import * as diyService from '@/services/diy';
 import { get } from 'lodash';
-
+import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import GroupProductListModal from './components/GroupProductList';
 import ProductListModal from './components/ProductList';
 
 let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
   let themeId = match?.params.themeId;
   let categoryId = match?.params.categoryId;
-  const [{ tableProps }, { query: showList }] = useRequest({
+  const [{ tableProps, dataSource }, { query: showList }] = useRequest<any>({
     service: diyService.getCategoryProductList,
     transform: (d) => {
       return { data: d.list, total: d.total };
@@ -43,6 +43,32 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
       },
     });
   }, []);
+  const onUpSort = useCallback(
+    (record, index) => {
+      let targetId = dataSource[index - 1].id;
+      let moveId = record.id;
+      diyService.updateThemeCategoryGoodSort({
+        coverI: moveId,
+        coverII: targetId,
+      }).then(() => {
+          showList(true);
+        });
+    },
+    [dataSource],
+  );
+  const onDownSort = useCallback(
+    (record, index) => {
+      let targetId = dataSource[index + 1].id;
+      let moveId = record.id;
+      diyService.updateThemeCategoryGoodSort({
+        coverI: moveId,
+        coverII: targetId,
+      }).then(() => {
+          showList(true);
+        });
+    },
+    [dataSource],
+  );
   const fields = useMemo<FilterFormFieldType[]>(
     () => [
       {
@@ -109,6 +135,34 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
         },
       },
       {
+        name: '排序',
+        width: 160,
+        align: 'center',
+        render(value: number, record: any, index: number) {
+          return (
+            <Space>
+              <ArrowUpOutlined
+                onClick={onUpSort.bind(null, record, index)}
+                style={{
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  visibility: index == 0 ? 'hidden' : 'visible',
+                }}
+              ></ArrowUpOutlined>
+              <ArrowDownOutlined
+                onClick={onDownSort.bind(null, record, index)}
+                style={{
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  visibility:
+                    index + 1 >= dataSource.length ? 'hidden' : 'visible',
+                }}
+              ></ArrowDownOutlined>
+            </Space>
+          );
+        },
+      },
+      {
         title: '操作',
         width: 80,
         render: (record) => {
@@ -116,7 +170,7 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
         },
       },
     ],
-    [onDelete],
+    [onDelete, dataSource, onDownSort, onUpSort],
   );
   const [productModalVisible, setProductModalVisible] = useState(false);
   const [groupProductModalVisible, setGroupProductModalVisible] = useState(

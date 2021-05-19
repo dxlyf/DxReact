@@ -1,3 +1,7 @@
+/**
+ * 商品实体模型数据处理
+ * @author fanyonglong
+ */
 import { Effect, ImmerReducer, Reducer, Subscription } from 'umi';
 import * as productService from '@/services/product';
 import * as shopService from '@/services/shop';
@@ -21,6 +25,7 @@ interface shopProductItem {
   stockNum: number; // 库存数量
   isEnable: number; // 是否启用 0否 1是
   diyModelId: number; // 模型id
+  sandwichModelId:number // 夹心模型ID
   shopProductPropertyList: shopProductProperty[];
 }
 export interface ProductEntity {
@@ -245,6 +250,7 @@ const ProductModel: ProductModelType = {
             stockNum: specFormItem.stockNum,
             isEnable: specFormItem.isEnable,
             diyModelId: specFormItem.diyModelId,
+            sandwichModelId:specFormItem.sandwichModelId,
             shopProductPropertyList: spec.shopProductPropertyList.map(
               (p: any) => {
                 return {
@@ -395,11 +401,12 @@ const ProductModel: ProductModelType = {
             productItemNo: d.productItemNo, // 商品规格编码
             imageUrl: [], // 规格图片
             recommendedPrice: d.recommendedPrice * 0.01, // 建议零售价
-            price: d.price>0?d.price * 0.01:d.recommendedPrice* 0.01, //销售价格 ,小于0取建议零售价
+            price: d.price > 0 ? d.price * 0.01 : d.recommendedPrice * 0.01, //销售价格 ,小于0取建议零售价
             stockNum: '', // 库存数量
             maxStockNum: Infinity,
             isEnable: 0, // 是否启用 0否 1是
             diyModelId: '', // 模型id
+            sandwichModelId:'',// 夹心模型
             shopProductPropertyList: shopProductPropertyList,
             shopProductPropertyListFieldMap: keyBy(
               shopProductPropertyList,

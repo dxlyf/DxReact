@@ -3,7 +3,7 @@ import routes from './routes';
 import path from 'path';
 
 export default defineConfig({
-  title:false,
+  title: false,
   outputPath: 'build',
   nodeModulesTransform: {
     type: 'none',

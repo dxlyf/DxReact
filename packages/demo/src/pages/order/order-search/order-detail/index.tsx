@@ -26,6 +26,8 @@ import {
   getOrderDetail,
   getByOrderLog,
   getcancelOrder,
+  getProduceEmployeeByOutOrderNo,
+  getDeliverymanByOutOrderNo,
 } from '@/services/order';
 import { useImmer } from 'use-immer';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
@@ -53,7 +55,7 @@ const OrderDetail = (props) => {
             <Image
               src={
                 text.picUrl
-                  ? `https://rf..net/${text.picUrl}?imageView2/1/w/150/h/150`
+                  ? `https://rf.blissmall.net/${text.picUrl}?imageView2/1/w/150/h/150`
                   : imgFaillBack
               }
               className={styles.tableImage}
@@ -88,11 +90,25 @@ const OrderDetail = (props) => {
       dataIndex: 'orderStatusStr',
     },
   ];
+  // 生产数据
+  const regetProduce = useRequest(getProduceEmployeeByOutOrderNo, {
+    manual: true,
+    formatResult: (data: any) => data,
+  });
+  // 配送数据
+  const regetDelivery = useRequest(getDeliverymanByOutOrderNo, {
+    manual: true,
+    formatResult: (data: any) => data,
+  });
   // 详情
   const reqgetOrderDetail = useRequest(() => getOrderDetail(orderId), {
     manual: true,
     formatResult: (data: any) => data,
     onSuccess(data) {
+      console.log(data.orderNo, 'data.orderNo');
+
+      regetDelivery.run({ outOrderNo: data.orderNo });
+      regetProduce.run({ outOrderNo: data.orderNo });
       // console.log('请求chenggong');
       const dataArr = data.orderItemList;
       dataArr.forEach((item, index) => {
@@ -136,7 +152,7 @@ const OrderDetail = (props) => {
     reqgetByOrderLog.run();
   });
   const deadline = reqgetOrderDetail.data
-    ? new Date(reqgetOrderDetail.data.createdTime).getTime() + 1000 * 60 * 15
+    ? new Date(reqgetOrderDetail.data.createdTime).getTime() + 1000 * 60 * 30
     : ''; // 倒计时
   const onFinish = () => {
     console.log('倒计时完成');
@@ -300,28 +316,51 @@ const OrderDetail = (props) => {
               <div className={styles.infoTitle}>生产及配送</div>
               <div className={styles.info}>
                 <div>城市归属：</div>
-                {reqgetOrderDetail.data.receiverCityName}
+                {regetProduce.data && regetProduce.data.length
+                  ? regetProduce.data[0].cityName || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>生产站点：</div>
+                {regetProduce.data && regetProduce.data.length
+                  ? regetProduce.data[0].storeName || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>生产人员：</div>
+                {regetProduce.data && regetProduce.data.length
+                  ? regetProduce.data[0].employeeName || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>生产时间：</div>
+                {regetProduce.data && regetProduce.data.length
+                  ? regetProduce.data[0].packTime || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>配送方式：</div>
+                {regetDelivery.data && regetDelivery.data.length
+                  ? regetDelivery.data[0].deliveryTypeDesc || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>配送商：</div>
+                {regetDelivery.data && regetDelivery.data.length
+                  ? regetDelivery.data[0].deliveryDistributor || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>配送员：</div>
+                {regetDelivery.data && regetDelivery.data.length
+                  ? regetDelivery.data[0].deliverymanName || '-'
+                  : '-'}
               </div>
               <div className={styles.info}>
                 <div>配送时间：</div>
+                {regetDelivery.data && regetDelivery.data.length
+                  ? regetDelivery.data[0].deliveryTime || '-'
+                  : '-'}
               </div>
             </div>
             <div className={styles.infoTwoBox}>

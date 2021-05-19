@@ -32,6 +32,7 @@ export interface FilterFormField {
   label?: any;
   render?: (field: FilterFormField, ctx: ControlContext) => any;
   props?: any;
+  colProps?: any;
   formItemProps?: any;
   wrapper?: boolean;
   initialValue?: any;
@@ -45,7 +46,7 @@ export interface FilterFormField {
   transform?: (value: any, field: FilterRenderField, values: any) => any;
   isValidValue?: (value: any, field: FilterRenderField, values: any) => boolean;
   validate?: (value: any, field: FilterRenderField, values: any) => boolean;
-  normalize?:(value: any, field: FilterRenderField, values: any) => any;
+  normalize?: (value: any, field: FilterRenderField, values: any) => any;
 }
 export type FilterRenderField = {
   fieldIndex?: number;
@@ -79,12 +80,12 @@ const { create, controls } = createFilterControl({
   },
 });
 create('text', {
-  normalize(value:any){
-     return typeof value==='string'?trim(value):value
+  normalize(value: any) {
+    return typeof value === 'string' ? trim(value) : value;
   },
   render(field) {
     return <Input maxLength={50} {...field.props}></Input>;
-  }
+  },
 });
 create('list', {
   isValidValue(value: any) {

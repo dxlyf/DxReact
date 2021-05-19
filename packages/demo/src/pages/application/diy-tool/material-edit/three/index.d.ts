@@ -11,6 +11,7 @@ type ThreeObjectParams = {
   cakeInfo?: any;
   cardInfo?: any;
   font?: string;
+  rotateSpeed?: number;
 }
 type Error = (err: string) => void;
 type LoadSuccess = (object: Group) => void;
@@ -57,11 +58,11 @@ export default class ThreeObject {
   animate: () => void;
   start: (success?: () => void, error?: Error) => void;
   loadModel: (info: any, success?: LoadSuccess, error?: Error, data?: MeshParamsJson) => void;
-  showText: (str: string, imageUrl: string, success?: LoadSuccess, error?: Error) => void;
+  showText: (str: string, imageUrl: string, success?: LoadSuccess, error?: Error, refresh?: boolean) => void;
 
   autoRotate: boolean;
   getImage: (withoutBackgroud?: boolean) => string;
-  findObjects: (info: any, without?: boolean) => Group[];
+  findObjects: (info: any, array?: Group[]) => Group[];
   clearScene: (withCake?: boolean) => void;
   deleteObject: (group?: Group | null, withoutRender?: boolean) => void;
   getSceneObjectWithoutCake: () => Group[];
@@ -73,6 +74,7 @@ export default class ThreeObject {
   setSceneData: (json: any, success?: () => void, error?: Error) => void;
   selected: Group | null;
   resetObject: (group: Group | null) => void;
+  findSkuObjects: () => [data: Group[], cake: Group[]];
   setSceneHeight: () => void;
   changMeshParams: (info: any, success?: LoadSuccess, error?: Error, object?: Group) => void;
   getMeshNames: (group: Group) => MeshNames[];
@@ -83,4 +85,6 @@ export default class ThreeObject {
   setCakeColor: (color: number) => void;
   stickToCake: (object?: Group | null, outside?: boolean) => void;
   stickFromCameraToCake: (object: Group, outside?: boolean) => void;
+  speedRate: number;
+  autoRender: boolean;
 }

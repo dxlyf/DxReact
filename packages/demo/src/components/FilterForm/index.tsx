@@ -209,7 +209,13 @@ const FilterForm = React.forwardRef<
                 currentValue: currentValue,
                 fieldIndex: i,
               };
-              newfieldItem.currentValue=fieldItem.normalize?fieldItem.normalize(newfieldItem.currentValue,newfieldItem,values):newfieldItem.currentValue
+              newfieldItem.currentValue = fieldItem.normalize
+                ? fieldItem.normalize(
+                    newfieldItem.currentValue,
+                    newfieldItem,
+                    values,
+                  )
+                : newfieldItem.currentValue;
               let isValid = fieldItem.isValidValue!(
                 newfieldItem.currentValue,
                 newfieldItem,
@@ -344,6 +350,7 @@ const FilterForm = React.forwardRef<
             <Col
               key={field.key}
               span={field.span}
+              {...(field.colProps ?? {})}
               className={classNames({
                 hidden: field.hidden,
               })}

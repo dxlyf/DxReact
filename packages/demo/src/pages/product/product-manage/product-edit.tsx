@@ -139,6 +139,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
             stockNum: specFormItem.stockNum,
             isEnable: specFormItem.isEnable,
             diyModelId: specFormItem.diyModelId,
+            sandwichModelId:specFormItem.sandwichModelId,
             shopProductPropertyList: spec.shopProductPropertyList.map(
               (p: any) => {
                 return {

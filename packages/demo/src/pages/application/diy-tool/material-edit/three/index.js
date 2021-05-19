@@ -31,12 +31,11 @@ import {
   setObjectHeight,
   getHeight,
   setVeneer,
-  setCakeVeneer,
 } from './collision';
 import G, { panInfo, cursorInfo } from './globalValues';
 
 function ThreeObject(params) {
-  const { getMeshParams, type, width, height, cakeInfo } = params,
+  const { getMeshParams, type, width, height, cakeInfo, rotateSpeed } = params,
     isBack = type === 'back',
     isFront = type === 'front',
     isShowcase = type === 'showcase',
@@ -44,10 +43,18 @@ function ThreeObject(params) {
     lightFar = 200,
     store = [],
     dragObjects = [], //可拖曳物件
-    heightObjects = [];
+    heightObjects = [], //测高物件
+    veneerObjects = [], //贴面物件
+    defaultExclude = {
+      '蛋糕': { type: ['蛋糕', '围边', '淋边', '贴面', '大摆件'] },
+      '围边': { type: ['围边', '淋边', '贴面'] },
+      '淋边': { type: ['围边', '淋边'] },
+      '贴面': { type: ['围边'] },
+      '大摆件': { type: ['大摆件'] }
+    };
 
   let ready = false,
-    skyTypeList = [],
+    autoRender = isFront,
     onClickModel = null,
     pan = null,
     cursor = null,
@@ -59,10 +66,22 @@ function ThreeObject(params) {
     orgMaterials = null,
     cakeSize = G.CakeDiam,
     cakeColor = -1,
+    speedRate = 1,
     cardInfo = params.cardInfo
       ? params.cardInfo
-      : { url: `${G.HostUrl}/Card.glb`, type: '字牌', name: '字牌' }, //--
-    textFont = params.font ? params.font : `${G.HostUrl}/FZSTK.TTF`; //--
+      : {
+        url: `${G.HostUrl}/Card.glb`,
+        type: '字牌',
+        name: '字牌',
+        deep: 0,
+        canMove: true,
+        canRotate: true,
+        canSwing: false,
+        canVeneer: false,
+        canSelect: true,
+        isMult: false,
+      },
+    textFont = params.font ? params.font : `${G.HostUrl}/FZSTK.TTF`;
 
   //场景
   const scene = new Scene();
@@ -105,7 +124,7 @@ function ThreeObject(params) {
     alpha: true,
   });
   renderer.setSize(width, height); //设置渲染区域尺寸
-  // renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFSoftShadowMap;
   renderer.setClearColor(0xbcb0a6, 1); //设置背景颜色
@@ -114,18 +133,15 @@ function ThreeObject(params) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.maxPolarAngle = Math.PI * 0.5;
   controls.autoRotate = false;
-  controls.autoRotateSpeed = 8;
+  controls.autoRotateSpeed = rotateSpeed || 2;
   controls.enablePan = false;
   controls.zoomSpeed = 0.5;
   controls.minDistance = 700; //设置相机距离原点的最远距离
   controls.maxDistance = 2000; //设置相机距离原点的最远距离
   if (isBack) {
     controls.minDistance = 50;
-    controls.addEventListener('change', animate);
-  } else if (isShowcase) {
-    controls.addEventListener('change', animate);
-    controls.autoRotateSpeed = 3;
   }
+  if (!autoRender) controls.addEventListener('change', animate);
 
   //物件控制器
   const dragControls = new DragControls(
@@ -134,6 +150,7 @@ function ThreeObject(params) {
     renderer.domElement,
   );
   dragControls.heightObjects = heightObjects;
+  dragControls.veneerObjects = veneerObjects;
   dragControls.transformGroup = true;
   dragControls.type = 'move';
   dragControls.enabled = !isShowcase;
@@ -164,7 +181,7 @@ function ThreeObject(params) {
       default:
         break;
     }
-    if (!isFront) animate();
+    if (!autoRender) animate();
   }
   dragControls.addEventListener('dragstart', dragHandle);
   dragControls.addEventListener('drag', dragHandle);
@@ -172,11 +189,55 @@ function ThreeObject(params) {
 
   // 场景渲染
   function animate() {
-    if (isFront) {
+    if (autoRender) {
       requestAnimationFrame(animate);
       controls.update();
     }
     renderer.render(scene, camera);
+  }
+
+  function autoRotateSpeed() {
+    let test = 5;
+    let skip = 180; //约3秒
+    let time = null;
+    let times = [];
+
+    let step = 0;
+    function runTest() {
+      if (step > 0) {
+        step--;
+      } else if (time === null) time = new Date().getTime();
+      else if (test > times.length) {
+        let tmp = new Date().getTime();
+        tmp = tmp - time;
+        times.push(tmp);
+        time = new Date().getTime();
+      } else {
+        let total = 0;
+        for (let i = 0; i < times.length; i++) {
+          total += times[i];
+        }
+        let rate = total / times.length;
+        controls.autoRotateSpeed = rate * 0.12 * speedRate;
+        time = null;
+        times.length = 0;
+        step = skip;
+      }
+      requestAnimationFrame(runTest);
+    }
+    runTest();
+  }
+
+  function sendSuccess(success, error, msg, ...params) {
+    if (success)
+      try {
+        success(...params);
+      } catch (ex) {
+        sendError(error, msg + '\r\n调用success失败\r\n' + ex.stack);
+      }
+  }
+  function sendError(error, msg) {
+    if (error) error(msg);
   }
 
   function loadPan(success, error) {
@@ -188,12 +249,11 @@ function ThreeObject(params) {
       (group) => {
         pan = group;
         pan.rotation.y = Math.PI / 4;
-        scene.add(pan);
-        heightObjects.push(pan);
-        success();
+        addToScene(pan);
+        sendSuccess(success, error, '加载底座成功');
       },
-      () => {
-        if (error) error('加载底座失败');
+      (err) => {
+        sendError(error, '加载底座失败\r\n' + err.stack);
       },
       panInfo,
     );
@@ -210,10 +270,10 @@ function ThreeObject(params) {
         scene.add(cursor);
         cursor.visible = false;
         cursor.getObjectByName('gPy').position.y = G.CakeDeep + G.CakeHeight;
-        if (success) success();
+        sendSuccess(success, error, '加载光标成功');
       },
-      () => {
-        if (error) error('加载光标失败');
+      (err) => {
+        sendError(error, '加载光标失败\r\n' + err.stack);
       },
       cursorInfo,
     );
@@ -223,14 +283,16 @@ function ThreeObject(params) {
       loadModel(
         cakeInfo,
         () => {
-          animate();
-          if (success) success();
+          if (!autoRender) animate();
+          sendSuccess(success, error, '加载默认蛋糕成功');
         },
-        error,
+        (err) => {
+          sendError('加载默认蛋糕失败\r\n' + err.stack);
+        },
       );
     } else {
-      animate();
-      if (success) success();
+      if (!autoRender) animate();
+      sendSuccess(success, error, '');
     }
   }
   //启动
@@ -240,6 +302,8 @@ function ThreeObject(params) {
       return;
     }
     loadPan(() => {
+      autoRotateSpeed();
+      if (autoRender) animate();
       ready = true;
       if (isBack) {
         loadBasicCake(success, error);
@@ -248,17 +312,14 @@ function ThreeObject(params) {
           loadBasicCake(success, error);
         }, error);
       } else {
-        if (success) success();
+        sendSuccess(success, error, '启动成功');
       }
     }, error);
-  }
-  function getSkuTypeList(arr) {
-    skyTypeList = arr;
   }
   //显示背景
   function showBackgroud(urls, success, error) {
     if (!urls) {
-      success();
+      sendSuccess(success, error, '');
       return;
     }
     new CubeTextureLoader().load(
@@ -266,19 +327,19 @@ function ThreeObject(params) {
       (map) => {
         scene.background = map;
         scene.data = urls;
-        if (!isFront) animate();
-        if (success) success(map);
+        if (!autoRender) animate();
+        sendSuccess(success, error, '加载背景成功', map);
       },
       undefined,
       () => {
-        if (error) error('加载背景失败');
+        sendError(error, '加载背景失败');
       },
     );
   }
   //显示logo
   function showLogo(data, success, error) {
     if (!data) {
-      success();
+      sendSuccess(success, error, '');
       return;
     }
     let {
@@ -319,8 +380,8 @@ function ThreeObject(params) {
         logo.position.y = y;
         logo.data = data;
         scene.add(logo);
-        if (!isFront) animate();
-        if (success) success(logo);
+        if (!autoRender) animate();
+        sendSuccess(success, error, '加载Logo成功', logo);
       },
       undefined,
       error,
@@ -335,11 +396,22 @@ function ThreeObject(params) {
   function loadModel(info, success, error, data) {
     if (!data) data = getMeshParams(info);
     const objectType = data.type;
+    //检查重复
     if (!data.isMult) {
       const arr = findObjects({ name: data.name });
       if (arr.length > 0) {
-        success(arr[0]);
+        sendSuccess(success, error, '模型已加载', arr[0]);
         return;
+      }
+    }
+    //检查规格
+    if (['围边', '淋边', '大摆件'].includes(data.type)) {
+      let cake = findObjects({ type: '蛋糕' });
+      if (cake.length > 0) {
+        if (checkOffSpec(cake[0].data, data)) {
+          sendError(error, '规格不符');
+          return;
+        }
       }
     }
     new GLTFLoader().load(
@@ -348,42 +420,24 @@ function ThreeObject(params) {
         let model = gltf.scene;
         setMeshParams(model, info, data)
           .then((group) => {
-            let remove = [];
+            logicalRelation(group);
+
+            //处理位置
             if (pan) group.position.y = pan.position.y;
             if (objectType === '蛋糕') {
-              remove = findObjects({ type: objectType });
-            } else if (objectType === '围边') {
-              remove = findObjects({ type: ['围边', '淋边', '贴面'] });
-              setOtherSize(group, cakeSize / G.CakeDiam);
-            } else if (objectType === '淋边') {
-              remove = findObjects({ type: ['围边', '淋边'] });
+              requestAnimationFrame(() => {
+                setCakeSize(cakeSize);
+              });
+            } else if (['围边', '淋边'].includes(objectType)) {
               setOtherSize(group, cakeSize / G.CakeDiam);
             } else if (objectType === '贴面') {
-              remove = findObjects({ type: ['围边'] });
               stickFromCameraToCake(group);
             } else if (ready) {
               setObjectHeight(group, heightObjects);
             }
-            remove.forEach((g) => {
-              deleteObject(g);
-            });
 
-            if (objectType === '蛋糕') {
-              heightObjects.push(group);
-              requestAnimationFrame(() => {
-                setSceneHeight();
-              });
-            }
-            if (group.data.canSelect || (isBack && objectType === '蛋糕')) {
-              dragObjects.push(group);
-              if (cursor)
-                requestAnimationFrame(() => {
-                  selectLocaltion(group, cursor);
-                });
-            }
-            scene.add(group);
+            addToScene(group);
             if (ready) {
-              store.push(group);
               if (isBack) {
                 const ms = [];
                 forMesh(model, (mesh) => {
@@ -392,22 +446,113 @@ function ThreeObject(params) {
                   m.MeshName = mesh.name;
                 });
                 orgMaterials = ms;
-                animate();
-                if (!isFront) animate();
+                if (!autoRender) {
+                  animate();
+                  animate();
+                }
               }
             }
             selected = group;
-            if (success) success(group);
+            sendSuccess(success, error, '加载模型成功', group);
           })
           .catch((err) => {
-            if (error) error('加载材质失败');
+            sendError(error, '加载材质失败\r\n' + err.stack);
           });
       },
       undefined,
       function (err) {
-        if (error) error('模型加载失败');
+        sendError(error, '模型加载失败\r\n' + err.stack);
       },
     );
+  }
+  //检查不合规格
+  function checkOffSpec(orgData, nowData){
+    return orgData.shape !== nowData.shape ||
+    (nowData.type !== '大摆件' && orgData.specs !== nowData.specs) ||
+    (nowData.type === '大摆件' && nowData.outside > cakeSize)
+  }
+  //逻辑关系
+  function logicalRelation(group) {
+    const data = group.data;
+    const { type, shape, specs, outside, inside } = data;
+    let excludeObjects = [];
+    let includeObjects = [];
+    let exclude = data.exclude ? data.exclude : defaultExclude[type];
+    let include = data.include;
+    if (!include) {
+      if (type === '蛋糕') {
+        include = {
+          type: { $not: '蛋糕' },
+          shape,
+          specs,
+        }
+      } else if (['大摆件', '围边'].includes(type)) {
+        include = {
+          $or: {
+            outside: { $lteq: inside },
+            inside: { $gteq: outside }
+          }
+        };
+      }
+    }
+    if (exclude) excludeObjects = findObjects(exclude);
+    if (include) includeObjects = findObjects(include, excludeObjects);
+    excludeObjects.forEach((object) => {
+      if (!includeObjects.includes(object)) {
+        if (
+          type === '蛋糕' &&
+          ['围边', '淋边', '大摆件'].includes(object.data.type) &&
+          checkOffSpec(data, object.data)
+        ) {
+          deleteObject(object);
+        } else {
+          let objs = [];
+          exclude = object.data.exclude ? object.data.exclude : defaultExclude[object.data.type];
+          if (exclude) {
+            objs = findObjects(exclude, [group]);
+            if (objs.length > 0) {
+              if (!object.data.include || findObjects(object.data.include, [group]).length === 0) {
+                deleteObject(object);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  function addToScene(group) {
+    addDragObject(group);
+    addHeightObject(group);
+    addVeneerObject(group);
+    scene.add(group);
+    if (ready) store.push(group);
+  }
+  //处理可拖曳物
+  function addDragObject(group) {
+    if (group.data.canSelect || (isBack && group.data.type === '蛋糕')) {
+      dragObjects.push(group);
+      if (cursor) requestAnimationFrame(() => {
+        selectLocaltion(group, cursor);
+      });
+    }
+  }
+  //处理测高物件
+  function addHeightObject(group) {
+    if (['蛋糕', '底盘'].includes(group.data.type)) heightObjects.push(group);
+    sortObjects(veneerObjects);
+  }
+  //处理贴面物件
+  function addVeneerObject(group) {
+    if (['蛋糕'].includes(group.data.type)) veneerObjects.push(group);
+    sortObjects(veneerObjects);
+  }
+  //处理数组排序，以蛋糕为第一个元素
+  function sortObjects(arr) {
+    const cakes = findObjects({ type: '蛋糕' }, arr);
+    const others = findObjects({ type: { $not: '蛋糕' } }, arr);
+    arr.length = 0;
+    cakes.forEach((group) => { arr.push(group) });
+    others.forEach((group) => { arr.push(group) });
   }
 
   // 初始化字牌
@@ -418,7 +563,7 @@ function ThreeObject(params) {
         loadTextFont(
           textFont,
           () => {
-            if (success) success({ card, font });
+            sendSuccess(success, error, '初始化字牌成功', { card, font });
           },
           error,
         );
@@ -432,26 +577,26 @@ function ThreeObject(params) {
     loadCard(data.url, data.scale)
       .then((c) => {
         card = c;
-        if (success) success(c);
+        sendSuccess(success, error, '加载字牌成功', card);
       })
-      .catch(() => {
-        if (error) error('加载字牌失败');
+      .catch((err) => {
+        sendError(error, '加载字牌失败\r\n' + err.stack);
       });
   }
   function loadTextFont(url, success, error) {
-    textFont = url;
+    if (url) textFont = url;
     loadFont(url)
       .then((f) => {
         font = f;
         textFont = url;
-        if (success) success(f);
+        sendSuccess(success, error, '加载字体成功', font);
       })
-      .catch(() => {
-        if (error) error('加载字体失败');
+      .catch((err) => {
+        sendError(error, '加载字体失败\r\n' + err.stack);
       });
   }
   //展示字牌
-  function showText(txt, success, error) {
+  function showText(txt, success, error, refresh) {
     if ((font === null || card === null) && error) error('字体未始化');
     const data = getMeshParams(cardInfo);
     data.text = txt;
@@ -461,11 +606,11 @@ function ThreeObject(params) {
       deleteObject(text);
     }
     if (txt === '') {
-      if (success) success(null);
+      sendSuccess(success, error, '', null);
     } else {
       let position = new Vector3(),
         rotation = new Euler(-Math.PI / 9, 0, 0);
-      if (text) {
+      if (text && !refresh) {
         let gRy = text.getObjectByName('gRy'),
           gRxz = text.getObjectByName('gRxz');
         position = new Vector3(
@@ -486,15 +631,12 @@ function ThreeObject(params) {
         gRy.position.y = position.y;
         gRy.rotation.y = rotation.y;
         gRxz.rotation.set(rotation.x, 0, rotation.z);
-        dragObjects.push(text);
+        addToScene(text);
         if (cursor) selectLocaltion(text, cursor);
-        scene.add(text);
-        store.push(text);
-        dragObjects.push(text);
-        if (!isFront) animate();
-        if (success) success(text);
+        if (!autoRender) animate();
+        sendSuccess(success, error, '展示字牌成功', text);
       } catch (err) {
-        if (error) error('字牌创建失败');
+        sendError(error, '字牌创建失败\r\n' + err.stack);
       }
     }
   }
@@ -512,10 +654,10 @@ function ThreeObject(params) {
   function resetObject(group) {
     if (!group) return;
     group.getObjectByName('gRy').rotation.y = 0;
-    group.getObjectByName('gRy').position.y = group.data.y;
+    group.getObjectByName('gRy').position.y = group.data.y || 0;
     group.getObjectByName('gRxz').rotation.x = 0;
     group.getObjectByName('gRxz').rotation.z = 0;
-    if (!isFront) animate();
+    if (!autoRender) animate();
   }
   //刷新场景模型的Y轴
   function setSceneHeight() {
@@ -524,45 +666,72 @@ function ThreeObject(params) {
         setObjectHeight(g, heightObjects);
       }
     });
-    if (!isFront) animate();
+    if (!autoRender) animate();
   }
-  function findSkuObjects(from) {
-    let data = this.getSceneObjectWithoutCake(),
-      cake = this.findObjects({ type: '蛋糕' });
+  function findSkuObjects() {
+    let data = getSceneObjectWithoutCake(),
+      cake = findObjects({ type: '蛋糕' });
     return [data, cake];
   }
-  //查找模型
-  function findObjects(data, without, array) {
+  //查找模型 并且(默认):$and 或者:$or 非:$not 小于:$lt 小于等于:$lteq 大于:$gt 大于等于:$gteq
+  function findObjects(data, array) {
     if (!array) array = store;
     let arr = [];
-    const kvs = Object.entries(data);
-    function check(g, kv) {
-      let pass = false;
-      if (kv[1] instanceof Array) {
-      } else {
-        kv[1] = [kv[1]];
-      }
-      kv[1].forEach((val) => {
-        if (without) {
-          pass = pass || g.data[kv[0]] !== val;
+    function compare(g, kv, key) {
+      if (kv[0] === '$not') {
+        if (kv[1] instanceof Array) {
+          return !kv[1].includes(g.data[key]);
         } else {
-          pass = pass || g.data[kv[0]] === val;
+          return kv[1] !== g.data[key];
         }
-      });
-      return pass;
+      } else if (kv[0] === '$lt') {
+        return g.data[key] < kv[1];
+      } else if (kv[0] === '$lteq') {
+        return g.data[key] <= kv[1];
+      } else if (kv[0] === '$gt') {
+        return g.data[key] > kv[1];
+      } else if (kv[0] === '$gteq') {
+        return g.data[key] >= kv[1];
+      }
     }
+    function check(g, kv) {
+      if (kv[1] instanceof Array) {
+        return kv[1].includes(g.data[kv[0]]);;
+      } else if (typeof kv[1] === 'object') {
+        return Object.entries(kv[1]).every(item => compare(g, item, kv[0]));
+      } else {
+        return [kv[1]].includes(g.data[kv[0]]);
+      }
+    }
+    function checkItem(g, kv) {
+      if (
+        !(kv[1] instanceof Array) &&
+        typeof kv[1] === 'object' &&
+        ['$and', '$or'].includes(kv[0])
+      ) {
+        const kvis = Object.entries(kv[1]);
+        if (kv[0] === '$and') {
+          return checkGroup(g, kvis);
+        } else {
+          return checkGroup(g, kvis, true);
+        }
+      } else {
+        return check(g, kv);
+      }
+    }
+    function checkGroup(g, kvs, or) {
+      if (or) return kvs.some(kv => checkItem(g, kv));
+      else return kvs.every(kv => checkItem(g, kv));
+    }
+    const kvs = Object.entries(data);
     array.forEach((g) => {
-      let pass = false;
-      kvs.forEach((kv) => {
-        pass = pass || check(g, kv);
-      });
-      if (pass) arr.push(g);
+      if (checkGroup(g, kvs)) arr.push(g);
     });
     return arr;
   }
   //查找除蛋糕外的模型
   function getSceneObjectWithoutCake() {
-    return findObjects({ type: '蛋糕' }, true);
+    return findObjects({ type: { $not: '蛋糕' } });
   }
   //删除
   function deleteObject(object, withoutRender) {
@@ -572,37 +741,28 @@ function ThreeObject(params) {
         cursor.visible = false;
         scene.add(cursor);
       }
+      scene.remove(object);
       let index = store.indexOf(object);
-      if (index !== -1) {
-        scene.remove(object);
-        store.splice(index, 1);
-        index = dragObjects.indexOf(object);
-        if (index !== -1) {
-          dragObjects.splice(index, 1);
-        }
-        index = heightObjects.indexOf(object);
-        if (index !== -1) {
-          heightObjects.splice(index, 1);
-        }
-      }
+      if (index !== -1) store.splice(index, 1);
+      index = dragObjects.indexOf(object);
+      if (index !== -1) dragObjects.splice(index, 1);
+      index = heightObjects.indexOf(object);
+      if (index !== -1) heightObjects.splice(index, 1);
+      index = veneerObjects.indexOf(object);
+      if (index !== -1) veneerObjects.splice(index, 1);
     }
-    if (!withoutRender && !isFront) animate();
+    if (!withoutRender && !autoRender) animate();
   }
   //清空场景
   function clearScene(withCake) {
-    let cake = null;
-    while (store.length > 0) {
-      let object = store[0];
-      if (!withCake && object.data.type === '蛋糕') cake = object;
-      deleteObject(object, isBack);
+    let keep = 0;
+    while (store.length > keep) {
+      let object = store[keep];
+      if (!withCake && object.data.type === '蛋糕') {
+        keep++;
+      } else deleteObject(object, isBack);
     }
-    if (cake) {
-      scene.add(cake);
-      store.push(cake);
-      heightObjects.push(cake);
-      if (isBack) dragObjects.push(cake);
-    }
-    if (!isFront) animate();
+    if (!autoRender) animate();
   }
   //截图
   function getImage(withoutBackgroud) {
@@ -616,7 +776,7 @@ function ThreeObject(params) {
       hide.forEach((obj) => {
         obj.visible = false;
       });
-      animate();
+      renderer.render(scene, camera);
       let img = renderer.domElement.toDataURL('image/png');
       renderer.setClearColor(0xbcb0a6, 1);
       scene.background = background;
@@ -625,7 +785,7 @@ function ThreeObject(params) {
       hide.forEach((obj) => {
         obj.visible = true;
       });
-      animate();
+      renderer.render(scene, camera);
       return img;
     } else return renderer.domElement.toDataURL('image/png');
   }
@@ -634,7 +794,10 @@ function ThreeObject(params) {
     const backgroundInfo = scene.data,
       logoInfo = logo ? logo.data : undefined,
       objectsInfo = [];
-    store.forEach((object) => {
+    let products = findSkuObjects();
+    products = products[1].concat(products[0]);
+    products.forEach((object) => {
+      if (['底盘', '光标'].includes(object.data.type)) return;
       const gRy = object.getObjectByName('gRy'),
         gRxz = object.getObjectByName('gRxz'),
         group = gRxz.children[0],
@@ -672,36 +835,64 @@ function ThreeObject(params) {
       color,
       cameraPosition,
     } = json;
-    function nextStep1() {
-      showLogo(logoInfo, nextStep2, (err) => {
-        nextStep2();
+
+    step1();
+    function step1() {
+      showBackgroud(backgroundInfo, step2, (err) => {
+        step2();
       });
     }
-    function nextStep2() {
+    function step2() {
+      showLogo(logoInfo, step3, (err) => {
+        step3();
+      });
+    }
+    function step3() {
       const objects = [...objectsInfo];
       function setLocaltion(object, info) {
         const gRy = object.getObjectByName('gRy'),
           gRxz = object.getObjectByName('gRxz'),
           group = gRxz.children[0];
-        object.position.set(info.position.x, 0, info.position.z);
-        gRy.position.y = info.position.y;
-        gRy.rotation.y = info.rotation.y;
-        gRxz.rotation.set(info.rotation.x, 0, info.rotation.z);
         group.scale.copy(info.scale);
+        object.updateWorldMatrix(false, true);
+        gRxz.rotation.set(info.rotation.x, 0, info.rotation.z);
+        gRy.position.set(0, info.position.y, 0);
+        gRy.rotation.set(0, info.rotation.y, 0);
+        object.position.set(info.position.x, 0, info.position.z);
+        object.updateWorldMatrix(false, true);
+        if (object.data.type === '贴面') {
+          setVeneer(object, veneerObjects);
+        } else if (object.data.canMove) {
+          setObjectHeight(object, heightObjects);
+        }
+        if (!autoRender) animate();
         load();
       }
       function load() {
         if (objects.length > 0) {
           let object = objects.shift();
           if (object.data.text && object.data.text !== '') {
-            showText(
-              object.data.text,
-              object.info,
-              (group) => {
-                setLocaltion(group, object);
-              },
-              error,
-            );
+            if (card === null || font === null) {
+              initText(() => {
+                showText(
+                  object.data.text,
+                  (group) => {
+                    setLocaltion(group, object);
+                  },
+                  error,
+                  true,
+                );
+              }, error);
+            } else {
+              showText(
+                object.data.text,
+                (group) => {
+                  setLocaltion(group, object);
+                },
+                error,
+                true,
+              );
+            }
           } else {
             loadModel(
               object.info,
@@ -720,17 +911,15 @@ function ThreeObject(params) {
           );
           cakeSize = size;
           if (color !== -1) setCakeColor(color);
-          setSceneHeight();
-          controls.update();
-          animate();
-          if (success) success();
+          if (!autoRender) {
+            controls.update();
+            animate();
+          }
+          sendSuccess(success, error, '还原场景成功');
         }
       }
       load();
     }
-    showBackgroud(backgroundInfo, nextStep1, (err) => {
-      nextStep1();
-    });
   }
   //取模型名与材质名
   function getMeshNames(group) {
@@ -749,7 +938,7 @@ function ThreeObject(params) {
   function changMeshParams(info, success, error, object) {
     if (!object) object = selected;
     if (!info || !object) {
-      success(null);
+      sendSuccess(success, error, '', null);
       return;
     }
     const group = object.getObjectByName('gRxz').children[0];
@@ -764,10 +953,6 @@ function ThreeObject(params) {
     deleteObject(object);
     let changeType = object.data.type !== data.type;
     if (changeType) {
-      if (data.type === '蛋糕') {
-        const cake = findObjects({ type: '蛋糕' });
-        if (cake.length > 0) deleteObject(cake[0]);
-      }
       if (object.data.type === '蛋糕') {
         loadBasicCake(() => {
           formatObject();
@@ -781,13 +966,15 @@ function ThreeObject(params) {
     function formatObject() {
       setMeshParams(group, info, data)
         .then((group) => {
+          logicalRelation(group);
           group.position.copy(object.position);
           const objectType = group.data.type;
-          if (
-            objectType === '蛋糕' ||
-            objectType === '围边' ||
-            objectType === '淋边'
-          ) {
+          //处理位置
+          if (objectType === '蛋糕') {
+            if (changeType) requestAnimationFrame(() => {
+              setCakeSize(cakeSize);
+            });
+          } else if (['围边', '淋边'].includes(objectType)) {
           } else if (objectType === '贴面') {
             if (changeType) {
               stickFromCameraToCake(group);
@@ -802,20 +989,18 @@ function ThreeObject(params) {
           } else {
             setObjectHeight(group, heightObjects);
           }
-          if (group.data.type === '蛋糕') {
-            heightObjects.push(group);
-          }
-          dragObjects.push(group);
-          scene.add(group);
-          store.push(group);
+
+          addToScene(group);
           selected = group;
-          animate();
-          if (!isFront) animate();
-          if (success) success(group);
+          if (!autoRender) {
+            animate();
+            animate();
+          }
+          sendSuccess(success, error, '更改模型参数成功', group);
         })
-        .catch(() => {
-          error('加载材质失败');
-          animate();
+        .catch((err) => {
+          sendError(error, '加载材质失败\r\n' + err.stack);
+          if (!autoRender) animate();
         });
     }
   }
@@ -839,7 +1024,7 @@ function ThreeObject(params) {
     }
     const objs = findObjects({ type: '贴面' });
     objs.forEach((obj) => {
-      setVeneer(obj, cake);
+      setVeneer(obj, veneerObjects);
     });
     setSceneHeight();
   }
@@ -859,15 +1044,15 @@ function ThreeObject(params) {
         return false;
       });
     }
-    if (!isFront) animate();
+    if (!autoRender) animate();
   }
   //把物件贴在蛋糕旁边
   function stickToCake(object, outside) {
     if (!object) object = selected;
     if (object) {
-      setCakeVeneer(object, heightObjects, outside);
+      setVeneer(object, veneerObjects, outside);
     }
-    if (!isFront) animate();
+    if (!autoRender) animate();
   }
   //把物件以相机方向贴在蛋糕旁边
   function stickFromCameraToCake(object, outside) {
@@ -911,7 +1096,6 @@ function ThreeObject(params) {
     loadTextFont: { value: loadTextFont },
     showLogo: { value: showLogo },
     showBackgroud: { value: showBackgroud },
-    getSkuTypeList: { value: getSkuTypeList },
     animate: { value: animate },
     start: { value: start },
     loadModel: { value: loadModel },
@@ -979,6 +1163,26 @@ function ThreeObject(params) {
     setCakeColor: { value: setCakeColor },
     stickToCake: { value: stickToCake },
     stickFromCameraToCake: { value: stickFromCameraToCake },
+    speedRate: {
+      get: () => {
+        return speedRate;
+      },
+      set: (v) => {
+        speedRate = v;
+      },
+    },
+    autoRender: {
+      get: () => {
+        return autoRender;
+      },
+      set: (v) => {
+        autoRender = v;
+        if (autoRender) {
+          controls.removeEventListener('change', animate);
+          animate();
+        } else controls.addEventListener('change', animate);
+      },
+    },
   });
 }
 

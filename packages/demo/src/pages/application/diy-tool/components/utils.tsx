@@ -3,16 +3,19 @@ import { Form, Space } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd';
 
-export const WrapTipText = ({ label, text, children }) => {
+export const WrapTipText = ({
+  label,
+  text,
+  children,
+  shouldUpdate = false,
+}) => {
   return (
-    <Form.Item label={label}>
-      <Space>
-        {children}
-        <span style={{ color: '#999' }}>
-          <InfoCircleOutlined style={{ paddingRight: 5 }} />
-          {text}
-        </span>
-      </Space>
+    <Form.Item label={label} shouldUpdate={shouldUpdate}>
+      {children}
+      <span style={{ color: '#999', marginLeft: 15 }}>
+        <InfoCircleOutlined style={{ paddingRight: 5 }} />
+        {text}
+      </span>
     </Form.Item>
   );
 };
@@ -69,3 +72,7 @@ export function handleDict(HDict) {
   });
   return HDict;
 }
+
+export const includesType = (arr, type) => {
+  return arr.includes(Number(type));
+};
