@@ -25,6 +25,7 @@ import FilterForm, {
 import * as diyService from '@/services/diy';
 import { useRequest, useModal } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
+import cakeImg from '@/assets/images/cake.png';
 
 let DIYCategory: ConnectRC<any> = ({ history, match }) => {
   let themeId = match.params.themeId;
@@ -157,6 +158,17 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
       {
         title: '分类名称',
         dataIndex: 'name',
+        render(name, record) {
+          if (record.categoryType === 1) {
+            return (
+              <Space>
+                <span>{name}</span>
+                <img width={32} height={32} src={cakeImg} />
+              </Space>
+            );
+          }
+          return name;
+        },
       },
       {
         title: '商品数量',
@@ -168,6 +180,14 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
         width: 160,
         align: 'center',
         render(value: number, record: any, index: number) {
+          let isShowUp = true,
+            isShowDown = true;
+          if (index == 0) {
+            isShowUp = false;
+          }
+          if (index + 1 >= dataSource.length) {
+            isShowDown = false;
+          }
           return (
             <Space>
               <ArrowUpOutlined
@@ -175,7 +195,7 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
                 style={{
                   color: '#1890ff',
                   cursor: 'pointer',
-                  visibility: index == 0 ? 'hidden' : 'visible',
+                  visibility: !isShowUp ? 'hidden' : 'visible',
                 }}
               ></ArrowUpOutlined>
               <ArrowDownOutlined
@@ -183,8 +203,7 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
                 style={{
                   color: '#1890ff',
                   cursor: 'pointer',
-                  visibility:
-                    index + 1 >= dataSource.length ? 'hidden' : 'visible',
+                  visibility: !isShowDown ? 'hidden' : 'visible',
                 }}
               ></ArrowDownOutlined>
             </Space>
@@ -198,7 +217,9 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
           return (
             <Space>
               <a onClick={showModal.bind(null, '编辑分类', record)}>编辑</a>
-              <a onClick={onDeleteHandle.bind(null, record)}>删除</a>
+              {record.categoryType === 1 ? null : (
+                <a onClick={onDeleteHandle.bind(null, record)}>删除</a>
+              )}
               <Link
                 to={`/product/diy/theme/category/${themeId}/goods/${record.id}`}
               >

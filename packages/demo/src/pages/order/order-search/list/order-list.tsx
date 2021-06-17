@@ -21,8 +21,6 @@ import FilterForm, {
 } from '@/components/FilterForm';
 import * as orderService from '@/services/order';
 import { useRequest, useTableSelection, useModal } from '@/common/hooks';
-import * as ahooks from 'ahooks';
-
 import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
 import { get, flatMap, uniqueId } from 'lodash';
@@ -62,21 +60,12 @@ let OrderList: ConnectRC<any> = ({ history }) => {
     },
   });
 
-  // const reqUpdateOrderPriceFindItems = ahooks.useRequest(
-  //   orderService.updateOrderPriceFindItems,
-  //   {
-  //     manual: true,
-  //     onSuccess() {
-  //       message.success('修改成功！');
-  //     },
-  //   },
-  // );
-
   let orderPriceRef = useRef<any>();
   let [priceModal, { show: openPriceModal, close: closePriceModal }] = useModal(
     {
       title: '订单改价',
       width: 800,
+      destroyOnClose:true,
       //visible:true,
       onOk: () => {
         orderPriceRef.current
@@ -392,8 +381,7 @@ let OrderList: ConnectRC<any> = ({ history }) => {
           }}
         ></Pagination>
       </Card>
-      <Modal {...priceModal.props} destroyOnClose>
-        {console.log(priceModal)}
+      <Modal {...priceModal.props}>
         <div className={styles.orderPriceMark}>
           只有未付款的订单才可以改价！改价后联系买家刷新订单支付界面！
         </div>

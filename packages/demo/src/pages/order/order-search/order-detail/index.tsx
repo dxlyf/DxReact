@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useReducer, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useReducer,
+  useMemo,
+  useRef,
+  useCallback,
+} from 'react';
 import {
   Row,
   Col,
@@ -31,6 +38,7 @@ import {
 } from '@/services/order';
 import { useImmer } from 'use-immer';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { get } from 'lodash';
 
 const { Step } = Steps;
 const { Countdown } = Statistic;
@@ -55,7 +63,7 @@ const OrderDetail = (props) => {
             <Image
               src={
                 text.picUrl
-                  ? `https://rf.blissmall.net/${text.picUrl}?imageView2/1/w/150/h/150`
+                  ? `https://rf..net/${text.picUrl}?imageView2/1/w/150/h/150`
                   : imgFaillBack
               }
               className={styles.tableImage}
@@ -177,6 +185,17 @@ const OrderDetail = (props) => {
   const toPrice = (str: any) => {
     return Number(str * 0.01).toFixed(2);
   };
+  const displayPromotionType = useCallback((value) => {
+    switch (value) {
+      case 1:
+        return '优惠卷';
+      case 2:
+        return '兑换卷';
+      default:
+        return value;
+    }
+  }, []);
+  let orderPromotions=get(reqgetOrderDetail, 'data.orderPromotions', [])
   return (
     <ProCard split="horizontal">
       {reqgetOrderDetail.data ? (
@@ -386,6 +405,20 @@ const OrderDetail = (props) => {
                 {reqgetOrderDetail.data.payNo || '-'}
               </div>
             </div>
+            
+              <div className={styles.infoTwoBox}>
+                <div className={styles.infoTitle}>优惠活动信息</div>
+                <div className={styles.info}>
+                  <div>券类型：</div>
+                  {orderPromotions.length>0?orderPromotions.map((d) => displayPromotionType(d.promotionType))
+                    .join(','):'-'}
+                </div>
+                <div className={styles.info}>
+                  <div>券名称：</div>
+                  {orderPromotions.length>0?orderPromotions.map((d) => d.promotionName)
+                    .join(','):'-'}
+                </div>
+              </div>
             {/* <div className={styles.infoTwoBox}>
               <div className={styles.infoTitle}>其他信息</div>
               <div className={styles.info}>
@@ -434,7 +467,7 @@ const OrderDetail = (props) => {
           <ProCard>
             <div className={styles.infoBottom}>
               <div>商品总价：</div>
-              <span>￥{toPrice(reqgetOrderDetail.data.totalAmount)}</span>
+              <span>￥{toPrice(reqgetOrderDetail.data.productAmount)}</span>
             </div>
             <div className={styles.infoBottom}>
               <div>运费：</div>
@@ -451,6 +484,18 @@ const OrderDetail = (props) => {
             <div className={styles.infoBottom}>
               <div>附加费：</div>
               <span>￥{toPrice(reqgetOrderDetail.data.additionalAmount)}</span>
+            </div>
+            <div className={styles.infoBottom}>
+              <div>优惠：</div>
+              <span>
+                ￥
+                {toPrice(
+                  get(reqgetOrderDetail, 'data.orderPromotions', []).reduce(
+                    (a, b) => a + b.discountAmount,
+                    0,
+                  ),
+                )}
+              </span>
             </div>
             <div className={styles.infoBottom}>
               <div>礼品卡/储值卡：</div>

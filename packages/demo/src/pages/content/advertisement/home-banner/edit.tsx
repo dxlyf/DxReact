@@ -21,6 +21,7 @@ import * as diyService from '@/services/diy';
 import moment from 'moment';
 import { omit } from 'lodash';
 import { transformFilesToUrls, normalizeFile } from '@/utils/util';
+import { UploadVideo } from '@/components/Upload';
 
 const formLayout = {
   wrapperCol: {
@@ -50,12 +51,26 @@ let HomeBannerEdit: React.FC<any> = (props) => {
     (urlType) => {
       if (urlType === ADVERTISE_STATUS.enums.value0.value) {
         return null;
+      } else if (urlType === ADVERTISE_STATUS.enums.value5.value) {
+        return (
+          <Form.Item
+            name="adviceVideoUrl"
+            initialValue={[]}
+            valuePropName="fileList"
+          >
+            <UploadVideo maxCount={1}></UploadVideo>
+          </Form.Item>
+        );
       } else if (urlType === ADVERTISE_STATUS.enums.value2.value) {
         return (
-          <Form.Item style={{ marginTop: 15 }} name="adviceUrl">
+          <Form.Item
+            style={{ marginTop: 15 }}
+            initialValue={[]}
+            name="adviceUrl"
+          >
             <Select placeholder="请选择主题">
               {themeList.map((d) => (
-                <Select.Option key={d.id} value={d.id+""}>
+                <Select.Option key={d.id} value={d.id + ''}>
                   {d.name}
                 </Select.Option>
               ))}
@@ -74,7 +89,12 @@ let HomeBannerEdit: React.FC<any> = (props) => {
   );
   let onSaveUpdate = useCallback(
     (values: any) => {
-      let submitData = omit(values, 'startAndEndTime', 'advicePic');
+      let submitData = omit(
+        values,
+        'startAndEndTime',
+        'advicePic',
+        'adviceVideoUrl',
+      );
       submitData.startTime = values.startAndEndTime[0].format(
         'YYYY-MM-DD HH:mm:00',
       );
@@ -82,6 +102,11 @@ let HomeBannerEdit: React.FC<any> = (props) => {
         'YYYY-MM-DD HH:mm:00',
       );
       submitData.advicePic = transformFilesToUrls(values.advicePic).join('');
+      if (submitData.urlType == ADVERTISE_STATUS.enums.value5.value) {
+        submitData.adviceUrl = transformFilesToUrls(values.adviceVideoUrl).join(
+          '',
+        );
+      }
       setLoading(true);
       let result;
       if (id) {
@@ -114,7 +139,14 @@ let HomeBannerEdit: React.FC<any> = (props) => {
             startAndEndTime: [moment(d.startTime), moment(d.endTime)],
             advicePic: [normalizeFile(d.advicePic)],
             urlType: d.urlType,
-            adviceUrl: d.adviceUrl,
+            adviceUrl:
+              d.urlType == ADVERTISE_STATUS.enums.value5.value
+                ? ''
+                : d.adviceUrl,
+            adviceVideoUrl:
+              d.urlType == ADVERTISE_STATUS.enums.value5.value
+                ? [normalizeFile(d.adviceUrl)]
+                : [],
             status: d.status,
             remark: d.remark,
           });
@@ -152,7 +184,7 @@ let HomeBannerEdit: React.FC<any> = (props) => {
         <Form.Item label="广告图片" name="advicePic" {...formItemProps}>
           <UploadImage maxCount={1} draggleSort={false}></UploadImage>
         </Form.Item>
-        <Form.Item label="链接类型">
+        <Form.Item label="链接类型" wrapperCol={{ span: 15 }}>
           <Form.Item
             name="urlType"
             initialValue={ADVERTISE_STATUS.enums.value0.value}
@@ -161,6 +193,7 @@ let HomeBannerEdit: React.FC<any> = (props) => {
               onChange={() => {
                 form.setFieldsValue({
                   adviceUrl: '',
+                  adviceVideoUrl: [],
                 });
               }}
             >
@@ -171,7 +204,7 @@ let HomeBannerEdit: React.FC<any> = (props) => {
               ))}
             </Radio.Group>
           </Form.Item>
-          <Form.Item noStyle dependencies={['urlType']}>
+          <Form.Item noStyle shouldUpdate={() => true}>
             {({ getFieldValue }) => {
               let urlType = getFieldValue('urlType');
               return <div>{renderUrlType(urlType)}</div>;

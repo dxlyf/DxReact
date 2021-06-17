@@ -77,10 +77,6 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
         },
       },
       {
-        title: '商品归属',
-        dataIndex: 'shopName',
-      },
-      {
         title: '操作',
         render: (record) => {
           return (

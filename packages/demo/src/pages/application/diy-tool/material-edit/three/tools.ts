@@ -6,27 +6,28 @@ import {
   Texture,
   CubeTexture,
   Vector3,
+  Matrix4,
   Box3,
   MeshBasicMaterial,
-  BoxGeometry,
-  CylinderGeometry,
-  SphereGeometry,
   CubeRefractionMapping,
   RepeatWrapping,
   DoubleSide,
   TextureLoader,
   CubeTextureLoader,
-  Side
+  Side,
+  Object3D,
 } from 'three';
+import { findCollisionPoints3D, CollisionPointGroup } from './collision';
+import { createGeometryByVectors } from './utils';
 
 type BasicMaterialParams = {
   target?: string; //网格物名
   replace?: boolean; //是否替换新材质
   keep?: string[]; //保留原材质
 
-  alphaMapRepeat?: number[] | number;  //透明贴图密度
+  alphaMapRepeat?: number[] | number; //透明贴图密度
   bumpScale?: number; //凹凸贴图影响
-  bumpMapRepeat?: number[] | number;  //凹凸贴图密度
+  bumpMapRepeat?: number[] | number; //凹凸贴图密度
   envMapIntensity?: number; //环境贴图强度（对新材质无效--在replace=false时使用）
   mapRepeat?: number[] | number; //贴图密度
   metalness?: number; //金属（对新材质无效--在replace=false时使用）
@@ -57,21 +58,21 @@ type MaterialParams = BasicMaterialParams & {
 };
 
 type BasicMeshParams = {
-  x?: number; //gPxz位置X
-  y?: number; //gRy位置y
-  z?: number; //gPxz位置Z
-  cover?: string; //模型套 "box"|"cylinder"|"sphere"
-  outside?: number; //外圈
-  inside?: number; //内圈
-};
-export type MeshParamsJson = BasicMeshParams & {
-  scale?: number[] | number; //缩放
-  size?: number[] | number; //指定大小
-  materials?: MaterialParamsJson[]; //材质  
-
   //模型控制参数
   url: string;
-  type: '底盘' | '蛋糕' | '光标' | '淋边' | '围边' | '摆件' | '插牌' | '贴面' | '字牌' | '大摆件' | '';
+  type:
+  | '底盘'
+  | '蛋糕'
+  | '光标'
+  | '淋边'
+  | '围边'
+  | '摆件'
+  | '插牌'
+  | '贴面'
+  | '字牌'
+  | '大摆件'
+  | '夹心'
+  | '';
   name: string;
   deep: number;
   canMove: boolean;
@@ -82,15 +83,30 @@ export type MeshParamsJson = BasicMeshParams & {
   isMult: boolean;
   shape?: string;
   specs?: string;
+  isBlock?: boolean;
   text?: string;
   font?: string;
   exclude?: any;
   include?: any;
+  outside?: number; //外圈
+  inside?: number; //内圈
+  x?: number; //gPxz位置X
+  y?: number; //gRy位置y
+  z?: number; //gPxz位置Z
+};
+export type MeshParamsJson = BasicMeshParams & {
+  scale?: number[] | number; //缩放
+  size?: number[] | number; //指定大小
+  materials?: MaterialParamsJson[]; //材质
+  collisionPoints?: { x: number, y: number, z: number }[];
+  collisionPointGroup?: { points: { x: number, y: number, z: number }[][], height: number[], levelHeight: Number };
 };
 type MeshParams = BasicMeshParams & {
   scale: Vector3; //缩放
   size: Vector3; //指定大小
   materials?: MaterialParams[]; //材质
+  collisionPoints?: Vector3[];
+  collisionPointGroup?: CollisionPointGroup;
 };
 
 export function getDiam(orgR: number, h: number): number {
@@ -105,7 +121,9 @@ export function getSizeBox(orgR: number, h: number): Vector3 {
 
 // 整理模型参数
 export async function setMeshParams(
-  group: Group, info: any, data: MeshParamsJson
+  group: Group,
+  info: any,
+  data: MeshParamsJson,
 ): Promise<Group> {
   //列队加载材质
   async function lineUp(params: MaterialParamsJson): Promise<MaterialParams> {
@@ -145,7 +163,7 @@ export async function setMeshParams(
                   resolve(texture);
                 },
                 undefined,
-                reject
+                reject,
               );
             } catch (ex) {
               reject(ex);
@@ -157,15 +175,18 @@ export async function setMeshParams(
                 (texture: Texture) => {
                   texture.wrapS = texture.wrapT = RepeatWrapping;
                   if (repeat) {
-                    if (typeof repeat === 'number') texture.repeat.set(repeat, repeat);
-                    else if (repeat.length >= 2) texture.repeat.set(repeat[0], repeat[1]);
-                    else if (repeat.length > 0) texture.repeat.set(repeat[0], repeat[0]);
+                    if (typeof repeat === 'number')
+                      texture.repeat.set(repeat, repeat);
+                    else if (repeat.length >= 2)
+                      texture.repeat.set(repeat[0], repeat[1]);
+                    else if (repeat.length > 0)
+                      texture.repeat.set(repeat[0], repeat[0]);
                   }
                   result[type] = texture;
                   resolve(texture);
                 },
                 undefined,
-                reject
+                reject,
               );
             } catch (ex) {
               reject(ex);
@@ -178,24 +199,47 @@ export async function setMeshParams(
     }
     return result;
   }
-  let { scale, size, materials, ...other } = data;
+  let {
+    scale: scaleJson,
+    size: sizeJson,
+    collisionPoints: collisionPointsJson,
+    collisionPointGroup: collisionPointGroupJson,
+    materials,
+    ...other
+  } = data;
   if (!materials) materials = [];
-  let scaleV: Vector3, sizeV: Vector3;
-  if (scale) {
-    if (typeof scale === 'number') scaleV = new Vector3(scale, scale, scale);
-    else if (scale.length >= 3) scaleV = new Vector3(scale[0], scale[1], scale[2]);
-    else if (scale.length > 0) scaleV = new Vector3(scale[0], scale[0], scale[0]);
-    else scaleV = new Vector3(1, 1, 1);
+  let scale: Vector3, size: Vector3;
+  if (scaleJson) {
+    if (typeof scaleJson === 'number') scale = new Vector3(scaleJson, scaleJson, scaleJson);
+    else if (scaleJson.length >= 3)
+      scale = new Vector3(scaleJson[0], scaleJson[1], scaleJson[2]);
+    else if (scaleJson.length > 0)
+      scale = new Vector3(scaleJson[0], scaleJson[0], scaleJson[0]);
+    else scale = new Vector3(1, 1, 1);
   } else {
-    scaleV = new Vector3(1, 1, 1);
+    scale = new Vector3(1, 1, 1);
   }
-  if (size) {
-    if (typeof size === 'number') sizeV = new Vector3(size, size, size);
-    else if (size.length >= 3) sizeV = new Vector3(size[0], size[1], size[2]);
-    else if (size.length > 0) sizeV = new Vector3(size[0], size[0], size[0]);
-    else sizeV = new Vector3(-1, -1, -1);
-  }else{
-    sizeV = new Vector3(-1, -1, -1);
+  if (sizeJson) {
+    if (typeof sizeJson === 'number') size = new Vector3(sizeJson, sizeJson, sizeJson);
+    else if (sizeJson.length >= 3) size = new Vector3(sizeJson[0], sizeJson[1], sizeJson[2]);
+    else if (sizeJson.length > 0) size = new Vector3(sizeJson[0], sizeJson[0], sizeJson[0]);
+    else size = new Vector3(-1, -1, -1);
+  } else {
+    size = new Vector3(-1, -1, -1);
+  }
+  let collisionPoints, collisionPointGroup: CollisionPointGroup | undefined;
+  if (collisionPointsJson) {
+    collisionPoints = [];
+    collisionPointsJson.forEach(v => collisionPoints.push(new Vector3(v.x, v.y, v.z)));
+  }
+  if (collisionPointGroupJson) {
+    collisionPointGroup = { points: [], height: [], levelHeight: collisionPointGroupJson.levelHeight };
+    collisionPointGroupJson.points.forEach(ps => {
+      let arr: Vector3[] = [];
+      collisionPointGroup!.points.push(arr);
+      ps.forEach(v => arr.push(new Vector3(v.x, v.y, v.z)))
+    });
+    collisionPointGroupJson.height.forEach(v => collisionPointGroup!.height.push(v));
   }
   const mps: MaterialParams[] = [];
   for (let i = 0; i < materials.length; i++) {
@@ -220,32 +264,39 @@ export async function setMeshParams(
   }
   let meshParams: MeshParams = {
     ...other,
-    scale: scaleV,
-    size: sizeV,
+    scale,
+    size,
+    collisionPoints,
+    collisionPointGroup,
     materials: mps,
   };
   return formatMesh(group, meshParams, info, data);
 }
 
 //整理网格物
-function formatMesh(group: Group, meshParams: MeshParams, info: any, data: MeshParamsJson): Group {
+function formatMesh(
+  group: Group,
+  meshParams: MeshParams,
+  info: any,
+  data: MeshParamsJson,
+): Group {
   // gPxz:拖动位置.xz children:gPy
-  // gPy:拖动位置.y children:gRy+光标 
-  // gRy:组角度.y 上下移动位置.y children:gRxz
-  // gRxz:组角度.xz 固定位置.y children:模型+文字|模型套  
-  const gRxz = new Group();
-  gRxz.name = 'gRxz';
+  // gPy:拖动位置.y children:gRy+光标
+  // gRxz:组角度.xz 固定位置.y children:gRy
+  // gRy:组角度.y 上下移动位置.y children:模型+文字|模型套
   const gRy = new Group();
   gRy.name = 'gRy';
-  gRy.add(gRxz);
+  const gRxz = new Group();
+  gRxz.name = 'gRxz';
+  gRxz.add(gRy);
   const gPy = new Group();
   gPy.name = 'gPy';
-  gPy.add(gRy);
+  gPy.add(gRxz);
   const gPxz = new Group();
   gPxz.name = 'gPxz';
   gPxz.add(gPy);
 
-  let { scale, size, x, y, z, cover } = meshParams;
+  let { scale, size, x, y, z } = meshParams;
   x = x ? x : 0;
   y = y ? y : 0;
   z = z ? z : 0;
@@ -284,51 +335,82 @@ function formatMesh(group: Group, meshParams: MeshParams, info: any, data: MeshP
       }
     }
   });
-  let gRxzSize, gRxzCenter;
+  let modelsSize, modelsCenter;
   let box = new Box3();
+  group.name = 'models';
   group.scale.set(scale.x, scale.y, scale.z);
-  group.updateWorldMatrix(false, true);  
+  group.updateWorldMatrix(false, true);
   box.expandByObject(group);
-  gRxzSize = box.getSize(new Vector3());
-  gRxzCenter = box.getCenter(new Vector3());
-  const sx = size.x === -1 ? group.scale.x : size.x / gRxzSize.x * group.scale.x;
-  const sy = size.y === -1 ? group.scale.y : size.y / gRxzSize.y * group.scale.y;
-  const sz = size.z === -1 ? group.scale.z : size.z / gRxzSize.z * group.scale.z;
+  modelsSize = box.getSize(new Vector3());
+  modelsCenter = box.getCenter(new Vector3());
+  const sx =
+    size.x === -1 ? group.scale.x : (size.x / modelsSize.x) * group.scale.x;
+  const sy =
+    size.y === -1 ? group.scale.y : (size.y / modelsSize.y) * group.scale.y;
+  const sz =
+    size.z === -1 ? group.scale.z : (size.z / modelsSize.z) * group.scale.z;
   group.scale.set(sx, sy, sz);
   group.updateWorldMatrix(false, true);
-  gRxz.add(group);
+  gRy.add(group);
+  if (data.type === '夹心') {
+    const groupMirror = getMirrorMesh(group, new Vector3(0, 0, 1), 'modelsMirror');
+    gRy.add(groupMirror);
+    const groupMirror1 = group.clone();
+    groupMirror1.name = 'modelsMirror1';
+    groupMirror1.rotateY(Math.PI);
+    gRy.add(groupMirror1);
+    const groupMirror2 = getMirrorMesh(group, new Vector3(1, 0, 0), 'modelsMirror2');
+    gRy.add(groupMirror2);
+  }
   box = new Box3();
-  box.expandByObject(gRxz);
-  gRxzSize = box.getSize(new Vector3());
-  gRxzCenter = box.getCenter(new Vector3());
-  if (cover) {
-    let mesh = null;
-    let material = new MeshBasicMaterial({
+  box.expandByObject(gRy);
+  modelsSize = box.getSize(new Vector3());
+  modelsCenter = box.getCenter(new Vector3());
+  gRy.position.y = y;
+  gPxz.position.set(x, 0, z);
+  Object.assign(group, { modelsCenter, modelsSize });
+  Object.assign(gPxz, { info, data });
+  const cover = new Mesh(
+    createGeometryByVectors(meshParams.collisionPointGroup ? meshParams.collisionPointGroup : findCollisionPoints3D(group)),
+    new MeshBasicMaterial({
       color: 0xffffff,
       opacity: 0,
       transparent: true,
-    });
-    if (cover === 'box') {
-      mesh = new Mesh(new BoxGeometry(gRxzSize.x, gRxzSize.y, gRxzSize.z), material);
-    } else if (cover === 'cylinder') {
-      mesh = new Mesh(
-        new CylinderGeometry(gRxzSize.x / 2, gRxzSize.x / 2, gRxzSize.y, 16),
-        material,
-      );
-    } else if (cover === 'sphere') {
-      mesh = new Mesh(new SphereGeometry(gRxzSize.x / 2, 24), material);
-    }
-    if (mesh) {
-      mesh.geometry.translate(gRxzCenter.x, gRxzCenter.y, gRxzCenter.z);
-      mesh.renderOrder = 2;
-      gRxz.add(mesh);
-    }
-  }
-  gRy.position.y = y;
-  gPxz.position.set(x, 0, z);
-  Object.assign(gRxz, { gRxzCenter, gRxzSize });
-  Object.assign(gPxz, { info, data });
+      side: DoubleSide,
+    }),
+  );
+  cover.renderOrder = 2;
+  cover.name = 'cover';
+  gRy.add(cover);
   return gPxz;
+}
+//镜像模型
+function getMirrorMesh(group: Group, vec: Vector3, name?: string) {
+  const groupMirror = group.clone();
+  groupMirror.name = name ? name : '';
+  let m = new Matrix4();
+  m.set(
+    1 - 2 * vec.x * vec.x,
+    -2 * vec.x * vec.y,
+    -2 * vec.x * vec.z,
+    0,
+    -2 * vec.x * vec.y,
+    1 - 2 * vec.y * vec.y,
+    -2 * vec.y * vec.z,
+    0,
+    -2 * vec.x * vec.z,
+    -2 * vec.y * vec.z,
+    1 - 2 * vec.z * vec.z,
+    0,
+    0,
+    0,
+    0,
+    1,
+  );
+  forMesh(groupMirror, (mesh: any) => {
+    mesh.applyMatrix4(m);
+  });
+  return groupMirror;
 }
 //设置选择标志动画
 export function selectAnimation(
@@ -383,7 +465,7 @@ export function forMesh(
 }
 
 //通过网格物找组
-export function findGroup(object: Mesh): Group | null {
+export function findGroup(object: Object3D | null): Group | null {
   let group: any = null;
   if (object) {
     group = object.parent;

@@ -53,24 +53,7 @@ export let GroupProductList: React.FC<any> = ({ dataItem, onChange }) => {
           placeholder: '请输入商口名称或商品编号',
           maxLength: 50,
         },
-      },
-      {
-        type: 'shop',
-        name: 'shopId',
-        label: '商品归属',
-        props: { selectedIndex: 1 },
-      },
-      {
-        type: 'list',
-        name: 'status',
-        label: '商品状态',
-        initialValue: -1,
-        data: [
-          { text: '全部', value: -1 },
-          { text: '已上架', value: 1 },
-          { text: '已下架', value: 2 },
-        ],
-      },
+      }
     ],
     [],
   );
@@ -79,38 +62,44 @@ export let GroupProductList: React.FC<any> = ({ dataItem, onChange }) => {
       {
         title: '商品信息',
         dataIndex: 'productidInfo',
-        render(text: any, record: any) {
+        render(text, record: any) {
           return (
             <Space>
               <ImageView
                 width={60}
                 height={40}
-                src={(record.imageUrl + '').split(',')[0]}
+                src={(record.imageUrl+'').split(',')[0]}
                 srcSuffix="?imageView2/1/w/60/h/40"
               ></ImageView>
               <Space direction="vertical" align="start">
                 <div>{record.productName}</div>
-                <div>{record.productNo}</div>
               </Space>
             </Space>
           );
         },
       },
       {
-        title: '商品归属',
-        dataIndex: 'shopName',
+        title: '商品编号',
+        dataIndex: 'productNo',
       },
       {
-        title: '商品状态',
+        title: '商品类型',
+        dataIndex: 'type',
+        render(type) {
+          return PRODUCT.PRODUCT_TYPES.get(type, 'text');
+        },
+      },
+      {
+        title: '状态',
         dataIndex: 'status',
         render(value: number) {
-          return PRODUCT.PRODUCT_SCALE_STATUS.get(value, 'text');
+          return PRODUCT.PRODUCT_STATUS.get(value, 'text');
         },
       },
       {
         title: '电商云商品分类',
         dataIndex: 'categoryName',
-      },
+      }
     ],
     [],
   );

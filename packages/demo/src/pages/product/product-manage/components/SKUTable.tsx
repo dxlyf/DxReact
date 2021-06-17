@@ -11,7 +11,8 @@ import styles from '../index.less';
 
 const SKUTable = React.memo(
   React.forwardRef((props: any, ref) => {
-    let { propertyList, shopProductItemList } = props;
+    let { propertyList, shopProductItemList, isCake } = props;
+
     let [form] = Form.useForm();
     let [{ formItemProps }] = useUplaodImage({ message: '请上传图片' });
     let propertyColumn = useMemo(
@@ -31,8 +32,9 @@ const SKUTable = React.memo(
         })),
       [propertyList],
     );
-    let columns = useMemo<any[]>(
-      () => [
+
+    let columns = useMemo<any[]>(() => {
+      let arr = [
         {
           title: '规格图片',
           dataIndex: 'imageUrl',
@@ -43,8 +45,8 @@ const SKUTable = React.memo(
                 name={['skus', record.id + '', 'imageUrl']}
                 valuePropName="fileList"
               >
-                <UploadImage maxCount={1}>
-                  <a>上传</a>
+                <UploadImage maxCount={1} disabled>
+                  <span>上传</span>
                 </UploadImage>
               </Form.Item>
             );
@@ -71,7 +73,7 @@ const SKUTable = React.memo(
                 ]}
                 name={['skus', record.id + '', 'recommendedPrice']}
               >
-                <InputNumber min={0.01} precision={2}></InputNumber>
+                <InputNumber disabled min={0.01} precision={2}></InputNumber>
               </Form.Item>
             );
           },
@@ -96,28 +98,7 @@ const SKUTable = React.memo(
                 ]}
                 name={['skus', record.id + '', 'price']}
               >
-                <InputNumber min={0.01} precision={2}></InputNumber>
-              </Form.Item>
-            );
-          },
-        },
-        {
-          title: (
-            <span>
-              <i style={{ color: 'red' }}>*</i>库存
-            </span>
-          ),
-          dataIndex: 'stockNum',
-          render: (value: any, record: any) => {
-            return (
-              <Form.Item
-                initialValue={value}
-                rules={[
-                  { required: true, message: '请输入库存', type: 'number' },
-                ]}
-                name={['skus', record.id + '', 'stockNum']}
-              >
-                <InputNumber max={9999} min={0}></InputNumber>
+                <InputNumber disabled min={0.01} precision={2}></InputNumber>
               </Form.Item>
             );
           },
@@ -129,43 +110,10 @@ const SKUTable = React.memo(
             return <div className={styles.skuTableColumn}>{text}</div>;
           },
         },
-        {
-          title: '是否启用',
-          dataIndex: 'isEnable',
-          width: 80,
-          render: (value: any, record: any) => {
-            return (
-              <Form.Item
-                name={['skus', record.id + '', 'isEnable']}
-                initialValue={value}
-              >
-                <Select>
-                  <Select.Option value={1} key={1}>
-                    是
-                  </Select.Option>
-                  <Select.Option value={0} key={0}>
-                    否
-                  </Select.Option>
-                </Select>
-              </Form.Item>
-            );
-          },
-        },
-        {
-          title: 'DIY规格模型',
-          dataIndex: 'diyModelId',
-          render: (value: any, record: any) => {
-            return (
-              <Form.Item
-                initialValue={value}
-                name={['skus', record.id + '', 'diyModelId']}
-              >
-                <DIYModelSelect></DIYModelSelect>
-              </Form.Item>
-            );
-          },
-        },
-        {
+      ];
+
+      if (isCake === 1) {
+        arr.push({
           title: '夹心模型',
           dataIndex: 'sandwichModelId',
           render: (value: any, record: any) => {
@@ -178,10 +126,26 @@ const SKUTable = React.memo(
               </Form.Item>
             );
           },
-        },
-      ],
-      [propertyColumn],
-    );
+        });
+      } else {
+        arr.push({
+          title: 'DIY规格模型',
+          dataIndex: 'diyModelId',
+          render: (value: any, record: any) => {
+            return (
+              <Form.Item
+                initialValue={value}
+                name={['skus', record.id + '', 'diyModelId']}
+              >
+                <DIYModelSelect></DIYModelSelect>
+              </Form.Item>
+            );
+          },
+        });
+      }
+
+      return arr;
+    }, [propertyColumn, isCake]);
     useImperativeHandle(
       ref,
       () => ({

@@ -20,6 +20,12 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DragControls } from './DragControls';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+
 import { loadFont, loadCard, createText } from './Text3D';
 import {
   setMeshParams,
@@ -29,8 +35,10 @@ import {
 } from './tools';
 import {
   setObjectHeight,
-  getHeight,
   setVeneer,
+  findCollisionPoints,
+  getCollisionPosition,
+  findCollisionPoints3D,
 } from './collision';
 import G, { panInfo, cursorInfo } from './globalValues';
 
@@ -45,16 +53,11 @@ function ThreeObject(params) {
     dragObjects = [], //可拖曳物件
     heightObjects = [], //测高物件
     veneerObjects = [], //贴面物件
-    defaultExclude = {
-      '蛋糕': { type: ['蛋糕', '围边', '淋边', '贴面', '大摆件'] },
-      '围边': { type: ['围边', '淋边', '贴面'] },
-      '淋边': { type: ['围边', '淋边'] },
-      '贴面': { type: ['围边'] },
-      '大摆件': { type: ['大摆件'] }
-    };
+    moveLimit = [];
 
   let ready = false,
-    autoRender = isFront,
+    autoRender = false,
+    orgAutoRender = autoRender,
     onClickModel = null,
     pan = null,
     cursor = null,
@@ -70,25 +73,25 @@ function ThreeObject(params) {
     cardInfo = params.cardInfo
       ? params.cardInfo
       : {
-        url: `${G.HostUrl}/Card.glb`,
-        type: '字牌',
-        name: '字牌',
-        deep: 0,
-        canMove: true,
-        canRotate: true,
-        canSwing: false,
-        canVeneer: false,
-        canSelect: true,
-        isMult: false,
-      },
-    textFont = params.font ? params.font : `${G.HostUrl}/FZSTK.TTF`;
+          url: `${G.HostUrl}/Card.glb`,
+          type: '字牌',
+          name: '字牌',
+          deep: 0,
+          canMove: true,
+          canRotate: true,
+          canSwing: false,
+          canVeneer: false,
+          canSelect: true,
+          isMult: false,
+        },
+    textFont = params.font; // ? params.font : `${G.HostUrl}/STXINWEI.TTF`;
 
   //场景
   const scene = new Scene();
 
   //灯光
   scene.add(new AmbientLight(0x999999));
-  var directionalLight = new DirectionalLight(0x666666, 1);
+  let directionalLight = new DirectionalLight(0x666666, 1);
   directionalLight.position.set(far, far, far).normalize();
   scene.add(directionalLight);
   directionalLight = new DirectionalLight(0x101010, 1);
@@ -124,7 +127,9 @@ function ThreeObject(params) {
     alpha: true,
   });
   renderer.setSize(width, height); //设置渲染区域尺寸
-  renderer.setPixelRatio(window.devicePixelRatio);
+  if (type !== 'showcase') {
+    renderer.setPixelRatio(2);
+  }
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFSoftShadowMap;
   renderer.setClearColor(0xbcb0a6, 1); //设置背景颜色
@@ -141,7 +146,13 @@ function ThreeObject(params) {
   if (isBack) {
     controls.minDistance = 50;
   }
-  if (!autoRender) controls.addEventListener('change', animate);
+  var orgTime = 0; //减少运算量
+  function controlsHandle(event) {
+    if (Date.now() - orgTime < 16) return;
+    orgTime = Date.now();
+    animate();
+  }
+  if (!autoRender) controls.addEventListener('change', controlsHandle);
 
   //物件控制器
   const dragControls = new DragControls(
@@ -151,6 +162,7 @@ function ThreeObject(params) {
   );
   dragControls.heightObjects = heightObjects;
   dragControls.veneerObjects = veneerObjects;
+  dragControls.moveLimit = moveLimit;
   dragControls.transformGroup = true;
   dragControls.type = 'move';
   dragControls.enabled = !isShowcase;
@@ -166,10 +178,8 @@ function ThreeObject(params) {
         if (model) {
           controls.saveState();
           controls.enabled = false;
-          if (cursor) selectLocaltion(model, cursor);
-        } else {
-          if (cursor) cursor.visible = false;
         }
+        setCursor(model);
         if (onClickModel) onClickModel(model, 0);
         break;
       case 'drag':
@@ -187,13 +197,43 @@ function ThreeObject(params) {
   dragControls.addEventListener('drag', dragHandle);
   dragControls.addEventListener('dragend', dragHandle);
 
+  // postprocessing
+  let composer, effectFXAA, outlinePass;
+  composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+  outlinePass = new OutlinePass(new Vector2(width, height), scene, camera);
+  composer.addPass(outlinePass);
+  effectFXAA = new ShaderPass(FXAAShader);
+  effectFXAA.uniforms['resolution'].value.set(1 / width, 1 / height);
+  composer.addPass(effectFXAA);
+  outlinePass.edgeStrength = 5.0;
+  outlinePass.edgeGlow = 1.0;
+  outlinePass.edgeThickness = 2.0;
+  outlinePass.visibleEdgeColor.set(new Color(0xa4a4a4));
+  outlinePass.hiddenEdgeColor.set(new Color(0x666666));
+
   // 场景渲染
   function animate() {
     if (autoRender) {
       requestAnimationFrame(animate);
       controls.update();
     }
-    renderer.render(scene, camera);
+    // renderer.render(scene, camera);
+    composer.render();
+  }
+
+  //处理光标
+  function setCursor(group) {
+    if (group) {
+      if (cursor) selectLocaltion(group, cursor);
+      let meshs = [];
+      forMesh(group.getObjectByName('models'), mesh => meshs.push(mesh));
+      outlinePass.selectedObjects = meshs;
+    } else {
+      if (cursor) cursor.visible = false;
+      outlinePass.selectedObjects = [];
+    }
   }
 
   function autoRotateSpeed() {
@@ -249,7 +289,6 @@ function ThreeObject(params) {
       (group) => {
         pan = group;
         pan.rotation.y = Math.PI / 4;
-        addToScene(pan);
         sendSuccess(success, error, '加载底座成功');
       },
       (err) => {
@@ -259,9 +298,9 @@ function ThreeObject(params) {
     );
   }
   function loadCursor(success, error) {
-    loadModel(
+    if (autoRender) loadModel(
       {
-        url: `${G.HostUrl}/point.glb`,
+        url: `${G.HostUrl}/models/basic/point.glb`, //--
         name: 'cursor',
       },
       (group) => {
@@ -277,6 +316,7 @@ function ThreeObject(params) {
       },
       cursorInfo,
     );
+    else sendSuccess(success, error, '加载光标成功');
   }
   function loadBasicCake(success, error) {
     if (cakeInfo) {
@@ -298,7 +338,7 @@ function ThreeObject(params) {
   //启动
   function start(success, error) {
     if (ready) {
-      loadBasicCake(success, error);
+      sendSuccess(success, error, '已启动');
       return;
     }
     loadPan(() => {
@@ -331,8 +371,8 @@ function ThreeObject(params) {
         sendSuccess(success, error, '加载背景成功', map);
       },
       undefined,
-      () => {
-        sendError(error, '加载背景失败');
+      (err) => {
+        sendError(error, '加载背景失败\r\n' + err.stack);
       },
     );
   }
@@ -384,7 +424,9 @@ function ThreeObject(params) {
         sendSuccess(success, error, '加载Logo成功', logo);
       },
       undefined,
-      error,
+      (err) => {
+        sendError(error, '加载背景失败\r\n' + err.stack);
+      },
     );
   }
   //更改背景透明度
@@ -397,22 +439,18 @@ function ThreeObject(params) {
     if (!data) data = getMeshParams(info);
     const objectType = data.type;
     //检查重复
-    if (!data.isMult) {
+    if (!isBack && !data.isMult) {
       const arr = findObjects({ name: data.name });
       if (arr.length > 0) {
+        arr[0].info = info;
         sendSuccess(success, error, '模型已加载', arr[0]);
         return;
       }
     }
     //检查规格
-    if (['围边', '淋边', '大摆件'].includes(data.type)) {
-      let cake = findObjects({ type: '蛋糕' });
-      if (cake.length > 0) {
-        if (checkOffSpec(cake[0].data, data)) {
-          sendError(error, '规格不符');
-          return;
-        }
-      }
+    if (checkOffSpec(data)) {
+      sendError(error, '规格不符');
+      return;
     }
     new GLTFLoader().load(
       data.url,
@@ -428,11 +466,12 @@ function ThreeObject(params) {
               requestAnimationFrame(() => {
                 setCakeSize(cakeSize);
               });
-            } else if (['围边', '淋边'].includes(objectType)) {
+            } else if (['围边', '淋边', '夹心'].includes(objectType)) {
               setOtherSize(group, cakeSize / G.CakeDiam);
             } else if (objectType === '贴面') {
               stickFromCameraToCake(group);
             } else if (ready) {
+              group.position.copy(getCollisionPosition(group, group.position, moveLimit));
               setObjectHeight(group, heightObjects);
             }
 
@@ -446,11 +485,11 @@ function ThreeObject(params) {
                   m.MeshName = mesh.name;
                 });
                 orgMaterials = ms;
-                if (!autoRender) {
-                  animate();
-                  animate();
-                }
               }
+            }
+            if (!autoRender) {
+              animate();
+              animate();
             }
             selected = group;
             sendSuccess(success, error, '加载模型成功', group);
@@ -460,21 +499,53 @@ function ThreeObject(params) {
           });
       },
       undefined,
-      function (err) {
+      (err) => {
         sendError(error, '模型加载失败\r\n' + err.stack);
       },
     );
   }
   //检查不合规格
-  function checkOffSpec(orgData, nowData){
-    return orgData.shape !== nowData.shape ||
-    (nowData.type !== '大摆件' && orgData.specs !== nowData.specs) ||
-    (nowData.type === '大摆件' && nowData.outside > cakeSize)
+  function checkOffSpec(objectData, cakeData) {
+    if (isBack) return false;
+    if (!['围边', '淋边', '大摆件', '夹心'].includes(objectData.type))
+      return false;
+    if (!cakeData) {
+      const cakes = findObjects({ type: '蛋糕' });
+      if (cakes.length > 0) cakeData = findObjects({ type: '蛋糕' })[0].data;
+      else return false;
+    }
+    let cShape = cakeData.shape,
+      oShape = objectData.shape,
+      cSpecs = cakeData.specs,
+      oSpecs = objectData.specs;
+    if (!cShape) cShape = '圆形';
+    if (!oShape) oShape = '圆形';
+    if (!cSpecs) cSpecs = '20*6cm';
+    if (!oSpecs) oSpecs = '20*6cm';
+    return cShape !== oShape || cSpecs !== oSpecs;
   }
   //逻辑关系
+  const defaultExclude = {
+    蛋糕: { type: ['蛋糕', '围边', '淋边', '贴面', '大摆件', '夹心'] },
+    夹心: { type: ['夹心'] },
+    围边: { type: ['围边', '淋边', '贴面'] },
+    淋边: { type: ['围边', '淋边', '大摆件'] },
+    贴面: { type: ['围边'] },
+    大摆件: { type: ['大摆件', '淋边'] },
+  };
   function logicalRelation(group) {
     const data = group.data;
     const { type, shape, specs, outside, inside } = data;
+    if (isBack && type === '夹心') {
+      group.getObjectByName('modelsMirror').position.set(40, 0, 40);
+    }
+    if (isBack && type === '蛋糕') {
+      findObjects({ type }).forEach(cake => deleteObject(cake));
+      return;
+    }
+    if (['摆件'].includes(data.type) && !data.collisionPoints) {
+      data.collisionPoints = findCollisionPoints(group);
+    }
     let excludeObjects = [];
     let includeObjects = [];
     let exclude = data.exclude ? data.exclude : defaultExclude[type];
@@ -485,13 +556,23 @@ function ThreeObject(params) {
           type: { $not: '蛋糕' },
           shape,
           specs,
-        }
-      } else if (['大摆件', '围边'].includes(type)) {
+        };
+      } else if (['围边'].includes(type)) {
         include = {
           $or: {
             outside: { $lteq: inside },
-            inside: { $gteq: outside }
-          }
+            inside: { $gteq: outside },
+          },
+        };
+      } else if (['淋边'].includes(type)) {
+        include = {
+          type: ['大摆件'],
+          outside: { $lteq: inside },
+        };
+      } else if (['大摆件'].includes(type)) {
+        include = {
+          type: ['淋边'],
+          inside: { $gteq: outside },
         };
       }
     }
@@ -499,19 +580,20 @@ function ThreeObject(params) {
     if (include) includeObjects = findObjects(include, excludeObjects);
     excludeObjects.forEach((object) => {
       if (!includeObjects.includes(object)) {
-        if (
-          type === '蛋糕' &&
-          ['围边', '淋边', '大摆件'].includes(object.data.type) &&
-          checkOffSpec(data, object.data)
-        ) {
+        if (type === '蛋糕' && checkOffSpec(object.data, data)) {
           deleteObject(object);
         } else {
           let objs = [];
-          exclude = object.data.exclude ? object.data.exclude : defaultExclude[object.data.type];
+          exclude = object.data.exclude
+            ? object.data.exclude
+            : defaultExclude[object.data.type];
           if (exclude) {
             objs = findObjects(exclude, [group]);
             if (objs.length > 0) {
-              if (!object.data.include || findObjects(object.data.include, [group]).length === 0) {
+              if (
+                !object.data.include ||
+                findObjects(object.data.include, [group]).length === 0
+              ) {
                 deleteObject(object);
               }
             }
@@ -524,6 +606,7 @@ function ThreeObject(params) {
     addDragObject(group);
     addHeightObject(group);
     addVeneerObject(group);
+    addMoveLimit(group);
     scene.add(group);
     if (ready) store.push(group);
   }
@@ -531,28 +614,41 @@ function ThreeObject(params) {
   function addDragObject(group) {
     if (group.data.canSelect || (isBack && group.data.type === '蛋糕')) {
       dragObjects.push(group);
-      if (cursor) requestAnimationFrame(() => {
-        selectLocaltion(group, cursor);
-      });
+      setCursor(group);
     }
   }
   //处理测高物件
   function addHeightObject(group) {
     if (['蛋糕', '底盘'].includes(group.data.type)) heightObjects.push(group);
-    sortObjects(veneerObjects);
+    sortObjects(heightObjects);
   }
   //处理贴面物件
   function addVeneerObject(group) {
     if (['蛋糕'].includes(group.data.type)) veneerObjects.push(group);
     sortObjects(veneerObjects);
   }
+  //处理移动区域
+  function addMoveLimit(group) {
+    if (group.data.type === '蛋糕') {
+      moveLimit[0] = group;
+    }
+  }
+
   //处理数组排序，以蛋糕为第一个元素
   function sortObjects(arr) {
     const cakes = findObjects({ type: '蛋糕' }, arr);
-    const others = findObjects({ type: { $not: '蛋糕' } }, arr);
+    const sandwich = findObjects({ type: '夹心' }, arr);
+    const others = findObjects({ type: { $not: ['蛋糕', '夹心'] } }, arr);
     arr.length = 0;
-    cakes.forEach((group) => { arr.push(group) });
-    others.forEach((group) => { arr.push(group) });
+    cakes.forEach((group) => {
+      arr.push(group);
+    });
+    sandwich.forEach((group) => {
+      arr.push(group);
+    });
+    others.forEach((group) => {
+      arr.push(group);
+    });
   }
 
   // 初始化字牌
@@ -574,30 +670,39 @@ function ThreeObject(params) {
   function loadTextCard(info, success, error) {
     cardInfo = info;
     const data = getMeshParams(cardInfo);
-    loadCard(data.url, data.scale)
-      .then((c) => {
+    loadCard(
+      data.url,
+      data.scale,
+      (c) => {
         card = c;
         sendSuccess(success, error, '加载字牌成功', card);
-      })
-      .catch((err) => {
+      },
+      (err) => {
         sendError(error, '加载字牌失败\r\n' + err.stack);
-      });
+      },
+    );
   }
   function loadTextFont(url, success, error) {
-    if (url) textFont = url;
-    loadFont(url)
-      .then((f) => {
-        font = f;
-        textFont = url;
-        sendSuccess(success, error, '加载字体成功', font);
-      })
-      .catch((err) => {
-        sendError(error, '加载字体失败\r\n' + err.stack);
-      });
+    if (url) {
+      textFont = url;
+      loadFont(
+        url,
+        (f) => {
+          font = f;
+          textFont = url;
+          sendSuccess(success, error, '加载字体成功', font);
+        },
+        (err) => {
+          sendError(error, '加载字体失败\r\n' + err.stack);
+        },
+      );
+    } else {
+      sendSuccess(success, error, '无字体', font);
+    }
   }
   //展示字牌
   function showText(txt, success, error, refresh) {
-    if ((font === null || card === null) && error) error('字体未始化');
+    if (card === null && error) error('字体未始化');
     const data = getMeshParams(cardInfo);
     data.text = txt;
     data.textFont = textFont;
@@ -609,7 +714,7 @@ function ThreeObject(params) {
       sendSuccess(success, error, '', null);
     } else {
       let position = new Vector3(),
-        rotation = new Euler(-Math.PI / 9, 0, 0);
+        rotation = new Euler();
       if (text && !refresh) {
         let gRy = text.getObjectByName('gRy'),
           gRxz = text.getObjectByName('gRxz');
@@ -621,18 +726,19 @@ function ThreeObject(params) {
         rotation = new Euler(gRxz.rotation.x, gRy.rotation.y, gRxz.rotation.z);
       }
       try {
-        text = createText(txt, font, card);
+        if (font) text = createText(txt, card, font);
+        else text = createText(txt, card);
         text = Object.assign(text, { data, info: cardInfo });
-        let gPy = text.getObjectByName('gPy'),
-          gRy = text.getObjectByName('gRy'),
+        let gRy = text.getObjectByName('gRy'),
           gRxz = text.getObjectByName('gRxz');
         text.position.set(position.x, 0, position.z);
-        gPy.position.y = getHeight(text.position, heightObjects);
         gRy.position.y = position.y;
         gRy.rotation.y = rotation.y;
         gRxz.rotation.set(rotation.x, 0, rotation.z);
+        text.position.copy(getCollisionPosition(text, text.position, moveLimit));
+        setObjectHeight(text, heightObjects);
         addToScene(text);
-        if (cursor) selectLocaltion(text, cursor);
+        setCursor(text);
         if (!autoRender) animate();
         sendSuccess(success, error, '展示字牌成功', text);
       } catch (err) {
@@ -647,22 +753,26 @@ function ThreeObject(params) {
     if (model) {
       controls.saveState();
       controls.enabled = false;
-      if (cursor) selectLocaltion(model, cursor);
+      setCursor(model);
     }
   }
   //重置模型
   function resetObject(group) {
     if (!group) return;
-    group.getObjectByName('gRy').rotation.y = 0;
-    group.getObjectByName('gRy').position.y = group.data.y || 0;
-    group.getObjectByName('gRxz').rotation.x = 0;
-    group.getObjectByName('gRxz').rotation.z = 0;
+    const gRy = group.getObjectByName('gRy');
+    const gRxz = group.getObjectByName('gRxz');
+    const orgXZ = gRxz.orgXZ;
+    gRy.rotation.y = 0;
+    gRy.position.y = group.data.y || 0;
+    gRxz.rotation.x = orgXZ ? orgXZ.x : 0;
+    gRxz.rotation.z = orgXZ ? orgXZ.z : 0;
     if (!autoRender) animate();
   }
   //刷新场景模型的Y轴
   function setSceneHeight() {
     store.forEach((g) => {
-      if (g.data.canMove) {
+      if (['摆件', '插牌', '字牌', '大摆件'].includes(g.data.type)) {
+        g.position.copy(getCollisionPosition(g, g.position, moveLimit));
         setObjectHeight(g, heightObjects);
       }
     });
@@ -696,9 +806,9 @@ function ThreeObject(params) {
     }
     function check(g, kv) {
       if (kv[1] instanceof Array) {
-        return kv[1].includes(g.data[kv[0]]);;
+        return kv[1].includes(g.data[kv[0]]);
       } else if (typeof kv[1] === 'object') {
-        return Object.entries(kv[1]).every(item => compare(g, item, kv[0]));
+        return Object.entries(kv[1]).every((item) => compare(g, item, kv[0]));
       } else {
         return [kv[1]].includes(g.data[kv[0]]);
       }
@@ -720,8 +830,8 @@ function ThreeObject(params) {
       }
     }
     function checkGroup(g, kvs, or) {
-      if (or) return kvs.some(kv => checkItem(g, kv));
-      else return kvs.every(kv => checkItem(g, kv));
+      if (or) return kvs.some((kv) => checkItem(g, kv));
+      else return kvs.every((kv) => checkItem(g, kv));
     }
     const kvs = Object.entries(data);
     array.forEach((g) => {
@@ -731,7 +841,7 @@ function ThreeObject(params) {
   }
   //查找除蛋糕外的模型
   function getSceneObjectWithoutCake() {
-    return findObjects({ type: { $not: '蛋糕' } });
+    return findObjects({ type: { $not: ['蛋糕', '夹心'] } });
   }
   //删除
   function deleteObject(object, withoutRender) {
@@ -750,6 +860,11 @@ function ThreeObject(params) {
       if (index !== -1) heightObjects.splice(index, 1);
       index = veneerObjects.indexOf(object);
       if (index !== -1) veneerObjects.splice(index, 1);
+      if (object.data.type === '蛋糕') {
+        moveLimit[0] = null;
+      } else if (object.data.type === '大摆件') {
+        moveLimit[1] = null;
+      }
     }
     if (!withoutRender && !autoRender) animate();
   }
@@ -758,7 +873,7 @@ function ThreeObject(params) {
     let keep = 0;
     while (store.length > keep) {
       let object = store[keep];
-      if (!withCake && object.data.type === '蛋糕') {
+      if (!withCake && ['蛋糕', '夹心'].includes(object.data.type)) {
         keep++;
       } else deleteObject(object, isBack);
     }
@@ -766,6 +881,7 @@ function ThreeObject(params) {
   }
   //截图
   function getImage(withoutBackgroud) {
+    outlinePass.selectedObjects = [];
     if (withoutBackgroud) {
       renderer.setClearColor(0xbcb0a6, 0.0);
       const hide = findObjects({ type: store.length > 1 ? ['蛋糕'] : [] }),
@@ -787,7 +903,10 @@ function ThreeObject(params) {
       });
       renderer.render(scene, camera);
       return img;
-    } else return renderer.domElement.toDataURL('image/png');
+    } else {
+      renderer.render(scene, camera);
+      return renderer.domElement.toDataURL('image/png');
+    }
   }
   //生成场景数据
   function getSceneData() {
@@ -795,12 +914,13 @@ function ThreeObject(params) {
       logoInfo = logo ? logo.data : undefined,
       objectsInfo = [];
     let products = findSkuObjects();
-    products = products[1].concat(products[0]);
+    const sandwich = findObjects({ type: '夹心' });
+    products = products[1].concat(sandwich).concat(products[0]);
     products.forEach((object) => {
       if (['底盘', '光标'].includes(object.data.type)) return;
       const gRy = object.getObjectByName('gRy'),
         gRxz = object.getObjectByName('gRxz'),
-        group = gRxz.children[0],
+        group = gRy.getObjectByName('models'),
         { info, data } = object;
       objectsInfo.push({
         info,
@@ -835,98 +955,138 @@ function ThreeObject(params) {
       color,
       cameraPosition,
     } = json;
+    const objects = [...objectsInfo];
+    let step = 0;
+    if (backgroundInfo)
+      backgroundInfo.forEach((url, i) => {
+        backgroundInfo[i] = /^http/g.test(url) ? url : `${G.HostUrl}/${url}`;
+      });
+    if (logoInfo)
+      logoInfo.url = /^http/g.test(logoInfo.url)
+        ? logoInfo.url
+        : `${G.HostUrl}/${logoInfo.url}`;
 
-    step1();
-    function step1() {
-      showBackgroud(backgroundInfo, step2, (err) => {
-        step2();
-      });
+    function begin() {
+      if (step === 0)
+        showBackgroud(
+          backgroundInfo,
+          () => {
+            step++;
+            begin();
+          },
+          (err) => {
+            if (step === 0) {
+              step++;
+              begin();
+            }
+          },
+        );
+      else if (step === 1)
+        showLogo(
+          logoInfo,
+          () => {
+            step++;
+            begin();
+          },
+          (err) => {
+            if (step === 1) {
+              step++;
+              begin();
+            }
+          },
+        );
+      else load();
     }
-    function step2() {
-      showLogo(logoInfo, step3, (err) => {
-        step3();
-      });
-    }
-    function step3() {
-      const objects = [...objectsInfo];
-      function setLocaltion(object, info) {
-        const gRy = object.getObjectByName('gRy'),
-          gRxz = object.getObjectByName('gRxz'),
-          group = gRxz.children[0];
-        group.scale.copy(info.scale);
-        object.updateWorldMatrix(false, true);
-        gRxz.rotation.set(info.rotation.x, 0, info.rotation.z);
-        gRy.position.set(0, info.position.y, 0);
-        gRy.rotation.set(0, info.rotation.y, 0);
-        object.position.set(info.position.x, 0, info.position.z);
-        object.updateWorldMatrix(false, true);
-        if (object.data.type === '贴面') {
-          setVeneer(object, veneerObjects);
-        } else if (object.data.canMove) {
-          setObjectHeight(object, heightObjects);
-        }
-        if (!autoRender) animate();
-        load();
+    function setLocaltion(object, info) {
+      const gRy = object.getObjectByName('gRy'),
+        gRxz = object.getObjectByName('gRxz'),
+        group = gRy.getObjectByName('models');
+      group.scale.copy(info.scale);
+      gRxz.rotation.set(info.rotation.x, 0, info.rotation.z);
+      delete gRxz.orgXZ; //重置摆动
+      gRy.position.set(0, info.position.y, 0);
+      gRy.rotation.set(0, info.rotation.y, 0);
+      object.position.set(info.position.x, 0, info.position.z);
+      object.updateWorldMatrix(false, true);
+      if (object.data.type === '贴面') {
+        setVeneer(object, veneerObjects);
+      } else if (object.data.canMove) {
+        setObjectHeight(object, heightObjects);
       }
-      function load() {
-        if (objects.length > 0) {
-          let object = objects.shift();
-          if (object.data.text && object.data.text !== '') {
-            if (card === null || font === null) {
-              initText(() => {
+      if (!autoRender) animate();
+      load();
+    }
+    function load() {
+      if (objects.length > 0) {
+        let object = objects.shift();
+        if (['蛋糕', '夹心', '围边', '淋面'].includes(object.data.type)) {
+          object.data.y = G.CakeDeep;
+          object.position.y = G.CakeDeep;
+        }
+        if (object.data.text && object.data.text !== '') {
+          if (card === null || font === null) {
+            initText(
+              () => {
                 showText(
                   object.data.text,
                   (group) => {
                     setLocaltion(group, object);
                   },
-                  error,
+                  (err) => {
+                    sendError(error, '加载文本失败\r\n' + err.stack);
+                  },
                   true,
                 );
-              }, error);
-            } else {
-              showText(
-                object.data.text,
-                (group) => {
-                  setLocaltion(group, object);
-                },
-                error,
-                true,
-              );
-            }
+              },
+              (err) => {
+                sendError(error, '初始化字牌失败\r\n' + err.stack);
+              },
+            );
           } else {
-            loadModel(
-              object.info,
+            showText(
+              object.data.text,
               (group) => {
                 setLocaltion(group, object);
               },
-              error,
-              object.data,
+              (err) => {
+                sendError(error, '加载文本失败\r\n' + err.stack);
+              },
+              true,
             );
           }
         } else {
-          camera.position.set(
-            cameraPosition[0],
-            cameraPosition[1],
-            cameraPosition[2],
+          loadModel(
+            object.info,
+            (group) => {
+              setLocaltion(group, object);
+            },
+            error,
+            object.data,
           );
-          cakeSize = size;
-          if (color !== -1) setCakeColor(color);
-          if (!autoRender) {
-            controls.update();
-            animate();
-          }
-          sendSuccess(success, error, '还原场景成功');
         }
+      } else {
+        camera.position.set(
+          cameraPosition[0],
+          cameraPosition[1],
+          cameraPosition[2],
+        );
+        cakeSize = size;
+        if (color !== -1) setCakeColor(color);
+        if (!autoRender) {
+          controls.update();
+          animate();
+        }
+        sendSuccess(success, error, '还原场景成功');
       }
-      load();
     }
+    begin();
   }
   //取模型名与材质名
   function getMeshNames(group) {
     if (!group) group = selected;
     if (!group) return [];
     const arr = [];
-    forMesh(group, (mesh) => {
+    forMesh(group.getObjectByName('models'), (mesh) => {
       arr.push({
         mesh: mesh.name,
         material: mesh.material.name,
@@ -941,7 +1101,7 @@ function ThreeObject(params) {
       sendSuccess(success, error, '', null);
       return;
     }
-    const group = object.getObjectByName('gRxz').children[0];
+    const group = object.getObjectByName('models');
     const data = getMeshParams(info);
     forMesh(group, (mesh) => {
       orgMaterials.forEach((m) => {
@@ -954,9 +1114,14 @@ function ThreeObject(params) {
     let changeType = object.data.type !== data.type;
     if (changeType) {
       if (object.data.type === '蛋糕') {
-        loadBasicCake(() => {
-          formatObject();
-        }, error);
+        loadBasicCake(
+          () => {
+            formatObject();
+          },
+          (err) => {
+            sendError(error, '加载基础蛋糕失败\r\n' + err.stack);
+          },
+        );
       } else {
         formatObject();
       }
@@ -971,9 +1136,10 @@ function ThreeObject(params) {
           const objectType = group.data.type;
           //处理位置
           if (objectType === '蛋糕') {
-            if (changeType) requestAnimationFrame(() => {
-              setCakeSize(cakeSize);
-            });
+            if (changeType)
+              requestAnimationFrame(() => {
+                setCakeSize(cakeSize);
+              });
           } else if (['围边', '淋边'].includes(objectType)) {
           } else if (objectType === '贴面') {
             if (changeType) {
@@ -1010,10 +1176,13 @@ function ThreeObject(params) {
     let cake = null;
     for (let key in cakes) {
       cake = cakes[key];
-      const group = cake.getObjectByName('gRxz').children[0];
+      const group = cake.getObjectByName('models');
       const sr = size / cakeSize;
       group.scale.set(sr * group.scale.x, group.scale.y, sr * group.scale.z);
       group.updateWorldMatrix(false, true);
+      const cover = cake.getObjectByName('cover');
+      cover.scale.copy(group.scale);
+      cover.updateWorldMatrix(false, true);
 
       const objs = findObjects({ type: ['围边', '淋边'] });
       objs.forEach((obj) => {
@@ -1030,9 +1199,12 @@ function ThreeObject(params) {
   }
   //根据蛋糕尺寸等比绽放模型尺寸
   function setOtherSize(obj, sr) {
-    const g = obj.getObjectByName('gRxz').children[0];
+    const g = obj.getObjectByName('models');
     g.scale.set(sr * g.scale.x, g.scale.y, sr * g.scale.z);
     g.updateWorldMatrix(false, true);
+    const cover = obj.getObjectByName('cover');
+    cover.scale.copy(g.scale);
+    cover.updateWorldMatrix(false, true);
   }
   //更改蛋糕颜色
   function setCakeColor(color) {
@@ -1060,6 +1232,115 @@ function ThreeObject(params) {
     object.position.set(camera.position.x, pan.position.y, camera.position.z);
     object.updateWorldMatrix(false, true);
     stickToCake(object, outside);
+  }
+  //显示夹心
+  function showSandwich(success) {
+    let opacity = 1;
+    let left = 0;
+    store.forEach((group) => {
+      const { type } = group.data;
+      if (type !== '夹心') {
+        forMesh(group, (mesh) => {
+          mesh.org = {
+            opacity: mesh.material.opacity,
+            transparent: mesh.material.transparent,
+          };
+          mesh.material.transparent = true;
+          mesh.castShadow = false;
+        });
+      } else {
+        group.lookAt(
+          new Vector3(camera.position.x, group.position.y, camera.position.z),
+        );
+      }
+    });
+    function run() {
+      if (opacity > 0) {
+        opacity -= 0.04;
+        store.forEach((group) => {
+          const { type } = group.data;
+          if (type !== '夹心') {
+            forMesh(group, (mesh) => {
+              mesh.material.opacity = opacity * mesh.org.opacity;
+            });
+          }
+        });
+      } else if (left <= 40) {
+        left += 2;
+        store.forEach((group) => {
+          const { type } = group.data;
+          if (type === '夹心') {
+            // group.getObjectByName('models').position.x = -left;
+            group.getObjectByName('modelsMirror').position.x = left;
+            group.getObjectByName('modelsMirror').position.z = left;
+          }
+        });
+      } else {
+        if (!controls.autoRotate) setAutoRotate(true);
+        if (success) success();
+        return;
+      }
+      if (!autoRender) animate();
+      requestAnimationFrame(run);
+    }
+    run();
+  }
+  //隐藏夹心
+  function hideSandwich(success) {
+    let opacity = 0;
+    let left = 40;
+    if (controls.autoRotate) setAutoRotate(false);
+    function run() {
+      if (left > 0) {
+        left -= 2;
+        store.forEach((group) => {
+          const { type } = group.data;
+          if (type === '夹心') {
+            // group.getObjectByName('models').position.x = -left;
+            group.getObjectByName('modelsMirror').position.x = left;
+            group.getObjectByName('modelsMirror').position.z = left;
+          }
+        });
+      } else if (opacity < 1) {
+        opacity += 0.04;
+        store.forEach((group) => {
+          const { type } = group.data;
+          if (type !== '夹心') {
+            forMesh(
+              group,
+              (mesh) => (mesh.material.opacity = opacity * mesh.org.opacity),
+            );
+          }
+        });
+      } else {
+        if (success) success();
+        return;
+      }
+      if (!autoRender) animate();
+      requestAnimationFrame(run);
+    }
+    run();
+  }
+  function getCollisionPointGroup(group) {
+    if (!group) group = selected;
+    if (!group) return;
+    return findCollisionPoints3D(group.getObjectByName('models'));
+  }
+
+  function setAutoRender(v) {
+    autoRender = v;
+    if (autoRender) {
+      controls.removeEventListener('change', controlsHandle);
+      animate();
+    } else controls.addEventListener('change', controlsHandle);
+  }
+  function setAutoRotate(v) {
+    controls.autoRotate = v;
+    if (v) {
+      if (!autoRender) setAutoRender(true);
+    } else {
+      setAutoRender(orgAutoRender);
+    }
   }
 
   Object.defineProperties(this, {
@@ -1104,9 +1385,7 @@ function ThreeObject(params) {
       get: () => {
         return controls.autoRotate;
       },
-      set: (v) => {
-        controls.autoRotate = v;
-      },
+      set: setAutoRotate,
     },
     getImage: { value: getImage },
     findObjects: { value: findObjects },
@@ -1176,13 +1455,14 @@ function ThreeObject(params) {
         return autoRender;
       },
       set: (v) => {
-        autoRender = v;
-        if (autoRender) {
-          controls.removeEventListener('change', animate);
-          animate();
-        } else controls.addEventListener('change', animate);
+        orgAutoRender = v;
+        setAutoRender(v);
       },
     },
+    showSandwich: { value: showSandwich },
+    hideSandwich: { value: hideSandwich },
+    checkOffSpec: { value: checkOffSpec },
+    getCollisionPointGroup: { value: getCollisionPointGroup },
   });
 }
 

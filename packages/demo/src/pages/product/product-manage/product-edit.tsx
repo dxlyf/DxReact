@@ -1,3 +1,7 @@
+/**
+ * 商品管理-商品发布
+ * @author fanyonglong
+ */
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
   Card,
@@ -26,8 +30,7 @@ import { transformFilesToUrls } from '@/utils/util';
 import Editor from '@/components/Editor';
 import type {
   ProductModelState,
-  ProductEntityStateType,
-  ProductEntity,
+  ProductEntityStateType
 } from './models/product';
 import ProductGroupSelect from './components/ProductGroupSelect';
 import DIYModelSelect from './components/DIYModelSelect';
@@ -93,11 +96,11 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
   let { detail, shopList } = product;
   let productEditId = match?.params.id;
   const [formDetail] = Form.useForm();
-  const [formDetail2] = Form.useForm();
-  const [] = useState(() => {});
-  const [currentStep, setCurrentStep] = useState(0);
-  const [submitData, setSubmitData] = useState({});
-  const [visibleDSYunModal, setVisibleDSYunModal] = useState(false);
+  const [] = useState(() => { });
+  const [DSYunModal, setDSYunModal] = useState({
+    visible: false,
+    dataItem: {},
+  });
   const [
     { formItemProps: imageFormItemPorps },
     { transform: transformImage },
@@ -110,6 +113,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
   const getEditSubmitFormData = useCallback(
     (formData, skuData) => {
       let submitData: any = {
+        topProductId:detail.topProductId,
         shopId: formData.shopId,
         categoryId: detail.categoryId,
         categoryName: formData.categoryName,
@@ -120,11 +124,9 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
         productName: formData.productName,
         productDesc: formData.productDesc.trim(),
         imageUrl: transformFilesToUrls(formData.imageUrl).join(','),
+        isCake: formData.isCake,
         videoUrl: transformFilesToUrls(formData.videoUrl).join(''),
         propertyStr: detail.propertyStr,
-        linePrice: !isNaN(parseFloat(formData.linePrice))
-          ? Number(formData.linePrice) * 100
-          : undefined,
         productGroupNameStr: Array.isArray(formData.productGroupNameStr)
           ? formData.productGroupNameStr.join(',')
           : '',
@@ -132,6 +134,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
         shopProductItemList: detail.shopProductItemList.map((spec: any) => {
           let specFormItem = skuData.skus[spec.id];
           let specData: any = {
+            topProductItemId:spec.topProductItemId,
             productItemNo: spec.productItemNo,
             imageUrl: transformFilesToUrls(specFormItem.imageUrl).join(''),
             recommendedPrice: Number(specFormItem.recommendedPrice) * 100,
@@ -139,7 +142,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
             stockNum: specFormItem.stockNum,
             isEnable: specFormItem.isEnable,
             diyModelId: specFormItem.diyModelId,
-            sandwichModelId:specFormItem.sandwichModelId,
+            sandwichModelId: specFormItem.sandwichModelId,
             shopProductPropertyList: spec.shopProductPropertyList.map(
               (p: any) => {
                 return {
@@ -151,19 +154,14 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
               },
             ),
           };
-          if (isEditMode) {
+          if (isEditMode && spec._isNew !== true) {
             specData.id = spec.id;
           }
           return specData;
-        }),
-        shopProductDetail: {
-          appContent: '',
-          pcContent: '',
-        },
+        })
       };
       if (isEditMode) {
         submitData.id = detail.id;
-        submitData.shopProductDetail.id = detail.shopProductDetail.id;
       }
       return submitData;
     },
@@ -171,20 +169,15 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
   );
 
   const onFormFinish = useCallback(
-    (name: string, { values, forms }) => {
-      if (name == 'step1') {
-        skutableRef.current.validateFields().then((skuTable: any) => {
-          // console.log('skuTable',skuTable)
-          let newSubmitData = getEditSubmitFormData(values, skuTable);
-          setSubmitData(newSubmitData);
-          setCurrentStep((currentStep: number) => currentStep + 1);
-        });
-      } else if (name == 'step2') {
+    (values) => {
+      skutableRef.current.validateFields().then((skuTable: any) => {
+        // console.log('skuTable',skuTable)
+        let newSubmitData = getEditSubmitFormData(values, skuTable);
         let finalSubmitData: any = {
-          ...submitData,
+          ...newSubmitData,
         };
-        finalSubmitData.shopProductDetail.appContent = values.appContent;
-        finalSubmitData.shopProductDetail.pcContent = values.pcContent;
+        //   finalSubmitData.shopProductDetail.appContent = values.appContent;
+        //  finalSubmitData.shopProductDetail.pcContent = values.pcContent;
         if (isEditMode) {
           dispatch({
             type: 'product/updateProduct',
@@ -202,9 +195,10 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
             history.push('/product/product-manage/list');
           });
         }
-      }
+      });
+
     },
-    [skutableRef, detail, isEditMode, submitData, getEditSubmitFormData],
+    [skutableRef, detail, isEditMode, getEditSubmitFormData],
   );
   const bindDSYunProductDetail = useCallback(
     (detail: ProductEntityStateType) => {
@@ -214,6 +208,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
         categoryTypeName: detail.categoryTypeName,
         name: detail.name,
         imageUrl: detail.imageUrl,
+        videoUrl: detail.videoUrl,
       });
     },
     [],
@@ -225,29 +220,32 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
       categoryName: detail.categoryName,
       categoryTypeName: detail.categoryTypeName,
       name: detail.name,
-      productName: detail.productName,
-      productDesc: detail.productDesc,
+      productName:detail.productName,
+      productDesc:detail.productDesc,
       imageUrl: detail.imageUrl,
+      isCake: detail.isCake,
       videoUrl: detail.videoUrl,
       diyModelId: detail.diyModelId,
       productGroupNameStr: detail.productGroupNameStr,
-      linePrice: detail.linePrice,
+      
     });
-    formDetail2.setFieldsValue({
-      appContent: detail.shopProductDetail.appContent,
-      pcContent: detail.shopProductDetail.pcContent,
-    });
+
   }, []);
   const onSelectDSYunProduct = useCallback(
     (record: any) => {
       dispatch({
         type: 'product/bindDsyunProductToDetail',
-        payload: record.id,
+        payload: {
+          id: record.id,
+          isEditMode: isEditMode,
+        },
       }).then((detail: any) => {
-        bindDSYunProductDetail(detail);
+        if (!isEditMode) {
+          bindDSYunProductDetail(detail);
+        }
       });
     },
-    [bindDSYunProductDetail],
+    [bindDSYunProductDetail, isEditMode],
   );
   const renderPropertyList = useCallback(() => {
     return (
@@ -299,88 +297,64 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
     <>
       <Card
         title={
-          !productEditId && (
-            <Button
-              type="primary"
-              onClick={() => {
-                setVisibleDSYunModal(true);
-              }}
-            >
-              选择商品
-            </Button>
-          )
+          <Button
+            type="primary"
+            onClick={() => {
+              setDSYunModal({
+                visible: true,
+                dataItem: {
+                  productNo:isEditMode?detail.productNo:'',
+                },
+              });
+            }}
+          >
+            选择商品
+          </Button>
         }
       >
-        <Steps style={{ width: 400, margin: '0 auto' }} current={currentStep}>
-          <Steps.Step title="基本信息" key={0}></Steps.Step>
-          <Steps.Step title="商品详情" key={1}></Steps.Step>
-        </Steps>
-        <Form.Provider onFormFinish={onFormFinish}>
-          <Form
-            {...formProps}
-            className={classNames({
-              [styles.hidden]: currentStep !== 0,
-            })}
-            name="step1"
-            form={formDetail}
-          >
-            {
-              <Row className={styles.formContent}>
-                <Col span={24}>
-                  <Card
-                    title="商品归属"
-                    bordered={false}
-                    className={styles.cardTitle}
+
+        <Form
+          {...formProps}
+          name="step1"
+          form={formDetail}
+          onFinish={onFormFinish}
+        >
+          {
+            <Row className={styles.formContent}>
+              <Col span={24}>
+                <Card
+                  title="基础信息"
+                  bordered={false}
+                  className={styles.cardTitle}
+                >
+                  <Form.Item label="商品ID" name="id">
+                    <Input placeholder="系统自动生成" disabled></Input>
+                  </Form.Item>
+                  <Form.Item label="商品类型" name="categoryTypeName">
+                    <Input disabled></Input>
+                  </Form.Item>
+                  <Form.Item
+                    label="商品编码"
+                    name="productNo"
+                    rules={[{ required: true, message: '商品编码不能为空!' }]}
                   >
-                    <Form.Item
-                      label="商品所属店铺"
-                      name="shopId"
-                      rules={[
-                        { required: true, message: '请选择商品所属店铺！' },
-                      ]}
-                    >
-                      <Select>
-                        {shopList.map((d: any) => (
-                          <Select.Option value={d.id} key={d.id}>
-                            {d.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Card>
-                  <Card
-                    title="基础信息"
-                    bordered={false}
-                    className={styles.cardTitle}
+                    <Input disabled></Input>
+                  </Form.Item>
+                  <Form.Item
+                    label="商品分类"
+                    initialValue={detail.categoryName}
+                    name="categoryName"
                   >
-                    <Form.Item label="商品ID" name="id">
-                      <Input placeholder="系统自动生成" disabled></Input>
-                    </Form.Item>
-                    <Form.Item label="商品类型" name="categoryTypeName">
-                      <Input disabled></Input>
-                    </Form.Item>
-                    <Form.Item
-                      label="商品编码"
-                      name="productNo"
-                      rules={[{ required: true, message: '商品编码不能为空!' }]}
-                    >
-                      <Input disabled></Input>
-                    </Form.Item>
-                    <Form.Item
-                      label="商品分类"
-                      initialValue={detail.categoryName}
-                      name="categoryName"
-                    >
-                      <Input disabled></Input>
-                    </Form.Item>
-                    <Form.Item
-                      label="商品名称"
-                      initialValue={detail.name}
-                      name="name"
-                    >
-                      <Input disabled></Input>
-                    </Form.Item>
-                    <Form.Item
+                    <Input disabled></Input>
+                  </Form.Item>
+                  <Form.Item
+                    label="商品名称"
+                    initialValue={detail.name}
+                    name="name"
+                  >
+                    <Input disabled></Input>
+                  </Form.Item>
+                  <Form.Item
                       label="商品名"
                       name="productName"
                       initialValue={detail.productName}
@@ -401,181 +375,116 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
                     >
                       <Input maxLength={50}></Input>
                     </Form.Item>
-                    <Form.Item
-                      label="商品图片"
-                      name="imageUrl"
-                      {...formProps2}
-                      {...imageFormItemPorps}
-                    >
-                      <UploadImage
-                        descption={productImageDesc}
-                        maxCount={15}
-                      ></UploadImage>
-                    </Form.Item>
-                    <Form.Item
-                      label="商品视频"
-                      name="videoUrl"
-                      {...formProps2}
-                      initialValue={[]}
-                      valuePropName="fileList"
-                    >
-                      <UploadVideo
-                        descption={productVideoDesc}
-                        maxCount={1}
-                      ></UploadVideo>
-                    </Form.Item>
-
-                    <Form.Item
-                      label="DIY商品模型"
-                      initialValue={detail.diyModelId}
-                    >
-                      <Input.Group>
-                        <Form.Item name="diyModelId">
-                          <DIYModelSelect></DIYModelSelect>
-                        </Form.Item>
-                      </Input.Group>
-                    </Form.Item>
-                    <Form.Item
-                      label="商品分组"
-                      name="productGroupNameStr"
-                      initialValue={detail.productGroupNameStr}
-                    >
-                      <ProductGroupSelect></ProductGroupSelect>
-                    </Form.Item>
-                  </Card>
-                  <Card
-                    title="库存价格"
-                    bordered={false}
-                    className={styles.cardTitle}
+                  <Form.Item
+                    label="是否是蛋糕"
+                    name="isCake"
+                    initialValue={detail.isCake}
                   >
-                    <Form.Item label="商品规格">
-                      {renderPropertyList()}
-                    </Form.Item>
-                    <Form.Item label="规格明细" {...formProps2}>
-                      <SKUTable
-                        ref={skutableRef}
-                        propertyList={detail.propertyList}
-                        shopProductItemList={detail.shopProductItemList}
-                        dispatch={dispatch}
-                      ></SKUTable>
-                    </Form.Item>
-                    <Form.Item
-                      label="划线价(元)"
-                      name="linePrice"
-                      rules={[
-                        {
-                          validator(rule, value) {
-                            if (
-                              value !== '' &&
-                              value !== null &&
-                              value !== undefined &&
-                              !regexp_number.test(value)
-                            ) {
-                              return Promise.reject('请输入数字');
-                            } else if (
-                              regexp_number.test(value) &&
-                              Number(value) <= 0
-                            ) {
-                              return Promise.reject('不能小于0');
-                            }
-                            return Promise.resolve();
-                          },
-                        },
-                      ]}
-                    >
-                      <Input
-                        prefix={<span>￥</span>}
-                        style={{ width: 120 }}
-                        onBlur={() => {
-                          let linePrice = formDetail.getFieldValue('linePrice');
-                          let isNumber = regexp_number.test(linePrice);
-                          formDetail.setFieldsValue({
-                            linePrice:
-                              !isNumber || (isNumber && Number(linePrice) <= 0)
-                                ? ''
-                                : Number(linePrice).toFixed(2),
-                          });
-                        }}
-                      ></Input>
-                    </Form.Item>
-                  </Card>
-                  <Form.Item label={<span></span>} colon={false}>
-                    <Button
-                      htmlType="submit"
-                      type="primary"
-                      onClick={(e) => {
-                        if (detail.productNo === '') {
-                          message.error('请先选择商品');
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      下一步
+                    <Select>
+                      <Select.Option value={1} key={1}>
+                        是
+                        </Select.Option>
+                      <Select.Option value={0} key={0}>
+                        否
+                        </Select.Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    label="商品图片"
+                    name="imageUrl"
+                    {...formProps2}
+                    initialValue={[]}
+                    valuePropName="fileList"
+                    required={false}
+                  >
+                    <UploadImage
+                      draggleSort={false}
+                      disabled={true}
+                      maxCount={15}
+                    ></UploadImage>
+                  </Form.Item>
+                  <Form.Item
+                    label="商品视频"
+                    name="videoUrl"
+                    initialValue={[]}
+                    valuePropName="fileList"
+                  >
+                    <UploadVideo
+                      disabled={true}
+                      maxCount={1}
+                    ></UploadVideo>
+                  </Form.Item>
+                  <Form.Item
+                    label="DIY商品模型"
+                    initialValue={detail.diyModelId}
+                  >
+                    <Input.Group>
+                      <Form.Item name="diyModelId">
+                        <DIYModelSelect></DIYModelSelect>
+                      </Form.Item>
+                    </Input.Group>
+                  </Form.Item>
+                  <Form.Item
+                    label="商品分组"
+                    name="productGroupNameStr"
+                    initialValue={detail.productGroupNameStr}
+                  >
+                    <ProductGroupSelect></ProductGroupSelect>
+                  </Form.Item>
+                </Card>
+                <Card
+                  title="库存价格"
+                  bordered={false}
+                  className={styles.cardTitle}
+                >
+                  <Form.Item label="商品规格">
+                    {renderPropertyList()}
+                  </Form.Item>
+                  <Form.Item label="规格明细" shouldUpdate {...formProps2}>
+                    {({ getFieldValue }) => {
+                      return (
+                        <SKUTable
+                          isCake={getFieldValue('isCake')}
+                          ref={skutableRef}
+                          propertyList={detail.propertyList}
+                          shopProductItemList={detail.shopProductItemList}
+                          dispatch={dispatch}
+                        />
+                      );
+                    }}
+                  </Form.Item>
+  
+                </Card>
+                <Form.Item label={<span></span>} colon={false}>
+                  <Button
+                    htmlType="submit"
+                    type="primary"
+                    onClick={(e) => {
+                      if (detail.productNo === '') {
+                        message.error('请先选择商品');
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    保存
                     </Button>
-                  </Form.Item>
-                </Col>
-              </Row>
-            }
-          </Form>
-          <Form
-            {...formProps2}
-            className={classNames({
-              [styles.hidden]: currentStep !== 1,
-            })}
-            name="step2"
-            form={formDetail2}
-          >
-            {
-              <Row className={styles.formContent}>
-                <Col span={24}>
-                  <Form.Item label="商品详情">
-                    <Tabs
-                      activeKey={goodDetailType}
-                      type="card"
-                      onChange={(value) => {
-                        setGoodDetailType(value);
-                      }}
-                    >
-                      <Tabs.TabPane key="0" tab="移动端" forceRender>
-                        <Form.Item name="appContent">
-                          <Editor></Editor>
-                        </Form.Item>
-                      </Tabs.TabPane>
-                      <Tabs.TabPane key="1" tab="电脑端" forceRender>
-                        <Form.Item name="pcContent">
-                          <Editor></Editor>
-                        </Form.Item>
-                      </Tabs.TabPane>
-                    </Tabs>
-                  </Form.Item>
-                  <Form.Item label={<span></span>} colon={false}>
-                    <Space>
-                      <Button
-                        type="primary"
-                        onClick={() => {
-                          setCurrentStep(currentStep - 1);
-                        }}
-                      >
-                        上一步
-                      </Button>
-                      <Button
-                        htmlType="submit"
-                        type="primary"
-                        loading={submitLoading}
-                      >
-                        保存
-                      </Button>
-                    </Space>
-                  </Form.Item>
-                </Col>
-              </Row>
-            }
-          </Form>
-        </Form.Provider>
+                </Form.Item>
+              </Col>
+            </Row>
+          }
+        </Form>
+
+
       </Card>
       <DSYunProductListModal
-        visible={visibleDSYunModal}
-        onCancel={setVisibleDSYunModal}
+        dataItem={DSYunModal.dataItem}
+        visible={DSYunModal.visible}
+        onCancel={() => {
+          setDSYunModal({
+            dataItem: {},
+            visible: false,
+          });
+        }}
         onOk={onSelectDSYunProduct}
       ></DSYunProductListModal>
     </>

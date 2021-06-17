@@ -57,7 +57,7 @@ const QiniuFileUpload = (props) => {
     // );
     const newFileList = fileList.map((file) => {
       if (file.response) {
-        file.url = `https://rf.blissmall.net/${file.response}`;
+        file.url = `https://rf..net/${file.response}`;
         file.name = file.response;
       }
       return file;

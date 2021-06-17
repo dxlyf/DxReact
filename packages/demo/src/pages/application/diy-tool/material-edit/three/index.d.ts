@@ -2,6 +2,9 @@ import { Font, Group, CubeTexture } from "three";
 import {
   MeshParamsJson
 } from './tools';
+import {
+  CollisionPointGroup
+} from './collision'
 
 type ThreeObjectParams = {
   getMeshParams: (model: any) => MeshParamsJson;
@@ -87,4 +90,8 @@ export default class ThreeObject {
   stickFromCameraToCake: (object: Group, outside?: boolean) => void;
   speedRate: number;
   autoRender: boolean;
+  showSandwich: (success: () => void) => void;
+  hideSandwich: (success: () => void) => void;
+  checkOffSpec: (objectData: any, cakeData?: any) => boolean;
+  getCollisionPointGroup(group?: Group): CollisionPointGroup;
 }

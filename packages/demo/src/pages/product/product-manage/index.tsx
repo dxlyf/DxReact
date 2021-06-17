@@ -15,6 +15,7 @@ import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
 import { get } from 'lodash';
 import { PRODUCT } from '@/common/constants';
+import { render } from 'react-dom';
 
 let ProductManage: ConnectRC<any> = ({ history }) => {
   let [
@@ -43,29 +44,6 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
           maxLength: 50,
         },
       },
-      {
-        type: 'shop',
-        name: 'shopId',
-        label: '商品归属',
-        initialValue: -1,
-      },
-      {
-        type: 'list',
-        name: 'status',
-        label: '商品状态',
-        initialValue: -1,
-        data: [
-          { text: '全部', value: -1 },
-          { text: '已上架', value: 1 },
-          { text: '已下架', value: 2 },
-        ],
-        props: {
-          onChange: (value: string) => {
-            setStatus('' + value);
-            filterRef.current?.query();
-          },
-        },
-      },
     ],
     [],
   );
@@ -85,21 +63,27 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
               ></ImageView>
               <Space direction="vertical" align="start">
                 <div>{record.productName}</div>
-                <div>{record.productNo}</div>
               </Space>
             </Space>
           );
         },
       },
       {
-        title: '商品归属',
-        dataIndex: 'shopName',
+        title: '商品编号',
+        dataIndex: 'productNo',
       },
       {
-        title: '上架状态',
+        title: '商品类型',
+        dataIndex: 'type',
+        render(type) {
+          return PRODUCT.PRODUCT_TYPES.get(type, 'text');
+        },
+      },
+      {
+        title: '状态',
         dataIndex: 'status',
         render(value: number) {
-          return PRODUCT.PRODUCT_SCALE_STATUS.get(value, 'text');
+          return PRODUCT.PRODUCT_STATUS.get(value, 'text');
         },
       },
       {
@@ -181,23 +165,17 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
           ref={filterRef as any}
           span={18}
           fields={fields}
+          searchProps={{span:16}}
           onQuery={showList}
           autoBind={true}
         >
           <Button type="primary" onClick={onPublishProduct}>
             发布商品
           </Button>
-          <Button onClick={() => updateProductStatus(1)}>上架</Button>
-          <Button onClick={() => updateProductStatus(2)}>下架</Button>
           <Button onClick={onDeleteProduct}>删除</Button>
         </FilterForm>
       </Card>
       <Card className="m-table-wrapper">
-        <Tabs activeKey={currentStatus} onChange={onStatusTabChange}>
-          <Tabs.TabPane tab="全部" key="-1"></Tabs.TabPane>
-          <Tabs.TabPane tab="已上架" key="1"></Tabs.TabPane>
-          <Tabs.TabPane tab="已下架" key="2"></Tabs.TabPane>
-        </Tabs>
         <Table
           rowSelection={rowSelection}
           columns={columns}

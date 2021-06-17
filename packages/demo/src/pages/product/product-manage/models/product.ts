@@ -5,7 +5,7 @@
 import { Effect, ImmerReducer, Reducer, Subscription } from 'umi';
 import * as productService from '@/services/product';
 import * as shopService from '@/services/shop';
-import { keyBy, find, uniqueId } from 'lodash';
+import { keyBy, find, uniqueId, differenceBy } from 'lodash';
 import app from '@/utils/app';
 import { normalizeFile } from '@/utils/util';
 import { PRODUCT } from '@/common/constants';
@@ -18,6 +18,7 @@ interface shopProductProperty {
 }
 interface shopProductItem {
   [key: string]: any;
+  topProductItemId: string; // 电商云商品项ID
   productItemNo: string; // 商品规格编码
   imageUrl: any[]; // 规格图片
   recommendedPrice: number; // 建议零售价
@@ -25,38 +26,14 @@ interface shopProductItem {
   stockNum: number; // 库存数量
   isEnable: number; // 是否启用 0否 1是
   diyModelId: number; // 模型id
-  sandwichModelId:number // 夹心模型ID
+  sandwichModelId: number; // 夹心模型ID
   shopProductPropertyList: shopProductProperty[];
-}
-export interface ProductEntity {
-  id?: number; // 基础商品id
-  shopId: number; // 店铺id
-  categoryId: number; // 分类ID
-  categoryName: string; //分类名称
-  categoryType: number; //电商云商品类型(1-蛋糕类,2-面包类,3-成品类,4-饮品类,5-虚拟类)
-  type: number; // 商品类型 1-单品, 2-组合
-  productNo: string; // 电商云商品编码
-  name: string; // 电商云商品名称
-  productName: string; //商品名称
-  productDesc: string; //商品卖点
-  imageUrl: string; // 商品图片，多个逗号隔开
-  videoUrl: string; // 商品视频
-  propertyStr: string; // 商品属性ids(属性propertyId逗号字符串分隔)
-  linePrice: number; //划线价
-  productGroupNameStr: string; //商品分组，多个逗号隔开
-  diyModelId: string; // 模型ID
-  shopProductItemList: shopProductItem[]; //商品规格
-  shopProductDetail: {
-    id?: string;
-    shopProductId?: string;
-    appContent: string;
-    pcContent: string;
-  };
 }
 
 export interface ProductEntityStateType {
   [key: string]: any;
   id: string; // 基础商品id
+  topProductId: string; // 电商云基础商品ID
   shopId: string; // 店铺id
   shopName: string; //
   categoryId: string; // 分类ID
@@ -67,6 +44,7 @@ export interface ProductEntityStateType {
   productNo: string; // 电商云商品编码
   name: string; // 电商云商品名称
   productName: string; //商品名称
+  productTitle: string; // 商品标题
   productDesc: string; //商品卖点
   imageUrl: any[]; // 商品图片，多个逗号隔开
   videoUrl: any[]; // 商品视频
@@ -76,6 +54,7 @@ export interface ProductEntityStateType {
   diyModelId: string; // 模型ID
   propertyList: any[];
   shopProductItemList: shopProductItem[]; //商品规格
+  isCake: number; // 商品是否是蛋糕
   shopProductDetail: {
     [key: string]: any;
     id: string; //基础商品详情id
@@ -105,6 +84,7 @@ export interface ProductModelType {
     setDetailToFormDetail: ImmerReducer<ProductModelState>;
     updateEditDetail: ImmerReducer<ProductModelState>;
     resetDetail: ImmerReducer<ProductModelState>;
+    mergeUpdateDsyunDetailToDetail: ImmerReducer<ProductModelState>;
     setDsyunDetailToDetail: ImmerReducer<ProductModelState>;
     setShopList: ImmerReducer<ProductModelState>;
   };
@@ -117,6 +97,7 @@ const initProductDetail = (detail: ProductEntityStateType) => {
   detail.categoryId = '';
   detail.name = '';
 
+  detail.topProductId = '';
   detail.id = '';
   detail.productName = '';
   detail.productDesc = '';
@@ -131,6 +112,7 @@ const initProductDetail = (detail: ProductEntityStateType) => {
   detail.shopProductDetail = {} as any;
   detail.shopProductDetail.appContent = '';
   detail.shopProductDetail.pcContent = '';
+  detail.isCake = 0;
   return detail;
 };
 const ProductModel: ProductModelType = {
@@ -192,13 +174,18 @@ const ProductModel: ProductModelType = {
     },
     *bindDsyunProductToDetail({ payload }, { all, call, put, select }: any) {
       try {
-        let product = yield call(productService.getDSYunProductDetail, payload);
+        let product = yield call(
+          productService.getDSYunProductDetail,
+          payload.id,
+        );
         let category = yield call(
           productService.getDSYunProductCategoryById,
           product.categoryId,
         );
         yield put({
-          type: 'setDsyunDetailToDetail',
+          type: payload.isEditMode
+            ? 'mergeUpdateDsyunDetailToDetail'
+            : 'setDsyunDetailToDetail',
           payload: {
             product,
             category,
@@ -250,7 +237,7 @@ const ProductModel: ProductModelType = {
             stockNum: specFormItem.stockNum,
             isEnable: specFormItem.isEnable,
             diyModelId: specFormItem.diyModelId,
-            sandwichModelId:specFormItem.sandwichModelId,
+            sandwichModelId: specFormItem.sandwichModelId,
             shopProductPropertyList: spec.shopProductPropertyList.map(
               (p: any) => {
                 return {
@@ -269,6 +256,7 @@ const ProductModel: ProductModelType = {
     },
     // 商品详情绑定
     setDetailToFormDetail(state, { payload: { product, category } }) {
+      state.detail.topProductId = product.topProductId;
       state.detail.id = product.id;
       state.detail.shopId = product.shopId;
       state.detail.categoryType = product.categoryType;
@@ -283,11 +271,16 @@ const ProductModel: ProductModelType = {
       state.detail.type = product.type;
       state.detail.productName = product.productName;
       state.detail.productDesc = product.productDesc;
-      state.detail.imageUrl = product.imageUrl.split(',').map((url: string) => {
-        return normalizeFile(url);
-      });
+      state.detail.isCake = product.isCake;
+      state.detail.imageUrl = product.imageUrl
+        ? product.imageUrl.split(',').map((url: string) => {
+            return normalizeFile(url);
+          })
+        : [];
       state.detail.videoUrl = product.videoUrl
-        ? [normalizeFile(product.videoUrl)]
+        ? product.videoUrl.split(',').map((url: string) => {
+            return normalizeFile(url);
+          })
         : [];
       state.detail.propertyStr = product.propertyStr;
       state.detail.linePrice = isNaN(parseFloat(product.linePrice))
@@ -341,16 +334,95 @@ const ProductModel: ProductModelType = {
           };
         },
       );
-      state.detail.shopProductDetail.id = product.shopProductDetail.id;
-      state.detail.shopProductDetail.shopProductId =
-        product.shopProductDetail.shopProductId;
-      state.detail.shopProductDetail.appContent =
-        product.shopProductDetail.appContent;
-      state.detail.shopProductDetail.pcContent =
-        product.shopProductDetail.pcContent;
+      // state.detail.shopProductDetail.id = product.shopProductDetail.id;
+      // state.detail.shopProductDetail.shopProductId =
+      //   product.shopProductDetail.shopProductId;
+      // state.detail.shopProductDetail.appContent =
+      //   product.shopProductDetail.appContent;
+      // state.detail.shopProductDetail.pcContent =
+      //   product.shopProductDetail.pcContent;
+    },
+    // 合并更新电商云详情，转换到本系统产品详情
+    mergeUpdateDsyunDetailToDetail(state, { payload: { product, category } }) {
+      let oldShopProductItemList = state.detail.shopProductItemList;
+      let oldPropertyList = state.detail.propertyList;
+      let oldPropertyStr = state.detail.propertyStr;
+
+      let propertyList = product.propertyList.map((d: any, index: number) => {
+        return {
+          ...d,
+          fieldName: 'specPropertyName' + index,
+        };
+      });
+      let propertyListMap = keyBy(propertyList, 'id'); // 规格属性
+
+      let shopProductItemList = product.productItemList.map(
+        (d: any, rowIndex: number) => {
+          let shopProductPropertyList = d.skuPropertyList.map((p: any) => {
+            let propertItem = propertyListMap[p.propertyId];
+            let propertyValue = find(propertItem.propertyValues, {
+              id: p.propertyValueId,
+            });
+            return {
+              fieldName: propertItem.fieldName,
+              propertyId: p.propertyId, // 属性id
+              propertyName: propertItem.name, // 属性名称
+              propertyValueId: p.propertyValueId, // 属性值id
+              propertyValue: propertyValue.value, // 属性值名称
+            };
+          });
+          return {
+            id: d.id || rowIndex,
+            topProductItemId: d.skuId,
+            _isNew: true, // 是否是新增数据
+            productItemNo: d.productItemNo, // 商品规格编码
+            imageUrl: [], // 规格图片
+            recommendedPrice: d.recommendedPrice * 0.01, // 建议零售价
+            price: d.price > 0 ? d.price * 0.01 : d.recommendedPrice * 0.01, //销售价格 ,小于0取建议零售价
+            stockNum: '', // 库存数量
+            maxStockNum: Infinity,
+            isEnable: 0, // 是否启用 0否 1是
+            diyModelId: '', // 模型id
+            sandwichModelId: '', // 夹心模型
+            shopProductPropertyList: shopProductPropertyList,
+            shopProductPropertyListFieldMap: keyBy(
+              shopProductPropertyList,
+              'fieldName',
+            ),
+          };
+        },
+      );
+      // 新增的SKU
+      let newAddItems = differenceBy(
+        shopProductItemList,
+        oldShopProductItemList,
+        (d: any) => d.productItemNo,
+      );
+      // 合并SKU数据
+      let newShopProductItemList = oldShopProductItemList
+        .map((d: any) => {
+          let newItem = shopProductItemList.find(
+            (p) => p.productItemNo === d.productItemNo,
+          );
+          if (!newItem) {
+            return d;
+          }
+          return {
+            ...d,
+            recommendedPrice: newItem.recommendedPrice,
+            shopProductPropertyList: newItem.shopProductPropertyList,
+            shopProductPropertyListFieldMap:
+              newItem.shopProductPropertyListFieldMap,
+          };
+        })
+        .concat(newAddItems);
+      state.detail.propertyStr = propertyList.map((d) => d.id).join(',');
+      state.detail.propertyList = propertyList;
+      state.detail.shopProductItemList = newShopProductItemList;
     },
     // 设置电商云详情，转换到本系统产品详情
     setDsyunDetailToDetail(state, { payload: { product, category } }) {
+      state.detail.topProductId = product.topProductId;
       state.detail.categoryType = product.categoryType;
       state.detail.categoryTypeName = PRODUCT.CATEGORY_TYPES.get(
         product.categoryType,
@@ -365,10 +437,18 @@ const ProductModel: ProductModelType = {
       //  state.detail.id=''
       // state.detail.productName=''
       //  state.detail.productDesc=''
-      state.detail.imageUrl = product.imageUrl
-        ? [normalizeFile(product.imageUrl)]
+      let productDetail = product.productDetail || {};
+      state.detail.imageUrl = productDetail.imageList
+        ? productDetail.imageList.map((url: string) => {
+            return normalizeFile(url);
+          })
         : [];
-      state.detail.videoUrl = [];
+      state.detail.videoUrl = productDetail.videoUrl
+        ? productDetail.videoUrl.split(',').map((url: string) => {
+            return normalizeFile(url);
+          })
+        : [];
+      state.detail.isCake = 0;
       // state.detail.productGroupNameStr=[]
       //  state.detail.diyModelId=''
 
@@ -398,6 +478,7 @@ const ProductModel: ProductModelType = {
           });
           return {
             id: d.id || rowIndex,
+            topProductItemId: d.skuId,
             productItemNo: d.productItemNo, // 商品规格编码
             imageUrl: [], // 规格图片
             recommendedPrice: d.recommendedPrice * 0.01, // 建议零售价
@@ -406,7 +487,7 @@ const ProductModel: ProductModelType = {
             maxStockNum: Infinity,
             isEnable: 0, // 是否启用 0否 1是
             diyModelId: '', // 模型id
-            sandwichModelId:'',// 夹心模型
+            sandwichModelId: '', // 夹心模型
             shopProductPropertyList: shopProductPropertyList,
             shopProductPropertyListFieldMap: keyBy(
               shopProductPropertyList,

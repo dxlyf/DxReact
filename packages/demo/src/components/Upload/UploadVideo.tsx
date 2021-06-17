@@ -7,6 +7,7 @@ import { Upload, Modal, Typography, UploadProps, Tooltip } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useControllableValue } from 'ahooks';
 import { uploadRequest, buindTodayUplaodDir } from './request';
+import app from '@/utils/app';
 
 const { Text } = Typography;
 type UploadVideoeProps = {
@@ -35,7 +36,15 @@ export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
   });
   const onChangeHandle = useCallback(
     ({ file, fileList, event }) => {
-      let newFileList = [...fileList];
+      let newFileList = fileList.map((f) => {
+        if (f.response) {
+          return {
+            ...f,
+            url: app.toImageUrl(f.response.url),
+          };
+        }
+        return f;
+      });
       setFileList(newFileList);
     },
     [onChange],
@@ -56,12 +65,13 @@ export const UploadVideo: React.FC<UploadVideoeProps> = (props) => {
   return (
     <div>
       <Upload
+        accept="video/*"
         customRequest={uploadRequest}
         {...restProps}
         data={{
           customVars: data,
           uploadDir: buindTodayUplaodDir({
-            beforeDir: 'diy/images',
+            beforeDir: 'diy/videos',
             afterDir: uploadDir,
           }),
         }}

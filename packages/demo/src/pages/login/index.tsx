@@ -48,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ dispatch, location, loginLoading }) => {
         payload: {
           clientId: app.clientType,
           loginName: values.loginName,
-          typeCode: 'retailAdminLogin',
+          typeCode: 'Login',
         },
       })
         .then((data: any) => {

@@ -31,7 +31,9 @@ export let DSYunProductList: React.FC<any> = ({ dataItem, onChange }) => {
         type: 'text',
         name: 'strText',
         label: '商品信息',
+        initialValue: dataItem.productNo,
         props: {
+          disabled: !!dataItem.productNo,
           placeholder: '请输入商品名称或商品编号',
           maxLength: 50,
         },
@@ -153,10 +155,13 @@ let DSYunProductListModal: React.FC<any> = (props) => {
   const onCancelHandle = useCallback(() => {
     setVisible(false);
   }, []);
-  const onChangeHandle = useCallback((record: any[]) => {
-    onOk(record);
-    onCancelHandle();
-  }, []);
+  const onChangeHandle = useCallback(
+    (record: any[]) => {
+      onOk(record);
+      onCancelHandle();
+    },
+    [onOk],
+  );
 
   return (
     <Modal

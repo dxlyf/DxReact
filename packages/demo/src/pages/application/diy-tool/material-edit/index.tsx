@@ -1,7 +1,7 @@
 /**
  * @description DIY管理 - 配件素材-新增或修改素材
  */
-import { useEffect, createRef, useRef } from 'react';
+import { useEffect, createRef, useRef, useState } from 'react';
 import ProCard from '@ant-design/pro-card';
 import '@ant-design/compatible/assets/index.css';
 import {
@@ -15,8 +15,8 @@ import {
   Dropdown,
   Radio,
   Upload,
+  Anchor,
 } from 'antd';
-import { Anchor } from 'antd';
 import { useRequest, useMount, useUnmount, useDebounceFn } from 'ahooks';
 import { FormInstance } from 'antd/lib/form';
 import styles from './materialEdit.module.less';
@@ -32,7 +32,9 @@ import {
   handleFetchToThreeData,
   handleStrToArr,
   getBaseFormInitialValues,
+  VKM_defaultCake,
 } from './DTO';
+
 import { ProFormRadio } from '@ant-design/pro-form';
 import {
   handleDict,
@@ -49,54 +51,6 @@ import { v4 as uuid } from 'uuid';
 import G from './three/globalValues';
 import { checkAuthorize } from '@/components/Authorized';
 
-const three = new Three({
-  type: 'back',
-  width: 600,
-  height: 600,
-  getMeshParams,
-  cakeInfo: {
-    id: '830439381476909056',
-    modelGroupId: 37,
-    topModelGroupId: 2,
-    topModelGroupName: '第三方',
-    modelGroupName: '勿动',
-    name: '粉色蛋糕',
-    imageUrl:
-      'https://rf.blissmall.net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
-    modelType: 1,
-    url: 'https://rf.blissmall.net/31088d56-7664-430f-9388-a1de4627a367.glb',
-    shape: '圆形',
-    specs: '20*6cm',
-    canMove: false,
-    canRotate: false,
-    canSwing: false,
-    isMult: false,
-    canVeneer: false,
-    canSelect: false,
-    type: '蛋糕',
-    materials: [
-      {
-        target: 'cake_001',
-        material: 'lambert20SG_0',
-        roughness: 1,
-        color: '#FEDAD8',
-        emissive: '#0B0200',
-        envMap: [
-          'https://rf.blissmall.net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
-          'https://rf.blissmall.net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
-          'https://rf.blissmall.net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
-          'https://rf.blissmall.net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
-          'https://rf.blissmall.net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
-          'https://rf.blissmall.net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
-        ],
-        envMapIntensity: 0.4,
-      },
-    ],
-    y: G.CakeDeep,
-    scale: [1, 0.75, 1],
-  },
-});
-
 const { Link } = Anchor;
 
 const getSize = (group) => {
@@ -109,7 +63,7 @@ const getSize = (group) => {
   return arr.join(', ');
 };
 
-const dict = handleDict({
+let dictData = {
   type: {
     raw: {
       '1': { label: '蛋糕', value: 1 },
@@ -121,22 +75,21 @@ const dict = handleDict({
       // '6': { label: '底盘', value: 6 },
       '3': { label: '贴面', value: 3 },
       '8': { label: '字牌', value: 8 },
+      '10': { label: '夹心', value: 10 },
     },
   },
   specs: {
     raw: {
-      '1': { label: '16*6cm', value: '16*6cm' },
-      '2': { label: '22*6cm', value: '22*6cm' },
-      '3': { label: '25*6cm', value: '25*6cm' },
-      '4': { label: '27*6cm', value: '27*6cm' },
+      // '1': { label: '16*6cm', value: '16*6cm' },
+      // '2': { label: '22*6cm', value: '22*6cm' },
+      // '3': { label: '25*6cm', value: '25*6cm' },
+      // '4': { label: '27*6cm', value: '27*6cm' },
     },
   },
   shape: {
     raw: {
       '1': { label: '圆形', value: '圆形' },
-      '2': { label: '方形', value: '方形' },
-      '3': { label: '心形', value: '心形' },
-      '4': { label: '四叶草', value: '四叶草' },
+      // '2': { label: '球形', value: '球形' },
     },
   },
   flag: {
@@ -151,7 +104,55 @@ const dict = handleDict({
       },
     },
   },
-});
+};
+
+let dict = handleDict(dictData);
+
+const shapeHandle = (type) => {
+  let raw = {
+    '1': { label: '圆形', value: '圆形' },
+    '2': { label: '球形', value: '球形' },
+  };
+  if (!includesType([1, 2, 9, 10], type)) {
+    delete raw['2'];
+  }
+
+  dictData = {
+    ...dictData,
+    shape: {
+      raw: raw,
+    },
+  };
+  dict = handleDict(dictData);
+};
+
+const specsHandle = (shape) => {
+  let raw: any = {};
+
+  if (shape === '球形') {
+    raw = {
+      '6': { label: '20.5*17*12cm', value: '20.5*17*12cm' },
+    };
+  }
+  if (shape === '圆形') {
+    raw = {
+      '2': { label: '20*6cm', value: '20*6cm' },
+      '7': { label: '17*6cm', value: '17*6cm' },
+    };
+  }
+
+  dict = handleDict({
+    ...dictData,
+    specs: {
+      raw: raw,
+    },
+  });
+};
+
+let three = null;
+let editObject = null; //编辑件
+
+let cakeInfoName = 'circular_2';
 
 const MaterialEdit = (props) => {
   let { match, route } = props;
@@ -160,6 +161,29 @@ const MaterialEdit = (props) => {
 
   const [baseForm] = Form.useForm();
   const attributeForm = useRef<FormInstance>();
+  // 防止多次start模型
+  const startLoad = useRef(false);
+  const [cakeSelect, setCakeSelect] = useState(VKM_defaultCake);
+  const [collisionPointGroupValue, setCollisionPointGroupValue] =
+    useState(false);
+  // console.log(
+  //   '🚀 ~ file: index.tsx ~ line 167 ~ MaterialEdit ~ cakeSelect',
+  //   cakeSelect,
+  // );
+  // const three = useRef<any>(null);
+
+  if (!three) {
+    three = new Three({
+      type: 'back',
+      width: 600,
+      height: 600,
+      getMeshParams,
+      cakeInfo: {
+        ...cakeSelect.get(cakeInfoName, 'parameter'),
+        y: G.CakeDeep,
+      },
+    });
+  }
 
   const [state, setState]: any = useImmer({
     topModelGroupData: [],
@@ -184,8 +208,9 @@ const MaterialEdit = (props) => {
   const { materialId } = match.params;
   const isCreate = route.type === 'create';
 
-  if (isCreate) {
+  if (isCreate && !three.ready && !startLoad.current) {
     three.start();
+    startLoad.current = true;
   }
 
   const reqDetailModel = useRequest(detailModel, {
@@ -221,14 +246,15 @@ const MaterialEdit = (props) => {
           handleImgStrToValObj(item),
         );
       }
+
       return resultData;
     },
     onSuccess: (data: any) => {
-      // data = _mockData;
-      // topModelGroupId,
-      // topModelGroupName,
-      // modelGroupId,
-      // modelGroupName,
+      // 设置低模
+      setCollisionPointGroupValue(data.collisionPointGroup ? true : false);
+
+      shapeHandle(data.type);
+      specsHandle(data.shape);
 
       setState((draft) => {
         draft.materialsData = data.materials;
@@ -259,6 +285,7 @@ const MaterialEdit = (props) => {
 
           if (data.orignData.url) {
             three.loadModel(loadModelParms, (group) => {
+              editObject = group;
               setState((draft) => {
                 draft.size = getSize(group);
               });
@@ -349,7 +376,7 @@ const MaterialEdit = (props) => {
   });
 
   useUnmount(() => {
-    three.clearScene(true);
+    three.clearScene();
   });
 
   useEffect(() => {
@@ -359,6 +386,7 @@ const MaterialEdit = (props) => {
     };
   }, [onKeyDown]);
 
+  // 预览
   const handlePreview = async () => {
     const values_base = await baseForm.validateFields();
 
@@ -375,20 +403,30 @@ const MaterialEdit = (props) => {
 
     resultData.type = dict.type.valObj[String(resultData.type)];
 
-    three.changMeshParams(resultData, (group) => {
-      setState((draft) => {
-        draft.size = getSize(group);
-      });
-    });
+    three.changMeshParams(
+      resultData,
+      (group) => {
+        setState((draft) => {
+          draft.size = getSize(group);
+        });
+        editObject = group;
+      },
+      null,
+      editObject,
+    );
   };
 
   // 保存提交
   const handleOnSubmit = async () => {
     const values_base = await baseForm.validateFields();
     const values_attribute = await attributeForm.current.validateFields();
-
+    // 低模
+    const collisionPointGroup = three.getCollisionPointGroup();
     // 没有值就设置为0
-    if (includesType([1, 2, 4, 7, 8], values_base.type) && !values_base.deep) {
+    if (
+      includesType([1, 2, 4, 7, 8, 10], values_base.type) &&
+      !values_base.deep
+    ) {
       values_base.deep = 0;
     }
 
@@ -414,8 +452,8 @@ const MaterialEdit = (props) => {
       modelToolJson: JSON.stringify({
         ...restValues,
         name: name,
-
         type: dict.type.valObj[String(type)],
+        collisionPointGroup,
         materials,
       }),
     };
@@ -444,6 +482,7 @@ const MaterialEdit = (props) => {
       three.clearScene();
 
       three.loadModel(resultData, (group) => {
+        editObject = group;
         setState((draft) => {
           draft.size = getSize(group);
         });
@@ -580,6 +619,10 @@ const MaterialEdit = (props) => {
                   <PictureUpload maxFiles={1} />
                 </Form.Item>
 
+                <Form.Item label="低模">
+                  {collisionPointGroupValue ? '有' : '无'}
+                </Form.Item>
+
                 <Form.Item
                   name="type"
                   label="素材类型"
@@ -595,18 +638,16 @@ const MaterialEdit = (props) => {
                     allowClear
                     onChange={(type) => {
                       let param: any = {
-                        // deep: undefined,
-                        // canMove: undefined,
-                        // canRotate: undefined,
-                        // canSwing: undefined,
-                        // canVeneer: undefined,
-                        // canSelect: undefined,
-                        // isMult: undefined,
-                        // shape: undefined,
-                        // specs: undefined
+                        shape: '圆形',
+                        specs: '20*6cm',
                       };
-                      if (includesType([1, 2, 7], type)) {
+
+                      shapeHandle(type);
+                      specsHandle(param.shape);
+
+                      if (includesType([1, 2, 7, 10], type)) {
                         param = {
+                          ...param,
                           deep: 0,
                           canMove: false,
                           canRotate: false,
@@ -614,8 +655,6 @@ const MaterialEdit = (props) => {
                           canVeneer: false,
                           canSelect: false,
                           isMult: false,
-                          shape: '圆形',
-                          specs: '20*6cm',
                           x: undefined,
                           y: undefined,
                           z: undefined,
@@ -623,6 +662,7 @@ const MaterialEdit = (props) => {
                         };
                       } else if (includesType([4, 5, 8], type)) {
                         param = {
+                          ...param,
                           canMove: true,
                           canRotate: true,
                           canVeneer: false,
@@ -631,8 +671,6 @@ const MaterialEdit = (props) => {
                           x: undefined,
                           y: undefined,
                           z: undefined,
-                          shape: undefined,
-                          specs: undefined,
                           cover: undefined,
                         };
                         if (type === 4) {
@@ -644,6 +682,7 @@ const MaterialEdit = (props) => {
                         param.canSwing = type === 5;
                       } else if (includesType([3], type)) {
                         param = {
+                          ...param,
                           deep: undefined,
                           canMove: false,
                           canRotate: false,
@@ -651,14 +690,26 @@ const MaterialEdit = (props) => {
                           canVeneer: true,
                           canSelect: true,
                           isMult: true,
-                          shape: '圆形',
-                          specs: '20*6cm',
                           x: undefined,
                           y: undefined,
                           z: undefined,
                           cover: undefined,
                         };
                       }
+
+                      if (includesType([2], type)) {
+                        param.outside = 60;
+                        param.inside = 0;
+                      }
+
+                      if (includesType([7, 9], type)) {
+                        param.outside = 100;
+                        param.inside = 0;
+                      }
+                      if (includesType([9], type)) {
+                        param.isBlock = false;
+                      }
+
                       baseForm.setFieldsValue(param);
 
                       setState((draft) => {
@@ -703,10 +754,27 @@ const MaterialEdit = (props) => {
                             placeholder="请选择形状"
                             options={dict.shape.list}
                             allowClear
-                            disabled={includesType(
-                              [1, 2, 3, 7],
-                              Number(baseForm.getFieldValue('type')),
-                            )}
+                            disabled={
+                              !includesType(
+                                [1, 2, 7, 9, 10],
+                                Number(baseForm.getFieldValue('type')),
+                              )
+                            }
+                            onChange={(shape) => {
+                              specsHandle(shape);
+
+                              console.log(cakeSelect);
+
+                              if (shape === '球形') {
+                                baseForm.setFieldsValue({
+                                  specs: dict.specs.raw['6'].value,
+                                });
+                              } else {
+                                baseForm.setFieldsValue({
+                                  specs: dict.specs.raw['2'].value,
+                                });
+                              }
+                            }}
                           />
                         </Form.Item>
                       )
@@ -716,6 +784,7 @@ const MaterialEdit = (props) => {
 
                 <Form.Item shouldUpdate noStyle>
                   {() => {
+                    // console.log(dict.specs);
                     return (
                       !includesType(
                         [3, 4, 5, 8],
@@ -725,32 +794,13 @@ const MaterialEdit = (props) => {
                           <Select
                             style={{ width: 200 }}
                             placeholder="请选择规格"
-                            options={dict.shape.list}
+                            options={dict.specs.list}
                             allowClear
-                            disabled={includesType(
-                              [1, 2, 3, 7],
-                              Number(baseForm.getFieldValue('type')),
-                            )}
+                            // disabled={includesType(
+                            //   [1, 2, 3, 7, 9, 10],
+                            //   Number(baseForm.getFieldValue('type')),
+                            // )}
                           />
-                        </Form.Item>
-                      )
-                    );
-                  }}
-                </Form.Item>
-
-                {/* <Form.Item shouldUpdate noStyle>
-                  {() => {
-                    return (
-                      includesType(
-                        [1, 2, 9],
-                        Number(baseForm.getFieldValue('type')),
-                      ) && (
-                        <Form.Item
-                          name="outside"
-                          label="外圈"
-                          rules={[{ required: true, message: '请输入外圈!' }]}
-                        >
-                          <InputNumber style={{ width: 200 }} precision={2} />
                         </Form.Item>
                       )
                     );
@@ -761,7 +811,33 @@ const MaterialEdit = (props) => {
                   {() => {
                     return (
                       includesType(
-                        [1, 2, 9],
+                        [2, 7, 9],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <Form.Item
+                          name="outside"
+                          label="外圈"
+                          rules={[{ required: true, message: '请输入外圈!' }]}
+                        >
+                          <InputNumber
+                            style={{ width: 200 }}
+                            precision={2}
+                            disabled={includesType(
+                              [7],
+                              Number(baseForm.getFieldValue('type')),
+                            )}
+                          />
+                        </Form.Item>
+                      )
+                    );
+                  }}
+                </Form.Item>
+
+                <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
+                      includesType(
+                        [2, 7, 9],
                         Number(baseForm.getFieldValue('type')),
                       ) && (
                         <Form.Item
@@ -774,13 +850,28 @@ const MaterialEdit = (props) => {
                       )
                     );
                   }}
-                </Form.Item> */}
+                </Form.Item>
 
                 <Form.Item shouldUpdate noStyle>
                   {() => {
                     return (
+                      includesType(
+                        [9],
+                        Number(baseForm.getFieldValue('type')),
+                      ) && (
+                        <Form.Item label="是否平整" name="isBlock">
+                          <Radio.Group options={dict.flag.list} />
+                        </Form.Item>
+                      )
+                    );
+                  }}
+                </Form.Item>
+
+                {/* <Form.Item shouldUpdate noStyle>
+                  {() => {
+                    return (
                       !includesType(
-                        [1, 2, 7],
+                        [1, 2, 7, 10],
                         Number(baseForm.getFieldValue('type')),
                       ) && (
                         <WrapTipText
@@ -806,7 +897,7 @@ const MaterialEdit = (props) => {
                       )
                     );
                   }}
-                </Form.Item>
+                </Form.Item> */}
               </ProCard>
 
               <ProCard title="模型缩放与位置" id="scaling_position">
@@ -834,7 +925,7 @@ const MaterialEdit = (props) => {
                   {() => {
                     return (
                       !includesType(
-                        [1, 2, 3, 7],
+                        [1, 2, 3, 7, 10],
                         Number(baseForm.getFieldValue('type')),
                       ) && (
                         <WrapTipText
@@ -854,7 +945,7 @@ const MaterialEdit = (props) => {
                   {() => {
                     return (
                       !includesType(
-                        [1, 2, 3, 7],
+                        [1, 2, 3, 7, 10],
                         Number(baseForm.getFieldValue('type')),
                       ) && (
                         <WrapTipText
@@ -874,7 +965,7 @@ const MaterialEdit = (props) => {
                   {() => {
                     return (
                       !includesType(
-                        [1, 2, 3, 7],
+                        [1, 2, 3, 7, 10],
                         Number(baseForm.getFieldValue('type')),
                       ) && (
                         <WrapTipText
@@ -899,7 +990,7 @@ const MaterialEdit = (props) => {
                             style={{ width: 200 }}
                             precision={2}
                             disabled={includesType(
-                              [1, 2, 7],
+                              [1, 2, 7, 10],
                               Number(baseForm.getFieldValue('type')),
                             )}
                           />
@@ -918,7 +1009,7 @@ const MaterialEdit = (props) => {
                         <Radio.Group
                           options={dict.flag.list}
                           disabled={includesType(
-                            [1, 2, 3, 7],
+                            [1, 2, 3, 7, 10],
                             Number(baseForm.getFieldValue('type')),
                           )}
                         ></Radio.Group>
@@ -934,7 +1025,7 @@ const MaterialEdit = (props) => {
                         <Radio.Group
                           options={dict.flag.list}
                           disabled={includesType(
-                            [1, 2, 3, 7],
+                            [1, 2, 3, 7, 10],
                             Number(baseForm.getFieldValue('type')),
                           )}
                         ></Radio.Group>
@@ -950,7 +1041,7 @@ const MaterialEdit = (props) => {
                         <Radio.Group
                           options={dict.flag.list}
                           disabled={includesType(
-                            [1, 2, 3, 7],
+                            [1, 2, 3, 7, 10],
                             Number(baseForm.getFieldValue('type')),
                           )}
                         ></Radio.Group>
@@ -966,7 +1057,7 @@ const MaterialEdit = (props) => {
                         <Radio.Group
                           options={dict.flag.list}
                           disabled={includesType(
-                            [1, 2, 7],
+                            [1, 2, 7, 10],
                             Number(baseForm.getFieldValue('type')),
                           )}
                         ></Radio.Group>
@@ -982,7 +1073,7 @@ const MaterialEdit = (props) => {
                         <Radio.Group
                           options={dict.flag.list}
                           disabled={includesType(
-                            [1, 2, 3, 7],
+                            [1, 2, 3, 7, 10],
                             Number(baseForm.getFieldValue('type')),
                           )}
                         ></Radio.Group>
@@ -998,7 +1089,7 @@ const MaterialEdit = (props) => {
                         <Radio.Group
                           options={dict.flag.list}
                           disabled={includesType(
-                            [1, 2, 3, 7],
+                            [1, 2, 3, 7, 10],
                             Number(baseForm.getFieldValue('type')),
                           )}
                         ></Radio.Group>
@@ -1034,7 +1125,6 @@ const MaterialEdit = (props) => {
                     className={styles.btn}
                     type="primary"
                     onClick={handleOnSubmit}
-                    size="large"
                   >
                     保存
                   </Button>
@@ -1047,7 +1137,6 @@ const MaterialEdit = (props) => {
                       link.download = `${Date.now().toString()}.png`;
                       link.click();
                     }}
-                    size="large"
                   >
                     截图
                   </Button>
@@ -1076,7 +1165,7 @@ const MaterialEdit = (props) => {
                               imageUrl: [
                                 {
                                   status: 'done',
-                                  url: `https://rf.blissmall.net/${o.key}`,
+                                  url: `https://rf..net/${o.key}`,
                                   name: o.key,
                                 },
                               ],
@@ -1092,7 +1181,6 @@ const MaterialEdit = (props) => {
                       xhr.setRequestHeader('Authorization', `UpToken ${token}`);
                       xhr.send(pic);
                     }}
-                    size="large"
                   >
                     设置预览图
                   </Button>
@@ -1104,16 +1192,11 @@ const MaterialEdit = (props) => {
                         draft.gridFlag = !state.gridFlag;
                       });
                     }}
-                    size="large"
                   >
                     {state.gridFlag ? '隐藏网格线' : '显示网格线'}
                   </Button>
 
-                  <Button
-                    className={styles.btn}
-                    onClick={handlePreview}
-                    size="large"
-                  >
+                  <Button className={styles.btn} onClick={handlePreview}>
                     预览
                   </Button>
                   <div
@@ -1136,16 +1219,37 @@ const MaterialEdit = (props) => {
                     onClick={() => {
                       history.goBack();
                     }}
-                    size="large"
                   >
                     返回
                   </Button>
-                  <Input
-                    size="large"
-                    className={styles.text}
-                    value={state.size}
-                    disabled
-                  />
+                  <Input className={styles.text} value={state.size} disabled />
+                  <Select
+                    onChange={(value) => {
+                      cakeInfoName = value;
+                      three.loadModel(
+                        cakeSelect.get(cakeInfoName, 'parameter'),
+                      );
+                    }}
+                    style={{ width: 120 }}
+                    placeholder="选择蛋糕"
+                    defaultValue={cakeInfoName}
+                    disabled={includesType(
+                      [1],
+                      Number(baseForm.getFieldValue('type')),
+                    )}
+                  >
+                    {cakeSelect.values.map(({ value, label }) => {
+                      return (
+                        <Select.Option
+                          key={value}
+                          value={value}
+                          // disabled={disabled}
+                        >
+                          {label}
+                        </Select.Option>
+                      );
+                    })}
+                  </Select>
                 </div>
               </Affix>
             </div>

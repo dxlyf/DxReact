@@ -421,7 +421,6 @@ const Attribute = (props) => {
                         <Col>
                           <a
                             onClick={() => {
-                              console.log(emissive);
                               formRef.current!.setFieldsValue({
                                 [target]: {
                                   emissive: emissive,

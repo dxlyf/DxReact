@@ -22,6 +22,8 @@ import styles from './materialList.module.less';
 import EditMadal from './components/EditMadal';
 import BatchModal from './components/BatchModal';
 import { useImmer, useImmerReducer } from 'use-immer';
+import { UserModelState } from '@/models/user';
+import { Link, connect } from 'umi';
 import {
   deleteModelGroup,
   getAllModelGroup,
@@ -29,7 +31,6 @@ import {
 } from '@/services/material';
 import { getModelList, batchDelete, copyModel } from '@/services/diyModel';
 import Authorized, { checkAuthorize } from '@/components/Authorized';
-import { Link } from 'umi';
 
 const { confirm } = Modal;
 
@@ -104,7 +105,7 @@ const RenderList = ({ modelListData, isSelected, toggle, handleCopy }) => {
             }}
             width={130}
             height={130}
-            src={`https://rf.blissmall.net/${imageUrl}?imageView2/1/w/150/h/150`}
+            src={`https://rf..net/${imageUrl}?imageView2/1/w/150/h/150`}
             fallback={imgFaillBack}
           />
           <div className={styles.toolsBox}>
@@ -126,6 +127,7 @@ const RenderList = ({ modelListData, isSelected, toggle, handleCopy }) => {
 };
 
 const MaterialList: React.FC<any> = (props) => {
+  const { user } = props;
   const [modal, dispatch]: any = useImmerReducer(reducer, modal_initialState);
   const [state, setState]: any = useImmer({
     searchTreeKey: '',
@@ -499,8 +501,14 @@ const MaterialList: React.FC<any> = (props) => {
               >
                 批量修改分组
               </a>
-              <Divider type="vertical" />
-              <a onClick={() => batchDeleteClick()}>批量删除模型</a>
+
+              {/* 只有河马才能删除 */}
+              {user.currentUser.loginName === '13168080750' && (
+                <>
+                  <Divider type="vertical" />
+                  <a onClick={() => batchDeleteClick()}>批量删除模型</a>
+                </>
+              )}
 
               <div className={styles.pagination}>
                 <Pagination {...paginationProps} />
@@ -515,4 +523,6 @@ const MaterialList: React.FC<any> = (props) => {
   );
 };
 
-export default MaterialList;
+export default connect(({ user }: { user: UserModelState }) => ({
+  user: user,
+}))(MaterialList);

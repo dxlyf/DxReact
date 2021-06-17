@@ -1,6 +1,7 @@
 import {
 	Camera,
 	EventDispatcher,
+	Group,
 	Object3D
 } from 'three';
 
@@ -11,7 +12,7 @@ export class DragControls extends EventDispatcher {
 	object: Camera;
 
 	//
-	type: 'move' | 'rotate' | 'swing';
+	type: 'move' | 'moveY' | 'rotate' | 'swing';
 	limit: {
 		// circle
 		maxC?: number;
@@ -25,6 +26,7 @@ export class DragControls extends EventDispatcher {
 	}
 	heightObjects: Object3D[];
 	veneerObjects: Object3D[];
+	moveLimit: Group[];
 	getSelectedObjects: () => Object3D;
 	setLockObject: (lockObject: Object3D) => void;
 	getLockObject: () => Object3D;

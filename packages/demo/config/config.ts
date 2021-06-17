@@ -14,6 +14,7 @@ export default defineConfig({
   dva: {
     immer: true,
   },
+  hash: true,
   forkTSChecker: {},
   routes: routes,
   fastRefresh: {},

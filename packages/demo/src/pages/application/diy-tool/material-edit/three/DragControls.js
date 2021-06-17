@@ -1,6 +1,6 @@
 import { selectLocaltion } from './tools';
 import G from './globalValues';
-import { getMeshInfo, getVeneerPoint, setObjectHeight, getCollisionGroup } from './collision';
+import { getMeshInfo, getVeneerPoint, setObjectHeight, getCollisionGroup, checkCollisionArea, getCollisionPosition } from './collision';
 import { Matrix4, Matrix3, Plane, Raycaster, Vector2, Vector3, Scene, EventDispatcher } from 'three';
 
 function DragControls(_objects, _camera, _domElement) {
@@ -47,12 +47,13 @@ function DragControls(_objects, _camera, _domElement) {
   this.limit = {
     maxC: undefined,
     maxS: {
-      maxX: 132,
-      maxZ: 132,
+      maxX: 118,
+      maxZ: 118,
       rotate: Math.PI / 4,
-      radius: 30,
+      radius: 28,
     }
   };
+  this.moveLimit = [];
   this.heightObjects = [];
   this.veneerObjects = [];
   function veneer(vector, object) {
@@ -148,19 +149,16 @@ function DragControls(_objects, _camera, _domElement) {
       m4.makeRotationY(-rotate);
       vector.applyMatrix4(m4);
     }
-    object.position.copy(vector);
+    object.position.copy(getCollisionPosition(object, vector, scope.moveLimit));
     setObjectHeight(object, scope.heightObjects);
   }
-  function rotate(vector, object) {
-    //旋转与上下
-    if (!object.data.canRotate) return;
+  function moveY(vector, object) {
+    //上下
     const
       deep = object.data.deep,
       gPy = object.getObjectByName('gPy'),
       cursor = gPy.children.length > 1 ? gPy.children[1] : null,
       gRy = object.getObjectByName('gRy');
-    let y = (vector.x - _om.x) * 6;
-    gRy.rotation.y += y;
     if (object.data.deep === 0) return;
     const group = getCollisionGroup(object.position, scope.heightObjects);
     if (group && group.data) {
@@ -168,7 +166,7 @@ function DragControls(_objects, _camera, _domElement) {
         if (cursor) cursor.position.y -= gRy.position.y;
         gRy.position.y = 0;
       } else {
-        y = (vector.y - _om.y) * 160;
+        let y = (vector.y - _om.y) * 160;
         if (gRy.position.y + y > 0) y = 0 - gRy.position.y;
         if (gRy.position.y + y < deep) y = deep - gRy.position.y;
         if (gPy.position.y + gRy.position.y + y < G.CakeDeep) y = G.CakeDeep - gPy.position.y - gRy.position.y;
@@ -177,20 +175,39 @@ function DragControls(_objects, _camera, _domElement) {
       }
     }
   }
+  function rotate(vector, object) {
+    //旋转
+    if (!object.data.canRotate) return;
+    const gRy = object.getObjectByName('gRy');
+    let y = (vector.x - _om.x) * 6;
+    gRy.rotation.y += y;
+    if (checkCollisionArea(object, object.position, scope.moveLimit).length > 0) {
+      gRy.rotation.y -= y;
+    }
+    moveY(vector, object);
+  }
   function swing(vector, object) {
     //摆动
     if (!object.data.canSwing) return;
     const
       gPy = object.getObjectByName('gPy'),
       cursor = gPy.children.length > 1 ? gPy.children[1] : null,
-      gRy = object.getObjectByName('gRy'),
-      gRxz = object.getObjectByName('gRxz');
+      gRxz = object.getObjectByName('gRxz'),
+      orgXZ = gRxz.orgXZ;
+    if (orgXZ) {
+      gRxz.rotation.x -= orgXZ.x;
+      gRxz.rotation.z -= orgXZ.z;
+    }
     const rxz = _om.sub(vector).multiplyScalar(4);
-    rxz.applyMatrix3(new Matrix3().rotate(gRy.rotation.y).rotate(_radianY));
+    rxz.applyMatrix3(new Matrix3().rotate(_radianY));
     if (Math.abs(gRxz.rotation.x + rxz.x) < Math.PI / 4)
       gRxz.rotation.x += rxz.x;
     if (Math.abs(gRxz.rotation.z - rxz.y) < Math.PI / 4)
       gRxz.rotation.z -= rxz.y;
+    if (orgXZ) {
+      gRxz.rotation.x += orgXZ.x;
+      gRxz.rotation.z += orgXZ.z;
+    }
     if (cursor) selectLocaltion(object, cursor);
   }
   function gesture(touches, object) {
@@ -214,8 +231,10 @@ function DragControls(_objects, _camera, _domElement) {
     touches['org'] = touches['now'];
     delete touches['now'];
   }
-
+  var orgTime = 0; //减少运算量
   function setObject() {
+    if (Date.now() - orgTime < 16) return;
+    orgTime = Date.now();
     if (touches) {
       gesture(touches, _selected);
     } else {
@@ -232,6 +251,9 @@ function DragControls(_objects, _camera, _domElement) {
             );
           }
 
+          break;
+        case 'moveY':
+          moveY(_mouse, _selected);
           break;
         case 'rotate':
           rotate(_mouse, _selected);

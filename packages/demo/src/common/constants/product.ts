@@ -48,12 +48,20 @@ export const PRODUCT_TYPES = valuesKeyMap(
 export const PRODUCT_STATUS = valuesKeyMap(
   [
     {
+      value: 0,
+      text: '未发布',
+    },
+    {
       value: 1,
       text: '在售',
     },
     {
       value: 2,
       text: '停售',
+    },
+    {
+      value: 3,
+      text: '已失效',
     },
   ],
   'value',

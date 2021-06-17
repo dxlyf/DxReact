@@ -22,6 +22,10 @@ export const ADVERTISE_STATUS = valuesKeyMap(
       value: 5,
       text: '小程序',
     },
+    {
+      value: 6,
+      text: '视频',
+    },
   ],
   'value',
 );

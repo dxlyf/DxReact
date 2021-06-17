@@ -66,7 +66,7 @@ function validator(state) {
       message: '请继续添加图片'
     }
   }
-  if (urlTypes.filter(Boolean).length !== rects.length) {
+  if (urlTypes.filter(d=>d!=undefined&&d!==null).length !== rects.length) {
     return {
       type: 'error',
       message: '存在布局链接类型未填写，请检查'
@@ -74,7 +74,7 @@ function validator(state) {
   } else {
     let validateSucc = true
     for (var i = 0;i < urlTypes.length;i++) {
-      if (urlTypes[i] !== 1 && !adviceUrls[i]) {
+      if (urlTypes[i] != ADVERTISE_STATUS.enums.value0.value && !adviceUrls[i]) {
         validateSucc = false
         break
       }

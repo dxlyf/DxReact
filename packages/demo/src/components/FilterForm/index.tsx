@@ -122,6 +122,23 @@ const FilterForm = React.forwardRef<
             );
           }
         },
+        renderControl(field: FilterFormField, colIndex: number){
+          let render = field.render;
+          if (field.type === QUERY_BUTTON) {
+            return ctx.current!.wrapperComponent(renderSearch(), {
+              ...field,
+              labelWidth: colIndex == 0 ? labelWidth : 20,
+            });
+          }
+          if (!render) {
+            throw `找不到${field.name}定义的${field.type}类型控件`;
+          }
+          let ret = render(field, ctx.current!);
+          if (field.wrapper) {
+            return ctx.current!.wrapperComponent(ret, field);
+          }
+          return ret;
+        }
       };
     }
 
@@ -304,23 +321,7 @@ const FilterForm = React.forwardRef<
         </Row>
       );
     };
-    const renderControl = (field: FilterFormField, colIndex: number) => {
-      let render = field.render;
-      if (field.type === QUERY_BUTTON) {
-        return ctx.current!.wrapperComponent(renderSearch(), {
-          ...field,
-          labelWidth: colIndex == 0 ? labelWidth : 20,
-        });
-      }
-      if (!render) {
-        throw `找不到${field.name}定义的${field.type}类型控件`;
-      }
-      let ret = render(field, ctx.current!);
-      if (field.wrapper) {
-        return ctx.current!.wrapperComponent(ret, field);
-      }
-      return ret;
-    };
+    
     const renderFilterFields = (mergeFields: FilterRenderField[]) => {
       let fields: FilterRenderField[][] = [];
       let renderList = [],
@@ -355,7 +356,7 @@ const FilterForm = React.forwardRef<
                 hidden: field.hidden,
               })}
             >
-              {renderControl(field, c)}
+              {ctx.current.renderControl(field, c)}
             </Col>,
           );
           if (field.hidden) {

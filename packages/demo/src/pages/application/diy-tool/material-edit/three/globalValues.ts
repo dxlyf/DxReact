@@ -1,11 +1,11 @@
 const G = {
   HostUrl: window.location.origin,
   CakeDeep: -130,
-  CakeHeight: 60,
+  CakeHeight: 80,
   CakeDiam: 200,
 }
 export const panInfo = {
-  size: [280, 5, 280],
+  size: [250, 5, 250],
   x: 0,
   y: G.CakeDeep - 5,
   z: 0,
