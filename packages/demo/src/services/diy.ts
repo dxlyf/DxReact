@@ -109,10 +109,63 @@ export function getAllDiyTheme() {
   });
 }
 export function updateThemeCategoryGoodSort(data: any) {
-  return request('blisscake/backend/diyCategoryProductRel/updateSort',
-    {
-      method: 'GET',
-      params:data,
-    },
-  );
+  return request('blisscake/backend/diyCategoryProductRel/updateSort', {
+    method: 'GET',
+    params: data,
+  });
+}
+export function getTemplateList(data) {
+  return request('blisscake/backend/opusTemplate/findPage', {
+    method: 'POST',
+    data,
+  });
+}
+// 批量添加模板
+export function batchAddTemplate(data) {
+  return request('blisscake/backend/opusTemplate/batchAdd', {
+    method: 'POST',
+    data,
+  });
+}
+// 查询用户作品
+export function getUserOpus(data) {
+  return request('blisscake/backend/memOpus/findPage', {
+    method: 'POST',
+    data,
+  });
+}
+// 查询模板详情
+export function getTemplateDetail(params) {
+  return request('blisscake/backend/opusTemplate/detail', {
+    method: 'GET',
+    params,
+  });
+}
+// 模板更新
+export function updateTempalte(data) {
+  return request('blisscake/backend/opusTemplate/update', {
+    method: 'POST',
+    data,
+  });
+}
+// 模板排序
+export function updateTemplateSort(params) {
+  return request('blisscake/backend/opusTemplate/updateSort', {
+    method: 'GET',
+    params,
+  });
+}
+// 模板启用/停用
+export function updateTempalteStatus(data) {
+  return request('blisscake/backend/opusTemplate/updateStatus', {
+    method: 'POST',
+    data,
+  });
+}
+// 模板删除
+export function deleteTempalte(data) {
+  return request('blisscake/backend/opusTemplate/delete', {
+    method: 'POST',
+    data,
+  });
 }

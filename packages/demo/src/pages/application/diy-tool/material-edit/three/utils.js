@@ -1,7 +1,5 @@
 import {
   Vector3,
-  Face3,
-  Geometry,
 } from 'three'
 
 //角度转弧度
@@ -84,39 +82,6 @@ export function createTextImage(text) {
     ctx.fillText(text, canvas.width / 2, canvas.height / 2);
   }
   return canvas;
-}
-//生成几何体
-export function createGeometryByVectors(params) {
-  const { points, height, levelHeight } = params;
-  const vertices = [];
-  const faces = [];
-  points.forEach((arr, i) => {
-    let top = i + 1 < points.length ? height[i + 1] : height[i] + levelHeight;
-    let start = vertices.length;
-    arr.forEach((vertice) => {
-      let v = vertice.clone();
-      v.y = height[i];
-      vertices.push(v);
-      let v1 = v.clone();
-      v1.y = top;
-      vertices.push(v1);
-    });
-    for (let i = start; i < vertices.length; i += 2) {
-      let p0 = i, p1 = i + 3, p2 = i + 2, p3 = i + 1;
-      if (i + 3 >= vertices.length) {
-        p1 = start + 1;
-        p2 = start;
-      }
-      faces.push(new Face3(p0, p1, p2));
-      faces.push(new Face3(p0, p3, p1));
-    }
-  });
-  const geom = new Geometry();
-  geom.vertices = vertices;
-  geom.faces = faces;
-  geom.computeFaceNormals();//计算法向量 这决定了对光做出的反应
-
-  return geom;
 }
 
 export function isChinese(temp) {

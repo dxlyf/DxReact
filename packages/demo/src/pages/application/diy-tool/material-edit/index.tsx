@@ -55,7 +55,7 @@ const { Link } = Anchor;
 
 const getSize = (group) => {
   const box = new Box3();
-  box.setFromObject(group);
+  box.setFromObject(group.getObjectByName('models'));
   const size = box.getSize(new Vector3());
   const arr = Object.values(size).map((item) => {
     return item.toFixed(2);
@@ -138,6 +138,7 @@ const specsHandle = (shape) => {
     raw = {
       '2': { label: '20*6cm', value: '20*6cm' },
       '7': { label: '17*6cm', value: '17*6cm' },
+      '6': { label: '22*6cm', value: '22*6cm' },
     };
   }
 
@@ -165,7 +166,7 @@ const MaterialEdit = (props) => {
   const startLoad = useRef(false);
   const [cakeSelect, setCakeSelect] = useState(VKM_defaultCake);
   const [collisionPointGroupValue, setCollisionPointGroupValue] =
-    useState(false);
+    useState(null);
   // console.log(
   //   '🚀 ~ file: index.tsx ~ line 167 ~ MaterialEdit ~ cakeSelect',
   //   cakeSelect,
@@ -251,7 +252,7 @@ const MaterialEdit = (props) => {
     },
     onSuccess: (data: any) => {
       // 设置低模
-      setCollisionPointGroupValue(data.collisionPointGroup ? true : false);
+      setCollisionPointGroupValue(data.collisionPointGroup || null);
 
       shapeHandle(data.type);
       specsHandle(data.shape);
@@ -400,6 +401,8 @@ const MaterialEdit = (props) => {
       handleFormToThreeData(item),
     );
     resultData.materials = materials;
+    // 低模
+    resultData.collisionPointGroup = collisionPointGroupValue;
 
     resultData.type = dict.type.valObj[String(resultData.type)];
 
@@ -449,6 +452,8 @@ const MaterialEdit = (props) => {
       name,
       imageUrl,
       modelType: type,
+      shape: values_base.shape,
+      specs: values_base.specs,
       modelToolJson: JSON.stringify({
         ...restValues,
         name: name,

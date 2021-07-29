@@ -2,7 +2,7 @@
  * 查询过滤组件
  * @author fanyonglong
  */
-import React, {
+ import React, {
   FC,
   useState,
   useEffect,
@@ -121,23 +121,6 @@ const FilterForm = React.forwardRef<
               </Form.Item>
             );
           }
-        },
-        renderControl(field: FilterFormField, colIndex: number){
-          let render = field.render;
-          if (field.type === QUERY_BUTTON) {
-            return ctx.current!.wrapperComponent(renderSearch(), {
-              ...field,
-              labelWidth: colIndex == 0 ? labelWidth : 20,
-            });
-          }
-          if (!render) {
-            throw `找不到${field.name}定义的${field.type}类型控件`;
-          }
-          let ret = render(field, ctx.current!);
-          if (field.wrapper) {
-            return ctx.current!.wrapperComponent(ret, field);
-          }
-          return ret;
         }
       };
     }
@@ -321,7 +304,23 @@ const FilterForm = React.forwardRef<
         </Row>
       );
     };
-    
+    let renderControl=(field: FilterFormField, colIndex: number)=>{
+      let render = field.render;
+      if (field.type === QUERY_BUTTON) {
+        return ctx.current!.wrapperComponent(renderSearch(), {
+          ...field,
+          labelWidth: colIndex == 0 ? labelWidth : 20,
+        });
+      }
+      if (!render) {
+        throw `找不到${field.name}定义的${field.type}类型控件`;
+      }
+      let ret = render(field, ctx.current!);
+      if (field.wrapper) {
+        return ctx.current!.wrapperComponent(ret, field);
+      }
+      return ret;
+    }
     const renderFilterFields = (mergeFields: FilterRenderField[]) => {
       let fields: FilterRenderField[][] = [];
       let renderList = [],
@@ -356,7 +355,7 @@ const FilterForm = React.forwardRef<
                 hidden: field.hidden,
               })}
             >
-              {ctx.current.renderControl(field, c)}
+              {renderControl(field, c)}
             </Col>,
           );
           if (field.hidden) {
@@ -381,6 +380,7 @@ const FilterForm = React.forwardRef<
 
     ctx.current!.query = onQueryHandle;
     ctx.current!.reset = onResetHandle;
+    ctx.current!.renderControl=renderControl
     ctx.current!.form = form;
     useImperativeHandle(ref, () => ctx.current!, [ctx.current]);
     useEffect(() => {

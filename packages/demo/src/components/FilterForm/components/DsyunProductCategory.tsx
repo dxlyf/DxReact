@@ -14,7 +14,7 @@ const DsyunProductCategory = React.memo(
     let [options, setOptions] = useState<any>([]);
 
     const fetchData = useCallback((pid) => {
-      return getDSYunCategoryList({ pid: pid }).then((data: any) => {
+      return getDSYunCategoryList({ pid: pid,pageNum:1,pageSize:100 }).then((data: any) => {
         return data.list.map((d: any) => {
           return {
             label: d.name,

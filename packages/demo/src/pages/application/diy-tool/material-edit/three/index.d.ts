@@ -65,6 +65,7 @@ export default class ThreeObject {
 
   autoRotate: boolean;
   getImage: (withoutBackgroud?: boolean) => string;
+  getSceneImages: () => string[];
   findObjects: (info: any, array?: Group[]) => Group[];
   clearScene: (withCake?: boolean) => void;
   deleteObject: (group?: Group | null, withoutRender?: boolean) => void;
@@ -84,8 +85,6 @@ export default class ThreeObject {
   store: Group[];
   dragObjects: Group[];
   heightObjects: Group[];
-  setCakeSize: (size: number) => void;
-  setCakeColor: (color: number) => void;
   stickToCake: (object?: Group | null, outside?: boolean) => void;
   stickFromCameraToCake: (object: Group, outside?: boolean) => void;
   speedRate: number;

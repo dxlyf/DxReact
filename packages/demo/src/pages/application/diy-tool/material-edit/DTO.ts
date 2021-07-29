@@ -409,6 +409,7 @@ export const VKM_defaultCake = valuesKeyMap(
       name: '球形',
       pound: 3,
       parameter: {
+        scale: [1.077, 1, 1.077],
         id: '844998486821699584',
         modelGroupId: 39,
         topModelGroupId: 1,

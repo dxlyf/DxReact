@@ -66,11 +66,25 @@ let OrderList: ConnectRC<any> = ({ history }) => {
       title: '订单改价',
       width: 800,
       destroyOnClose:true,
+      stateReducer(state){
+        if(state.dataItem){
+          return {
+            okButtonProps:{
+               disabled:state.dataItem.isEditPrice===false
+            }
+          }
+        }
+        return {}
+      },
       //visible:true,
       onOk: () => {
         orderPriceRef.current
           .submit()
           .then((params: any) => {
+            if(params.orderItemList.length<=0){
+               message.info('数据没有变化，不需要提交')
+               return
+            }
             // 提交
             orderService.updateOrderPriceFindItems(params).then(() => {
               message.success('修改成功！');
@@ -383,7 +397,7 @@ let OrderList: ConnectRC<any> = ({ history }) => {
       </Card>
       <Modal {...priceModal.props}>
         <div className={styles.orderPriceMark}>
-          只有未付款的订单才可以改价！改价后联系买家刷新订单支付界面！
+          只有未付款的订单才可以改价！改价后联系买家刷新订单支付界面！已参与优惠券活动的订单不支持改价！
         </div>
         <OrderUpdatePrice
           ref={orderPriceRef}

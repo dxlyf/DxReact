@@ -16,6 +16,7 @@ import {
   BackSide,
   Vector3,
   Euler,
+  Matrix4,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -73,17 +74,17 @@ function ThreeObject(params) {
     cardInfo = params.cardInfo
       ? params.cardInfo
       : {
-          url: `${G.HostUrl}/Card.glb`,
-          type: '字牌',
-          name: '字牌',
-          deep: 0,
-          canMove: true,
-          canRotate: true,
-          canSwing: false,
-          canVeneer: false,
-          canSelect: true,
-          isMult: false,
-        },
+        url: `${G.HostUrl}/Card.glb`,
+        type: '字牌',
+        name: '字牌',
+        deep: 0,
+        canMove: true,
+        canRotate: true,
+        canSwing: false,
+        canVeneer: false,
+        canSelect: true,
+        isMult: false,
+      },
     textFont = params.font; // ? params.font : `${G.HostUrl}/STXINWEI.TTF`;
 
   //场景
@@ -207,8 +208,8 @@ function ThreeObject(params) {
   effectFXAA = new ShaderPass(FXAAShader);
   effectFXAA.uniforms['resolution'].value.set(1 / width, 1 / height);
   composer.addPass(effectFXAA);
-  outlinePass.edgeStrength = 5.0;
-  outlinePass.edgeGlow = 1.0;
+  outlinePass.edgeStrength = type === 'showcase' ? 2.0 : 4.0;
+  outlinePass.edgeGlow = 0;
   outlinePass.edgeThickness = 2.0;
   outlinePass.visibleEdgeColor.set(new Color(0xa4a4a4));
   outlinePass.hiddenEdgeColor.set(new Color(0x666666));
@@ -464,10 +465,9 @@ function ThreeObject(params) {
             if (pan) group.position.y = pan.position.y;
             if (objectType === '蛋糕') {
               requestAnimationFrame(() => {
-                setCakeSize(cakeSize);
+                setSceneHeight();
               });
             } else if (['围边', '淋边', '夹心'].includes(objectType)) {
-              setOtherSize(group, cakeSize / G.CakeDiam);
             } else if (objectType === '贴面') {
               stickFromCameraToCake(group);
             } else if (ready) {
@@ -482,7 +482,7 @@ function ThreeObject(params) {
                 forMesh(model, (mesh) => {
                   const m = mesh.material.clone();
                   ms.push(m);
-                  m.MeshName = mesh.name;
+                  m.MeshId = mesh.uuid;
                 });
                 orgMaterials = ms;
               }
@@ -537,7 +537,12 @@ function ThreeObject(params) {
     const data = group.data;
     const { type, shape, specs, outside, inside } = data;
     if (isBack && type === '夹心') {
-      group.getObjectByName('modelsMirror').position.set(40, 0, 40);
+      if (shape === '球形') {
+        group.getObjectByName('models').position.x = -40;
+        group.getObjectByName('modelsMirror').position.x = 40;
+      } else {
+        group.getObjectByName('modelsMirror').position.set(40, 0, 40);
+      }
     }
     if (isBack && type === '蛋糕') {
       findObjects({ type }).forEach(cake => deleteObject(cake));
@@ -559,6 +564,7 @@ function ThreeObject(params) {
         };
       } else if (['围边'].includes(type)) {
         include = {
+          type: '围边',
           $or: {
             outside: { $lteq: inside },
             inside: { $gteq: outside },
@@ -728,6 +734,7 @@ function ThreeObject(params) {
       try {
         if (font) text = createText(txt, card, font);
         else text = createText(txt, card);
+        data.collisionPoints = findCollisionPoints(text);
         text = Object.assign(text, { data, info: cardInfo });
         let gRy = text.getObjectByName('gRy'),
           gRxz = text.getObjectByName('gRxz');
@@ -873,7 +880,7 @@ function ThreeObject(params) {
     let keep = 0;
     while (store.length > keep) {
       let object = store[keep];
-      if (!withCake && ['蛋糕', '夹心'].includes(object.data.type)) {
+      if (!withCake && (object.data.type === '蛋糕' || (!isBack && object.data.type === '夹心'))) {
         keep++;
       } else deleteObject(object, isBack);
     }
@@ -907,6 +914,26 @@ function ThreeObject(params) {
       renderer.render(scene, camera);
       return renderer.domElement.toDataURL('image/png');
     }
+  }
+  function getSceneImages(num) {
+    const position = camera.position.clone();
+    camera.position.set(0, 250, 500);
+    camera.lookAt(scene.position);
+    renderer.setPixelRatio(1);
+    const imgs = [];
+    const arc = Math.PI * 2 / num;
+    for (let i = 0; i < num; i++) {
+      renderer.render(scene, camera);
+      imgs.push(renderer.domElement.toDataURL('image/png'));
+      camera.applyMatrix4(new Matrix4().makeRotationY(arc));
+    }
+    camera.position.copy(position);
+    camera.lookAt(scene.position);
+    if (type !== 'showcase') {
+      renderer.setPixelRatio(2);
+    }
+    renderer.render(scene, camera);
+    return imgs;
   }
   //生成场景数据
   function getSceneData() {
@@ -951,8 +978,6 @@ function ThreeObject(params) {
       backgroundInfo,
       logoInfo,
       objectsInfo,
-      size,
-      color,
       cameraPosition,
     } = json;
     const objects = [...objectsInfo];
@@ -995,13 +1020,18 @@ function ThreeObject(params) {
             }
           },
         );
-      else load();
+      else {
+        objects.sort((a, b) => {
+          if (a.data.type === '蛋糕') return -1;
+          else if (b.data.type === '蛋糕') return 1;
+          else return 0;
+        });
+        load();
+      }
     }
     function setLocaltion(object, info) {
       const gRy = object.getObjectByName('gRy'),
-        gRxz = object.getObjectByName('gRxz'),
-        group = gRy.getObjectByName('models');
-      group.scale.copy(info.scale);
+        gRxz = object.getObjectByName('gRxz');
       gRxz.rotation.set(info.rotation.x, 0, info.rotation.z);
       delete gRxz.orgXZ; //重置摆动
       gRy.position.set(0, info.position.y, 0);
@@ -1070,8 +1100,6 @@ function ThreeObject(params) {
           cameraPosition[1],
           cameraPosition[2],
         );
-        cakeSize = size;
-        if (color !== -1) setCakeColor(color);
         if (!autoRender) {
           controls.update();
           animate();
@@ -1105,7 +1133,7 @@ function ThreeObject(params) {
     const data = getMeshParams(info);
     forMesh(group, (mesh) => {
       orgMaterials.forEach((m) => {
-        if (m.MeshName === mesh.name) {
+        if (m.MeshId === mesh.uuid) {
           mesh.material = m.clone();
         }
       });
@@ -1138,7 +1166,7 @@ function ThreeObject(params) {
           if (objectType === '蛋糕') {
             if (changeType)
               requestAnimationFrame(() => {
-                setCakeSize(cakeSize);
+                setSceneHeight();
               });
           } else if (['围边', '淋边'].includes(objectType)) {
           } else if (objectType === '贴面') {
@@ -1169,54 +1197,6 @@ function ThreeObject(params) {
           if (!autoRender) animate();
         });
     }
-  }
-  //更改蛋糕尺寸
-  function setCakeSize(size) {
-    const cakes = findObjects({ type: '蛋糕' });
-    let cake = null;
-    for (let key in cakes) {
-      cake = cakes[key];
-      const group = cake.getObjectByName('models');
-      const sr = size / cakeSize;
-      group.scale.set(sr * group.scale.x, group.scale.y, sr * group.scale.z);
-      group.updateWorldMatrix(false, true);
-      const cover = cake.getObjectByName('cover');
-      cover.scale.copy(group.scale);
-      cover.updateWorldMatrix(false, true);
-
-      const objs = findObjects({ type: ['围边', '淋边'] });
-      objs.forEach((obj) => {
-        setOtherSize(obj, sr);
-      });
-      cakeSize = size;
-      break;
-    }
-    const objs = findObjects({ type: '贴面' });
-    objs.forEach((obj) => {
-      setVeneer(obj, veneerObjects);
-    });
-    setSceneHeight();
-  }
-  //根据蛋糕尺寸等比绽放模型尺寸
-  function setOtherSize(obj, sr) {
-    const g = obj.getObjectByName('models');
-    g.scale.set(sr * g.scale.x, g.scale.y, sr * g.scale.z);
-    g.updateWorldMatrix(false, true);
-    const cover = obj.getObjectByName('cover');
-    cover.scale.copy(g.scale);
-    cover.updateWorldMatrix(false, true);
-  }
-  //更改蛋糕颜色
-  function setCakeColor(color) {
-    const arr = findObjects({ type: '蛋糕' });
-    cakeColor = color;
-    for (let key in arr) {
-      forMesh(arr[key], (mesh) => {
-        mesh.material.color = new Color(color);
-        return false;
-      });
-    }
-    if (!autoRender) animate();
   }
   //把物件贴在蛋糕旁边
   function stickToCake(object, outside) {
@@ -1268,11 +1248,14 @@ function ThreeObject(params) {
       } else if (left <= 40) {
         left += 2;
         store.forEach((group) => {
-          const { type } = group.data;
+          const { type, shape } = group.data;
           if (type === '夹心') {
-            // group.getObjectByName('models').position.x = -left;
-            group.getObjectByName('modelsMirror').position.x = left;
-            group.getObjectByName('modelsMirror').position.z = left;
+            if (shape === '球形') {
+              group.getObjectByName('models').position.x = -left;
+              group.getObjectByName('modelsMirror').position.x = left;
+            } else {
+              group.getObjectByName('modelsMirror').position.set(left, 0, left);
+            }
           }
         });
       } else {
@@ -1294,11 +1277,14 @@ function ThreeObject(params) {
       if (left > 0) {
         left -= 2;
         store.forEach((group) => {
-          const { type } = group.data;
+          const { type, shape } = group.data;
           if (type === '夹心') {
-            // group.getObjectByName('models').position.x = -left;
-            group.getObjectByName('modelsMirror').position.x = left;
-            group.getObjectByName('modelsMirror').position.z = left;
+            if (shape === '球形') {
+              group.getObjectByName('models').position.x = -left;
+              group.getObjectByName('modelsMirror').position.x = left;
+            } else {
+              group.getObjectByName('modelsMirror').position.set(left, 0, left);
+            }
           }
         });
       } else if (opacity < 1) {
@@ -1388,6 +1374,7 @@ function ThreeObject(params) {
       set: setAutoRotate,
     },
     getImage: { value: getImage },
+    getSceneImages: { value: getSceneImages },
     findObjects: { value: findObjects },
     clearScene: { value: clearScene },
     deleteObject: { value: deleteObject },
@@ -1438,8 +1425,6 @@ function ThreeObject(params) {
         return heightObjects;
       },
     },
-    setCakeSize: { value: setCakeSize },
-    setCakeColor: { value: setCakeColor },
     stickToCake: { value: stickToCake },
     stickFromCameraToCake: { value: stickFromCameraToCake },
     speedRate: {

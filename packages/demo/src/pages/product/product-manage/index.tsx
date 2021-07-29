@@ -158,12 +158,23 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
       },
     });
   }, [selectedRows, clearAllSelection, showList]);
+  const onBatchRefreshProduct=useCallback(() => {
+    console.log('selectedRows',selectedRows)
+    if (selectedRows!.length <= 0) {
+      message.warn('请先勾选商品！');
+      return;
+    }
+    productService.batchRefreshProduct(selectedRows?.map((d) => d.id)).then(() => {
+      message.success(`刷新成功`);
+      clearAllSelection!();
+      showList(true);
+    });
+  }, [selectedRows, clearAllSelection, showList]);
   return (
     <Space direction="vertical" className="m-list-wrapper">
       <Card className="m-filter-wrapper">
         <FilterForm
           ref={filterRef as any}
-          span={18}
           fields={fields}
           searchProps={{span:16}}
           onQuery={showList}
@@ -173,6 +184,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
             发布商品
           </Button>
           <Button onClick={onDeleteProduct}>删除</Button>
+          <Button onClick={onBatchRefreshProduct} type="primary">批量刷新商品</Button>
         </FilterForm>
       </Card>
       <Card className="m-table-wrapper">

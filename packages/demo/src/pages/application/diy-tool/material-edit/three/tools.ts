@@ -8,7 +8,6 @@ import {
   Vector3,
   Matrix4,
   Box3,
-  MeshBasicMaterial,
   CubeRefractionMapping,
   RepeatWrapping,
   DoubleSide,
@@ -17,8 +16,7 @@ import {
   Side,
   Object3D,
 } from 'three';
-import { findCollisionPoints3D, CollisionPointGroup } from './collision';
-import { createGeometryByVectors } from './utils';
+import { createCover, CollisionPointGroup } from './collision';
 
 type BasicMaterialParams = {
   target?: string; //网格物名
@@ -99,7 +97,7 @@ export type MeshParamsJson = BasicMeshParams & {
   size?: number[] | number; //指定大小
   materials?: MaterialParamsJson[]; //材质
   collisionPoints?: { x: number, y: number, z: number }[];
-  collisionPointGroup?: { points: { x: number, y: number, z: number }[][], height: number[], levelHeight: Number };
+  collisionPointGroup?: { points: { x: number, y: number, z: number }[][], height: number[], levelHeight: number };
 };
 type MeshParams = BasicMeshParams & {
   scale: Vector3; //缩放
@@ -335,32 +333,32 @@ function formatMesh(
       }
     }
   });
+  group.name = 'models';
   let modelsSize, modelsCenter;
   let box = new Box3();
-  group.name = 'models';
-  group.scale.set(scale.x, scale.y, scale.z);
-  group.updateWorldMatrix(false, true);
   box.expandByObject(group);
   modelsSize = box.getSize(new Vector3());
-  modelsCenter = box.getCenter(new Vector3());
-  const sx =
-    size.x === -1 ? group.scale.x : (size.x / modelsSize.x) * group.scale.x;
-  const sy =
-    size.y === -1 ? group.scale.y : (size.y / modelsSize.y) * group.scale.y;
-  const sz =
-    size.z === -1 ? group.scale.z : (size.z / modelsSize.z) * group.scale.z;
-  group.scale.set(sx, sy, sz);
+  const sx = size.x === -1 ? scale.x : size.x / modelsSize.x;
+  const sy = size.y === -1 ? scale.y : size.y / modelsSize.y;
+  const sz = size.z === -1 ? scale.z : size.z / modelsSize.z;
+  const matrix = new Matrix4().scale(new Vector3(sx, sy, sz));
+  forMesh(group, mesh => { 
+    mesh.scale.set(1,1,1)
+    mesh.applyMatrix4(matrix);
+   });
   group.updateWorldMatrix(false, true);
   gRy.add(group);
   if (data.type === '夹心') {
     const groupMirror = getMirrorMesh(group, new Vector3(0, 0, 1), 'modelsMirror');
     gRy.add(groupMirror);
-    const groupMirror1 = group.clone();
-    groupMirror1.name = 'modelsMirror1';
-    groupMirror1.rotateY(Math.PI);
-    gRy.add(groupMirror1);
-    const groupMirror2 = getMirrorMesh(group, new Vector3(1, 0, 0), 'modelsMirror2');
-    gRy.add(groupMirror2);
+    if(data.shape === '圆形'){
+      const groupMirror1 = group.clone();
+      groupMirror1.name = 'modelsMirror1';
+      groupMirror1.rotateY(Math.PI);
+      gRy.add(groupMirror1);
+      const groupMirror2 = getMirrorMesh(group, new Vector3(1, 0, 0), 'modelsMirror2');
+      gRy.add(groupMirror2);
+    }
   }
   box = new Box3();
   box.expandByObject(gRy);
@@ -370,18 +368,7 @@ function formatMesh(
   gPxz.position.set(x, 0, z);
   Object.assign(group, { modelsCenter, modelsSize });
   Object.assign(gPxz, { info, data });
-  const cover = new Mesh(
-    createGeometryByVectors(meshParams.collisionPointGroup ? meshParams.collisionPointGroup : findCollisionPoints3D(group)),
-    new MeshBasicMaterial({
-      color: 0xffffff,
-      opacity: 0,
-      transparent: true,
-      side: DoubleSide,
-    }),
-  );
-  cover.renderOrder = 2;
-  cover.name = 'cover';
-  gRy.add(cover);
+  gRy.add(createCover(group, meshParams.collisionPointGroup));
   return gPxz;
 }
 //镜像模型

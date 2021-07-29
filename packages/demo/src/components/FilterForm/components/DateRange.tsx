@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback,useMemo } from 'react';
 import {
   Select,
   Form,
@@ -15,41 +15,46 @@ import { get } from 'lodash';
 import { DownOutlined } from '@ant-design/icons';
 import moment from 'moment';
 
+const defaultDateRange=[
+  { value: 0, date: [0, 0], text: '今天' },
+  { value: 1, date: [-1, -1], text: '昨天' },
+  { value: 2, date: [-6, 0], text: '近7天' },
+  { value: 3, date: [-29, 0], text: '近30天' },
+]
 const DateRange = React.memo(
   React.forwardRef((props: any, ref) => {
     let { field, ...restProps } = props;
     let {
       initialValue,
-      range = [
-        { value: 0, text: '今天' },
-        { value: -1, text: '昨天' },
-        { value: -6, text: '近7天' },
-        { value: -29, text: '近30天' },
-      ],
+      range:propsRange,
     } = field;
     let { form } = useContext(FilterContext);
+    let range=useMemo(() =>propsRange?propsRange:defaultDateRange,[propsRange])
     let [currentDateRange, setCurrentDateRange] = useState(() => {
       if (range.length > 0) {
-        return range[0].value;
+        return range[0];
       }
-      return 0;
+      return {};
     });
     initialValue =
       initialValue === undefined ? [moment(), moment()] : initialValue;
-    let setCurrentDate = useCallback((value) => {
+    let setCurrentDate = useCallback((currentRange) => {
+      let date=currentRange.date
       let start = moment(),
         end = moment();
-      start.add(Number(value), 'd');
+      start.add(Number(date[0]), 'd');
+      end.add(Number(date[1]), 'd');
       form.setFieldsValue({
         [field.fieldName]: [start, end],
       });
-    }, []);
+    }, [range]);
     let onChangeDate = useCallback(
       (e) => {
-        setCurrentDate(e.target.value);
-        setCurrentDateRange(e.target.value);
+        let currentRange=range.find(d=>d.value==e.target.value)
+        setCurrentDate(currentRange);
+        setCurrentDateRange(currentRange);
       },
-      [setCurrentDate],
+      [setCurrentDate,range],
     );
     let disabledDate = useCallback((current) => {
       // Can not select days before today and today
@@ -67,7 +72,7 @@ const DateRange = React.memo(
               {...restProps}
             ></DatePicker.RangePicker>
           </Form.Item>
-          <Radio.Group onChange={onChangeDate} value={currentDateRange}>
+          <Radio.Group onChange={onChangeDate} value={currentDateRange.value}>
             {range.map((d) => (
               <Radio.Button value={d.value} key={d.value}>
                 {d.text}

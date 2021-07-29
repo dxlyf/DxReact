@@ -79,13 +79,7 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
           placeholder: '请输入商品名称或商品编号',
           maxLength: 50,
         },
-      },
-      {
-        label: '商品归属',
-        type: 'shop',
-        name: 'shopId',
-        props: { selectedIndex: 1, disabled: true },
-      },
+      }
     ],
     [],
   );
@@ -109,10 +103,6 @@ let GoodsManage: React.FC<{} & ConnectProps<any>> = ({ match }) => {
             </Space>
           );
         },
-      },
-      {
-        title: '商品归属',
-        dataIndex: 'shopName',
       },
       {
         title: '商品分组',

@@ -74,6 +74,12 @@ export function batchDelete(data: any) {
     data,
   });
 }
+export function batchRefreshProduct(data: any) {
+  return request('blisscake/backend/shopProduct/batchRefreshProduct', {
+    method: 'POST',
+    data,
+  });
+}
 // 商品分组列表
 export function getProductGroupList(data: any) {
   return request('blisscake/backend/productGroup/find', {

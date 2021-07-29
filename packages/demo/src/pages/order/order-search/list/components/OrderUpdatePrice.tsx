@@ -98,7 +98,7 @@ const OrderUpdatePrice = React.memo(
                 initialValue={value}
                 name={['order', record.id, 'price']}
               >
-                <InputNumber precision={2}></InputNumber>
+                <InputNumber disabled={dataItem.isEditPrice===false} precision={2}></InputNumber>
               </Form.Item>
             );
           },
@@ -139,7 +139,7 @@ const OrderUpdatePrice = React.memo(
           },
         },
       ],
-      [dataSource, totalPrice],
+      [dataSource, totalPrice,dataItem],
     );
     useImperativeHandle(
       ref,

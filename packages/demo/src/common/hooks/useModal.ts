@@ -29,33 +29,16 @@ export const useModal = (options: useModalProps): ModalType => {
     };
   });
   let [stateOptions, setStateOptions] = useState({});
-
-  let setStateOptionsHandle = useCallback((state: any) => {
-    setStateOptions((prevState) => ({ ...prevState, ...state }));
+  let showModal = useCallback((title = '', dataItem = null) => {
+    setState({
+      title: title,
+      dataItem: dataItem,
+      visible: true,
+    });
   }, []);
-  let setInnerState = useCallback(
-    (state: any) => {
-      let newStateOptions = stateReducer ? stateReducer(state) : null;
-      if (newStateOptions) {
-        setStateOptionsHandle(newStateOptions);
-      }
-      setState(state);
-    },
-    [stateReducer, setStateOptionsHandle],
-  );
-  let showModal = useCallback(
-    (title = '', dataItem = null) => {
-      setInnerState({
-        title: title,
-        dataItem: dataItem,
-        visible: true,
-      });
-    },
-    [setInnerState],
-  );
   let onCancelHandle = useCallback(
     (e) => {
-      setInnerState({
+      setState({
         title: '',
         visible: false,
         dataItem: null,
@@ -64,22 +47,24 @@ export const useModal = (options: useModalProps): ModalType => {
         onCancel(e);
       }
     },
-    [onCancel, setInnerState],
+    [onCancel],
   );
+  let mergeStateOptions = stateReducer ? stateReducer(state) : false;
   let modalProps = {
     visible: state.visible,
     title: state.title,
     onCancel: onCancelHandle,
     ...restOptions,
-    ...stateOptions,
+    ...(stateOptions || {}),
+    ...(mergeStateOptions || {}),
   };
   return [
     { props: modalProps, state: state },
     {
       show: showModal,
       close: onCancelHandle,
-      setState,
-      setStateOptions: setStateOptionsHandle,
+      setState: setState,
+      setStateOptions: setStateOptions,
     },
   ];
 };

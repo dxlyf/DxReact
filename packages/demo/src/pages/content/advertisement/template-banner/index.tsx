@@ -1,24 +1,27 @@
 /**
- * 首页广告banner
+ * 模板广告banner
  * @author fanyonglong
  */
-import React, {  useCallback, useMemo } from 'react';
-import { Badge, Button, Card, Space, message, Modal } from 'antd';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { Tabs, Button, Card, Space, message, Modal,Badge } from 'antd';
 import Table, { RichTableColumnType } from '@/components/Table';
 import FilterForm, {
-  FilterFormFieldType
+  FilterFormFieldType,
+  ControlContextType,
 } from '@/components/FilterForm';
 import * as avsertiseService from '@/services/advertisement';
 import { useRequest } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
 import { get } from 'lodash';
-import { ADVERTISE_STATUS } from '@/common/constants/advertisement';
+import { ADVERTISE_STATUS,ADVERTISE_TYPE } from '@/common/constants/advertisement';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
-let HomeBanner: ConnectRC<any> = ({ history }) => {
+let TemplateBanner: ConnectRC<any> = ({ history }) => {
   let [{ tableProps, dataSource }, { query: showList }] = useRequest<any>({
-    service: avsertiseService.getAdvertisementList,
+    service:(params={})=>{
+      return avsertiseService.getAdvertisementList({...params,adviceType:ADVERTISE_TYPE.enums.value1.value})
+    },
     transform: (res: any) => {
       return {
         data: res.list,
@@ -186,7 +189,7 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
         render: (record: any) => {
           return (
             <Space>
-              <Link to={`/content/advertisement/home-banner/edit/${record.id}`}>
+              <Link to={`template-banner/edit/${record.id}`}>
                 编辑
               </Link>
               <a onClick={onUpdateStatusHandle.bind(null, record)}>
@@ -207,7 +210,7 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
           <Button
             type="primary"
             onClick={() => {
-              history.push('/content/advertisement/home-banner/add');
+              history.push('template-banner/add');
             }}
           >
             新增广告
@@ -221,4 +224,4 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
   );
 };
 
-export default HomeBanner;
+export default TemplateBanner;

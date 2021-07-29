@@ -10,6 +10,9 @@ import {
   BufferGeometry,
   Euler,
   Geometry,
+  Face3,
+  MeshBasicMaterial,
+  DoubleSide,
 } from 'three';
 import G from './globalValues';
 import { findGroup, forMesh, MeshParamsJson } from './tools';
@@ -17,7 +20,7 @@ import { AreaOfTriangle, GetArcByAxis } from './utils';
 
 type CollisionsParams = {
   vector: Vector3;
-  objects: Group[];
+  objects: Object3D[];
   direction: Vector3;
 };
 type MeshInfo = {
@@ -219,8 +222,8 @@ export function checkCollisionPoints(group: Group, vector: Vector3, target: Grou
   const center = (target.getObjectByName('models') as any).modelsCenter.clone().applyMatrix4(getGroupMatrix(target, 16 | 32)) as Vector3;
   const result: OutsidePoint[] = [];
   const offset = type === '插牌' ? 10 : 0;
-  points.forEach((v: Vector3) => {
-    let vv: Vector3 = v.clone().applyMatrix4(matrix);
+  points.forEach((v: any) => {
+    let vv: Vector3 = v.isVector3 ? v.clone().applyMatrix4(matrix) : new Vector3(v.x, v.y, v.z).applyMatrix4(matrix);
     vv.y = 0;
     let vvv = vv.clone();
     let vLength = vv.length();
@@ -281,7 +284,7 @@ export function getCollisionPosition(group: Group, vector: Vector3, limit: Group
   return vector;
 }
 export function getGroupMatrix(group: Group, level?: number): Matrix4 {
-  // 'gPxz.position':1 'gPy.position':2 'gRxz.rotation':4 'gRy.rotation':8 'gRy.position':16 'group.scale':32
+  // 'gPxz.position':1 'gPy.position':2 'gRxz.rotation':4 'gRy.rotation':8 'gRy.position':16
   if (!level) level = 1 | 4 | 8;
   const gPy = group.getObjectByName('gPy')!;
   const gRxz = gPy.getObjectByName('gRxz')!;
@@ -299,24 +302,21 @@ export function getGroupMatrix(group: Group, level?: number): Matrix4 {
   //rotation
   if (level & 4) rotationXZ.set(gRxz.rotation.x, 0, gRxz.rotation.z);
   if (level & 8) rotationY = gRy.rotation.y;
-  //scale
-  if (level & 8) scale.copy(model.scale);
 
   return new Matrix4()
-    .makeRotationY(rotationY)
     .makeRotationFromEuler(rotationXZ)
-    .scale(scale)
+    .makeRotationY(rotationY)
     .setPosition(position)
     ;
 }
 
 type Point = { p: Vector3; a: number; l: number, h: number };
 type PointGroup = { max: Point, height: number, arr: Point[] };
-export type CollisionPointGroup = { points: Vector3[][], height: number[], levelHeight: Number };
+export type CollisionPointGroup = { points: Vector3[][], height: number[], levelHeight: number };
 export function findCollisionPoints(group: Group): Vector3[] {
   return findCollisionPoints3D(group.getObjectByName('cover') as Group, 1000).points[0];
 }
-export function findCollisionPoints3D(models: Group, levelHeight?: number): CollisionPointGroup {
+export function findCollisionPoints3D(models: Group | Mesh, levelHeight?: number): CollisionPointGroup {
   if (!levelHeight) levelHeight = 10;
   let modelsSize = (models as any).modelsSize as Vector3;
   if (!modelsSize) {
@@ -359,22 +359,28 @@ export function findCollisionPoints3D(models: Group, levelHeight?: number): Coll
     return true;
   }
   const result: CollisionPointGroup = { points: [], height: [], levelHeight };
-  const groupMatrix = models.matrix;
   const arc = 0.017453292519943295 * 6;
   const points: PointGroup[] = [];
   forMesh(models, (mesh: Mesh) => {
-    const meshMatrix = mesh.matrix;
     let buffer: BufferGeometry;
     if ((mesh.geometry as any).isGeometry) {
       buffer = new BufferGeometry().fromGeometry(mesh.geometry as Geometry);
     } else {
       buffer = mesh.geometry as BufferGeometry;
     }
-    let position = buffer.attributes.position;;
+    let matrixs: Matrix4[] = [];
+    matrixs.push(mesh.matrix);
+    if (mesh !== models) {
+      let tmp = mesh.parent;
+      while (tmp !== models) {
+        matrixs.push(tmp!.matrix);
+        tmp = tmp!.parent;
+      }
+    }
+    let position = buffer.attributes.position;
     for (let i = 0; i < position.count; i++) {
       let p = new Vector3(position.getX(i), position.getY(i), position.getZ(i));
-      p.applyMatrix4(meshMatrix);
-      p.applyMatrix4(groupMatrix);
+      matrixs.forEach(matrix => { p.applyMatrix4(matrix); });
       let h = p.y;
       p.y = 0;
       let a = new Vector3(1, 0, 0).angleTo(p);
@@ -447,6 +453,53 @@ export function findCollisionPoints3D(models: Group, levelHeight?: number): Coll
   });
   return result;
 }
+//生成几何体
+export function createGeometryByVectors(params: CollisionPointGroup): Geometry {
+  const { points, height, levelHeight } = params;
+  const vertices: Vector3[] = [];
+  const faces: Face3[] = [];
+  points.forEach((arr, i) => {
+    let top = i + 1 < points.length ? height[i + 1] : height[i] + levelHeight;
+    let start = vertices.length;
+    arr.forEach((vertice) => {
+      let v = vertice.clone();
+      v.y = height[i];
+      vertices.push(v);
+      let v1 = v.clone();
+      v1.y = top;
+      vertices.push(v1);
+    });
+    for (let i = start; i < vertices.length; i += 2) {
+      let p0 = i, p1 = i + 3, p2 = i + 2, p3 = i + 1;
+      if (i + 3 >= vertices.length) {
+        p1 = start + 1;
+        p2 = start;
+      }
+      faces.push(new Face3(p0, p1, p2));
+      faces.push(new Face3(p0, p3, p1));
+    }
+  });
+  const geom = new Geometry();
+  geom.vertices = vertices;
+  geom.faces = faces;
+  geom.computeFaceNormals();//计算法向量 这决定了对光做出的反应
+
+  return geom;
+}
+export function createCover(group: Group, collisionPointGroup?: any): Mesh {
+  const cover = new Mesh(
+    createGeometryByVectors(collisionPointGroup ? collisionPointGroup : findCollisionPoints3D(group)),
+    new MeshBasicMaterial({
+      color: 0xffffff,
+      opacity: 0,
+      transparent: true,
+      side: DoubleSide,
+    }),
+  );
+  cover.renderOrder = 2;
+  cover.name = 'cover';
+  return cover;
+}
 export function checkCollide(
   moveObject: any,
   vector: Vector3,
@@ -502,7 +555,7 @@ export function centripetal(group: Group, cake: Group): void {
         gRxz.position.y -= deep;
         gRxz.orgXZ = xz;
         if (type === '字牌')
-          group.getObjectByName('textGroup')!.rotation.set(0, 0, 0);
+          group.getObjectByName('models')!.rotation.set(0, 0, 0);
         return;
       }
       break;
@@ -514,7 +567,7 @@ export function centripetal(group: Group, cake: Group): void {
     gRxz.rotation.z -= orgXZ.z;
     gRxz.position.y += deep;
     if (type === '字牌')
-      group.getObjectByName('textGroup')!.rotation.set(-Math.PI / 9, 0, 0);
+      group.getObjectByName('models')!.rotation.set(-Math.PI / 9, 0, 0);
   }
   gRxz.orgXZ = null;
 }

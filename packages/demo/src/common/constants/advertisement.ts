@@ -29,3 +29,11 @@ export const ADVERTISE_STATUS = valuesKeyMap(
   ],
   'value',
 );
+// 广告类型 : 1.首页Banner 2.模版页Banner
+export const ADVERTISE_TYPE = valuesKeyMap([{
+  value: 1,
+  text: "首页Banner"
+}, {
+  value: 2,
+  text: "模板Banner"
+}])
