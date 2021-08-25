@@ -3,19 +3,19 @@
  * @author fanyonglong
  */
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { Tabs, Button, Card, Space, message, Modal } from 'antd';
+import { Tabs, Button, Card, Space, message, Modal, Tag, Form, Select } from 'antd';
 import Table, { RichTableColumnType } from '@/components/Table';
 import FilterForm, {
   FilterFormFieldType,
   ControlContextType,
 } from '@/components/FilterForm';
 import * as productService from '@/services/product';
-import { useRequest, useTableSelection } from '@/common/hooks';
+import { useRequest, useTableSelection, useModal } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
 import { get } from 'lodash';
 import { PRODUCT } from '@/common/constants';
-import { render } from 'react-dom';
+import GoodsLabelSelect from './components/GoodsLabelSelect'
 
 let ProductManage: ConnectRC<any> = ({ history }) => {
   let [
@@ -33,6 +33,25 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
       };
     },
   });
+  let [labelForm] = Form.useForm()
+  let [labelModal, { show: showLabelModal, close: closeLabelModal }] = useModal({
+    destroyOnClose: true,
+    okText:selectedRows.length>0?`确定(${selectedRows.length})`:'确定',
+    onOk: () => {
+      labelForm.validateFields().then(values => {
+        productService.batchAddLabel({
+          ids: selectedRows?.map((d) => d.id),
+          labelId: values.labelId
+        }).then(() => {
+          message.success(`添加成功`);
+          clearAllSelection!();
+          showList(true);
+          closeLabelModal()
+        });
+      })
+
+    }
+  })
   const fields = useMemo<FilterFormFieldType[]>(
     () => [
       {
@@ -87,8 +106,15 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
         },
       },
       {
-        title: '电商云商品分类',
+        title: '商品分类',
         dataIndex: 'categoryName',
+      },
+      {
+        title: '标签',
+        dataIndex: 'label',
+        render(text) {
+          return text===''?'--':<Tag color="gold">{text}</Tag>
+        }
       },
       {
         title: '操作',
@@ -158,8 +184,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
       },
     });
   }, [selectedRows, clearAllSelection, showList]);
-  const onBatchRefreshProduct=useCallback(() => {
-    console.log('selectedRows',selectedRows)
+  const onBatchRefreshProduct = useCallback(() => {
     if (selectedRows!.length <= 0) {
       message.warn('请先勾选商品！');
       return;
@@ -170,13 +195,20 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
       showList(true);
     });
   }, [selectedRows, clearAllSelection, showList]);
+  const onBatchAddLabel = useCallback(() => {
+    if (selectedRows!.length <= 0) {
+      message.warn('请先勾选商品！');
+      return;
+    }
+    showLabelModal('添加标签')
+  }, [selectedRows, showLabelModal])
   return (
     <Space direction="vertical" className="m-list-wrapper">
       <Card className="m-filter-wrapper">
         <FilterForm
           ref={filterRef as any}
           fields={fields}
-          searchProps={{span:16}}
+          searchProps={{ span: 16 }}
           onQuery={showList}
           autoBind={true}
         >
@@ -185,6 +217,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
           </Button>
           <Button onClick={onDeleteProduct}>删除</Button>
           <Button onClick={onBatchRefreshProduct} type="primary">批量刷新商品</Button>
+          <Button onClick={onBatchAddLabel} type="primary">批量添加标签</Button>
         </FilterForm>
       </Card>
       <Card className="m-table-wrapper">
@@ -195,6 +228,13 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
           {...tableProps}
         ></Table>
       </Card>
+      <Modal {...labelModal.props}>
+        <Form form={labelForm} wrapperCol={{span:12}} labelCol={{span:8}} preserve={false}>
+          <Form.Item label="选择标签" name="labelId" initialValue='0'>
+            <GoodsLabelSelect></GoodsLabelSelect>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Space>
   );
 };

@@ -3,7 +3,7 @@
  * @author fanyonglong
  */
 import React from 'react';
-import { Input, Select, FormInstance } from 'antd';
+import { Input, Select, FormInstance, InputNumber, DatePicker } from 'antd';
 import { trim } from 'lodash';
 import { PRODUCT } from '@/common/constants';
 import moment from 'moment';
@@ -13,6 +13,7 @@ import DsyunProductCategory from './components/DsyunProductCategory';
 import SelectInput from './components/SelectInput';
 import DateRange from './components/DateRange';
 import SourceChannel from './components/SourceChannel';
+import DsyunOrganization from './components/DsyunOrganization';
 
 export type ControlContext = {
   [key: string]: any;
@@ -87,13 +88,20 @@ create('text', {
     return <Input maxLength={50} {...field.props}></Input>;
   },
 });
+create('number', {
+  render(field) {
+    return (
+      <InputNumber style={{ width: '100%' }} {...field.props}></InputNumber>
+    );
+  },
+});
 create('list', {
   isValidValue(value: any) {
     return value !== undefined && value !== -1;
   },
   render(field) {
     return (
-      <Select {...field.props}>
+      <Select {...field.props} allowClear>
         {field.data
           ? field.data.map((d: any) => (
               <Select.Option value={d.value} key={d.value}>
@@ -102,6 +110,13 @@ create('list', {
             ))
           : field.props.children}
       </Select>
+    );
+  },
+});
+create('dsyunOrganization', {
+  render(field) {
+    return (
+      <DsyunOrganization field={field} {...field.props}></DsyunOrganization>
     );
   },
 });
@@ -160,7 +175,7 @@ create('modelGroup', {
           filterParams[fieldItem.name[0]] = value[0];
         }
         if (value.length > 1) {
-          filterParams[fieldItem.name[1]] = value[1];
+          filterParams[fieldItem.name[1]] = value[value.length - 1];
         }
       }
     }
@@ -215,6 +230,57 @@ create('sourceChannel', {
   wrapper: false,
   render(field) {
     return <SourceChannel field={field} {...field.props}></SourceChannel>;
+  },
+});
+create('dateRangePicker', {
+  compose(memo, values, field) {
+    let fieldName = (field.name as string[]).join('_');
+    let value = values[fieldName];
+    if (
+      field.fieldIndex == 0 &&
+      value &&
+      Array.isArray(value) &&
+      value.length == 2
+    ) {
+      let value = values[fieldName];
+      memo[field.name[0]] = value[0].format('YYYY-MM-DD');
+      memo[field.name[1]] = value[1].format('YYYY-MM-DD');
+    }
+  },
+  render(field) {
+    return (
+      <DatePicker.RangePicker
+        format="YYYY-MM-DD"
+        style={{ width: '100%' }}
+        {...field.props}
+      ></DatePicker.RangePicker>
+    );
+  },
+});
+create('dateTimeRangePicker', {
+  compose(memo, values, field) {
+    let fieldName = (field.name as string[]).join('_');
+    let value = values[fieldName];
+    if (
+      field.fieldIndex == 0 &&
+      value &&
+      Array.isArray(value) &&
+      value.length == 2
+    ) {
+      let value = values[fieldName];
+      memo[field.name[0]] = value[0].format('YYYY-MM-DD HH:mm:ss');
+      memo[field.name[1]] = value[1].format('YYYY-MM-DD HH:mm:ss');
+    }
+  },
+  render(field) {
+    return (
+      <DatePicker.RangePicker
+        showTime={{ format: 'HH:mm' }}
+        format="YYYY-MM-DD HH:mm"
+        style={{ width: '100%' }}
+        {...field.props}
+      ></DatePicker.RangePicker>
+    );
   },
 });
 

@@ -1,3 +1,7 @@
+/**
+ * 商家后台母版页
+ * @author fanyonglong
+ */
 import type {
   MenuDataItem,
   BasicLayoutProps as ProLayoutProps,
@@ -26,10 +30,11 @@ export type BasicLayoutContext = { [K in 'location']: BasicLayoutProps[K] } & {
   breadcrumbNameMap: Record<string, MenuDataItem>;
 };
 
+
 const postMenuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
   menuList
     .map((item) => {
-      const localItem = {
+      const localItem:any = {
         ...item,
         children: item.children
           ? postMenuDataRender(item.children).filter(Boolean)
@@ -38,8 +43,11 @@ const postMenuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
       if (localItem.children && localItem.children.length <= 0) {
         return null as any;
       }
+      if(!localItem.authority){
+        return localItem
+      }
       return checkAuthorize(
-        item.authority ?? ['admin'],
+        item.authority,
         localItem,
         null,
       ) as MenuDataItem;
@@ -57,12 +65,11 @@ const BasicLayout: React.FC<any> = ({ children }) => {
 
   return (
     <PageContainer title={false} extra={false}>
-      <Authorized
-        authority={currentMenu.authority ?? ['admin']}
-        noMatch={<Status403></Status403>}
-      >
+      {!currentMenu.authority?children:<Authorized
+        authority={currentMenu.authority}
+        noMatch={<Status403></Status403>}>
         {children}
-      </Authorized>
+      </Authorized>}
     </PageContainer>
   );
 };

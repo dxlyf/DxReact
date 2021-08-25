@@ -8,6 +8,7 @@ import { useImmer } from 'use-immer';
 import { useResetFormOnCloseModal } from '../../components/utils';
 import { batchUpdateGroup } from '@/services/diyModel';
 import { checkAuthorize } from '@/components/Authorized';
+import ModelGroup from '../../components/ModelGroup'
 
 function handleValueEnum(data) {
   const valueEnum: any = {};
@@ -22,37 +23,6 @@ const BatchModal = (props) => {
 
   const [form] = Form.useForm();
 
-  const [state, setState]: any = useImmer({
-    topModelGroupId: {
-      data: [],
-    },
-    modelGroupId: {
-      data: [],
-    },
-  });
-
-  const reqGetModelGroupById = useRequest(getModelGroupById, {
-    manual: true,
-    refreshDeps: [form.getFieldValue('topModelGroupId')],
-    onSuccess: (data: any, params) => {
-      let keyName = 'modelGroupId';
-      let arr: any = [...data];
-
-      // pid为0是第一层数据
-      if (params[0].pid === '0') {
-        keyName = 'topModelGroupId';
-        // 使用第三方模型制作权限账号不让编辑标准库
-        if (!checkAuthorize(['admin'])) {
-          arr = arr.filter((item) => item.id === 2);
-        }
-      }
-
-      setState((draft) => {
-        draft[keyName].data = arr ? handleValueEnum(arr) : [];
-      });
-    },
-  });
-
   const reqBatchUpdateGroup = useRequest(batchUpdateGroup, {
     manual: true,
   });
@@ -61,14 +31,6 @@ const BatchModal = (props) => {
     form,
     visible,
   });
-
-  useEffect(() => {
-    if (visible) {
-      reqGetModelGroupById.run({
-        pid: '0',
-      });
-    }
-  }, [visible]);
 
   if (!ids || ids.length === 0) {
     return null;
@@ -80,11 +42,12 @@ const BatchModal = (props) => {
       width={width}
       title="批量修改分组"
       visible={visible}
+      layout="horizontal"
       // visible={true}
-      onFinish={async ({ topModelGroupId, modelGroupId }) => {
+      onFinish={async ({ modelGroupId }) => {
         await reqBatchUpdateGroup.run({
-          topModelGroupId,
-          modelGroupId,
+          topModelGroupId:modelGroupId[0],
+          modelGroupId:modelGroupId[modelGroupId.length-1],
           ids,
         });
         message.success('修改成功！');
@@ -93,29 +56,14 @@ const BatchModal = (props) => {
         }
         return true;
       }}
-      onValuesChange={(changeValues) => {
-        if (changeValues.topModelGroupId) {
-          reqGetModelGroupById.run({
-            pid: changeValues.topModelGroupId,
-          });
-        }
-      }}
       onVisibleChange={onCancel}
     >
-      <ProFormSelect
-        name="topModelGroupId"
-        label="第一级分组"
-        valueEnum={state.topModelGroupId.data}
-        placeholder="请输入第一级分组"
-        rules={[{ required: true, message: '请输入第一级分组' }]}
-      />
-      <ProFormSelect
-        name="modelGroupId"
-        label="第二级分组"
-        valueEnum={state.modelGroupId.data}
-        placeholder="请输入第二级分组"
-        rules={[{ required: true, message: '请输入第二级分组' }]}
-      />
+     <Form.Item label="所属分组" name="modelGroupId" rules={[{
+                        required:true,
+                        type:"array",
+                        min:1,
+                        message:'请选择所属分组'
+                    }]}><ModelGroup></ModelGroup></Form.Item>
     </ModalForm>
   );
 };

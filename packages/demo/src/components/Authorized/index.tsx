@@ -14,7 +14,7 @@ export const checkPermissions = <T, K>(
   noAuthority: K,
 ): T | K => {
   if (!currentAuthority) {
-    return yesAuthority;
+    return noAuthority;
   }
   if (Array.isArray(currentAuthority)) {
     if (

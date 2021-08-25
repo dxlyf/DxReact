@@ -63,7 +63,7 @@ const OrderDetail = (props) => {
             <Image
               src={
                 text.picUrl
-                  ? `https://rf..net/${text.picUrl}?imageView2/1/w/150/h/150`
+                  ? `https://rf.blissmall.net/${text.picUrl}?imageView2/1/w/150/h/150`
                   : imgFaillBack
               }
               className={styles.tableImage}
@@ -195,7 +195,7 @@ const OrderDetail = (props) => {
         return value;
     }
   }, []);
-  let orderPromotions=get(reqgetOrderDetail, 'data.orderPromotions', [])
+  let orderPromotions = get(reqgetOrderDetail, 'data.orderPromotions', []);
   return (
     <ProCard split="horizontal">
       {reqgetOrderDetail.data ? (
@@ -405,20 +405,24 @@ const OrderDetail = (props) => {
                 {reqgetOrderDetail.data.payNo || '-'}
               </div>
             </div>
-            
-              <div className={styles.infoTwoBox}>
-                <div className={styles.infoTitle}>优惠活动信息</div>
-                <div className={styles.info}>
-                  <div>券类型：</div>
-                  {orderPromotions.length>0?orderPromotions.map((d) => displayPromotionType(d.promotionType))
-                    .join(','):'-'}
-                </div>
-                <div className={styles.info}>
-                  <div>券名称：</div>
-                  {orderPromotions.length>0?orderPromotions.map((d) => d.promotionName)
-                    .join(','):'-'}
-                </div>
+
+            <div className={styles.infoTwoBox}>
+              <div className={styles.infoTitle}>优惠活动信息</div>
+              <div className={styles.info}>
+                <div>券类型：</div>
+                {orderPromotions.length > 0
+                  ? orderPromotions
+                      .map((d) => displayPromotionType(d.promotionType))
+                      .join(',')
+                  : '-'}
               </div>
+              <div className={styles.info}>
+                <div>券名称：</div>
+                {orderPromotions.length > 0
+                  ? orderPromotions.map((d) => d.promotionName).join(',')
+                  : '-'}
+              </div>
+            </div>
             {/* <div className={styles.infoTwoBox}>
               <div className={styles.infoTitle}>其他信息</div>
               <div className={styles.info}>
@@ -448,10 +452,16 @@ const OrderDetail = (props) => {
                   巧克力牌：
                   {reqgetOrderDetail.data.blessInfoList[0].chocolateCard || '-'}
                 </div>
+                <div className={styles.qklrule}>
+                  规&emsp;&emsp;格：
+                  {reqgetOrderDetail.data.blessInfoList[0].chocolateCardRule ||
+                    '-'}
+                </div>
                 <div className={styles.red}>
                   祝福贺卡：
                   {reqgetOrderDetail.data.blessInfoList[0].greetCard || '-'}
                 </div>
+            
               </div>
             </div>
           </ProCard>

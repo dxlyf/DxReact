@@ -18,7 +18,7 @@ export default (api: IApi) => {
       },
     },
   });
-
+  
   api.onStart(async ({ args }) => {
     console.log('args', args);
     let envConfig = api.config.envConfig.env;

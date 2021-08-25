@@ -42,3 +42,28 @@ export function sendToSpecifiedMobile(data: any) {
     data,
   });
 }
+
+// 组织 - 查询
+export function getOrgList(data) {
+  return request('uc/backend/org/list', {
+    method: 'POST',
+    data,
+  });
+}
+// 组织 - 根据Code查询
+export function getOrgByCode(data) {
+  return request('uc/backend/org/getOrgByCode', {
+    method: 'GET',
+    params: data,
+    skipErrorHandler: true,
+  });
+}
+
+// 组织 - 根据Id查询
+export function getOrgById(data: any) {
+  return request('uc/backend/org/getOrgById', {
+    method: 'GET',
+    params: data,
+    skipErrorHandler: true,
+  });
+}

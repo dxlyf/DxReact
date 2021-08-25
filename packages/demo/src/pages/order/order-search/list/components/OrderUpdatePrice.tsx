@@ -42,7 +42,8 @@ const OrderUpdatePrice = React.memo(
                 productName,
                 price: Number((unitPrice * 0.01).toFixed(2)),
                 num: quantity,
-                discount: discountAmount,
+                discount: Number((discountAmount * 0.01).toFixed(2)),
+                orgDiscount:Number((discountAmount * 0.01).toFixed(2)),
                 propertyStr,
               };
             },
@@ -60,10 +61,21 @@ const OrderUpdatePrice = React.memo(
     }, [dataItem.id]);
     let totalPrice = useMemo(() => {
       return dataSource.reduce(
-        (price, r) => Number((price + r.price * r.num).toFixed(2)),
+        (price, r) => Number((price + r.price * r.num-r.discount).toFixed(2)),
         0,
       );
     }, [dataSource]);
+    let onPriceChange=useCallback((id,value)=>{
+      let newData=dataSource.map(d=>{
+        let newItem={...d}
+          if(newItem.id==id){
+            newItem.discount=0
+            newItem.price=value
+          }
+          return newItem
+      })
+      setDataSource(newData)
+    },[dataSource])
     let columns = useMemo(
       () => [
         {
@@ -98,7 +110,7 @@ const OrderUpdatePrice = React.memo(
                 initialValue={value}
                 name={['order', record.id, 'price']}
               >
-                <InputNumber disabled={dataItem.isEditPrice===false} precision={2}></InputNumber>
+                <InputNumber onChange={onPriceChange.bind(null,record.id)} disabled={dataItem.isEditPrice===false} precision={2}></InputNumber>
               </Form.Item>
             );
           },
@@ -109,15 +121,12 @@ const OrderUpdatePrice = React.memo(
         },
         {
           title: '优惠(元)',
-          dataIndex: 'discount',
-          render(value) {
-            return Number(value * 0.01).toFixed(2);
-          },
+          dataIndex: 'discount'
         },
         {
           title: '小计(元)',
           render(record: any) {
-            return Number((record.price * record.num).toFixed(2));
+            return Number((record.price * record.num-record.discount).toFixed(2));
           },
         },
         {
@@ -165,25 +174,10 @@ const OrderUpdatePrice = React.memo(
       [form, dataSource],
     );
 
-    const onValuesChange = useCallback(
-      (values, allValues) => {
-        Object.keys(allValues.order).forEach((id) => {
-          let newDataSource = dataSource.map((row) => {
-            return {
-              ...row,
-              price: allValues.order[row.id].price,
-            };
-          });
-          setDataSource(newDataSource);
-        });
-      },
-      [dataSource],
-    );
     return (
       <Form
         form={form}
         size="small"
-        onValuesChange={onValuesChange}
         preserve={false}
       >
         <Table

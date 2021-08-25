@@ -1,3 +1,7 @@
+/**
+ * 重写商品分类
+ * @author fanyonglong
+ */
 import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { Select, Form, Cascader } from 'antd';
 import {
@@ -14,40 +18,42 @@ const DsyunProductCategory = React.memo(
     let [options, setOptions] = useState<any>([]);
 
     const fetchData = useCallback((pid) => {
-      return getDSYunCategoryList({ pid: pid,pageNum:1,pageSize:100 }).then((data: any) => {
-        return data.list.map((d: any) => {
-          return {
-            label: d.name,
-            value: d.id,
-            isLeaf: d.leaf == 1,
-          };
-        });
-      });
+      return getDSYunCategoryList({ pid: pid, pageNum: 1, pageSize: 100 }).then(
+        (data: any) => {
+          return data.list.map((d: any) => {
+            return {
+              label: d.name,
+              value: d.id,
+              isLeaf: d.leaf == 1,
+            };
+          });
+        },
+      );
     }, []);
     const bindData = useCallback(
       (data) => {
-        let initialValue = restProps.value;
+        let initialValue = value;
         if (Array.isArray(initialValue)) {
-          return Promise.all(
-            restProps.value.map((id: any) => fetchData(id)),
-          ).then((datas: any[]) => {
-            let current = data;
-            for (let i = 0, len = initialValue.length; i < len; i++) {
-              let value = initialValue[i];
-              let children = datas[i];
-              let index = current.findIndex((d: any) => d.value == value);
-              if (index !== -1 && children) {
-                current = current[index].children = children;
-              } else {
-                break;
+          return Promise.all(initialValue.map((id: any) => fetchData(id))).then(
+            (datas: any[]) => {
+              let current = data;
+              for (let i = 0, len = initialValue.length; i < len; i++) {
+                let value = initialValue[i];
+                let children = datas[i];
+                let index = current.findIndex((d: any) => d.value == value);
+                if (index !== -1 && children) {
+                  current = current[index].children = children;
+                } else {
+                  break;
+                }
               }
-            }
-            return data;
-          });
+              return data;
+            },
+          );
         }
         return data;
       },
-      [restProps.value],
+      [value],
     );
     const loadData = useCallback((selectedOptions) => {
       const targetOption = selectedOptions[selectedOptions.length - 1];
@@ -74,7 +80,12 @@ const DsyunProductCategory = React.memo(
     }, []);
 
     return (
-      <Cascader {...restProps} loadData={loadData} options={options}></Cascader>
+      <Cascader
+        {...restProps}
+        value={value}
+        loadData={loadData}
+        options={options}
+      ></Cascader>
     );
   }),
 );

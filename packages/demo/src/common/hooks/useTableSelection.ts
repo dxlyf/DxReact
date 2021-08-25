@@ -40,6 +40,7 @@ export default function useTableSelection<T extends { [key: string]: any }>(
     defaultValue: defaultSelectedRows,
     valuePropName: 'selectedRows',
   });
+
   // 记录所有选中行
   const selectDataRows = useCallback(
     (selected, rows) => {

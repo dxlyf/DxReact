@@ -49,7 +49,7 @@ import { useImmer } from 'use-immer';
 import { detailModel, addModel, editModel } from '@/services/diyModel';
 import { v4 as uuid } from 'uuid';
 import G from './three/globalValues';
-import { checkAuthorize } from '@/components/Authorized';
+import ModelGroup from '../components/ModelGroup'
 
 const { Link } = Anchor;
 
@@ -297,38 +297,9 @@ const MaterialEdit = (props) => {
           console.log(err);
         },
       );
-
-      if (data.topModelGroupId) {
-        reqGetModelGroupById.run({
-          pid: data.topModelGroupId,
-        });
-      }
     },
   });
 
-  const reqGetModelGroupById = useRequest(getModelGroupById, {
-    manual: true,
-    onSuccess: (data: any = [], params) => {
-      let keyName = 'modelGroupData';
-      let arr: any = [...data];
-
-      // pid为0是第一层数据
-      if (params[0].pid === '0') {
-        keyName = 'topModelGroupData';
-        // 使用第三方模型制作权限账号不让编辑标准库
-        if (!checkAuthorize(['admin'])) {
-          arr = arr.filter((item) => item.id === 2);
-        }
-      }
-
-      setState((draft) => {
-        draft[keyName] = arr.map(({ id, name }) => ({
-          value: String(id),
-          label: name,
-        }));
-      });
-    },
-  });
 
   const addDiyMaterialValue = useRequest(addModel, {
     manual: true,
@@ -366,9 +337,7 @@ const MaterialEdit = (props) => {
   }, [prewContentRef]);
 
   useMount(() => {
-    reqGetModelGroupById.run({
-      pid: '0',
-    });
+
     if (!isCreate) {
       reqDetailModel.run({
         id: materialId,
@@ -447,8 +416,8 @@ const MaterialEdit = (props) => {
     );
 
     resultData = {
-      topModelGroupId,
-      modelGroupId,
+      topModelGroupId:modelGroupId[0],
+      modelGroupId:modelGroupId[modelGroupId.length-1],
       name,
       imageUrl,
       modelType: type,
@@ -558,42 +527,14 @@ const MaterialEdit = (props) => {
               scrollToFirstError
             >
               <ProCard title="基础信息" id="basic_information">
-                <Form.Item
-                  name="topModelGroupId"
-                  label="第一级分组"
-                  rules={[{ required: true, message: '请输入第一级分组' }]}
-                >
-                  <Select
-                    onChange={(id) => {
-                      setTimeout(() => {
-                        reqGetModelGroupById.run({
-                          pid: id,
-                        });
-                        baseForm.setFieldsValue({
-                          modelGroupId: undefined,
-                        });
-                      }, 500);
-                    }}
-                    // defaultValue={String(topModelGroupId)}
-                    style={{ width: 200 }}
-                    placeholder="请选择第一级分组"
-                    options={state.topModelGroupData}
-                    allowClear
-                  ></Select>
-                </Form.Item>
+              <Form.Item label="所属分组" name="modelGroupId" rules={[{
+                        required:true,
+                        type:"array",
+                        min:1,
+                        message:'请选择所属分组'
+                    }]}><ModelGroup></ModelGroup></Form.Item>
 
-                <Form.Item
-                  name="modelGroupId"
-                  label="第二级分组"
-                  rules={[{ required: true, message: '请输入第二级分组' }]}
-                >
-                  <Select
-                    style={{ width: 200 }}
-                    placeholder="请选择第二级分组"
-                    options={state.modelGroupData}
-                    allowClear
-                  ></Select>
-                </Form.Item>
+          
 
                 <Form.Item
                   name="name"
@@ -1170,7 +1111,7 @@ const MaterialEdit = (props) => {
                               imageUrl: [
                                 {
                                   status: 'done',
-                                  url: `https://rf..net/${o.key}`,
+                                  url: `https://rf.blissmall.net/${o.key}`,
                                   name: o.key,
                                 },
                               ],

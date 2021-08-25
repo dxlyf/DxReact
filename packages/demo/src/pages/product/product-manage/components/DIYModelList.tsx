@@ -49,10 +49,7 @@ export let DIYModelList: React.FC<any> = ({ dataItem, onChange }) => {
       {
         title: '模型分组',
         render: (record) => {
-          return (
-            record.topModelGroupName +
-            (record.modelGroupName ? '/' + record.modelGroupName : '')
-          );
+          return record.modelGroupNameStr
         },
       },
       {

@@ -45,7 +45,7 @@ export function getDSYunProductList(data: any) {
     data,
   });
 }
-// 获取电商云商品详情
+// 获取商品详情
 export function getDSYunProductDetail(productId: any) {
   return request('prd/backend/companyProduct/getProductDetail', {
     method: 'GET',
@@ -159,5 +159,12 @@ export function deleteGroupGoods(params: any) {
   return request('blisscake/backend/productGroupRel/delete', {
     method: 'GET',
     params,
+  });
+}
+// 批量添加商品标签
+export function batchAddLabel(data: any) {
+  return request('blisscake/backend/shopProduct/batchRefreshLabel', {
+    method: 'POST',
+    data,
   });
 }

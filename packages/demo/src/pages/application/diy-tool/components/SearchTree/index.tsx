@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo,useMemo } from 'react';
 import { useImmer } from 'use-immer';
 import styles from './SearchTree.module.less';
 
@@ -88,7 +88,7 @@ const SearchTree: any = (props: any) => {
               {childrenNum}
             </span>
             <div className={styles.btnBox}>
-              {keyArr.length === 2 && (
+              {(keyArr.length === 2||keyArr.length === 3) && (
                 <Tooltip title="添加子分组" key="add">
                   <PlusOutlined
                     className={styles.iconBtn}

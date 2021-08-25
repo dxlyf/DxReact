@@ -37,7 +37,7 @@ const { confirm } = Modal;
 const modal_initialState = {
   editModal: {
     type: '', // 'create' | 'edit'
-    width: 400,
+    width: 500,
     visible: false,
     id: '', // 编辑id
     name: '',
@@ -45,7 +45,7 @@ const modal_initialState = {
     pidName: '', // 上一级名称
   },
   batchModal: {
-    width: 400,
+    width: 500,
     visible: false,
     ids: [],
   },
@@ -105,7 +105,7 @@ const RenderList = ({ modelListData, isSelected, toggle, handleCopy }) => {
             }}
             width={130}
             height={130}
-            src={`https://rf..net/${imageUrl}?imageView2/1/w/150/h/150`}
+            src={`https://rf.blissmall.net/${imageUrl}?imageView2/1/w/150/h/150`}
             fallback={imgFaillBack}
           />
           <div className={styles.toolsBox}>
@@ -137,7 +137,7 @@ const MaterialList: React.FC<any> = (props) => {
 
   const [urlState, setUrlState] = useUrlState(
     {
-      selectedKeys: checkAuthorize(['admin']) ? '0-1' : '0-2',
+      selectedKeys: checkAuthorize(['thirdParty'],'0-2','0-1'),
       pageNum: '1',
       pageSize: '30',
     },
@@ -174,7 +174,7 @@ const MaterialList: React.FC<any> = (props) => {
         if (data) {
           let arr: any = data;
           // 使用第三方模型制作权限账号不让编辑标准库
-          if (!checkAuthorize(['admin'])) {
+          if (checkAuthorize(['thirdParty'])) {
             arr = data.filter((item) => item.id === 2);
           }
 
@@ -214,7 +214,7 @@ const MaterialList: React.FC<any> = (props) => {
           pageSize: Number(urlState.pageSize),
         },
         {
-          topModelGroupId: urlState.selectedKeys.split('-')[1],
+         // topModelGroupId: urlState.selectedKeys.split('-')[1],
           modelGroupId: urlState.selectedKeys.split('-')[2],
         },
       ],
@@ -265,12 +265,8 @@ const MaterialList: React.FC<any> = (props) => {
       const id = e.node.id;
 
       const params: any = {
-        // 第一级使用id，因为一级的pid为0
-        topModelGroupId: String(pid === 0 ? id : pid),
+        modelGroupId:String(id)
       };
-      if (pid !== 0) {
-        params.modelGroupId = String(id);
-      }
       await reqModelList.run(
         {
           current: 1,
@@ -420,27 +416,26 @@ const MaterialList: React.FC<any> = (props) => {
         <Link to="/application/diy-tool/material-create">
           <Button icon={<PlusOutlined />}>添加模型</Button>
         </Link>
-        <Authorized authority={['admin']}>
-          <Search
+        <Authorized authority={['thirdParty']} noMatch={<Search
             className={styles.searchModel}
             placeholder="搜索模型"
             allowClear
             enterButton
             onSearch={onModelSearch}
-          />
+          />}>
+          
         </Authorized>
       </ProCard>
 
       <ProCard split="vertical" gutter={24}>
         <ProCard colSpan="300px" split="horizontal" gutter={24}>
           <ProCard bordered={false}>
-            <Authorized authority={['admin']}>
-              <Search
+            <Authorized authority={['thirdParty']} noMatch={ <Search
                 allowClear
                 placeholder="搜索分组"
                 onSearch={onSearch}
                 style={{ marginBottom: 20 }}
-              />
+              />}>    
             </Authorized>
 
             <SearchTree {...SearchTreeProps} />

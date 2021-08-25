@@ -12,14 +12,20 @@ import { getProductGroupList } from '@/services/product';
 import { ImageView } from '@/components/Image';
 import { useTableSelection } from '@/common/hooks';
 import { PRODUCT } from '@/common/constants';
+import { pick } from 'lodash';
 
-export let GroupProductList: React.FC<any> = ({ dataItem, onChange }) => {
+export let GroupProductList: React.FC<any> = ({
+  dataItem,
+  onChange,
+  ...restProps
+}) => {
   let [
     { rowSelection, selectedRows },
     { clearAllSelection },
   ] = useTableSelection({
     keep: true,
     onAllChange: onChange,
+    ...pick(restProps, 'selectedRows','getCheckboxProps'),
   });
   const [{ tableProps, dataSource }, { query: showList }] = useRequest({
     service: getProductGroupList,
@@ -79,7 +85,7 @@ export let GroupProductList: React.FC<any> = ({ dataItem, onChange }) => {
   );
 };
 let GroupProductListModal: React.FC<any> = (props) => {
-  let { dataItem, onOk } = props;
+  let { dataItem, onOk, selectedRows: _selectedRows = [],listProps={} } = props;
   let [selectedRows, setSelectedRows] = useState<any[]>([]);
   let [visible, setVisible] = useControllableValue(props, {
     defaultValue: false,
@@ -101,6 +107,8 @@ let GroupProductListModal: React.FC<any> = (props) => {
   useUpdateEffect(() => {
     if (!visible) {
       setSelectedRows([]);
+    } else {
+      setSelectedRows([..._selectedRows]);
     }
   }, [visible]);
   let okText = `确认选择${
@@ -119,6 +127,8 @@ let GroupProductListModal: React.FC<any> = (props) => {
       <GroupProductList
         dataItem={dataItem}
         onChange={onChangeHandle}
+        selectedRows={selectedRows}
+        {...listProps}
       ></GroupProductList>
     </Modal>
   );

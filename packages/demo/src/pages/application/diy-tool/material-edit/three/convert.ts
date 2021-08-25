@@ -54,14 +54,14 @@ export function getMeshParams(info: any): MeshParamsJson {
     params.materials!.forEach((material) => {
       if (material.envMap) {
         for (let i in material.envMap) {
-          material.envMap[i] = 'https://rf..net' + material.envMap[i];
+          material.envMap[i] = 'https://rf.blissmall.net' + material.envMap[i];
         }
       }
       if (material.map) {
-        material.map = 'https://rf..net' + material.map;
+        material.map = 'https://rf.blissmall.net' + material.map;
       }
       if (material.bumpMap) {
-        material.bumpMap = 'https://rf..net' + material.bumpMap;
+        material.bumpMap = 'https://rf.blissmall.net' + material.bumpMap;
       }
     });
   }

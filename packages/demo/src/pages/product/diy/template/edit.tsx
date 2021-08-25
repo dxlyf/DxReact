@@ -78,8 +78,11 @@ const TemplateDetail: React.FC<any> = (props) => {
         >
           <Input maxLength={50} />
         </Form.Item>
-        <Form.Item label="模板简介" name="templateRemark">
-          <Input.TextArea rows={10} maxLength={200}></Input.TextArea>
+        <Form.Item label="模板简介" name="templateRemark" rules={[{
+           max:50,
+           message:"最大长度不能超过50个字符"
+        }]}>
+          <Input.TextArea rows={10} maxLength={50}></Input.TextArea>
         </Form.Item>
         <Form.Item label="商品明细">
           {detail.productList.map((item, index) => (

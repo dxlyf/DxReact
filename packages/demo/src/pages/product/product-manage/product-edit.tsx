@@ -22,12 +22,10 @@ import {
   Descriptions,
 } from 'antd';
 import { UploadImage, UploadVideo, useUplaodImage } from '@/components/Upload';
-import classNames from 'classnames';
 import DSYunProductListModal from './components/DSYunProductList';
 import { connect, ConnectRC, Loading, history } from 'umi';
-import { get, throttle } from 'lodash';
 import { transformFilesToUrls } from '@/utils/util';
-import Editor from '@/components/Editor';
+import GoodsLabelSelect from './components/GoodsLabelSelect'
 import type {
   ProductModelState,
   ProductEntityStateType
@@ -108,7 +106,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
   const [goodDetailType, setGoodDetailType] = useState<string>('0');
   const isEditMode = detail.id !== ''; // 是否编辑模式
   const skutableRef = useRef<any>();
-
+ 
   // 获取修改的数据
   const getEditSubmitFormData = useCallback(
     (formData, skuData) => {
@@ -125,6 +123,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
         productDesc: formData.productDesc.trim(),
         imageUrl: transformFilesToUrls(formData.imageUrl).join(','),
         isCake: formData.isCake,
+        labelId:formData.labelId,
         videoUrl: transformFilesToUrls(formData.videoUrl).join(''),
         propertyStr: detail.propertyStr,
         productGroupNameStr: Array.isArray(formData.productGroupNameStr)
@@ -224,6 +223,7 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
       productDesc:detail.productDesc,
       imageUrl: detail.imageUrl,
       isCake: detail.isCake,
+      labelId:detail.labelId,
       videoUrl: detail.videoUrl,
       diyModelId: detail.diyModelId,
       productGroupNameStr: detail.productGroupNameStr,
@@ -388,6 +388,9 @@ const ProductEdit: ConnectRC<ProductEditProps> = ({
                         否
                         </Select.Option>
                     </Select>
+                  </Form.Item>
+                  <Form.Item label="选择标签" name="labelId" initialValue={detail.labelId}>
+                    <GoodsLabelSelect></GoodsLabelSelect>
                   </Form.Item>
                   <Form.Item
                     label="商品图片"

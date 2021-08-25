@@ -17,7 +17,7 @@ import {
 } from 'antd';
 import Table, { RichTableColumnType } from '@/components/Table';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
-import { get } from 'lodash';
+import { get, flatMap, keyBy } from 'lodash';
 import FilterForm, {
   FilterFormFieldType,
   ControlContextType,
@@ -42,7 +42,11 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
       };
     },
   });
+  let dataSourceMap = useMemo(() => keyBy(dataSource, (d) => d.id), [
+    dataSource,
+  ]);
   let [modalForm] = Form.useForm();
+  let [subModalForm] = Form.useForm();
   let [
     modal,
     {
@@ -54,11 +58,12 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
     destroyOnClose: true,
     onOk: () => {
       modalForm.validateFields().then((values: any) => {
-        let modalState = modal.state;
+        let dataItem = modal.state.dataItem;
         setModalStateOptions({ okButtonProps: { loading: true } });
-        if (!modalState.dataItem) {
+        if (!dataItem.record) {
           diyService
             .addThemeCategory({
+              pid: dataItem.pid,
               themeId: themeId,
               name: values.name,
             })
@@ -73,8 +78,9 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
         } else {
           diyService
             .updateThemeCategory({
-              id: modalState.dataItem.id,
+              id: dataItem.record.id,
               name: values.name,
+              pid: dataItem.record.pid,
             })
             .then(() => {
               closeModal();
@@ -88,10 +94,14 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
       });
     },
   });
+
   const onDeleteHandle = useCallback((record) => {
+    let isRoot = record.pid == '0';
     Modal.confirm({
-      title: '是否删除分类?',
-      content: '删除后，会解绑分类下的商品',
+      title: isRoot ? '是否删除分类?' : `确定删除【${record.name}】？`,
+      content: isRoot
+        ? '删除后，会解绑分类下的商品'
+        : '删除分组，商品将移入【其他】分组中',
       onOk: () => {
         diyService
           .deleteThemeCategory({
@@ -110,36 +120,16 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
       status: checked ? 1 : 0,
     });
   }, []);
-  const onUpSort = useCallback(
-    (record, index) => {
-      let targetId = dataSource[index - 1].id;
-      let moveId = record.id;
-      diyService
-        .updateThemeCategorySort({
-          coverI: moveId,
-          coverII: targetId,
-        })
-        .then(() => {
-          showList(true);
-        });
-    },
-    [dataSource],
-  );
-  const onDownSort = useCallback(
-    (record, index) => {
-      let targetId = dataSource[index + 1].id;
-      let moveId = record.id;
-      diyService
-        .updateThemeCategorySort({
-          coverI: moveId,
-          coverII: targetId,
-        })
-        .then(() => {
-          showList(true);
-        });
-    },
-    [dataSource],
-  );
+  const onUpdateSort = useCallback((moveId, targetId) => {
+    diyService
+      .updateThemeCategorySort({
+        coverI: moveId,
+        coverII: targetId,
+      })
+      .then(() => {
+        showList(true);
+      });
+  }, []);
   const fields = useMemo<FilterFormFieldType[]>(
     () => [
       {
@@ -173,6 +163,9 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
       {
         title: '商品数量',
         dataIndex: 'productCount',
+        render(value, record) {
+          return record.pid == '0' ? '' : value + '';
+        },
       },
       {
         title: '用户侧展示顺序',
@@ -180,18 +173,25 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
         width: 160,
         align: 'center',
         render(value: number, record: any, index: number) {
-          let isShowUp = true,
-            isShowDown = true;
-          if (index == 0) {
+          let data =
+            record.pid == '0'
+              ? dataSource
+              : dataSourceMap[record.pid].diyCategories;
+          let isShowUp = index > 0;
+          let isShowDown = index + 1 < data.length;
+          if (record.pid !== '0' && record.categoryType == 2) {
             isShowUp = false;
+            isShowDown = false;
           }
-          if (index + 1 >= dataSource.length) {
+          if (isShowDown && data[index + 1].categoryType == 2) {
             isShowDown = false;
           }
           return (
             <Space>
               <ArrowUpOutlined
-                onClick={onUpSort.bind(null, record, index)}
+                onClick={() => {
+                  onUpdateSort(record.id, data[index - 1].id);
+                }}
                 style={{
                   color: '#1890ff',
                   cursor: 'pointer',
@@ -199,7 +199,9 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
                 }}
               ></ArrowUpOutlined>
               <ArrowDownOutlined
-                onClick={onDownSort.bind(null, record, index)}
+                onClick={() => {
+                  onUpdateSort(record.id, data[index + 1].id);
+                }}
                 style={{
                   color: '#1890ff',
                   cursor: 'pointer',
@@ -214,19 +216,59 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
         title: '操作',
         width: 200,
         render: (record: any) => {
-          return (
-            <Space>
-              <a onClick={showModal.bind(null, '编辑分类', record)}>编辑</a>
-              {record.categoryType === 1 ? null : (
-                <a onClick={onDeleteHandle.bind(null, record)}>删除</a>
-              )}
-              <Link
-                to={`/product/diy/theme/category/${themeId}/goods/${record.id}`}
-              >
-                商品管理
-              </Link>
-            </Space>
-          );
+          let isRoot = record.pid == '0';
+          if (isRoot) {
+            return (
+              <Space>
+                <a
+                  onClick={showModal.bind(null, '添加下级', {
+                    pid: record.id,
+                    label: '组名称',
+                    message: '请输入组名称！',
+                  })}
+                >
+                  添加下级
+                </a>
+                <a
+                  onClick={showModal.bind(null, '编辑分类', {
+                    record: record,
+                    pid: 0,
+                    label: '分类名称',
+                    message: '请输入分类名称！',
+                  })}
+                >
+                  编辑
+                </a>
+                {record.categoryType === 1 ? null : (
+                  <a onClick={onDeleteHandle.bind(null, record)}>删除</a>
+                )}
+              </Space>
+            );
+          } else {
+            return (
+              <Space>
+                {record.categoryType == 2 ? null : (
+                  <a
+                    onClick={showModal.bind(null, '编辑分组', {
+                      record: record,
+                      label: '组名称',
+                      message: '请输入组名称！',
+                    })}
+                  >
+                    编辑
+                  </a>
+                )}
+                {record.categoryType == 2 ? null : (
+                  <a onClick={onDeleteHandle.bind(null, record)}>删除</a>
+                )}
+                <Link
+                  to={`/product/diy/theme/category/${themeId}/goods/${record.id}/${record.pid}`}
+                >
+                  商品管理
+                </Link>
+              </Space>
+            );
+          }
         },
       },
     ],
@@ -236,11 +278,13 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
       onUpdateHandle,
       themeId,
       dataSource,
-      onUpSort,
-      onDownSort,
+      dataSourceMap,
+      onUpdateSort,
     ],
   );
-
+  const expandable = {
+    childrenColumnName: 'diyCategories',
+  };
   return (
     <Space direction="vertical" className="m-list-wrapper">
       <Card className="m-filter-wrapper">
@@ -254,7 +298,11 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
           <Button
             type="primary"
             onClick={() => {
-              showModal('添加分类');
+              showModal('添加分类', {
+                pid: 0,
+                label: '分类名称',
+                message: '请输入分类名称！',
+              });
             }}
           >
             添加分类
@@ -262,7 +310,12 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
         </FilterForm>
       </Card>
       <Card className="m-table-wrapper">
-        <Table columns={columns} rowKey="id" {...tableProps}></Table>
+        <Table
+          columns={columns}
+          rowKey="id"
+          {...tableProps}
+          expandable={expandable}
+        ></Table>
       </Card>
       <Modal {...modal.props}>
         <Form
@@ -272,13 +325,13 @@ let DIYCategory: ConnectRC<any> = ({ history, match }) => {
           labelCol={{ span: 6 }}
         >
           <Form.Item
-            label="分类名称"
+            label={get(modal.state.dataItem, 'label', '分类名称')}
             name="name"
-            initialValue={get(modal.state.dataItem, 'name')}
+            initialValue={get(modal.state.dataItem, 'record.name')}
             rules={[
               {
                 required: true,
-                message: '请输入分类名称！',
+                message: get(modal.state.dataItem, 'message'),
                 whitespace: true,
               },
             ]}

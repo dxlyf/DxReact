@@ -169,3 +169,18 @@ export function deleteTempalte(data) {
     data,
   });
 }
+// 获取分类列表信息
+export function getCategoryByPid(data) {
+  return request('blisscake/backend/diyCategory/getCategoryByPid', {
+    method: 'GET',
+    params:data,
+  });
+}
+
+// 批量修改商品分类
+export function updateProductCategory(data) {
+  return request('blisscake/backend/diyCategoryProductRel/updateProductCategory', {
+    method: 'POST',
+    data,
+  });
+}

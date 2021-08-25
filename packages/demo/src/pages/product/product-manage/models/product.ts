@@ -18,7 +18,7 @@ interface shopProductProperty {
 }
 interface shopProductItem {
   [key: string]: any;
-  topProductItemId: string; // 电商云商品项ID
+  topProductItemId: string; // 商品项ID
   productItemNo: string; // 商品规格编码
   imageUrl: any[]; // 规格图片
   recommendedPrice: number; // 建议零售价
@@ -33,16 +33,16 @@ interface shopProductItem {
 export interface ProductEntityStateType {
   [key: string]: any;
   id: string; // 基础商品id
-  topProductId: string; // 电商云基础商品ID
+  topProductId: string; // 基础商品ID
   shopId: string; // 店铺id
   shopName: string; //
   categoryId: string; // 分类ID
   categoryName: string; //分类名称
-  categoryType: string; //电商云商品类型(1-蛋糕类,2-面包类,3-成品类,4-饮品类,5-虚拟类)
-  categoryTypeName: string; // 电商云商品类型 名称
+  categoryType: string; //商品类型(1-蛋糕类,2-面包类,3-成品类,4-饮品类,5-虚拟类)
+  categoryTypeName: string; // 商品类型 名称
   type: ''; // 商品类型 1-单品, 2-组合
-  productNo: string; // 电商云商品编码
-  name: string; // 电商云商品名称
+  productNo: string; // 商品编码
+  name: string; // 商品名称
   productName: string; //商品名称
   productTitle: string; // 商品标题
   productDesc: string; //商品卖点
@@ -55,6 +55,7 @@ export interface ProductEntityStateType {
   propertyList: any[];
   shopProductItemList: shopProductItem[]; //商品规格
   isCake: number; // 商品是否是蛋糕
+  labelId: string; // 商品标签
   shopProductDetail: {
     [key: string]: any;
     id: string; //基础商品详情id
@@ -113,6 +114,7 @@ const initProductDetail = (detail: ProductEntityStateType) => {
   detail.shopProductDetail.appContent = '';
   detail.shopProductDetail.pcContent = '';
   detail.isCake = 0;
+  detail.labelId = '0';
   return detail;
 };
 const ProductModel: ProductModelType = {
@@ -272,15 +274,16 @@ const ProductModel: ProductModelType = {
       state.detail.productName = product.productName;
       state.detail.productDesc = product.productDesc;
       state.detail.isCake = product.isCake;
+      state.detail.labelId=product.labelId
       state.detail.imageUrl = product.imageUrl
         ? product.imageUrl.split(',').map((url: string) => {
-            return normalizeFile(url);
-          })
+          return normalizeFile(url);
+        })
         : [];
       state.detail.videoUrl = product.videoUrl
         ? product.videoUrl.split(',').map((url: string) => {
-            return normalizeFile(url);
-          })
+          return normalizeFile(url);
+        })
         : [];
       state.detail.propertyStr = product.propertyStr;
       state.detail.linePrice = isNaN(parseFloat(product.linePrice))
@@ -342,7 +345,7 @@ const ProductModel: ProductModelType = {
       // state.detail.shopProductDetail.pcContent =
       //   product.shopProductDetail.pcContent;
     },
-    // 合并更新电商云详情，转换到本系统产品详情
+    // 合并更新详情，转换到本系统产品详情
     mergeUpdateDsyunDetailToDetail(state, { payload: { product, category } }) {
       let oldShopProductItemList = state.detail.shopProductItemList;
       let oldPropertyList = state.detail.propertyList;
@@ -420,7 +423,7 @@ const ProductModel: ProductModelType = {
       state.detail.propertyList = propertyList;
       state.detail.shopProductItemList = newShopProductItemList;
     },
-    // 设置电商云详情，转换到本系统产品详情
+    // 设置详情，转换到本系统产品详情
     setDsyunDetailToDetail(state, { payload: { product, category } }) {
       state.detail.topProductId = product.topProductId;
       state.detail.categoryType = product.categoryType;
@@ -440,13 +443,13 @@ const ProductModel: ProductModelType = {
       let productDetail = product.productDetail || {};
       state.detail.imageUrl = productDetail.imageList
         ? productDetail.imageList.map((url: string) => {
-            return normalizeFile(url);
-          })
+          return normalizeFile(url);
+        })
         : [];
       state.detail.videoUrl = productDetail.videoUrl
         ? productDetail.videoUrl.split(',').map((url: string) => {
-            return normalizeFile(url);
-          })
+          return normalizeFile(url);
+        })
         : [];
       state.detail.isCake = 0;
       // state.detail.productGroupNameStr=[]

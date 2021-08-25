@@ -23,7 +23,14 @@ import {
 let UserOpus: ConnectRC<any> = (props) => {
   let { onSelectChange } = props;
   let [{ dataSource, tableProps }, { query: showList }] = useRequest<any>({
-    service: diyService.getUserOpus,
+    service: (params: any) => {
+      return diyService.getUserOpus(params).catch(() => {
+        return {
+          list: [],
+          total: 0,
+        };
+      });
+    },
     transform: (res: any) => {
       return {
         data: res.list,
@@ -56,7 +63,7 @@ let UserOpus: ConnectRC<any> = (props) => {
         },
       },
       {
-        type: 'text',
+        type: 'number',
         label: '手机号码',
         name: 'memberMobile',
         props: {
@@ -125,7 +132,14 @@ let DIYTempalte: ConnectRC<any> = ({ history }) => {
   let [selectedUserOpusIds, setSelectedUserOpusIds] = useState([]);
   let [currentStatus, setStatus] = useState<string>('-1');
   let [{ dataSource, tableProps }, { query: showList }] = useRequest<any>({
-    service: diyService.getTemplateList,
+    service: (params: any) => {
+      return diyService.getTemplateList(params).catch(() => {
+        return {
+          list: [],
+          total: 0,
+        };
+      });
+    },
     transform: (res: any) => {
       return {
         data: res.list,
@@ -200,7 +214,7 @@ let DIYTempalte: ConnectRC<any> = ({ history }) => {
         },
       },
       {
-        type: 'text',
+        type: 'number',
         name: 'memberMobile',
         label: '手机',
         props: {

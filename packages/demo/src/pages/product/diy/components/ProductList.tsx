@@ -12,8 +12,13 @@ import { getGroupProductList } from '@/services/product';
 import { ImageView } from '@/components/Image';
 import { useTableSelection } from '@/common/hooks';
 import { PRODUCT } from '@/common/constants';
-
-export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
+import { pick } from 'lodash';
+export let ProductList: React.FC<any> = ({
+  dataItem,
+  onChange,
+  disabledCheckbox,
+  ...restProps
+}) => {
   let [
     { rowSelection, selectedRows },
     { clearAllSelection },
@@ -21,11 +26,14 @@ export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
     keep: true,
     onAllChange: onChange,
     getCheckboxProps(record: any) {
+      let disabled=disabledCheckbox?disabledCheckbox(record):!!record.isOptional
       return {
-        disabled: !!record.isOptional,
+        disabled: disabled
       };
     },
+    ...pick(restProps, 'selectedRows','getCheckboxProps'),
   });
+
   const [{ tableProps, dataSource }, { query: showList }] = useRequest({
     service: getGroupProductList,
     params: {
@@ -53,7 +61,8 @@ export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
           placeholder: '请输入商口名称或商品编号',
           maxLength: 50,
         },
-      }],
+      },
+    ],
     [],
   );
   const columns = useMemo<RichTableColumnType<any>[]>(
@@ -67,7 +76,7 @@ export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
               <ImageView
                 width={60}
                 height={40}
-                src={(record.imageUrl+'').split(',')[0]}
+                src={(record.imageUrl + '').split(',')[0]}
                 srcSuffix="?imageView2/1/w/60/h/40"
               ></ImageView>
               <Space direction="vertical" align="start">
@@ -96,9 +105,9 @@ export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
         },
       },
       {
-        title: '电商云商品分类',
+        title: '商品分类',
         dataIndex: 'categoryName',
-      }
+      },
     ],
     [],
   );
@@ -119,7 +128,7 @@ export let ProductList: React.FC<any> = ({ dataItem, onChange }) => {
   );
 };
 let ProductListModal: React.FC<any> = (props) => {
-  let { dataItem, onOk } = props;
+  let { dataItem, onOk, selectedRows: _selectedRows = [],listProps={} } = props;
   let [selectedRows, setSelectedRows] = useState<any[]>([]);
   let [visible, setVisible] = useControllableValue(props, {
     defaultValue: false,
@@ -138,14 +147,18 @@ let ProductListModal: React.FC<any> = (props) => {
       onOk([...selectedRows]);
     }
   }, [onOk, selectedRows, onCancelHandle]);
+
   useUpdateEffect(() => {
     if (!visible) {
       setSelectedRows([]);
+    } else {
+      setSelectedRows([..._selectedRows]);
     }
   }, [visible]);
   let okText = `确认选择${
     selectedRows.length ? `(${selectedRows.length})` : ''
   }`;
+
   return (
     <Modal
       width="70%"
@@ -156,7 +169,12 @@ let ProductListModal: React.FC<any> = (props) => {
       okText={okText}
       title=" 添加商品"
     >
-      <ProductList dataItem={dataItem} onChange={onChangeHandle}></ProductList>
+      <ProductList
+        dataItem={dataItem}
+        onChange={onChangeHandle}
+        selectedRows={selectedRows}
+        {...listProps}
+      ></ProductList>
     </Modal>
   );
 };

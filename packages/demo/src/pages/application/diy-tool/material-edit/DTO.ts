@@ -22,14 +22,14 @@ export const handleNull = (data) => {
 };
 
 export const handleRemovePathName = (v) => {
-  return v.replace('https://rf..net', '');
+  return v.replace('https://rf.blissmall.net', '');
 };
 
 export const handleAddPathName = (v) => {
   const url = v.replace(/^\//g, '');
   return /(http|https):\/\/([\w.]+\/?)\S*/gi.test(url)
     ? url
-    : `https://rf..net/${url}`;
+    : `https://rf.blissmall.net/${url}`;
 };
 
 export const handleStrToArr = (k, v) => {
@@ -162,6 +162,7 @@ export const getBaseFormInitialValues = (isCreate, data) => {
     name,
     topModelGroupId,
     modelGroupId,
+    parentIds,
     imageUrl,
     url,
     modelToolJson,
@@ -188,7 +189,7 @@ export const getBaseFormInitialValues = (isCreate, data) => {
 
   return {
     topModelGroupId: isCreate ? undefined : String(topModelGroupId),
-    modelGroupId: isCreate ? undefined : String(modelGroupId),
+    modelGroupId: isCreate ? undefined : parentIds.slice(0,-1).split(',').slice(1).concat(modelGroupId).map(d=>parseInt(d)),
     name,
     imageUrl,
     url,
@@ -319,9 +320,9 @@ const circular_defaultCakeInfo = {
   topModelGroupName: '第三方',
   modelGroupName: '勿动',
   name: '粉色蛋糕',
-  imageUrl: 'https://rf..net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
+  imageUrl: 'https://rf.blissmall.net/3b76ac44-890c-48b5-adc7-2fcb14259480.png',
   modelType: 1,
-  url: 'https://rf..net/31088d56-7664-430f-9388-a1de4627a367.glb',
+  url: 'https://rf.blissmall.net/31088d56-7664-430f-9388-a1de4627a367.glb',
   shape: '圆形',
   specs: '20*6cm',
   canMove: false,
@@ -339,12 +340,12 @@ const circular_defaultCakeInfo = {
       color: '#FEDAD8',
       emissive: '#0B0200',
       envMap: [
-        'https://rf..net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
-        'https://rf..net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
-        'https://rf..net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
-        'https://rf..net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
-        'https://rf..net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
-        'https://rf..net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
+        'https://rf.blissmall.net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
+        'https://rf.blissmall.net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
+        'https://rf.blissmall.net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
+        'https://rf.blissmall.net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
+        'https://rf.blissmall.net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
+        'https://rf.blissmall.net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
       ],
       envMapIntensity: 0.4,
     },
@@ -417,9 +418,9 @@ export const VKM_defaultCake = valuesKeyMap(
         modelGroupName: '蛋糕',
         name: '渐变紫色星球蛋糕',
         imageUrl:
-          'https://rf..net/4f8ac8cb-ebd1-42ec-a291-e96b1e4f6a74.png',
+          'https://rf.blissmall.net/4f8ac8cb-ebd1-42ec-a291-e96b1e4f6a74.png',
         modelType: 1,
-        url: 'https://rf..net/93b2d241-ff8c-424f-a8e8-86faead43239.glb',
+        url: 'https://rf.blissmall.net/93b2d241-ff8c-424f-a8e8-86faead43239.glb',
         shape: '球形',
         specs: '20.5*17*12cm',
         deep: 0,
@@ -437,16 +438,16 @@ export const VKM_defaultCake = valuesKeyMap(
             replace: false,
             emissive: '#232328',
             envMap: [
-              'https://rf..net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
-              'https://rf..net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
-              'https://rf..net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
-              'https://rf..net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
-              'https://rf..net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
-              'https://rf..net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
+              'https://rf.blissmall.net/f3f708d8-85d0-420e-9e1e-87f4d074ceef.jpg',
+              'https://rf.blissmall.net/509590e9-a216-4d27-b064-373ad2a643c1.jpg',
+              'https://rf.blissmall.net/ee1547f0-c9b9-4667-93bd-cad805d5d0e1.jpg',
+              'https://rf.blissmall.net/4316d4dc-0d39-40ef-831f-b1f756627dc0.jpg',
+              'https://rf.blissmall.net/646340c2-398c-4003-b9ae-626c9ca8a922.jpg',
+              'https://rf.blissmall.net/b6eb52dd-ffff-4c59-9868-bcfd36c0ab21.jpg',
             ],
             envMapIntensity: 3,
             bumpMap:
-              'https://rf..net/54945458-c0ff-475d-8f44-199b23fa4c57.jpg',
+              'https://rf.blissmall.net/54945458-c0ff-475d-8f44-199b23fa4c57.jpg',
             bumpScale: 1.2,
           },
         ],
