@@ -1,5 +1,5 @@
 /**
- * 重写商品分类
+ * 重写电商云商品分类
  * @author fanyonglong
  */
 import React, { useEffect, useState, useContext, useCallback } from 'react';

@@ -5,7 +5,8 @@
 import { upload } from 'qiniu-js';
 import { getUploadToken } from '@/services/common';
 import moment from 'moment';
-import { getFileExtension, uuid } from '@/utils/util';
+import { getFileExtension } from '@/utils/util';
+import { v4 as uuid } from 'uuid'
 
 export const buindTodayUplaodDir = ({
   beforeDir = 'files',

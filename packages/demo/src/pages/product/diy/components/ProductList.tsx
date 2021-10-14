@@ -105,7 +105,7 @@ export let ProductList: React.FC<any> = ({
         },
       },
       {
-        title: '商品分类',
+        title: '电商云商品分类',
         dataIndex: 'categoryName',
       },
     ],

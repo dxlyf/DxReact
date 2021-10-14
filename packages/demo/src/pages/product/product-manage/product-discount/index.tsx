@@ -9,11 +9,9 @@ import FilterForm, { FilterFormFieldType } from '@/components/FilterForm';
 import * as prudctDiscountService from '@/services/product-discount';
 import { useRequest } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
-import { ImageView } from '@/components/Image';
-import { get } from 'lodash';
 import { DISCOUNT_STATUS } from '@/common/constants/product-discount';
 
-let HomeBanner: ConnectRC<any> = ({ history }) => {
+let ProductDiscount: ConnectRC<any> = ({ history }) => {
   let [{ tableProps, dataSource }, { query: showList }] = useRequest<any>({
     service: prudctDiscountService.getList,
     transform: (res: any) => {
@@ -115,10 +113,24 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
           return (
             <Space>
               <Link to={`discount/view/${record.id}`}>查看</Link>
-              <Button style={{padding:0}} type="link" disabled={record.status==2} onClick={()=>{
-                history.push(`discount/edit/${record.id}`)
-              }}>编辑</Button>
-              <Button style={{padding:0}} type="link" disabled={record.status==2}  onClick={onUpdateStatusHandle.bind(null, record)}>使结束</Button>
+              <Button
+                style={{ padding: 0 }}
+                type="link"
+                disabled={record.status == 2}
+                onClick={() => {
+                  history.push(`discount/edit/${record.id}`);
+                }}
+              >
+                编辑
+              </Button>
+              <Button
+                style={{ padding: 0 }}
+                type="link"
+                disabled={record.status == 2}
+                onClick={onUpdateStatusHandle.bind(null, record)}
+              >
+                使结束
+              </Button>
             </Space>
           );
         },
@@ -148,4 +160,4 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
   );
 };
 
-export default HomeBanner;
+export default ProductDiscount;

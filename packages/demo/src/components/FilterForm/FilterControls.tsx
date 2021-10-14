@@ -75,7 +75,7 @@ const createFilterControl = (defaultConfig: FilterControlType) => {
 };
 const { create, controls } = createFilterControl({
   wrapper: true,
-  render() {},
+  render() { },
   isValidValue(value: any) {
     return value !== undefined && value !== null && value !== '';
   },
@@ -104,10 +104,10 @@ create('list', {
       <Select {...field.props} allowClear>
         {field.data
           ? field.data.map((d: any) => (
-              <Select.Option value={d.value} key={d.value}>
-                {d.text}
-              </Select.Option>
-            ))
+            <Select.Option value={d.value} key={d.value}>
+              {d.text}
+            </Select.Option>
+          ))
           : field.props.children}
       </Select>
     );
@@ -233,6 +233,9 @@ create('sourceChannel', {
   },
 });
 create('dateRangePicker', {
+  isValidValue() {
+    return true;
+  },
   compose(memo, values, field) {
     let fieldName = (field.name as string[]).join('_');
     let value = values[fieldName];
@@ -258,6 +261,9 @@ create('dateRangePicker', {
   },
 });
 create('dateTimeRangePicker', {
+  isValidValue() {
+    return true;
+  },
   compose(memo, values, field) {
     let fieldName = (field.name as string[]).join('_');
     let value = values[fieldName];
@@ -275,8 +281,11 @@ create('dateTimeRangePicker', {
   render(field) {
     return (
       <DatePicker.RangePicker
-        showTime={{ format: 'HH:mm' }}
-        format="YYYY-MM-DD HH:mm"
+        format="YYYY-MM-DD HH:mm:ss"
+        showTime={{
+          format: 'HH:mm:ss',
+          defaultValue: [moment('00:00:00', 'HH:mm:ss'), moment('23:59:59', 'HH:mm:ss')],
+        }}
         style={{ width: '100%' }}
         {...field.props}
       ></DatePicker.RangePicker>

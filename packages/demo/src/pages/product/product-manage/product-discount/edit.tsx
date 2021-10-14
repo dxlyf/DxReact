@@ -32,7 +32,8 @@ import { StoreListModal } from './components/StoreList';
 import GroupProductListModal from '@/pages/product/diy/components/GroupProductList';
 import ProductListModal from '@/pages/product/diy/components/ProductList';
 import { get } from 'lodash';
-import styles from './style.less'
+import { useUpdate } from 'ahooks';
+import styles from './style.less';
 
 const formLayout = {
   wrapperCol: {
@@ -53,7 +54,7 @@ const initialState = () => {
     shopIdList: [],
     products: [],
     productGroup: [],
-    detail:null
+    detail: null,
   };
 };
 const reducerHandle = (state, action) => {
@@ -86,11 +87,12 @@ const reducerHandle = (state, action) => {
 
 const DiscountEdit: React.FC<any> = (props) => {
   let id = props.match?.params.id;
-  let isEdit=typeof id !=='undefined'
+  let isEdit = typeof id !== 'undefined';
   let [modelDetail, dispatch] = useReducer(reducerHandle, null, initialState);
   let [loading, setLoading] = useState(false);
   let [visibleStore, setVisibleStore] = useState(false);
   let [form] = Form.useForm();
+  let forceUpdate = useUpdate();
   const onSubmitHandle = useCallback(
     (values: any) => {
       let submitdata = {
@@ -100,40 +102,51 @@ const DiscountEdit: React.FC<any> = (props) => {
         discountEndTime: values.discountTime[1].format('YYYY-MM-DD HH:mm:ss'),
         discountNum: values.discountNum,
         shopRangeType: values.shopRangeType,
-        shopIdList: modelDetail.shopIdList.map((d)=>d.shopId),
+        shopIdList: modelDetail.shopIdList.map((d) => d.shopId),
         productRangeType: values.productRangeType,
         productIds: modelDetail.products.map((d) => d.shopProductId),
         groupIds: modelDetail.productGroup.map((d) => d.productGroupId),
         couponMutex: values.couponMutex,
       };
-      let p:any;
+      let p: any;
       if (typeof id !== 'undefined') {
         setLoading(true);
-        p=productDiscountService.update(submitdata)
+        p = productDiscountService.update(submitdata);
       } else {
         setLoading(true);
-        p=productDiscountService.add(submitdata)
+        p = productDiscountService.add(submitdata);
       }
-      p.then((d:any) => {
+      p.then((d: any) => {
         setLoading(false);
-        if(d.repeatFlag==true){
+        if (d.repeatFlag == true) {
           Modal.warning({
-            title:"以下商品正在活动中，不能添加。需要移除后，才能保存!",
-            content:(<><table className={styles["goods-table"]}>
-              <thead>
-                  <tr><th>商品编码</th><th>商品名称</th></tr>    
-              </thead>
-              <tbody>
-              {d.shopProductList.map((item,index)=><tr key={index}><td>{item.productNo}</td><td>{item.productName}</td></tr>)}  
-              </tbody>
-          </table></>)
-          })
-          return
+            title: '以下商品正在活动中，不能添加。需要移除后，才能保存!',
+            content: (
+              <>
+                <table className={styles['goods-table']}>
+                  <thead>
+                    <tr>
+                      <th>商品编码</th>
+                      <th>商品名称</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.shopProductList.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.productNo}</td>
+                        <td>{item.productName}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            ),
+          });
+          return;
         }
         message.success('保存成功');
         props.history.push('/product/product-manage/discount');
-      })
-      .catch(() => {
+      }).catch(() => {
         setLoading(false);
       });
     },
@@ -183,67 +196,83 @@ const DiscountEdit: React.FC<any> = (props) => {
     }
   }, [form.getFieldValue('productRangeType'), modelDetail]);
 
-
   const [productModalVisible, setProductModalVisible] = useState(false);
   const [groupProductModalVisible, setGroupProductModalVisible] = useState(
     false,
   );
-  let disableStoreMap=useMemo(()=>{
-    return new Map(modelDetail.shopIdList.filter(d=>d.isNew!==true).map(d=>[d.id,d]))
-  },[modelDetail.shopIdList])
+  let disableStoreMap = useMemo(() => {
+    return new Map(
+      modelDetail.shopIdList
+        .filter((d) => d.isNew !== true)
+        .map((d) => [d.id, d]),
+    );
+  }, [modelDetail.shopIdList]);
 
-  let disableProductMap=useMemo(()=>{
-    return new Map(modelDetail.products.filter(d=>d.isNew!==true).map(d=>[d.id,d]))
-  },[modelDetail.products])
-  let disableProductGroupMap=useMemo(()=>{
-    return new Map(modelDetail.productGroup.filter(d=>d.isNew!==true).map(d=>[d.id,d]))
-  },[modelDetail.productGroup])
+  let disableProductMap = useMemo(() => {
+    return new Map(
+      modelDetail.products
+        .filter((d) => d.isNew !== true)
+        .map((d) => [d.id, d]),
+    );
+  }, [modelDetail.products]);
+  let disableProductGroupMap = useMemo(() => {
+    return new Map(
+      modelDetail.productGroup
+        .filter((d) => d.isNew !== true)
+        .map((d) => [d.id, d]),
+    );
+  }, [modelDetail.productGroup]);
 
-  const onStoreChange = useCallback((rows) => {
-    dispatch({
-      type: 'setShopIdList',
-      payload: rows.map(d=>({...d,shopId:d.id,isNew:!disableStoreMap.has(d.id)})),
-    });
-    form.validateFields(['shopRangeType']);
-    setVisibleStore(false);
-  }, [disableStoreMap]);
-  const onComfirmProduct = useCallback((rows) => {
-    if (rows.length <= 0) {
+  const onStoreChange = useCallback(
+    (rows) => {
+      dispatch({
+        type: 'setShopIdList',
+        payload: rows.map((d) => ({
+          ...d,
+          shopId: d.id,
+          isNew: !disableStoreMap.has(d.id),
+        })),
+      });
+      form.validateFields(['shopRangeType']);
+      setVisibleStore(false);
+    },
+    [disableStoreMap],
+  );
+  const onComfirmProduct = useCallback(
+    (rows) => {
+      dispatch({
+        type: 'setProduct',
+        payload: rows.map((d) => {
+          return {
+            ...d,
+            shopProductId: d.id,
+            productName: d.productName || d.name,
+            isNew: !disableProductMap.has(d.id),
+          };
+        }),
+      });
       setProductModalVisible(false);
-      return;
-    }
-    dispatch({
-      type: 'setProduct',
-      payload: rows.map((d) => {
-        return {
-          ...d,
-          shopProductId:d.id,
-          productName: d.productName || d.name,
-          isNew:!disableProductMap.has(d.id)
-        };
-      }),
-    });
-    setProductModalVisible(false);
-    form.validateFields(['productRangeType']);
-  }, [disableProductMap]);
-  const onComfirmGroupProduct = useCallback((rows) => {
-    if (rows.length <= 0) {
+      form.validateFields(['productRangeType']);
+    },
+    [disableProductMap],
+  );
+  const onComfirmGroupProduct = useCallback(
+    (rows) => {
+      dispatch({
+        type: 'setProductGroup',
+        payload: rows.map((d) => {
+          return {
+            ...d,
+            productGroupId: d.id,
+            isNew: !disableProductGroupMap.has(d.id),
+          };
+        }),
+      });
       setGroupProductModalVisible(false);
-      return;
-    }
-    dispatch({
-      type: 'setProductGroup',
-      payload: rows.map((d) => {
-        return {
-          ...d,
-          productGroupId:d.id,
-          isNew:!disableProductGroupMap.has(d.id)
-        };
-      }),
-    });
-    setGroupProductModalVisible(false);
-    form.validateFields(['productRangeType']);
-  }, [disableProductGroupMap]);
+      form.validateFields(['productRangeType']);
+    },
+    [disableProductGroupMap],
+  );
   useEffect(() => {
     if (!id) {
       return;
@@ -267,26 +296,47 @@ const DiscountEdit: React.FC<any> = (props) => {
         dispatch({
           type: 'init',
           payload: {
-            detail:d,
-            shopIdList: get(d, 'shopRefs', []).map((d) => ({...d,orgId:d.id,id:d.shopId})),
-            products: get(d, 'productRefs', []).map((d) => ({ ...d,orgId:d.id,id:d.shopProductId+"" })),
-            productGroup: get(d, 'groupRefs', []).map((d) => ({ ...d,orgId:d.id,id:d.productGroupId+"" })),
+            detail: d,
+            shopIdList: get(d, 'shopRefs', []).map((d) => ({
+              ...d,
+              orgId: d.id,
+              id: d.shopId,
+            })),
+            products: get(d, 'productRefs', []).map((d) => ({
+              ...d,
+              orgId: d.id,
+              id: d.shopProductId + '',
+            })),
+            productGroup: get(d, 'groupRefs', []).map((d) => ({
+              ...d,
+              orgId: d.id,
+              id: d.productGroupId + '',
+            })),
           },
         });
       });
   }, []);
-  let isView=props.match.path=='/product/product-manage/discount/view/:id'
-  let disabledControls:any={
-      name:isView||isEdit,
-      discountTime:[isView||isEdit,isView],
-      discountNum:isView||isEdit,
-      shopRangeType:isView,
-      productRangeType:isView,
-      couponMutex:isView||isEdit,
-      save:isView
-  }
+  let isView = props.match.path == '/product/product-manage/discount/view/:id';
+  let disabledControls: any = {
+    name: isView || isEdit,
+    discountTime: [isView || isEdit, isView],
+    discountNum: isView || isEdit,
+    shopRangeType: isView,
+    allShop:
+      isView || (isEdit ? form.getFieldValue('shopRangeType') == 1 : false),
+    partialShop:
+      isView || (isEdit ? form.getFieldValue('shopRangeType') == 0 : false),
+    product:
+      isView || (isEdit ? form.getFieldValue('productRangeType') == 1 : false),
+    groupProduct:
+      isView || (isEdit ? form.getFieldValue('productRangeType') == 0 : false),
+    productRangeType: isView,
+    couponMutex: isView || isEdit,
+    save: isView,
+  };
+
   return (
-    <Card>      
+    <Card>
       <Form {...formLayout} form={form} onFinish={onSubmitHandle}>
         <Form.Item
           label="折扣名称"
@@ -316,10 +366,13 @@ const DiscountEdit: React.FC<any> = (props) => {
               current && current.isBefore(moment(), 'day')
             }
             format="YYYY-MM-DD HH:mm:ss"
-            showTime={{ 
-                format: 'HH:mm:ss',
-                defaultValue: [moment('00:00:00', 'HH:mm:ss'), moment('23:59:59', 'HH:mm:ss')],
-        }}
+            showTime={{
+              format: 'HH:mm:ss',
+              defaultValue: [
+                moment('00:00:00', 'HH:mm:ss'),
+                moment('23:59:59', 'HH:mm:ss'),
+              ],
+            }}
           ></DatePicker.RangePicker>
         </Form.Item>
         <Form.Item label="商品折扣" required>
@@ -331,12 +384,17 @@ const DiscountEdit: React.FC<any> = (props) => {
               rules={[
                 {
                   required: true,
-                  type:"number",
+                  type: 'number',
                   message: '请输入商品折扣',
                 },
               ]}
             >
-              <InputNumber precision={2} disabled={disabledControls.discountNum} min={1} max={9.99}></InputNumber>
+              <InputNumber
+                precision={2}
+                disabled={disabledControls.discountNum}
+                min={0.01}
+                max={9.99}
+              ></InputNumber>
             </Form.Item>
             <span>折</span>
           </Space>
@@ -365,16 +423,14 @@ const DiscountEdit: React.FC<any> = (props) => {
             <Radio.Group
               disabled={disabledControls.shopRangeType}
               onChange={(e) => {
-                if (e.target.value == 0) {
-                  dispatch({
-                    type: 'setShopIdList',
-                    payload: [],
-                  });
-                }
+                forceUpdate();
               }}
             >
-              <Radio.Button value={0}>全部店铺</Radio.Button>
+              <Radio.Button value={0} disabled={disabledControls.allShop}>
+                全部店铺
+              </Radio.Button>
               <Radio.Button
+                disabled={disabledControls.partialShop}
                 value={1}
                 onClick={() => {
                   if (!visibleStore) {
@@ -383,7 +439,7 @@ const DiscountEdit: React.FC<any> = (props) => {
                 }}
               >
                 {(form.getFieldValue('shopRangeType') || 0) == 0 ? (
-                  '部分电铺'
+                  '部分店铺'
                 ) : (
                   <Badge
                     offset={[15, -5]}
@@ -421,22 +477,13 @@ const DiscountEdit: React.FC<any> = (props) => {
             ]}
           >
             <Radio.Group
-               disabled={disabledControls.productRangeType}
+              disabled={disabledControls.productRangeType}
               onChange={(e) => {
-                if (e.target.value == 0) {
-                  dispatch({
-                    type: 'setProductGroup',
-                    payload: [],
-                  });
-                } else {
-                  dispatch({
-                    type: 'setProduct',
-                    payload: [],
-                  });
-                }
+                forceUpdate();
               }}
             >
               <Radio.Button
+                disabled={disabledControls.product}
                 value={0}
                 onClick={() => {
                   if (!productModalVisible) {
@@ -447,6 +494,7 @@ const DiscountEdit: React.FC<any> = (props) => {
                 添加商品
               </Radio.Button>
               <Radio.Button
+                disabled={disabledControls.groupProduct}
                 value={1}
                 onClick={() => {
                   if (!groupProductModalVisible) {
@@ -486,14 +534,18 @@ const DiscountEdit: React.FC<any> = (props) => {
         <Form.Item colon={false} label={<span></span>}>
           <Space>
             <Button
-            
               onClick={() => {
                 props.history.push('/product/product-manage/discount');
               }}
             >
               取消
             </Button>
-            <Button type="primary" htmlType="submit" loading={loading} disabled={disabledControls.save}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              disabled={disabledControls.save}
+            >
               保存
             </Button>
           </Space>
@@ -507,22 +559,22 @@ const DiscountEdit: React.FC<any> = (props) => {
           setVisibleStore(false);
         }}
         listProps={{
-          getCheckboxProps:(record)=>{
+          getCheckboxProps: (record) => {
             return {
-              disabled:disableStoreMap.has(record.id)
-            }
-          }
+              disabled: disableStoreMap.has(record.id),
+            };
+          },
         }}
       ></StoreListModal>
       <ProductListModal
         selectedRows={modelDetail.products}
         dataItem={{ id: undefined, relType: 3 }}
         listProps={{
-          getCheckboxProps:(record)=>{
+          getCheckboxProps: (record) => {
             return {
-              disabled:disableProductMap.has(record.id)
-            }
-          }
+              disabled: disableProductMap.has(record.id),
+            };
+          },
         }}
         visible={productModalVisible}
         onOk={onComfirmProduct}
@@ -538,11 +590,11 @@ const DiscountEdit: React.FC<any> = (props) => {
           setGroupProductModalVisible(false);
         }}
         listProps={{
-          getCheckboxProps:(record)=>{
-              return {
-                disabled:disableProductGroupMap.has(record.id)
-              }
-          }
+          getCheckboxProps: (record) => {
+            return {
+              disabled: disableProductGroupMap.has(record.id),
+            };
+          },
         }}
       ></GroupProductListModal>
     </Card>

@@ -45,14 +45,11 @@ import app from './app';
  * 
 */
 
-export const valuesKeyMap = <
-  T extends { [key: string]: any },
-  K extends keyof T
->(
+export const valuesKeyMap = <T extends {[key:string]:any},K extends keyof any>(
   values: T[],
-  ...names: K[]
+  ...names: Array<string>
 ) => {
-  let enums: { [key: string]: T } & {
+  let enums: { [key in K]?: T } & {
     value0?: T;
     value1?: T;
     value2?: T;
@@ -76,7 +73,7 @@ export const valuesKeyMap = <
     values: values,
     enums: enums,
     map: new Map<string | number, T>(
-      names.reduce<any[]>((memo, name: K) => {
+      names.reduce((memo, name) => {
         return memo.concat(values.map((d) => [d[name], d]));
       }, []),
     ),

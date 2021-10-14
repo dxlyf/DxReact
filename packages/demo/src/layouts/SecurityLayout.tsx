@@ -1,3 +1,7 @@
+/**
+ * 商家后台用户登录拦截
+ * @author fanyonglong
+ */
 import React, { FC, useState, useLayoutEffect, useMemo } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
 import { Redirect, ConnectProps, connect, Dispatch, Loading } from 'umi';

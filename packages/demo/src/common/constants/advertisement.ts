@@ -36,4 +36,7 @@ export const ADVERTISE_TYPE = valuesKeyMap([{
 }, {
   value: 2,
   text: "模板Banner"
+}, {
+  value: 3,
+  text: "有赞广告Banner"
 }])

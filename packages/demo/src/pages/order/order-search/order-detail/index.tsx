@@ -39,6 +39,7 @@ import {
 import { useImmer } from 'use-immer';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { get } from 'lodash';
+import { ORDER } from '@/common/constants';
 
 const { Step } = Steps;
 const { Countdown } = Statistic;
@@ -196,6 +197,7 @@ const OrderDetail = (props) => {
     }
   }, []);
   let orderPromotions = get(reqgetOrderDetail, 'data.orderPromotions', []);
+
   return (
     <ProCard split="horizontal">
       {reqgetOrderDetail.data ? (
@@ -225,22 +227,12 @@ const OrderDetail = (props) => {
               {/* 订单状态 0:未支付 1:付款确认中 10:待发货 20：已发货 30:已完成 40:已关闭 */}
               <div className={styles.border} style={{ padding: '20px' }}>
                 <div className={styles.status}>
-                  {reqgetOrderDetail.data.status == 0
-                    ? '待付款'
-                    : reqgetOrderDetail.data.status == 10
-                    ? '待发货'
-                    : reqgetOrderDetail.data.status == 20
-                    ? '已发货'
-                    : reqgetOrderDetail.data.status == 30
-                    ? '已完成'
-                    : reqgetOrderDetail.data.status == 40
-                    ? '已关闭'
-                    : ''}
+                  {ORDER.ORDER_STATUS.get(reqgetOrderDetail.data.status,'text','')}
                 </div>
                 <ProCard>
-                  {reqgetOrderDetail.data.status == 40 ? (
+                  {reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Closed.value ? (
                     reqgetOrderDetail.data.cancelReason
-                  ) : reqgetOrderDetail.data.status == 0 ? (
+                  ) : reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.PendingPayment.value ? (
                     <Countdown
                       value={deadline}
                       valueStyle={{ fontSize: 14 }}
@@ -252,7 +244,7 @@ const OrderDetail = (props) => {
                   )}
                 </ProCard>
 
-                {reqgetOrderDetail.data.status == 40 ? (
+                {reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Closed.value ? (
                   ''
                 ) : (
                   <Button type="primary" onClick={onCancelOrder}>
@@ -261,18 +253,18 @@ const OrderDetail = (props) => {
                 )}
               </div>
               <div style={{ padding: '40px', flexBasis: '70%' }}>
-                {reqgetOrderDetail.data.status == 40 ? (
+                {reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Closed.value ? (
                   ''
                 ) : (
                   <Steps
                     current={
-                      reqgetOrderDetail.data.status == 0
+                      reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.PendingPayment.value
                         ? 1
-                        : reqgetOrderDetail.data.status == 10
+                        : reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.ToBeShipped.value || reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.InStock.value
                         ? 2
-                        : reqgetOrderDetail.data.status == 20
+                        : reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Shipped.value
                         ? 3
-                        : reqgetOrderDetail.data.status == 30
+                        : reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Completed.value
                         ? 4
                         : 0
                     }
@@ -386,9 +378,10 @@ const OrderDetail = (props) => {
               <div className={styles.infoTitle}>付款信息</div>
               <div className={styles.info}>
                 <div>实付金额(元)：</div>
-                {reqgetOrderDetail.data.status == 10 ||
-                reqgetOrderDetail.data.status == 20 ||
-                reqgetOrderDetail.data.status == 30
+                {reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.ToBeShipped.value ||
+                reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Shipped.value ||
+                reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Completed.value ||
+                reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.InStock.value
                   ? `￥${toPrice(reqgetOrderDetail.data.payAmount)}`
                   : '-'}
               </div>
@@ -461,7 +454,6 @@ const OrderDetail = (props) => {
                   祝福贺卡：
                   {reqgetOrderDetail.data.blessInfoList[0].greetCard || '-'}
                 </div>
-            
               </div>
             </div>
           </ProCard>
@@ -498,13 +490,7 @@ const OrderDetail = (props) => {
             <div className={styles.infoBottom}>
               <div>优惠：</div>
               <span>
-                ￥
-                {toPrice(
-                  get(reqgetOrderDetail, 'data.orderPromotions', []).reduce(
-                    (a, b) => a + b.discountAmount,
-                    0,
-                  ),
-                )}
+                ￥{toPrice(get(reqgetOrderDetail, 'data.promotionAmount', 0))}
               </span>
             </div>
             <div className={styles.infoBottom}>
@@ -514,9 +500,10 @@ const OrderDetail = (props) => {
             <div className={styles.infoBottom}>
               <div>实付金额：</div>
               <span>
-                {reqgetOrderDetail.data.status == 10 ||
-                reqgetOrderDetail.data.status == 20 ||
-                reqgetOrderDetail.data.status == 30
+                {reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.ToBeShipped.value ||
+                reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Shipped.value ||
+                reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.Completed.value ||
+                reqgetOrderDetail.data.status == ORDER.ORDER_STATUS.enums.InStock.value
                   ? `￥${toPrice(reqgetOrderDetail.data.payAmount)}`
                   : '-'}
               </span>

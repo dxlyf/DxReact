@@ -97,6 +97,14 @@ let OrderList: ConnectRC<any> = ({ history }) => {
       },
     },
   );
+  const onStatusTabChange = useCallback((value) => {
+    setStatus(value + '');
+    filterRef.current?.form.setFieldsValue({
+      status: Number(value),
+    });
+    filterRef.current?.query();
+  }, []);
+
   const fields = useMemo<FilterFormFieldType[]>(
     () => [
       {
@@ -149,6 +157,11 @@ let OrderList: ConnectRC<any> = ({ history }) => {
         name: 'status',
         initialValue: -1,
         data: OrderStatusList,
+        props:{
+          onChange:(value)=>{
+            onStatusTabChange(value)
+          }
+        }
       },
       {
         type: 'dateRange',
@@ -162,7 +175,7 @@ let OrderList: ConnectRC<any> = ({ history }) => {
         initialValue: -1,
       },
     ],
-    [],
+    [onStatusTabChange],
   );
   const onCancelOrder = useCallback((record) => {
     Modal.confirm({
@@ -316,7 +329,7 @@ let OrderList: ConnectRC<any> = ({ history }) => {
           ) : (
             <div>
               {Number(record.payAmount * 0.01).toFixed(2)}
-              {record.status === ORDER.ORDER_STATUS.enums.value0.value ? (
+              {record.status === ORDER.ORDER_STATUS.enums.PendingPayment.value ? (
                 <p>
                   <a onClick={openPriceModal.bind(null, '订单改价', record)}>
                     修改价格
@@ -341,7 +354,7 @@ let OrderList: ConnectRC<any> = ({ history }) => {
             return { props: { colSpan: 0 } };
           }
           switch (record.status) {
-            case ORDER.ORDER_STATUS.enums.value5.value:
+            case ORDER.ORDER_STATUS.enums.Closed.value:
               return { props: { colSpan: 0 } };
             default:
               return <a onClick={onCancelOrder.bind(null, record)}>取消订单</a>;
@@ -351,13 +364,6 @@ let OrderList: ConnectRC<any> = ({ history }) => {
     ],
     [onCancelOrder, openPriceModal],
   );
-  const onStatusTabChange = useCallback((value) => {
-    setStatus(value + '');
-    filterRef.current?.form.setFieldsValue({
-      status: Number(value),
-    });
-    filterRef.current?.query();
-  }, []);
 
   return (
     <Space direction="vertical" className="m-list-wrapper">

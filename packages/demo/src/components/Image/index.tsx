@@ -5,7 +5,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Spin, Image as AntImage, ImageProps } from 'antd';
 import app from '@/utils/app';
-
 interface ImageViewProps extends ImageProps {
   src: string;
   srcSuffix?: string;
@@ -33,6 +32,7 @@ export let ImageView: React.FC<ImageViewProps> = ({
     }
     return propPreview;
   }, [propPreview]);
+
   return (
     <AntImage
       preview={preview}
@@ -42,4 +42,22 @@ export let ImageView: React.FC<ImageViewProps> = ({
     ></AntImage>
   );
 };
+type ImageGroupPreviewProps={
+  images:string[]
+  visible:boolean
+  onVisibleChange?:(visible:boolean,preVisible:boolean)=>void
+  privewProps?:any
+}
+export let ImageGroupPreview:React.FC<ImageGroupPreviewProps>=(props)=>{
+   let {images,visible,onVisibleChange,privewProps}=props
+   return  <div style={{ display: 'none' }}>
+   <AntImage.PreviewGroup  preview={{...(privewProps||{}), visible:visible, onVisibleChange: (visible,preVisible) =>{
+       if(onVisibleChange){
+          onVisibleChange(visible,preVisible)
+       }
+   } }}>
+   {images.map((src,index)=><ImageView key={index+src} src={src} />)}
+   </AntImage.PreviewGroup>
+</div>
+}
 export let PreviewGroup = AntImage.PreviewGroup;

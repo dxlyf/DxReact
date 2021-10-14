@@ -170,7 +170,7 @@ let DSYunProductListModal: React.FC<any> = (props) => {
       visible={visible}
       footer={null}
       onCancel={onCancelHandle}
-      title="基础商品库列表"
+      title="电商云基础商品库列表"
     >
       <DSYunProductList
         dataItem={dataItem}

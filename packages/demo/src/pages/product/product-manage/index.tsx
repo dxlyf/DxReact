@@ -106,7 +106,7 @@ let ProductManage: ConnectRC<any> = ({ history }) => {
         },
       },
       {
-        title: '商品分类',
+        title: '电商云商品分类',
         dataIndex: 'categoryName',
       },
       {

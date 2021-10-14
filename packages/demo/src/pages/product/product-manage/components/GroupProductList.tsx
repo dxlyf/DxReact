@@ -97,7 +97,7 @@ export let GroupProductList: React.FC<any> = ({ dataItem, onChange }) => {
         },
       },
       {
-        title: '商品分类',
+        title: '电商云商品分类',
         dataIndex: 'categoryName',
       }
     ],

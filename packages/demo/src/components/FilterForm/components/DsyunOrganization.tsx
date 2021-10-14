@@ -1,5 +1,5 @@
 /**
- * 重写组织控件
+ * 重写电商云组织控件
  * @author fanyonglong
  */
 import React, { useEffect, useState, useContext, useCallback } from 'react';
