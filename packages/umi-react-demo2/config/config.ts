@@ -8,6 +8,8 @@ export default defineConfig({
     { path: '/', component: '@/pages/index' },
   ],
   fastRefresh: {},
-  //webpack5:{},
-//  mfsu:{}
+  webpack5:{},
+  mfsu:{
+    
+  }
 });

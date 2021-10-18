@@ -31,15 +31,6 @@ enum ERROR_TYPE {
   REDIRECT = 4, // 重定向
   SLIENT = 5, // 不自动处理
 }
-type CustomeRequestOptions = {
-  skipErrorHandler?: boolean; // 跳过错误自动处理
-} & RequestOptionsInit;
-type CustomeResonseError = {
-  isBusinessError?: boolean;
-  request: {
-    options: CustomeRequestOptions;
-  } & ResponseErrorType['request'];
-} & ResponseErrorType;
 
 type ErrorInfoType = {
   type: number;
@@ -50,7 +41,7 @@ type ErrorInfoType = {
 const request = extend({
   timeout: 60000,
   getResponse: true,
-  errorHandler(error: CustomeResonseError) {
+  errorHandler(error) {
     let { request, response, data } = error;
     let errorInfo: ErrorInfoType;
     if (error.type === 'ResponseError') {
