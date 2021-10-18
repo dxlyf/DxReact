@@ -2,11 +2,12 @@ import { defineConfig } from 'umi';
 
 export default defineConfig({
   nodeModulesTransform: {
-    type: 'none',
+    type: 'none'
   },
   routes: [
     { path: '/', component: '@/pages/index' },
   ],
   fastRefresh: {},
-  webpack5:{}
+  //webpack5:{},
+//  mfsu:{}
 });
