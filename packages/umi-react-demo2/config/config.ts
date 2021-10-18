@@ -1,15 +1,22 @@
 import { defineConfig } from 'umi';
+import routes from './routes';
+import path from 'path';
 
 export default defineConfig({
+  title: false,
+  outputPath: 'build',
   nodeModulesTransform: {
-    type: 'none'
+    type: 'none',
   },
-  routes: [
-    { path: '/', component: '@/pages/index' },
-  ],
+  define: {
+    SYSTEM_REQUEST_PREFIX: '/apis/',
+  },
+  dva: {
+    immer: true,
+  },
+  hash: true,
+  forkTSChecker: {},
+  routes: routes,
   fastRefresh: {},
-  webpack5:{},
-  mfsu:{
-    
-  }
+  plugins: [path.resolve(__dirname, 'plugins', 'env.ts')],
 });
