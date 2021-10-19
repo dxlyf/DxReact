@@ -1,21 +1,4 @@
-import {defineKeyValueMap,KeyValueData} from '@/utils/util'
 
-export const SYSTEM_THEME={
-
-}
-export const BROWSER_ENV={
-    IE:'ie',
-    CHROME:'chrome'
-}
-
-
-export const PRODUCT_STATUS = defineKeyValueMap<KeyValueData,'unPublished'|'Published'>([{
-    key:'unPublished',
-    value:1,
-    text:'未发布'
-},{
-    key:'Published',
-    value:2,
-    text:'已发布'
-}])
-
+export const SYSTEM_USER_DATA = 'SYSTEM_USER_DATA';
+export const SYSTEM_LOGIN_PAGE="/login"
+export const SYSTEM_LOGIN_TOKEN='token'

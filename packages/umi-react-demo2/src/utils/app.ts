@@ -3,7 +3,10 @@
  * 全局单例实例
  * @author fanyonglong
  */
-const SYSTEM_USER_DATA = 'SYSTEM_USER_DATA';
+import {history} from 'umi'
+import {stringify} from 'querystring'
+import {SYSTEM_USER_DATA,SYSTEM_LOGIN_PAGE,SYSTEM_LOGIN_TOKEN} from '@/constants'
+
 class StorgaData<T> {
   data: { [key in string]: any };
   constructor(private key: string) {
@@ -65,10 +68,17 @@ class App {
     );
   }
   setToken(token: any) {
-    this.storage.set('token', token);
+    this.storage.set(SYSTEM_LOGIN_TOKEN, token);
   }
   getToken() {
-    return this.storage.get('token');
+    return this.storage.get(SYSTEM_LOGIN_TOKEN);
+  }
+  goLogin(){
+    history.push(
+      `${SYSTEM_LOGIN_PAGE}?${stringify({
+        redirect: window.location.pathname,
+      })}`,
+    );
   }
 }
 

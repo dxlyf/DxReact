@@ -1,4 +1,41 @@
 
+
+import { uniqueId, has } from 'lodash-es';
+import {v4 as uuidv4} from 'uuid'
+import app from './app';
+
+export const getFileName = (url: string) => {
+  let index = url.lastIndexOf('/');
+  return url.substring(index + 1);
+};
+export const normalizeFile = (url: string) => {
+  return {
+    uid: uniqueId('file'),
+    originalUrl: url,
+    url: app.toImageUrl(url),
+    name: getFileName(url),
+  };
+};
+export const transformFilesToUrls = (fileList: any) => {
+  if (!Array.isArray(fileList)) {
+    return [];
+  }
+  return fileList.map((file: any) => {
+    if (file.response) {
+      return file.response.url;
+    }
+    return file.originalUrl || file.url;
+  });
+};
+
+export function getFileExtension(filename: string, opts?: any) {
+  if (!opts) opts = {};
+  if (!filename) return '';
+  var ext = (/[^./\\]*$/.exec(filename) || [''])[0];
+  return opts.preserveCase ? ext : ext.toLowerCase();
+}
+ 
+export const uuid=uuidv4
 export type KeyValueData={
     key:string 
     text?:string

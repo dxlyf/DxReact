@@ -20,7 +20,7 @@ export default (api: IApi) => {
   });
   
   api.onStart(async ({ args }) => {
-    console.log('args', args);
+
     let envConfig = api.config.envConfig.env;
     let getConfig = api.config.envConfig.config;
     try {
@@ -39,12 +39,8 @@ export default (api: IApi) => {
         },
       ]);
       api.modifyConfig((memo) => {
-        let newConfig =
-          (getConfig && getConfig(res.env, envConfig[res.env])) || {};
-        return {
-          ...memo,
-          ...newConfig,
-        };
+        let newConfig =(getConfig && getConfig(res.env, envConfig[res.env])) || {};
+        return api.utils.mergeConfig(memo,newConfig)
       });
       let newConfig =
         (getConfig && getConfig(res.env, envConfig[res.env])) || {};
