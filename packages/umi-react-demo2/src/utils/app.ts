@@ -5,6 +5,7 @@
  */
 import {history} from 'umi'
 import {stringify} from 'querystring'
+import {clone} from 'lodash-es'
 import {SYSTEM_USER_DATA,SYSTEM_LOGIN_PAGE,SYSTEM_LOGIN_TOKEN} from '@/constants'
 
 class StorgaData<T> {
@@ -43,6 +44,7 @@ class StorgaData<T> {
     return this.data;
   }
 }
+
 class App {
   clientType: number = 1; // 客户端类型（1-运营后台,2-小程序，3-骑手APP,4-门店APP）
   storage: StorgaData<{ token: string }>;
@@ -52,8 +54,14 @@ class App {
     this.storage = new StorgaData(SYSTEM_USER_DATA);
     this.resourceConfig = {};
   }
+  get currentUserAuthority(){
+      if(!this._currentUser){
+        return []
+      }
+      return []
+  }
   set currentUser(value) {
-    this._currentUser = value;
+    this._currentUser = value?clone(value):value;
   }
   get currentUser() {
     return this._currentUser;

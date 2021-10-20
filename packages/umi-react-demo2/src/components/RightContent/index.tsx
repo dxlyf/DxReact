@@ -7,6 +7,7 @@ import {
   QuestionCircleOutlined,
   LogoutOutlined,
   SettingOutlined,
+  ApiOutlined
 } from '@ant-design/icons';
 import React, { useCallback } from 'react';
 import { connect, ConnectProps, ConnectRC, history } from 'umi';
@@ -36,7 +37,9 @@ const RightContent: React.FC<Partial<RightContentProps>> = ({
 
   const onMenuClick = useCallback(
     (item) => {
-      if (item.key === 'logout') {
+      if (item.key === 'docs') {
+        window.open(location.origin+'/~docs','_blank')
+      }else if (item.key === 'logout') {
         dispatch!({
           type: 'user/logout',
         });
@@ -46,6 +49,10 @@ const RightContent: React.FC<Partial<RightContentProps>> = ({
   );
   const menuHeaderDropdown = (
     <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
+      <Menu.Item key="docs">
+        <ApiOutlined />
+        文档
+      </Menu.Item>
       <Menu.Item key="logout">
         <LogoutOutlined />
         退出登录

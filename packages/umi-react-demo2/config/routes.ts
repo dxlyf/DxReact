@@ -1,5 +1,3 @@
-var isDev=process.env.UMI_ENV=='dev'
-
 export default [
   {
     path: '/',

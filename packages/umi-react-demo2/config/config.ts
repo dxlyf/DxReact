@@ -6,11 +6,6 @@ export default defineConfig({
   nodeModulesTransform: {
     type: 'none',
   },
-  // polyfill:{
-  //   imports: [
-  //     'core-js/stable',
-  //   ]
-  // },
   define: {
     SYSTEM_REQUEST_PREFIX: '/apis/',
   },
@@ -36,7 +31,7 @@ export default defineConfig({
       type:"image/png",
       href:"https://rf.blissmall.net/static/weixin_share_logo.png"
   }],
+   // mfsu:{} 不开启，当前umi版本msfu待优化
   // dumi
   ...dumiConfig
- // mfsu:{} 不开启，当前版本msfu待优化
 });

@@ -51,10 +51,10 @@ const request= extend({
   timeout: 60000,
   getResponse: true,
   errorHandler(error: CustomeResonseError) {
-    let { request, response, data } = error;
     let errorInfo: ErrorInfoType;
     // 如果是后台状态码code!=0，服务器返回操作失败等错误
     if (error.type === 'BusinessError') {
+      let { request, data } = error;
       error.isBusinessError = true;
       // 登录状态失效时,跳转登录
       if (
@@ -82,7 +82,7 @@ const request= extend({
       // http请求错误或响应错误或未知错误
       errorInfo = {
         type: ERROR_TYPE.NOTIFICATION,
-        message: data.message,
+        message: error.message,
       };
     }
     if (errorInfo) {
@@ -140,7 +140,7 @@ request.use(async function (ctx, next) {
   throw new ResponseError(
     ctx.res.response,
     '业务错误',
-    ctx.res.data,
+    ctx.res,
     ctx.req,
     'BusinessError',
   ) as ResponseError;

@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { Effect, ImmerReducer, Reducer } from 'umi';
-import { setCurrentUserAuthority } from '@/components/Authorized';
 import app from '@/utils/app';
 export interface UserModelState {
   currentUser: any;
@@ -22,11 +21,17 @@ export interface UserModelType {
 const UserModel: UserModelType = {
   namespace: 'user',
   state: {
-    currentUser: {}, //当前登录用户信息
+    currentUser: null, //当前登录用户信息
   },
   effects: {
     *getUserInfo({ payload }, { call, put, all }) {
-      
+        yield put({
+          type:"setCurrentUser",
+          payload:{
+              avatar:require('@/assets/images/128.png'),
+              firstName:"admin"
+          }
+        })
     },
     *login({ payload }, { call, put }: { put: any; call: any }) {
     
@@ -40,12 +45,8 @@ const UserModel: UserModelType = {
   },
   reducers: {
     setCurrentUser(state, { payload }) {
-      let permissionCodeSet = payload?.permissionCodeSet
-        ? [...payload?.permissionCodeSet]
-        : [];
-      setCurrentUserAuthority(permissionCodeSet);
-      state.currentUser = payload;
-      app.currentUser = payload;
+      state.currentUser = payload
+      app.currentUser = payload
     },
   },
 };

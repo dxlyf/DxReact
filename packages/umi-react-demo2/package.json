@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "start": "cross-env FORK_TS_CHECKER=1 PORT=8825 UMI_ENV=dev umi dev",
+    "start": "cross-env UMI_UI=0 FORK_TS_CHECKER=1 PORT=8825 UMI_ENV=dev umi dev",
     "build": "umi build",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
@@ -36,15 +36,14 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@types/inquirer": "^8.1.3",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@umijs/plugin-esbuild": "^1.3.1",
     "@umijs/preset-dumi": "^1.1.30",
     "@umijs/preset-react": "1.x",
+    "@umijs/preset-ui": "^2.2.9",
     "@umijs/test": "^3.5.20",
     "cross-env": "^7.0.3",
-    "inquirer": "^8.2.0",
     "lint-staged": "^10.0.7",
     "prettier": "^2.2.0",
     "react-dev-inspector": "^1.7.0",

@@ -1,4 +1,4 @@
-# umi project
+# admin project
 
 ## Getting Started
 

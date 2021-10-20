@@ -7,7 +7,7 @@ import { PageLoading } from '@ant-design/pro-layout';
 import { Redirect, ConnectProps, connect, Dispatch, Loading } from 'umi';
 import { stringify } from 'querystring';
 import { UserModelState } from '@/models/user';
-
+import {SYSTEM_LOGIN_PAGE} from '@/constants'
 type SecurityLayoutProps = {
   loading: boolean;
   user: UserModelState;
@@ -44,8 +44,8 @@ const SecurityLayout: FC<SecurityLayoutProps> = ({
   if ((!isLogin && loading) || !isReady) {
     return <PageLoading />;
   }
-  if (!isLogin && location.pathname !== '/login') {
-    return <Redirect to={`/login?${queryString}`} />;
+  if (!isLogin && location.pathname !== SYSTEM_LOGIN_PAGE) {
+    return <Redirect to={`${SYSTEM_LOGIN_PAGE}?${queryString}`} />;
   }
   return children as any;
 };

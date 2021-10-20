@@ -1,31 +1,35 @@
 /**
  * 文档集成编译配置
 */
-export default {
+const config={
     mode: 'site',
     menus: {
        "/business":[{
             title:"业务",
-            children:['business/index.md']
+            path:"business/index.md"
        }],
-       '/components':[{
-           title:"组件",
-           children:['components/index.md']
+       '/guide':[{
+           title:"指南",
+           path:'guide/index.md',
+           children:["guide/constant.md"]
        }]
     },
-    // 多语言配置方式如下
     navs:  [
         {
-            title: 'GitHub',
-            path: 'https://github.com/umijs/dumi',
+            title:"指南",
+            path: '/guide',
         },
         {
             title:"业务文档",
-            path:"/business"
+            path:"/business",
         },
         {
             title:"组件文档",
             path:"/components"
         }
     ],
+    resolve:{
+        includes:['docs',"src/components"]
+    }
 }
+export default config

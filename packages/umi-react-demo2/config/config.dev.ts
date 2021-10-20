@@ -5,7 +5,8 @@ export default defineConfig({
   mock: {},
   plugins: [
     'react-dev-inspector/plugins/umi/react-inspector',
-    path.resolve(__dirname, 'plugins', 'env.ts')],
+    path.join(__dirname,'plugins/env.ts'),
+    path.join(__dirname,'plugins/generate.ts')],
   inspectorConfig: {
     exclude: [],
     babelPlugins: [],

@@ -17,6 +17,9 @@ type UploadImageProp = {
   uploadBtnText?: string;
   descption?: any;
   draggleSort?: boolean;
+  /**
+   * @description 上传目录
+   */
   uploadDir?: string;
   onChange?: (fileList: any) => void;
 } & UploadProps;
@@ -208,7 +211,7 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
   );
 };
 
-export const useUplaodImage: (options?: any) => any = (options: any = {}) => {
+export const useUploadImage: (options?: any) => any = (options: any = {}) => {
   let { limitCount = 1, initialValue = [], message } = options;
   let rules = useMemo(
     () => [

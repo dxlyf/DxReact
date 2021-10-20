@@ -3,10 +3,9 @@
  * @author fanyonglong
  */
 import React, { FC } from 'react';
+import app from '@/utils/app'
 
 type authorityList = any[];
-let CURRENT_USER_AUTHORITY: authorityList = []; // 当前登录用户权限列表
-
 export const checkPermissions = <T, K>(
   authority: authorityList,
   currentAuthority: any,
@@ -52,11 +51,6 @@ const Authorized: FC<AuthorizedProps> = ({
     return checkAuthorize(currentAuthority, child, noMatch);
   });
 };
-export const setCurrentUserAuthority = (
-  currentUserAuthority: authorityList,
-) => {
-  CURRENT_USER_AUTHORITY = currentUserAuthority;
-};
 
 export const checkAuthorize = (
   currentAuthority: any,
@@ -64,7 +58,7 @@ export const checkAuthorize = (
   noAuthority: any = false,
 ) => {
   return checkPermissions(
-    CURRENT_USER_AUTHORITY,
+    app.currentUserAuthority,
     currentAuthority,
     yesAuthority,
     noAuthority,
