@@ -53,9 +53,9 @@ group:
  }
 ```
 ```ts
-import {defineKeyValueMap,KeyValueData} from '@/utils/util'
-// 显性定义key字面文本,用于typescript 语法提示
-export const PRODUCT_STATUS = defineKeyValueMap<KeyValueData,'unPublished'|'Published'>([{
+import {defineKeyValueMap} from '@/utils/util'
+// 通过定义key和value,通过typescript类型约束会自动提示 
+export const PRODUCT_STATUS = defineKeyValueMap([{
     key:'unPublished',
     value:1,
     text:'未发布'
@@ -64,7 +64,7 @@ export const PRODUCT_STATUS = defineKeyValueMap<KeyValueData,'unPublished'|'Publ
     value:2,
     text:'已发布'
 }])
- //显示文本
+ //显示文本 
  PRODUCT_STATUS.text(1)或PRODUCT_STATUS('unPublished')
  // 状态判断
  PRODUCT_STATUS.value('unPublished')==productItem.status

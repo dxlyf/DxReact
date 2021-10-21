@@ -56,16 +56,15 @@ const postMenuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
 
 const BasicLayout: React.FC<any> = ({ children }) => {
   const { menuData, currentMenu, breadcrumb } = useContext(RouteContext);
-  if (currentMenu && currentMenu.redirect) {
-    return children as React.ReactElement;
-  }
-  if (!currentMenu || (currentMenu && !currentMenu.component)) {
-    return <Status404></Status404>;
-  }
-
+  // if (currentMenu && currentMenu.redirect) {
+  //   return children as React.ReactElement;
+  // }
+  // if (!currentMenu || (currentMenu && !currentMenu.component)) {
+  //   return <Status404></Status404>;
+  // }
   return (
     <PageContainer title={false} extra={false}>
-      {!currentMenu.authority?children:<Authorized
+      {!currentMenu||(currentMenu&&!currentMenu.authority)?children:<Authorized
         authority={currentMenu.authority}
         noMatch={<Status403></Status403>}>
         {children}

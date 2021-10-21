@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "start": "cross-env UMI_UI=0 FORK_TS_CHECKER=1 PORT=8825 UMI_ENV=dev umi dev",
+    "start": "cross-env UMI_UI=1 FORK_TS_CHECKER=1 PORT=8825 UMI_ENV=dev umi dev",
     "build": "umi build",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",

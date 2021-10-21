@@ -1,29 +1,22 @@
 export default [
   {
     path: '/',
-    component: '@/layouts/BlankLayout',
+    component:'@/layouts/BasicLayout',
+    wrappers: ['@/layouts/BlankLayout', '@/layouts/SecurityLayout'],
     routes: [
       {
-        path: '/',
-        component: '@/layouts/SecurityLayout',
-        routes: [
-          {
-            path: '/',
-            component: '@/layouts/BasicLayout',
-            routes: [
-              {
-                path: '/',
-                name: '首页',
-                component: './index',
-              },
-              {
-                path: '*',
-                component: 'exception/404',
-              },
-            ],
-          },
-        ],
+        path:"/",
+        redirect:'/home'
       },
+      {
+        path: '/home',
+        name: '首页',
+        component: './index'
+      },
+      {
+        component: 'exception/404',
+      }
     ],
-  },
+  }
+
 ];

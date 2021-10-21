@@ -34,42 +34,62 @@ export function getFileExtension(filename: string, opts?: any) {
 }
  
 export const uuid=uuidv4
-export type KeyValueData={
-    key:string 
+export type KeyValueData<T extends string,K extends string|number>={
+    key:T 
     text?:string
-    value:number|string
-}
-export function defineKeyValueMap<T extends KeyValueData,K extends string|number>(data:T[]):{
-    get(key:K):T
-    value(key:K,defaultValue?:any):any
-    text(key:K,defaultValue?:any):any
-    map:Map<K,T>
-    data:T[]
-};
-
-export function defineKeyValueMap<T extends KeyValueData>(data:T[]){
-    let map=new Map<string|number,T>()
+    value:K,
+    [key:string]:any
+} 
+export function defineKeyValueMap<T extends string=string,K extends string|number=string|number>(data:Array<KeyValueData<T,K>>){
+    let map=new Map<T|K,KeyValueData<T,K>>()
     data.forEach((item,index)=>{
-        if(typeof item.key == 'string'){
-            map.set(item.key,item)
-        }
+        map.set(item.key,item)
         map.set(item.value,item)
     })
     
     return {
-        get(key:any){
+        get(key:T|K){
             if(!map.has(key)){
                 throw new Error(key+'不存在!')
             }
             return map.get(key)
         },
-        text(key:any,defaultValue=''){
+        text(key:T|K,defaultValue:any=''){
             return map.has(key)?map.get(key)?.text:defaultValue
         },
-        value(key:any,defaultValue=''){
+        value(key:T|K,defaultValue:any=''){
             return map.has(key)?map.get(key)?.value:defaultValue
         },
         map,
         data
     }
 }
+// var STATUS=defineKeyValueMap([{
+//   key:"error",
+//   value:1,
+//   text:"错误"
+// },{
+//   key:'success',
+//   value:2,
+//   text:'成功'
+// }])
+
+
+// interface AType<T extends string>{
+//   name:T
+// }
+// type ATypeResult<T extends string=string>={[id in T]:AType<T>}
+// function getData<T extends string=string>(data:Array<AType<T>>):ATypeResult<T>{
+//     var result={} as ATypeResult<T>
+//     data.forEach(d=>{
+//         result[d.name]=d
+//     })
+//     return result
+// }
+// var d=getData([{
+//   name:"a"
+// },{
+//   name:"b"
+// }])
+
+
