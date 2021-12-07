@@ -1,11 +1,11 @@
 import { valuesKeyMap } from '@/utils/util';
 
-export const ORDER_STATUS = valuesKeyMap<{value:number,text:string,enum?:string,visible?:boolean},"PendingPayment"|"InStock"|"Shipped"|"Completed"|"Closed"|"ToBeShipped">(
+export const ORDER_STATUS = valuesKeyMap(
   [
     {
       value: 0,
       text: '待付款',
-      enum:"PendingPayment",
+      enum: 'PendingPayment',
     },
     {
       value: 1,
@@ -15,27 +15,27 @@ export const ORDER_STATUS = valuesKeyMap<{value:number,text:string,enum?:string,
     {
       value: 10,
       text: '待发货',
-      enum:"ToBeShipped"
+      enum: 'ToBeShipped',
     },
     {
       value: 14,
       text: '备货中',
-      enum:'InStock'
+      enum: 'InStock',
     },
     {
       value: 20,
       text: '已发货',
-      enum:'Shipped'
+      enum: 'Shipped',
     },
     {
       value: 30,
       text: '已完成',
-      enum:'Completed'
+      enum: 'Completed',
     },
     {
       value: 40,
       text: '已关闭',
-      enum:"Closed"
+      enum: 'Closed',
     },
   ],
   'value',

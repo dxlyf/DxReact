@@ -49,7 +49,8 @@ import { useImmer } from 'use-immer';
 import { detailModel, addModel, editModel } from '@/services/diyModel';
 import { v4 as uuid } from 'uuid';
 import G from './three/globalValues';
-import ModelGroup from '../components/ModelGroup'
+import ModelGroup from '../components/ModelGroup';
+import moment from 'moment';
 
 const { Link } = Anchor;
 
@@ -165,8 +166,11 @@ const MaterialEdit = (props) => {
   // 防止多次start模型
   const startLoad = useRef(false);
   const [cakeSelect, setCakeSelect] = useState(VKM_defaultCake);
-  const [collisionPointGroupValue, setCollisionPointGroupValue] =
-    useState(null);
+  const [collisionPointGroupValue, setCollisionPointGroupValue] = useState(
+    null,
+  );
+  // 设置模型文件更新时间
+  const [fileUpdateDate, setFileUpdateDate] = useState<any>();
   // console.log(
   //   '🚀 ~ file: index.tsx ~ line 167 ~ MaterialEdit ~ cakeSelect',
   //   cakeSelect,
@@ -254,6 +258,9 @@ const MaterialEdit = (props) => {
       // 设置低模
       setCollisionPointGroupValue(data.collisionPointGroup || null);
 
+      // 设置模型文件更新时间
+      setFileUpdateDate(data.fileUpdateDate);
+
       shapeHandle(data.type);
       specsHandle(data.shape);
 
@@ -300,7 +307,6 @@ const MaterialEdit = (props) => {
     },
   });
 
-
   const addDiyMaterialValue = useRequest(addModel, {
     manual: true,
     onSuccess: () => {
@@ -337,7 +343,6 @@ const MaterialEdit = (props) => {
   }, [prewContentRef]);
 
   useMount(() => {
-
     if (!isCreate) {
       reqDetailModel.run({
         id: materialId,
@@ -394,6 +399,7 @@ const MaterialEdit = (props) => {
     const values_attribute = await attributeForm.current.validateFields();
     // 低模
     const collisionPointGroup = three.getCollisionPointGroup();
+
     // 没有值就设置为0
     if (
       includesType([1, 2, 4, 7, 8, 10], values_base.type) &&
@@ -416,8 +422,8 @@ const MaterialEdit = (props) => {
     );
 
     resultData = {
-      topModelGroupId:modelGroupId[0],
-      modelGroupId:modelGroupId[modelGroupId.length-1],
+      topModelGroupId: modelGroupId[0],
+      modelGroupId: modelGroupId[modelGroupId.length - 1],
       name,
       imageUrl,
       modelType: type,
@@ -429,6 +435,8 @@ const MaterialEdit = (props) => {
         type: dict.type.valObj[String(type)],
         collisionPointGroup,
         materials,
+        // 设置模型文件更新时间
+        fileUpdateDate,
       }),
     };
 
@@ -452,6 +460,8 @@ const MaterialEdit = (props) => {
       resultData.materials = [];
 
       resultData.type = dict.type.valObj[String(resultData.type)];
+
+      setFileUpdateDate(Date.now());
 
       three.clearScene();
 
@@ -527,14 +537,20 @@ const MaterialEdit = (props) => {
               scrollToFirstError
             >
               <ProCard title="基础信息" id="basic_information">
-              <Form.Item label="所属分组" name="modelGroupId" rules={[{
-                        required:true,
-                        type:"array",
-                        min:1,
-                        message:'请选择所属分组'
-                    }]}><ModelGroup></ModelGroup></Form.Item>
-
-          
+                <Form.Item
+                  label="所属分组"
+                  name="modelGroupId"
+                  rules={[
+                    {
+                      required: true,
+                      type: 'array',
+                      min: 1,
+                      message: '请选择所属分组',
+                    },
+                  ]}
+                >
+                  <ModelGroup></ModelGroup>
+                </Form.Item>
 
                 <Form.Item
                   name="name"
@@ -670,7 +686,13 @@ const MaterialEdit = (props) => {
                   label="3D模型"
                   valuePropName="fileList"
                   getValueFromEvent={normFile}
-                  extra="上传格式为GLB的模型文件"
+                  extra={`上传格式为GLB的模型文件${
+                    fileUpdateDate
+                      ? `（${moment(fileUpdateDate).format(
+                          'YYYY-MM-DD HH:mm:ss',
+                        )}）`
+                      : ''
+                  }`}
                 >
                   <FileUpload
                     maxCount={1}

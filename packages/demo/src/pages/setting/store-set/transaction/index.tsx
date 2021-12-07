@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useReducer, useMemo, useRef, useCallback } from 'react';
 import {
   Row,
   Col,
@@ -18,83 +18,48 @@ import ProCard from '@ant-design/pro-card';
 import styles from './transaction.less';
 import { useSelections, useRequest, useMount } from 'ahooks';
 import { getTradeConfig, updateTradeConfig } from '@/services/setting';
-import { useImmer } from 'use-immer';
 import moment from 'moment';
+import {get} from 'lodash' 
 
 const { Option } = Select;
 const Transaction = (props) => {
-  const [state, setState]: any = useImmer({
-    // 相当于声明data
-    lastTime: 0,
-  });
+  const [loading, setLoading]: any = useState(false);
   const reqgetTradeConfig = useRequest(getTradeConfig, {
     // 请求设置信息数据
     manual: true,
     formatResult: (data: any) => data,
     onSuccess(data) {},
   });
-  // 保存设置
-  const requpdateTradeConfig = useRequest(
-    (params) => updateTradeConfig(params),
-    {
-      manual: true,
-      onSuccess(data) {
-        console.log('保存设置', data);
-        message.success('保存成功');
-      },
-    },
-  );
 
   useMount(() => {
     reqgetTradeConfig.run({});
   });
 
-  const onFinish = (e: any) => {
-    // 点击保存按钮
-    console.log(e);
-    const rangeValue = e['timeArr'];
-    let params = e;
-    delete params.timeArr;
-    const rezNumber = (str) => {
-      return str.replace(/[^0-9]/gi, '');
-    };
-    for (const key in params) {
-      if (key !== 'readyTime') {
-        params[key] = rezNumber(params[key]);
-      }
+  const onFinish = useCallback((values:any) => {
+    if(loading){
+      return
     }
-    [params.deliveryStartTime, params.deliveryEndTime] = [
-      rangeValue[0].format('HH:mm'),
-      rangeValue[1].format('HH:mm'),
-    ];
-    // console.log(new Date().getTime());
-    const nowTime = new Date().getTime();
-    if (nowTime - state.lastTime > 2000 || state.lastTime === 0) {
-      // 防止多次提交
-      setState((draft) => {
-        draft.lastTime = new Date().getTime();
-      });
-      requpdateTradeConfig.run(params);
-      return;
+    setLoading(true)
+    let {timeArr,minDeliveryAmount,...restValues}=values
+    let data={
+      ...restValues,
+      minDeliveryAmount:isNaN(parseFloat(minDeliveryAmount))?undefined:parseFloat(minDeliveryAmount)*100,
+      deliveryStartTime:timeArr[0].format('HH:mm'),
+      deliveryEndTime:timeArr[1].format('HH:mm')
     }
-    // requpdateTradeConfig.run(params)
-  };
+    updateTradeConfig(data).then(()=>{
+      message.success('保存成功')
+    }).finally(()=>{
+      setLoading(false)
+    })
+  },[loading])
   const layout = {
     labelCol: { span: 4 },
     // wrapperCol: { span: 21 },
   };
-  const {
-    // 把表单的初始值声明
-    bookDay,
-    deliveryEndTime,
-    deliveryStartTime,
-    readyTime,
-    splitTime,
-    stockOutType,
-  } = reqgetTradeConfig.data ? reqgetTradeConfig.data : ''; // 没数据的时候报错
 
   return (
-    <ProCard split="horizontal">
+    <ProCard split="horizontal" >
       {reqgetTradeConfig.data ? (
         <Form
           {...layout}
@@ -103,20 +68,18 @@ const Transaction = (props) => {
           onFinish={onFinish}
           initialValues={{
             // 赋初始值
-            bookDay: `近${bookDay}天`,
-            deliveryEndTime,
-            deliveryStartTime,
-            readyTime,
-            splitTime: `${splitTime}分钟`,
-            stockOutType: `${stockOutType}`,
+            bookDay: get(reqgetTradeConfig.data,'bookDay','7')+'',
+            readyTime:get(reqgetTradeConfig.data,'readyTime',''),
+            splitTime: get(reqgetTradeConfig.data,'splitTime','30')+'',
+            stockOutType: get(reqgetTradeConfig.data,'stockOutType','1')+'',
+            minDeliveryAmount:!isNaN(parseFloat(reqgetTradeConfig.data.minDeliveryAmount))?parseFloat(reqgetTradeConfig.data.minDeliveryAmount)/100:'',
             timeArr: [
-              moment(deliveryStartTime, 'HH:mm'),
-              moment(deliveryEndTime, 'HH:mm'),
+              moment(get(reqgetTradeConfig.data,'deliveryStartTime','09:00'), 'HH:mm'),
+              moment(get(reqgetTradeConfig.data,'deliveryEndTime',':22:00'), 'HH:mm'),
             ], // 格式化时间
           }}
         >
-          <ProCard>
-            <ProCard split="vertical">
+            <ProCard split="vertical" style={{paddingLeft:68,paddingTop:20}}>
               <Form.Item name="stockOutType" label="库存扣减方式：">
                 <Radio.Group>
                   <Radio value="1">拍下减库存</Radio>
@@ -131,9 +94,7 @@ const Transaction = (props) => {
                 2）付款减库存：订单支付后减库存
               </div>
             </ProCard>
-          </ProCard>
-          <ProCard style={{ marginLeft: 30 }}>配送时间</ProCard>
-          <ProCard style={{ marginTop: -30 }}>
+          <ProCard title="配送时间" style={{paddingLeft:50}}>
             <Form.Item
               name="timeArr"
               label="店铺营业时间"
@@ -157,8 +118,22 @@ const Transaction = (props) => {
                 <Option value="7">近7天</Option>
               </Select>
             </Form.Item>
-            <Form.Item wrapperCol={{ span: 12, offset: 6 }}>
-              <Button
+          </ProCard>
+          <ProCard  title="起送价" style={{paddingLeft:50}}>
+          <Form.Item name="minDeliveryAmount" label="起送价(元)" rules={[{
+                validator(rule, value) {
+                    value=parseFloat(value)
+                  if (!isNaN(value)&&value<0) {
+                      return Promise.reject('不能为小于0')
+                  }
+                  return Promise.resolve()
+              }
+          }]}>
+              <InputNumber style={{ width: 160 }}/>
+            </Form.Item>
+          </ProCard>
+          <Form.Item wrapperCol={{ span: 12, offset: 6 }}>
+              <Button loading={loading}
                 type="primary"
                 htmlType="submit"
                 style={{ width: '120px' }}
@@ -166,11 +141,8 @@ const Transaction = (props) => {
                 保存
               </Button>
             </Form.Item>
-          </ProCard>
         </Form>
-      ) : (
-        ''
-      )}
+      ) : <Spin></Spin>}
     </ProCard>
   );
 };

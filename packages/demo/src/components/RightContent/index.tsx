@@ -7,8 +7,9 @@ import {
   QuestionCircleOutlined,
   LogoutOutlined,
   SettingOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { connect, ConnectProps, ConnectRC, history } from 'umi';
 import { UserModelState } from '@/models/user';
 import styles from './index.less';
@@ -29,7 +30,6 @@ const RightContent: React.FC<Partial<RightContentProps>> = ({
 }) => {
   let currentUser = user?.currentUser;
   let className = styles.right;
-
   if ((navTheme === 'dark' && layout === 'top') || layout === 'mix') {
     className = `${styles.right}  ${styles.dark}`;
   }
@@ -54,7 +54,7 @@ const RightContent: React.FC<Partial<RightContentProps>> = ({
   );
   return (
     <Space className={className}>
-      <Dropdown overlay={menuHeaderDropdown}>
+      <Dropdown overlay={menuHeaderDropdown} openClassName={styles.over}>
         <span className={`${styles.action} ${styles.account}`}>
           <Avatar
             size="small"
@@ -64,6 +64,9 @@ const RightContent: React.FC<Partial<RightContentProps>> = ({
           />
           <span className={`${styles.name} anticon`}>
             {currentUser.firstName}
+          </span>
+          <span className={styles.arrow}>
+            <DownOutlined></DownOutlined>
           </span>
         </span>
       </Dropdown>

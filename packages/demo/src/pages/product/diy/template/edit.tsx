@@ -5,6 +5,8 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { Form, Card, Space, Button, Input, message, Row, Col } from 'antd';
 import * as diyService from '@/services/diy';
+import { UploadImage } from '@/components/Upload';
+import { transformFilesToUrls, normalizeFile } from '@/utils/util';
 
 const formLayout = {
   wrapperCol: {
@@ -33,6 +35,8 @@ const TemplateDetail: React.FC<any> = (props) => {
         id: id,
         name: values.name,
         templateRemark: values.templateRemark,
+        detailPicUrl:transformFilesToUrls(values.detailPicUrl).join(','),
+        realPicUrl:transformFilesToUrls(values.realPicUrl).join('')
       };
       setLoading(true);
       diyService
@@ -60,6 +64,8 @@ const TemplateDetail: React.FC<any> = (props) => {
         form.setFieldsValue({
           name: d.name,
           templateRemark: d.templateRemark,
+          detailPicUrl:d.detailPicUrl?d.detailPicUrl.split(',').map(normalizeFile):[],
+          realPicUrl:d.realPicUrl?[normalizeFile(d.realPicUrl)]:[]
         });
       });
   }, []);
@@ -78,11 +84,17 @@ const TemplateDetail: React.FC<any> = (props) => {
         >
           <Input maxLength={50} />
         </Form.Item>
+        <Form.Item label="详情页图片" name="detailPicUrl" valuePropName="fileList" >
+          <UploadImage maxCount={5} draggleSort={true}></UploadImage>
+        </Form.Item>
         <Form.Item label="模板简介" name="templateRemark" rules={[{
            max:50,
            message:"最大长度不能超过50个字符"
         }]}>
           <Input.TextArea rows={10} maxLength={50}></Input.TextArea>
+        </Form.Item>
+        <Form.Item label="封面图" name="realPicUrl" valuePropName="fileList"  >
+          <UploadImage maxCount={1} draggleSort={false}></UploadImage>
         </Form.Item>
         <Form.Item label="商品明细">
           {detail.productList.map((item, index) => (

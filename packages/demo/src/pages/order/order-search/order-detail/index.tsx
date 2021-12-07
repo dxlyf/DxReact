@@ -71,7 +71,7 @@ const OrderDetail = (props) => {
             ></Image>
           </ProCard>
           <ProCard>
-            <div>{text.productName}</div>
+            <div>{text.productName}{text.extraBuy==1?<span className={styles.addPriceTip}>加价购</span>:null}</div>
             <div className={styles.gray}>规格编码：{text.productItemNo}</div>
             <div className={styles.gray}>{text.propertyStr}</div>
           </ProCard>
@@ -192,11 +192,9 @@ const OrderDetail = (props) => {
         return '优惠卷';
       case 2:
         return '兑换卷';
-      default:
-        return value;
     }
   }, []);
-  let orderPromotions = get(reqgetOrderDetail, 'data.orderPromotions', []);
+  let orderPromotions = get(reqgetOrderDetail, 'data.orderPromotions', []).filter(d=>!!displayPromotionType(d.promotionType));
 
   return (
     <ProCard split="horizontal">

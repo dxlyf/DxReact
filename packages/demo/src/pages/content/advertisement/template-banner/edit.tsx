@@ -15,7 +15,10 @@ import {
   message,
 } from 'antd';
 import { UploadImage, useUplaodImage } from '@/components/Upload';
-import { ADVERTISE_STATUS,ADVERTISE_TYPE } from '@/common/constants/advertisement';
+import {
+  ADVERTISE_URL_TYPES,
+  ADVERTISE_TYPE,
+} from '@/common/constants/advertisement';
 import * as avsertiseService from '@/services/advertisement';
 import * as diyService from '@/services/diy';
 import moment from 'moment';
@@ -49,9 +52,9 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
   let [themeList, setThemeList] = useState<any>([]);
   let renderUrlType = useCallback(
     (urlType) => {
-      if (urlType === ADVERTISE_STATUS.enums.value0.value) {
+      if (urlType === ADVERTISE_URL_TYPES.enums.value0.value) {
         return null;
-      } else if (urlType === ADVERTISE_STATUS.enums.value5.value) {
+      } else if (urlType === ADVERTISE_URL_TYPES.enums.value5.value) {
         return (
           <Form.Item
             name="adviceVideoUrl"
@@ -61,7 +64,7 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
             <UploadVideo maxCount={1}></UploadVideo>
           </Form.Item>
         );
-      } else if (urlType === ADVERTISE_STATUS.enums.value2.value) {
+      } else if (urlType === ADVERTISE_URL_TYPES.enums.value2.value) {
         return (
           <Form.Item
             style={{ marginTop: 15 }}
@@ -95,7 +98,7 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
         'advicePic',
         'adviceVideoUrl',
       );
-      submitData.adviceType=ADVERTISE_TYPE.enums.value1.value
+      submitData.adviceType = ADVERTISE_TYPE.enums.value1.value;
       submitData.startTime = values.startAndEndTime[0].format(
         'YYYY-MM-DD HH:mm:00',
       );
@@ -103,7 +106,7 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
         'YYYY-MM-DD HH:mm:00',
       );
       submitData.advicePic = transformFilesToUrls(values.advicePic).join('');
-      if (submitData.urlType == ADVERTISE_STATUS.enums.value5.value) {
+      if (submitData.urlType == ADVERTISE_URL_TYPES.enums.value5.value) {
         submitData.adviceUrl = transformFilesToUrls(values.adviceVideoUrl).join(
           '',
         );
@@ -141,11 +144,11 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
             advicePic: [normalizeFile(d.advicePic)],
             urlType: d.urlType,
             adviceUrl:
-              d.urlType == ADVERTISE_STATUS.enums.value5.value
+              d.urlType == ADVERTISE_URL_TYPES.enums.value5.value
                 ? ''
                 : d.adviceUrl,
             adviceVideoUrl:
-              d.urlType == ADVERTISE_STATUS.enums.value5.value
+              d.urlType == ADVERTISE_URL_TYPES.enums.value5.value
                 ? [normalizeFile(d.adviceUrl)]
                 : [],
             status: d.status,
@@ -188,7 +191,7 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
         <Form.Item label="链接类型" wrapperCol={{ span: 15 }}>
           <Form.Item
             name="urlType"
-            initialValue={ADVERTISE_STATUS.enums.value0.value}
+            initialValue={ADVERTISE_URL_TYPES.enums.value0.value}
           >
             <Radio.Group
               onChange={() => {
@@ -198,7 +201,7 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
                 });
               }}
             >
-              {ADVERTISE_STATUS.values.map((d) => (
+              {ADVERTISE_URL_TYPES.values.map((d) => (
                 <Radio key={d.value} value={d.value}>
                   {d.text}
                 </Radio>
@@ -218,7 +221,11 @@ let TemplateBannerEdit: React.FC<any> = (props) => {
             <Radio value={2}>停用</Radio>
           </Radio.Group>
         </Form.Item>
-        <Form.Item name="remark" label="备注">
+        <Form.Item
+          name="remark"
+          label="备注"
+          rules={[{ max: 200, message: '不能超过200个字符' }]}
+        >
           <Input.TextArea maxLength={200}></Input.TextArea>
         </Form.Item>
         <Form.Item colon={false} label={<span></span>}>

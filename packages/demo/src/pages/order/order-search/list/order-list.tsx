@@ -28,7 +28,7 @@ import { ORDER } from '@/common/constants';
 import OrderUpdatePrice from './components/OrderUpdatePrice';
 import styles from './style.less';
 
-let OrderStatusList = [{ value: -1, text: '全部' }].concat(
+let OrderStatusList = ([{ value: -1, text: '全部' }] as any).concat(
   ORDER.ORDER_STATUS.values.filter((d) => d.visible !== false),
 );
 let OrderList: ConnectRC<any> = ({ history }) => {
@@ -65,25 +65,25 @@ let OrderList: ConnectRC<any> = ({ history }) => {
     {
       title: '订单改价',
       width: 800,
-      destroyOnClose:true,
-      stateReducer(state){
-        if(state.dataItem){
+      destroyOnClose: true,
+      stateReducer(state) {
+        if (state.dataItem) {
           return {
-            okButtonProps:{
-               disabled:state.dataItem.isEditPrice===false
-            }
-          }
+            okButtonProps: {
+              disabled: state.dataItem.isEditPrice === false,
+            },
+          };
         }
-        return {}
+        return {};
       },
       //visible:true,
       onOk: () => {
         orderPriceRef.current
           .submit()
           .then((params: any) => {
-            if(params.orderItemList.length<=0){
-               message.info('数据没有变化，不需要提交')
-               return
+            if (params.orderItemList.length <= 0) {
+              message.info('数据没有变化，不需要提交');
+              return;
             }
             // 提交
             orderService.updateOrderPriceFindItems(params).then(() => {
@@ -157,11 +157,11 @@ let OrderList: ConnectRC<any> = ({ history }) => {
         name: 'status',
         initialValue: -1,
         data: OrderStatusList,
-        props:{
-          onChange:(value)=>{
-            onStatusTabChange(value)
-          }
-        }
+        props: {
+          onChange: (value) => {
+            onStatusTabChange(value);
+          },
+        },
       },
       {
         type: 'dateRange',
@@ -329,7 +329,8 @@ let OrderList: ConnectRC<any> = ({ history }) => {
           ) : (
             <div>
               {Number(record.payAmount * 0.01).toFixed(2)}
-              {record.status === ORDER.ORDER_STATUS.enums.PendingPayment.value ? (
+              {record.status ===
+              ORDER.ORDER_STATUS.enums.PendingPayment.value ? (
                 <p>
                   <a onClick={openPriceModal.bind(null, '订单改价', record)}>
                     修改价格

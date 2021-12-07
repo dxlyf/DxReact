@@ -60,3 +60,11 @@
     }
   }
 }
+.arrow {
+  transition: transform 0.3s ease;
+}
+.over {
+  .arrow {
+    transform: rotate3d(0, 0, 1, -180deg);
+  }
+}

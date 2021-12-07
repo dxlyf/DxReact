@@ -20,7 +20,7 @@ import {
 } from 'antd';
 import { CloseCircleFilled } from '@ant-design/icons';
 import { UploadImage, useUplaodImage } from '@/components/Upload';
-import { ADVERTISE_STATUS } from '@/common/constants/advertisement';
+import { ADVERTISE_URL_TYPES } from '@/common/constants/advertisement';
 import * as contentService from '@/services/content';
 import * as diyService from '@/services/diy';
 import moment from 'moment';
@@ -74,7 +74,7 @@ function validator(state) {
   } else {
     let validateSucc = true
     for (var i = 0;i < urlTypes.length;i++) {
-      if (urlTypes[i] != ADVERTISE_STATUS.enums.value0.value && !adviceUrls[i]) {
+      if (urlTypes[i] != ADVERTISE_URL_TYPES.enums.value0.value && !adviceUrls[i]) {
         validateSucc = false
         break
       }
@@ -146,9 +146,9 @@ let MagicCubeEditor: React.FC<any> = (props) => {
   },[state])
   let renderUrlType = useCallback(
     (urlType,adviceUrl) => {
-      if (urlType === ADVERTISE_STATUS.enums.value0.value||!urlType) {
+      if (urlType === ADVERTISE_URL_TYPES.enums.value0.value||!urlType) {
         return null;
-      } else if (urlType === ADVERTISE_STATUS.enums.value2.value) {
+      } else if (urlType === ADVERTISE_URL_TYPES.enums.value2.value) {
         return (
           <Form.Item style={{ marginTop: 15 }}>
             <Select value={adviceUrl} placeholder="请选择主题" onChange={(value)=>{
@@ -830,7 +830,7 @@ let MagicCubeEditor: React.FC<any> = (props) => {
 
               }}
             >
-              {ADVERTISE_STATUS.values.map((d) => (
+              {ADVERTISE_URL_TYPES.values.map((d) => (
                 <Radio key={d.value} value={d.value}>
                   {d.text}
                 </Radio>

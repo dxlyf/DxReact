@@ -4,7 +4,7 @@ import { getDIYModelGroupTreeList } from '@/services/product';
 
 const fieldNames = { label: 'name', value: 'id' };
 const ModelGroupCascader = React.memo(
-  React.forwardRef((props, ref) => {
+  React.forwardRef((props:any, ref) => {
     let [data, setData] = useState<any>([]);
     useEffect(() => {
       getDIYModelGroupTreeList().then((data) => {

@@ -1,6 +1,6 @@
 import { valuesKeyMap } from '@/utils/util';
 
-export const ADVERTISE_STATUS = valuesKeyMap(
+export const ADVERTISE_URL_TYPES = valuesKeyMap(
   [
     {
       value: 0,
@@ -39,4 +39,7 @@ export const ADVERTISE_TYPE = valuesKeyMap([{
 }, {
   value: 3,
   text: "有赞广告Banner"
+},{
+  value:4,
+  text:'首页弹窗'
 }])

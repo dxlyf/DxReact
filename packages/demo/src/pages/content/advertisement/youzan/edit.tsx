@@ -63,7 +63,7 @@ let YouZanBannerEdit: React.FC<any> = (props) => {
         .add(20, 'year')
         .format('YYYY-MM-DD HH:mm:00');
       submitData.urlType = 0;
-      submitData.status = 2;
+      submitData.status = values.status;
       setLoading(true);
       let result;
       if (id) {
@@ -96,7 +96,7 @@ let YouZanBannerEdit: React.FC<any> = (props) => {
             // startAndEndTime: [moment(d.startTime), moment(d.endTime)],
             advicePic: [normalizeFile(d.advicePic)],
 
-            // status: d.status,
+            status: d.status,
             remark: d.remark,
           });
         });
@@ -123,6 +123,12 @@ let YouZanBannerEdit: React.FC<any> = (props) => {
         <Form.Item label="广告图片" name="advicePic" {...formItemProps}>
           <UploadImage maxCount={1} draggleSort={false}></UploadImage>
         </Form.Item>
+        <Form.Item name="status" label="状态" initialValue={2} required>
+           <Radio.Group disabled>
+             <Radio value={1}>启用</Radio>
+             <Radio value={2}>停用</Radio>
+           </Radio.Group>
+         </Form.Item>
         <Form.Item
           name="remark"
           label="备注"

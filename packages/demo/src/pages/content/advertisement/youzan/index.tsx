@@ -89,12 +89,11 @@ let YouZanBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '广告名称',
         dataIndex: 'adviceName',
-        width: 260,
       },
       {
         title: '广告图片',
         dataIndex: 'advicePic',
-        width: 140,
+        width: 150,
         render(text, record: any) {
           return (
             <Space>
@@ -111,7 +110,7 @@ let YouZanBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '状态',
         dataIndex: 'statusDesc',
-        width: 100,
+        width: 120,
         render(text, record) {
           return (
             <Badge
@@ -124,15 +123,17 @@ let YouZanBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '更新时间',
         dataIndex: 'updatedTime',
-        width: 160,
+        width: 180,
       },
       {
         title: '备注',
         dataIndex: 'remark',
+        width: 480,
         render(text) {
           return (
             <Tooltip title={text}>
               <Typography.Paragraph
+                style={{ width: 480 }}
                 ellipsis={{
                   rows: 2,
                   expandable: false,

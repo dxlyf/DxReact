@@ -1,4 +1,5 @@
-@content-padding: 12px;
+// @import '~antd/dist/antd.less';
+@import './theme.less';
 
 #root {
   width: 100%;
@@ -11,6 +12,7 @@ body {
   display: none;
 }
 .basic-layout-wrapper {
+  @content-padding: 12px;
   .ant-layout {
   }
   .ant-pro-global-header {
@@ -56,6 +58,5 @@ body {
     vertical-align: middle;
     > .ant-form-item {
     }
-
   }
 }

@@ -1,5 +1,5 @@
 /**
- * 模板广告banner
+ * 首页弹窗banner
  * @author fanyonglong
  */
 import React, { useState, useCallback, useMemo, useRef } from 'react';
@@ -30,12 +30,12 @@ import {
 } from '@/common/constants/advertisement';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
-let TemplateBanner: ConnectRC<any> = ({ history }) => {
+let HomePopup: ConnectRC<any> = ({ history }) => {
   let [{ tableProps, dataSource }, { query: showList }] = useRequest<any>({
     service: (params = {}) => {
       return avsertiseService.getAdvertisementList({
         ...params,
-        adviceType: ADVERTISE_TYPE.enums.value1.value,
+        adviceType: ADVERTISE_TYPE.enums.value3.value,
       });
     },
     transform: (res: any) => {
@@ -77,7 +77,7 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
   );
   const onUpdateStatusHandle = useCallback((record) => {
     let msg =
-      record.status == 1 ? '确定要停用该广告吗？' : '确定要启用该广告吗？';
+      record.status == 1 ? '确定要停用该弹窗吗？' : '确定要启用该弹窗吗？';
     let status = record.status == 1 ? 2 : 1;
     Modal.confirm({
       title: '温馨提示',
@@ -129,7 +129,6 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '广告图片',
         dataIndex: 'advicePic',
-        width: 150,
         render(text, record: any) {
           return (
             <Space>
@@ -146,6 +145,7 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '广告类型',
         dataIndex: 'urlType',
+        width: 120,
         render(value: number) {
           return ADVERTISE_URL_TYPES.get(value, 'text');
         },
@@ -153,6 +153,7 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '状态',
         dataIndex: 'statusDesc',
+        width: 120,
         render(text, record) {
           return (
             <Badge
@@ -164,6 +165,7 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
       },
       {
         title: '起止时间',
+        width: 160,
         render(record) {
           return (
             <Space>
@@ -224,10 +226,13 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
       },
       {
         title: '操作',
+        width: 100,
         render: (record: any) => {
           return (
             <Space>
-              <Link to={`template-banner/edit/${record.id}`}>编辑</Link>
+              <Link to={`/content/advertisement/home-popup/edit/${record.id}`}>
+                编辑
+              </Link>
               <a onClick={onUpdateStatusHandle.bind(null, record)}>
                 {record.status == 1 ? '停用' : '启用'}
               </a>
@@ -246,10 +251,10 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
           <Button
             type="primary"
             onClick={() => {
-              history.push('template-banner/add');
+              history.push('/content/advertisement/home-popup/add');
             }}
           >
-            新增广告
+            新增弹窗
           </Button>
         </FilterForm>
       </Card>
@@ -260,4 +265,4 @@ let TemplateBanner: ConnectRC<any> = ({ history }) => {
   );
 };
 
-export default TemplateBanner;
+export default HomePopup;

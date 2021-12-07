@@ -44,35 +44,45 @@ import app from './app';
  * ```
  * 
 */
+type ValuesKeyData<K extends string> = {
+  enum?: K;
+  value: string | number;
+  text?: string;
+  [key: string]: any;
+};
 
-export const valuesKeyMap = <T extends {[key:string]:any},K extends keyof any>(
-  values: T[],
+type EnumValueType<T extends {}, K extends string> = {
+  [key in K]: T;
+} & {
+  value0?: T;
+  value1?: T;
+  value2?: T;
+  value3?: T;
+  value4?: T;
+  value5?: T;
+  value6?: T;
+  value7?: T;
+  value8?: T;
+  value9?: T;
+  value10?: T;
+};
+
+export const valuesKeyMap = <K extends string = string>(
+  values: Array<ValuesKeyData<K>>,
   ...names: Array<string>
 ) => {
-  let enums: { [key in K]?: T } & {
-    value0?: T;
-    value1?: T;
-    value2?: T;
-    value3?: T;
-    value4?: T;
-    value5?: T;
-    value6?: T;
-    value7?: T;
-    value8?: T;
-    value9?: T;
-    value10?: T;
-  } = {};
+  let enums = {};
   values.forEach((d, i: number) => {
     if (has(d, 'enum')) {
-      enums[d['enum']] = d;
+      enums[d.enum as string] = d;
     } else {
       enums['value' + i] = d;
     }
   });
   return {
     values: values,
-    enums: enums,
-    map: new Map<string | number, T>(
+    enums: enums as EnumValueType<ValuesKeyData<K>, K>,
+    map: new Map<string | number, ValuesKeyData<K>>(
       names.reduce((memo, name) => {
         return memo.concat(values.map((d) => [d[name], d]));
       }, []),

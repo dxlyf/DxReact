@@ -93,7 +93,7 @@ export const UploadImage: React.FC<UploadImageProp> = (props) => {
     ...restProps
   } = props;
 
-  let [fileList, setFileList] = useControllableValue<any>(props, {
+  let [fileList=[], setFileList] = useControllableValue<any>(props, {
     defaultValue: [],
     defaultValuePropName: 'defaultFileList',
     valuePropName: 'fileList',

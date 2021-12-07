@@ -70,8 +70,7 @@ const ShareSetting: React.FC<any> = () => {
                         ) : null}
                       </Space>
                     </div>
-                  ))}
-                  {fields.length >= 20 ? null : (
+                  ))}      
                     <Form.Item>
                       <Button
                         type="dashed"
@@ -82,7 +81,6 @@ const ShareSetting: React.FC<any> = () => {
                         添加
                       </Button>
                     </Form.Item>
-                  )}
                 </>
               );
             }}

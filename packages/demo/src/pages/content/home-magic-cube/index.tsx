@@ -6,16 +6,11 @@ import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { Tabs, Button, Card, Space, message, Modal } from 'antd';
 import Table, { RichTableColumnType } from '@/components/Table';
 import FilterForm, {
-  FilterFormFieldType,
-  ControlContextType,
+  FilterFormFieldType
 } from '@/components/FilterForm';
 import * as contentService from '@/services/content';
 import { useRequest } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
-import { ImageView } from '@/components/Image';
-import { get } from 'lodash';
-import { ADVERTISE_STATUS } from '@/common/constants/advertisement';
-import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
 let HomeBanner: ConnectRC<any> = ({ history }) => {
   let [{ tableProps, dataSource }, { query: showList }] = useRequest<any>({

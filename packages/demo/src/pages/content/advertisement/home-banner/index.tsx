@@ -2,18 +2,25 @@
  * 首页广告banner
  * @author fanyonglong
  */
-import React, {  useCallback, useMemo } from 'react';
-import { Badge, Button, Card, Space, message, Modal } from 'antd';
+import React, { useCallback, useMemo } from 'react';
+import {
+  Badge,
+  Button,
+  Card,
+  Space,
+  message,
+  Modal,
+  Tooltip,
+  Typography,
+} from 'antd';
 import Table, { RichTableColumnType } from '@/components/Table';
-import FilterForm, {
-  FilterFormFieldType
-} from '@/components/FilterForm';
+import FilterForm, { FilterFormFieldType } from '@/components/FilterForm';
 import * as avsertiseService from '@/services/advertisement';
 import { useRequest } from '@/common/hooks';
 import { ConnectRC, Link } from 'umi';
 import { ImageView } from '@/components/Image';
 import { get } from 'lodash';
-import { ADVERTISE_STATUS } from '@/common/constants/advertisement';
+import { ADVERTISE_URL_TYPES } from '@/common/constants/advertisement';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
 let HomeBanner: ConnectRC<any> = ({ history }) => {
@@ -127,15 +134,20 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
         title: '广告类型',
         dataIndex: 'urlType',
         render(value: number) {
-          return ADVERTISE_STATUS.get(value, 'text');
+          return ADVERTISE_URL_TYPES.get(value, 'text');
         },
       },
       {
         title: '状态',
         dataIndex: 'statusDesc',
-        render(text,record){
-          return <Badge text={text} color={record.status==1?'green':'red'}></Badge>
-        }
+        render(text, record) {
+          return (
+            <Badge
+              text={text}
+              color={record.status == 1 ? 'green' : 'red'}
+            ></Badge>
+          );
+        },
       },
       {
         title: '起止时间',
@@ -150,7 +162,7 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
         },
       },
       {
-        name: '排序',
+        title: '排序',
         width: 160,
         align: 'center',
         render(value: number, record: any, index: number) {
@@ -180,9 +192,26 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
       {
         title: '备注',
         dataIndex: 'remark',
+        width: 480,
+        render(text) {
+          return (
+            <Tooltip title={text}>
+              <Typography.Paragraph
+                style={{ width: 480 }}
+                ellipsis={{
+                  rows: 2,
+                  expandable: false,
+                }}
+              >
+                {text}
+              </Typography.Paragraph>
+            </Tooltip>
+          );
+        },
       },
       {
         title: '操作',
+        width: 100,
         render: (record: any) => {
           return (
             <Space>
@@ -197,7 +226,7 @@ let HomeBanner: ConnectRC<any> = ({ history }) => {
         },
       },
     ],
-    [dataSource,onUpdateStatusHandle],
+    [dataSource, onUpdateStatusHandle],
   );
 
   return (
