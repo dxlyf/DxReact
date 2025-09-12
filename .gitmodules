@@ -1,0 +1,12 @@
+[submodule "packages/antd"]
+	path = packages/antd
+	url = git@github.com:ant-design/ant-design.git
+[submodule "packages/pro-components"]
+	path = packages/pro-components
+	url = git@github.com:ant-design/pro-components.git
+[submodule "packages/ahooks"]
+	path = packages/ahooks
+	url = git@github.com:alibaba/hooks.git
+[submodule "packages/react"]
+	path = packages/react
+	url = git@github.com:facebook/react.git

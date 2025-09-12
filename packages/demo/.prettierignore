@@ -1,9 +1,0 @@
-**/*.md
-**/*.svg
-**/*.ejs
-**/*.html
-package.json
-.umi
-.umi-production
-.umi-test
-src/pages/application/diy-tool/material-edit/three
