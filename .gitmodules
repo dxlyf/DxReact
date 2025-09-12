@@ -10,3 +10,21 @@
 [submodule "packages/react"]
 	path = packages/react
 	url = git@github.com:facebook/react.git
+[submodule "packages/antd-mobile"]
+	path = packages/antd-mobile
+	url = git@github.com:ant-design/ant-design-mobile.git
+[submodule "packages/field-form"]
+	path = packages/field-form
+	url = git@github.com:react-component/field-form.git
+[submodule "packages/rc-upload"]
+	path = packages/rc-upload
+	url = git@github.com:react-component/upload.git
+[submodule "packages/rc-table"]
+	path = packages/rc-table
+	url = git@github.com:react-component/table.git
+[submodule "packages/async-validator"]
+	path = packages/async-validator
+	url = git@github.com:react-component/async-validator.git
+[submodule "packages/rc-util"]
+	path = packages/rc-util
+	url = git@github.com:react-component/util.git
