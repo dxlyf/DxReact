@@ -46,3 +46,6 @@
 [submodule "packages/arco-design-react"]
 	path = packages/arco-design-react
 	url = git@github.com:arco-design/arco-design.git
+[submodule "packages/fast-deep-equal"]
+	path = packages/fast-deep-equal
+	url = git@github.com:epoberezkin/fast-deep-equal.git

@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import 'virtual:uno.css'
 import './index.css'
+import {ConfigProvider} from 'antd'
 import { Provider as ReduxProdiver } from 'react-redux'
 import { store } from './store'
 import App from './app'
@@ -16,7 +17,7 @@ async function render() {
    root=createRoot(document.getElementById('root')!)
   root.render(
       <ReduxProdiver store={store}>
-        <App></App>
+        <ConfigProvider><App></App></ConfigProvider>
       </ReduxProdiver>,
   )
 

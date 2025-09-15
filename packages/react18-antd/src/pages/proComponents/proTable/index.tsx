@@ -33,7 +33,7 @@ export default ()=>{
                 render(dom,record){
                     return <Space>
                         <Button type='link' onClick={()=>{
-                            
+
                         }}>编辑</Button>
                         <Button type='link' danger >删除</Button>
                     </Space>

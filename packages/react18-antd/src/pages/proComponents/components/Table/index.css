@@ -1,0 +1,49 @@
+
+
+.table-cust989 {
+
+        .ant-table .ant-table-cell {
+            text-align: center;    
+            word-break: break-all;
+        }
+
+        .ant-table-thead {
+            tr th,
+            .ant-table-cell-scrollbar {
+                background-color: #f0f5ff !important;
+            }
+        }
+
+        .ant-pagination-prev,
+        .ant-pagination-item,
+        .ant-pagination-item a,
+        .ant-pagination-jump-next,
+        .ant-pagination-next {
+            background-color: #f9f9f9;
+            border-radius: 50%;
+        }
+
+        .ant-pagination-item-link:hover,
+        .ant-pagination-item:hover {
+            border-radius: 50%;
+            background-color: #1675fb;
+            color: white;
+
+            a {
+                background-color: transparent;
+                color: white;
+            }
+        }
+
+        .ant-pagination-item-active {
+            border: 0 !important;
+            background-color: #1675fb;
+            color: white;
+
+            a {
+                background-color: transparent;
+                color: white;
+            }
+        }
+    
+}

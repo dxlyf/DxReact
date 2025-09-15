@@ -32,6 +32,11 @@ const routes:RouteObjectAndMenu[]=[
                         path:'proTable',
                         name:'ProTable',
                          Component:React.lazy(()=>import('src/pages/proComponents/proTable'))
+                    },
+                       {
+                        path:'list',
+                        name:'列表',
+                         Component:React.lazy(()=>import('src/pages/proComponents/list'))
                     }
                 ]
             },{
