@@ -34,6 +34,16 @@ const routes:RouteObjectAndMenu[]=[
                          Component:React.lazy(()=>import('src/pages/proComponents/proTable'))
                     }
                 ]
+            },{
+                path:'antd',
+                name:'AntdComponents',
+                children:[
+                    {
+                        path:'list',
+                        name:'常用列表页',
+                          Component:React.lazy(()=>import('src/pages/antd/list'))
+                    }
+                ]
             }
         ]
     }

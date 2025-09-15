@@ -1,0 +1,93 @@
+{
+  "name": "react-dnd-parent",
+  "private": true,
+  "description": "React-DnD Monorepo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/react-dnd/react-dnd.git"
+  },
+  "keywords": [
+    "react",
+    "reactjs",
+    "file",
+    "drag",
+    "drop",
+    "html5",
+    "draggable",
+    "droppable",
+    "drag-and-drop",
+    "dnd",
+    "javascript",
+    "react-component",
+    "hoc"
+  ],
+  "engines": {
+    "node": ">= 10.0"
+  },
+  "author": "Dan Abramov <dan.abramov@me.com> (http://github.com/gaearon)",
+  "contributors": [
+    "Chris Trevino <darthtrevino@gmail.com> (http://github.com/darthtrevino)",
+    "Jordan Gensler (http://github.com/kesne)",
+    "Gagan (https://github.com/thetechie)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/react-dnd/react-dnd/issues"
+  },
+  "homepage": "https://github.com/react-dnd/react-dnd",
+  "scripts": {
+    "_modules_esm": "node ./module_test/mjs-imports.mjs",
+    "_modules_cjs": "node ./module_test/cjs-imports.cjs",
+    "_build_docsite": "yarn build:docsite",
+    "_check_modules": "run-s _modules_esm _modules_cjs",
+    "_check_spelling": "mdspell 'packages/documentation/docsite/markdown/**/*.md' --en-us --report",
+    "_check_rome": "rome check .",
+    "_release_packages": "turbo run release",
+    "_ci_packages": "turbo run ci",
+    "check_packages": "turbo run check",
+    "clean:": "yarn clean",
+    "build:": "yarn build",
+    "check:": "yarn check",
+    "test:": "yarn test",
+    "release:": "yarn release",
+    "format:": "yarn format",
+    "clean": "turbo run clean",
+    "build": "turbo run build",
+    "top_level_checks": "run-s _check_spelling _check_rome _check_modules",
+    "test": "turbo run test",
+    "release": "run-s clean ci _release_packages",
+    "format": "rome format . --write",
+    "changelog": "conventional-changelog -p eslint -i CHANGELOG.md -s -r 0",
+    "ci": "run-s _ci_packages top_level_checks git-is-clean",
+    "git-is-clean": "git status && git diff-index HEAD",
+    "update_sdks": "yarn dlx @yarnpkg/sdks vscode"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@tsconfig/strictest": "^1.0.2",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "conventional-changelog-cli": "^2.2.2",
+    "dnd-core": "workspace:^",
+    "inquirer": "^9.1.4",
+    "markdown-spellcheck": "^1.3.1",
+    "npm-run-all": "^4.1.5",
+    "react-dnd": "workspace:^",
+    "react-dnd-examples": "workspace:^",
+    "react-dnd-html5-backend": "workspace:^",
+    "react-dnd-test-backend": "workspace:^",
+    "react-dnd-test-utils": "workspace:^",
+    "react-dnd-touch-backend": "workspace:^",
+    "rome": "^11.0.0",
+    "turbo": "~1.6",
+    "typescript": "~4.9.4"
+  },
+  "packageManager": "yarn@3.3.1",
+  "resolutions": {
+    "@types/react": "18.0.5",
+    "@types/react-dom": "18.0.1"
+  }
+}

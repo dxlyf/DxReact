@@ -28,3 +28,21 @@
 [submodule "packages/rc-util"]
 	path = packages/rc-util
 	url = git@github.com:react-component/util.git
+[submodule "packages/dnd-kit"]
+	path = packages/dnd-kit
+	url = git@github.com:clauderic/dnd-kit.git
+[submodule "packages/react-dnd"]
+	path = packages/react-dnd
+	url = git@github.com:react-dnd/react-dnd.git
+[submodule "packages/redux"]
+	path = packages/redux
+	url = git@github.com:reduxjs/redux.git
+[submodule "packages/react-redux"]
+	path = packages/react-redux
+	url = git@github.com:reduxjs/react-redux.git
+[submodule "packages/immutable-js"]
+	path = packages/immutable-js
+	url = git@github.com:immutable-js/immutable-js.git
+[submodule "packages/arco-design-react"]
+	path = packages/arco-design-react
+	url = git@github.com:arco-design/arco-design.git

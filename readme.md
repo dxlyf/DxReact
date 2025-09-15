@@ -6,6 +6,22 @@ git submodule add --depth=1  git@github.com:ant-design/pro-components.git packag
 git submodule add --depth=1  git@github.com:alibaba/hooks.git packages/ahooks
 
 git submodule add --depth=1  git@github.com:facebook/react.git packages/react
+
+git submodule add --depth=1   git@github.com:ant-design/ant-design-mobile.git packages/antd-mobile
+git submodule add --depth=1  git@github.com:react-component/field-form.git packages/field-form
+git submodule add --depth=1  git@github.com:react-component/upload.git packages/rc-upload
+git submodule add --depth=1  git@github.com:react-component/table.git packages/rc-table
+git submodule add --depth=1  git@github.com:react-component/async-validator.git packages/async-validator
+git submodule add --depth=1  git@github.com:react-component/util.git packages/rc-util
+git submodule add --depth=1  git@github.com:clauderic/dnd-kit.git packages/dnd-kit
+git submodule add --depth=1 git@github.com:react-dnd/react-dnd.git packages/react-dnd
+git submodule add --depth=1  git@github.com:reduxjs/redux.git packages/redux
+git submodule add --depth=1  git@github.com:reduxjs/react-redux.git packages/react-redux
+git submodule add --depth=1 git@github.com:immutable-js/immutable-js.git packages/immutable-js
+
+git submodule add --depth 1 -b npm -f git@github.com:lodash/lodash.git packages/lodash
+
+git submodule add --depth 1 git@github.com:arco-design/arco-design.git packages/arco-design-react
 ```
 
 为 `packages` 目录添加 GitHub 开源仓库作为子模块是个好主意，这能方便你管理依赖并同步更新。你想知道具体如何操作，下面我来为你详细说明。

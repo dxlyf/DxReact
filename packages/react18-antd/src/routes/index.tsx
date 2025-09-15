@@ -3,7 +3,7 @@ import type {RouteObject} from 'react-router-dom'
 import {routes} from './routes'
 
 
-const router=createHashRouter(routes,{})
+const router=createHashRouter(routes as any,{})
 
 export {
     router
