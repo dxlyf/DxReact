@@ -1,0 +1,3 @@
+.checkgroupBreak:global(.ant-checkbox-group){
+        flex-direction: column!important;
+}

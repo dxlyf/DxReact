@@ -3,9 +3,12 @@ import mock from 'mockjs'
 export default defineMock({
   url: '/api/list',
   method:'POST',
+  
   body:(req)=>{
+    
     const current=req.body.current
      const pageSize=req.body.pageSize
+
     const list=mock.mock({
               'list|100':[{
                 'id|+1':1,

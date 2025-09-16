@@ -1,27 +1,48 @@
 
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import {SchemaForm,useSchemaForm,useSchemaFormColumns} from '../components/SchemaForm'
-import {Table,useTable,useTableRequest,useTableColumns,type TableColumn} from '../components/Table'
+import {Table,useTable,useTableRequest,useTableColumns,type TableColumn,type ActionType} from '../components/Table'
 import {request} from 'src/utils/request'
+import {SettingOutlined} from '@ant-design/icons'
+import { Button,Col,Dropdown,Input,Popover, Row, Space } from 'antd'
 export default ()=>{
-
-    const {searchFormProps,formFieldValues}=useSchemaForm({
+    const actionRef=useRef<ActionType>(null)
+    const {searchFormProps,form:schemaForm,formFieldValues}=useSchemaForm({
+        actionRef,
         columns:useSchemaFormColumns(()=>[
             {
                 dataIndex:'name',
                 initialValue:'李三',
                 fieldProps:{
                     placeholder:'请输入名称'
+                },
+                formItemProps:{
+                    
                 }
             }
         ],[])
     })
+
     const {tableProps}=useTable({
-        manualRequest:true,
-        params:formFieldValues,
+        actionRef:actionRef,
+        schemaForm:schemaForm,
+        //params:formFieldValues,
+        columnStorageKey:'table2',
+        //manualRequest,
+        rightHeaderSlot:<><Button>新增</Button><Button>新增</Button></>,
+        // toolBarRender(){
+        //     return [<Button>新增</Button>,<Button><SettingOutlined></SettingOutlined></Button>]
+        // },
+        // optionsRender:(props,defaultDom)=>{
+        //     return [<Button>新增2</Button>]
+        // },
+        // options:{
+        //     search:true
+        // },
         request:useTableRequest(async (params,sorter,filter)=>{
             console.log('pa',params,'sort',sorter,'filter',filter)
+            await (new Promise((resolve)=>setTimeout(resolve,2000)))
                 const ret=await request<{data:any[],total:number}>({
                     url:'list',
                     method:'post',
@@ -40,9 +61,16 @@ export default ()=>{
                 title:'名称',
                 dataIndex:'name',
                 sorter:true,
-                sortOrder:'descend'
+                defaultSortOrder:'descend',
+                width:100,
+                
+            },{
+                title:'创建时间',
+                dataIndex:'createTime',
+                
             },{
                 title:'操作',
+                width:120,
                 render:()=>{
                     return <></>
                 }

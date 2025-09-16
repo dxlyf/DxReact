@@ -1,11 +1,8 @@
-
-
-.table-cust989 {
-
-        .ant-table .ant-table-cell {
-            text-align: center;    
-            word-break: break-all;
-        }
+.checkgroupBreak:global(.ant-checkbox-group){
+        flex-direction: column!important;
+}
+.table{
+    :global {
 
         .ant-table-thead {
             tr th,
@@ -45,5 +42,5 @@
                 color: white;
             }
         }
-    
+    }
 }

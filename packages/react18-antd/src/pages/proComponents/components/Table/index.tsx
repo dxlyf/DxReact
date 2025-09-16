@@ -1,67 +1,139 @@
-import {EditableProTable} from '@ant-design/pro-components'
-import type {ProColumns,EditableProTableProps,ParamsType} from '@ant-design/pro-components'
-import type {FormInstance, TablePaginationConfig} from 'antd'
+import { EditableProTable } from '@ant-design/pro-components'
+import type { ProColumns, EditableProTableProps, ParamsType,ActionType } from '@ant-design/pro-components'
+import type { FormInstance, TablePaginationConfig } from 'antd'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { Row, Col, Button, Space } from 'antd'
 import { useMemoizedFn } from 'ahooks'
 import classNames from 'classnames'
-import   './index.css'
-type UseTableProps={
-    schemaForm?:FormInstance
-    defaultPageSize?:number
-    scrollY?:number
-}&EditableProTableProps<any,any>
+import { useColumnSetting } from './components/ColumnSetting'
+import styles from './index.module.css'
+type ToolBarRender<T> = Extract<EditableProTableProps<T, any>['toolbar'], Function>;
+
+type ActionBtn = {
+    key: string
+    label: React.ReactNode
+    onClick: () => void
+}
+type UseTableProps = {
+    columnStorageKey?: string
+    schemaForm?: FormInstance
+    defaultPageSize?: number
+    showColumnSetting?: boolean
+    scrollY?: number
+    // 表单右上角的下拉菜单操作按钮,完全覆盖
+    menuActions?: ActionBtn;
+    // 表单右上角的操作按钮,完全覆盖
+    actions?: ActionBtn[];
+    leftHeaderSlot?:React.ReactNode
+    rightHeaderSlot?:React.ReactNode
+    serialNumberColumn?:ProColumns
+} & TableProps<any, any>
+type TableProps<T, U extends ParamsType, ValueType = 'text'> = {
+    renderHeaderSlot?: (defaultDom: React.ReactNode) => React.ReactNode
+    renderFooterSlot?: (defaultDom: React.ReactNode) => React.ReactNode
+
+} & EditableProTableProps<T, U, ValueType>
 export type {
-    ProColumns as TableColumn
+    ProColumns as TableColumn,
+    ActionType
 }
-export const useTableColumns=(factory:()=>ProColumns[],deps:readonly unknown[])=>{
-    return useMemo(factory,deps)
+const useTableColumns = (factory: () => ProColumns[], deps: readonly unknown[]) => {
+    return useMemo(factory, deps)
 }
-export const useTableRequest=(request:NonNullable<EditableProTableProps<any,any>['request']>,deps:readonly unknown[])=>{
-    return useCallback(request,deps)
+const useTableRequest = (request: NonNullable<EditableProTableProps<any, any>['request']>, deps: readonly unknown[]) => {
+    return useCallback(request, deps)
 }
-export const useTable=(props:UseTableProps)=>{
-    const {schemaForm,defaultPageSize=10,scrollY=300,pagination:propPagination,className,request,...restProps}=props
-    const needPagination=propPagination!==false
-    const [pagination,setPagination]=useState<TablePaginationConfig>({
-        current:1,
-        pageSize:defaultPageSize,
-        defaultPageSize:defaultPageSize
-    })
-    const handleTableChange=useCallback<NonNullable<EditableProTableProps<any,any>['onTableChange']>>((pagination,filters,sorter)=>{
-            setPagination({
-                current:pagination.current,
-                pageSize:pagination.pageSize,
-                total:pagination.total
-            })
-           
-    },[])
-    const handleRequest=useMemoizedFn(async (params,sorter,filters)=>{
-        const formFilterParams=schemaForm?schemaForm.getFieldsValue():{}
-        const newParams={
+const useSerialNumberColumn=(config:ProColumns={})=>{
+    return {
+        title:'序號',
+        dataIndex:'_serialNo',
+        render:(text,record,index)=>{
+            return index+1
+        },
+        ...config
+    }
+}
+const defaultEmptyObject={}
+const useTable = (props: UseTableProps) => {
+    const { schemaForm,leftHeaderSlot,rightHeaderSlot, renderHeaderSlot, renderFooterSlot,serialNumberColumn=defaultEmptyObject,columns:propColumns, columnStorageKey, showColumnSetting = true, actions, toolBarRender, defaultPageSize = 10, scrollY = 300, className, request, ...restProps } = props
+
+    const [loading,setLoading]=useState(false)
+
+    const handleRequest = useMemoizedFn(async (params, sorter, filters) => {
+        const formFilterParams = schemaForm ? schemaForm.getFieldsValue() : {}
+        const newParams = {
             ...formFilterParams,
             ...params
         }
-        const result=await request!(newParams,sorter,filters)
+        setLoading(true)
+        let result={success:true,data:[],total:0}
+        try{
+            result = await request!(newParams, sorter, filters) as any
+        }catch(e){
+            result={success:true,data:[],total:0}
+        }finally{
+            setLoading(false)
+        }
         return result
     })
-    const tableProps:EditableProTableProps<any,any>={
-        rowKey:'id',
-        bordered:true,
-        size:'middle',
-        className:classNames('table-cust989',className),
-        scroll:{ x: 'max-content', y: `calc(100vh - ${scrollY}px)` },
-        request:handleRequest,
-        onTableChange:handleTableChange,
-        pagination:needPagination?{
-            ...pagination,
-            ...(propPagination||{})
-        }:false,
+    const { children, columns } = useColumnSetting({ columns: propColumns, storageKey: showColumnSetting ? columnStorageKey : undefined })
+    const defaultHeaderDom = showColumnSetting&&children
+    const tableProps: TableProps<any, any> = {
+        //loading,
+        rowKey: 'id',
+        bordered: true,
+        size: 'middle',
+        className: classNames(styles.table, className),
+        scroll: { x: 'max-content', y: `calc(100vh - ${scrollY}px)` },
+        showSorterTooltip:false,
+        renderHeaderSlot: () => {
+            return (<Row justify={'space-between'} style={{paddingBottom:10}}>
+                <Col flex={'none'}>
+                    {leftHeaderSlot}
+                </Col>
+                <Col flex={'none'}>
+                <Space>
+                    {rightHeaderSlot}
+                    {renderHeaderSlot?renderHeaderSlot(defaultHeaderDom):defaultHeaderDom}
+                </Space>
+                </Col>
+            </Row>)
+        },
+        renderFooterSlot: () => {
+            if (renderHeaderSlot) {
+                return renderHeaderSlot(defaultHeaderDom)
+            }
+            return <></>
+        },
+        columns: useMemo(()=>{
+            if(serialNumberColumn){
+                return [useSerialNumberColumn(serialNumberColumn)].concat(columns as any)
+            }
+            return columns
+        },[serialNumberColumn,columns]),
+        request: handleRequest,
+        pagination:{
+            defaultPageSize:20
+        },
         ...restProps
     }
     return {
+        loading,
         tableProps
     }
 }
-export const Table=<T, U extends ParamsType, ValueType = 'text'>(props:EditableProTableProps<T,U,ValueType>)=>{
-    return <EditableProTable  recordCreatorProps={false}  {...(props as any)}></EditableProTable>
+const Table = <T, U extends ParamsType, ValueType = 'text'>(props: TableProps<T, U, ValueType>) => {
+    const { renderHeaderSlot, renderFooterSlot, ...restProps } = props
+    return <>
+        {renderHeaderSlot?renderHeaderSlot(null):null}
+        <EditableProTable recordCreatorProps={false}  {...(restProps as any)}></EditableProTable>
+       {renderFooterSlot?renderFooterSlot(null):null}
+    </>
+}
+export {
+    Table,
+    useTable,
+    useTableColumns,
+    useTableRequest,
+    useSerialNumberColumn
 }
