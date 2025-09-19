@@ -24,6 +24,10 @@ git submodule add --depth 1 -b npm -f git@github.com:lodash/lodash.git packages/
 git submodule add --depth 1 git@github.com:arco-design/arco-design.git packages/arco-design-react
 
 git submodule add --depth 1 git@github.com:epoberezkin/fast-deep-equal.git packages/fast-deep-equal
+
+git submodule add --depth 1 git@github.com:iamkun/dayjs.git  packages/dayjs
+git submodule add --depth 1 git@github.com:react-component/dialog.git packages/rc-dialog
+git submodule add --depth 1 git@github.com:react-component/upload.git
 ```
 
 为 `packages` 目录添加 GitHub 开源仓库作为子模块是个好主意，这能方便你管理依赖并同步更新。你想知道具体如何操作，下面我来为你详细说明。

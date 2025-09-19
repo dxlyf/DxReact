@@ -6,8 +6,8 @@ export default defineMock({
   
   body:(req)=>{
     
-    const current=req.body.current
-     const pageSize=req.body.pageSize
+    const current=req.body?.current
+     const pageSize=req.body?.pageSize
 
     const list=mock.mock({
               'list|100':[{

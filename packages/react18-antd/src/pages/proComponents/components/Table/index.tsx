@@ -55,10 +55,11 @@ const useSerialNumberColumn=(config:ProColumns={})=>{
 }
 const defaultEmptyObject={}
 const useTable = (props: UseTableProps) => {
-    const { schemaForm,leftHeaderSlot,rightHeaderSlot, renderHeaderSlot, renderFooterSlot,serialNumberColumn=defaultEmptyObject,columns:propColumns, columnStorageKey, showColumnSetting = true, actions, toolBarRender, defaultPageSize = 10, scrollY = 300, className, request, ...restProps } = props
+    const { schemaForm,leftHeaderSlot,rightHeaderSlot,manualRequest=true, renderHeaderSlot, renderFooterSlot,serialNumberColumn=defaultEmptyObject,columns:propColumns, columnStorageKey, showColumnSetting = true, actions, toolBarRender, defaultPageSize = 10, scrollY = 300, className, request, ...restProps } = props
 
     const [loading,setLoading]=useState(false)
 
+    const indexRef=useRef({start:0})
     const handleRequest = useMemoizedFn(async (params, sorter, filters) => {
         const formFilterParams = schemaForm ? schemaForm.getFieldsValue() : {}
         const newParams = {
@@ -66,6 +67,9 @@ const useTable = (props: UseTableProps) => {
             ...params
         }
         setLoading(true)
+        if(params.current&&params.pageSize){
+            indexRef.current.start=params.current*params.pageSize-params.pageSize
+        }
         let result={success:true,data:[],total:0}
         try{
             result = await request!(newParams, sorter, filters) as any
@@ -79,6 +83,7 @@ const useTable = (props: UseTableProps) => {
     const { children, columns } = useColumnSetting({ columns: propColumns, storageKey: showColumnSetting ? columnStorageKey : undefined })
     const defaultHeaderDom = showColumnSetting&&children
     const tableProps: TableProps<any, any> = {
+        manualRequest,
         //loading,
         rowKey: 'id',
         bordered: true,
@@ -107,7 +112,14 @@ const useTable = (props: UseTableProps) => {
         },
         columns: useMemo(()=>{
             if(serialNumberColumn){
-                return [useSerialNumberColumn(serialNumberColumn)].concat(columns as any)
+                return [{
+                     title:'序號',
+                    dataIndex:'_serialNo',
+                    render:(text,record,index)=>{
+                        return indexRef.current.start+(index+1)
+                    },
+                    ...serialNumberColumn
+                }].concat(columns as any)
             }
             return columns
         },[serialNumberColumn,columns]),

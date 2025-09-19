@@ -49,3 +49,12 @@
 [submodule "packages/fast-deep-equal"]
 	path = packages/fast-deep-equal
 	url = git@github.com:epoberezkin/fast-deep-equal.git
+[submodule "packages/dayjs"]
+	path = packages/dayjs
+	url = git@github.com:iamkun/dayjs.git
+[submodule "packages/rc-dialog"]
+	path = packages/rc-dialog
+	url = git@github.com:react-component/dialog.git
+[submodule "packages/react-hook-form"]
+	path = packages/react-hook-form
+	url = git@github.com:react-hook-form/react-hook-form.git

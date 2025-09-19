@@ -6,31 +6,78 @@ import {Table,useTable,useTableRequest,useTableColumns,type TableColumn,type Act
 import {request} from 'src/utils/request'
 import {SettingOutlined} from '@ant-design/icons'
 import { Button,Col,Dropdown,Input,Popover, Row, Space } from 'antd'
+
 export default ()=>{
     const actionRef=useRef<ActionType>(null)
     const {searchFormProps,form:schemaForm,formFieldValues}=useSchemaForm({
+        // submitterColSpanProps:{
+        //     offset:0,
+        //     span:2
+        // },
+       // layout:'inline',
+        defaultColsNumber:4,
+        searchGutter:4,
+        colProps:{
+            flex:"none"
+        },
+        labelWidth:0,
+        rowProps:{gutter:4},
+        // span:{
+        //    xs: 24, sm: 12, md: 8, lg: 6, xl: 6, xxl: 6 
+        // },
         actionRef,
+        // useProFormInstanceOptions:{
+        //     transformFieldsValue(values){
+        //         return {
+        //             ...values,
+        //             city:values?.city?.join(',')
+        //         }
+        //     }
+        // },
+        initialValues:{
+            name:'李三',
+        },
         columns:useSchemaFormColumns(()=>[
             {
                 dataIndex:'name',
-                initialValue:'李三',
                 fieldProps:{
                     placeholder:'请输入名称'
                 },
                 formItemProps:{
                     
                 }
+            },{
+               // title:'日期',
+                dataIndex:'date',
+                valueType:'date'
+            },{
+                 dataIndex:'city',
+                // title:'城市',
+                 valueType:'select',
+                 fieldProps:{
+                    mode:'multiple',
+                   // allowClear:true,
+                 },
+                 transform:(value)=>{
+                     return Array.isArray(value)?value.join(','):undefined
+                 },
+                 request:async ()=>{
+                    return  [{value:'郴州',label:'郴州'},{value:'长沙',label:'长沙'}]
+                 }
+
             }
         ],[])
     })
+    const handleNewAdd=useCallback(()=>{
 
+    },[])
     const {tableProps}=useTable({
         actionRef:actionRef,
-        schemaForm:schemaForm,
-        //params:formFieldValues,
+       // schemaForm:schemaForm,
+        params:formFieldValues,
         columnStorageKey:'table2',
         //manualRequest,
-        rightHeaderSlot:<><Button>新增</Button><Button>新增</Button></>,
+        rightHeaderSlot:<><Button type='primary' onClick={handleNewAdd}>新增</Button><Button>新增</Button></>,
         // toolBarRender(){
         //     return [<Button>新增</Button>,<Button><SettingOutlined></SettingOutlined></Button>]
         // },

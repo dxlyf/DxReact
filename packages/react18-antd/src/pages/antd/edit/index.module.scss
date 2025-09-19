@@ -1,0 +1,28 @@
+$table_border_color:#ddd;
+$table_th_bgColor:#f2f2f2;
+@mixin border(){
+         border:solid 1px $table_border_color;
+}
+.table{
+    border-collapse: collapse;
+    border-spacing: 0;
+        @include border();
+
+  & :global{
+
+        td,th{
+               @include border();
+             
+        }
+        thead tr{
+                background-color: $table_th_bgColor;
+        }
+        thead :is(th,td){
+            padding: 8px 0;
+            color:#333;
+        }       
+        tbody td{
+                padding: 6px 4px;
+        }
+ }
+}
