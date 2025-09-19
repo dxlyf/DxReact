@@ -1,9 +1,31 @@
+// white-space: normal - 默认行为，文本自动换行
+
+// white-space: nowrap - 防止文本换行
+
+// white-space: pre - 保留空格和换行符
+
+// white-space: pre-wrap - 保留空格和换行符，同时自动换行
+
+// white-space: pre-line - 保留换行符但合并空格，同时自动换行
+
+// word-wrap: break-word - 允许长单词或URL换行
+
+// word-break: break-all - 在任何字符处打断单词
+
+// word-break: keep-all - 保持所有单词不换行（主要用于CJK文本）
+
+// text-overflow: ellipsis - 文本溢出时显示省略号
+
+// line-clamp - 多行文本溢出显示省略号
+
+// hyphens: auto - 自动添加连字符
 $table_border_color:#ddd;
 $table_th_bgColor:#f2f2f2;
 @mixin border(){
          border:solid 1px $table_border_color;
 }
 .table{
+    width: 100%;
     border-collapse: collapse;
     border-spacing: 0;
         @include border();
@@ -20,9 +42,15 @@ $table_th_bgColor:#f2f2f2;
         thead :is(th,td){
             padding: 8px 0;
             color:#333;
-        }       
+        }    
+          tbody tr>td:first-of-type{
+             word-break: break-all;
+             text-align: center;
+             white-space:pre-wrap;
+          }   
         tbody td{
-                padding: 6px 4px;
+                text-align: center;
+                padding: 4px 6px;
         }
  }
 }
