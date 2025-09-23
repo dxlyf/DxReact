@@ -40,7 +40,7 @@ const routes:RouteObjectAndMenu[]=[
                     },   {
                         path:'edit',
                         name:'常用编辑页',
-                          Component:React.lazy(()=>import('src/pages/proComponents/edit'))
+                        Component:React.lazy(()=>import('src/pages/proComponents/edit'))
                     }
                 ]
             },{
@@ -56,6 +56,11 @@ const routes:RouteObjectAndMenu[]=[
                         path:'edit',
                         name:'常用编辑页',
                           Component:React.lazy(()=>import('src/pages/antd/edit'))
+                    },
+                    {
+                        path:'edit2',
+                        name:'常用编辑页2',
+                          Component:React.lazy(()=>import('src/pages/antd/edit2'))
                     }
                 ]
             }
