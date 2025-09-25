@@ -62,6 +62,49 @@ const EditPage = () => {
     }, [])
     const tabItems = useMemo<TabsProps['items']>(() => {
         const collapseItems: CollapseProps['items'] = [{
+            key:'time',
+            label:'日期',
+            children:<>
+                <Row>
+                    <Col>
+                    <Form.Item name="num"  label='数字'>
+                        <InputNumber></InputNumber>
+                    </Form.Item>
+                    <Form.Item label='年份' name='year'>
+                        <DatePicker.YearPicker></DatePicker.YearPicker>
+                    </Form.Item>
+                    </Col>
+                      <Col>
+                    <Form.Item label='季度' name='quarter'>
+                        <DatePicker picker='quarter'></DatePicker>
+                    </Form.Item>
+                    </Col>
+                </Row>
+            </>
+        },{
+            key:'a',
+            label:'表单上传',
+            children:<>
+                <Row>
+                    <Col>
+                    
+                    <Form.Item  label='点击上传'  getValueFromEvent={(e)=>{
+                        return e.fileList
+                    }} valuePropName="fileList" rules={[{
+                        type:'array',
+                        required:true,
+                        message:'请上传文件'
+                    }]} name={'myFile'}>
+                        <Upload headers={{
+                            'Content-Type': 'multipart/form-data'
+                        }}   action={'/api/upload'} name='files'>
+                        <Button>点击上传</Button>
+                            </Upload>
+                    </Form.Item>
+                    </Col>
+                </Row>
+            </>
+        },{
             key: 'aaaaa',
             label: '应急演习',
             children: <>
@@ -129,7 +172,7 @@ const EditPage = () => {
                             <Form.Item noStyle shouldUpdate>
                                 {(form) => {
                                     const errors = Array.from(new Set(form.getFieldsError().filter(d => d.name.includes('exerciseList')).flatMap(d => d.errors)))
-                                    return <Popover placement='topLeft' open={errors.length > 0} content={<div style={{ fontSize: 12, color: 'red' }}>
+                                    return <Popover title='应急演习' placement='topLeft' open={errors.length > 0} content={<div style={{ fontSize: 12, color: 'red' }}>
                                         <Form.ErrorList errors={errors}></Form.ErrorList>
                                     </div>}><div></div></Popover>
                                 }}
@@ -179,7 +222,17 @@ const EditPage = () => {
                                                         required: true,
                                                         message: '請填寫主題'
                                                     }]} noStyle name={[field.name, 'exerciseTheme']}>
-                                                        <Input style={{ width: '80%' }} size='small'></Input>
+                                                        <Select allowClear onChange={(value,option)=>{
+                                                            if(option){
+                                                                form.setFieldValue(['exerciseList',field.name,'exerciseThemeName'],option.label)
+                                                            }else{
+                                                                form.setFieldValue(['exerciseList',field.name,'exerciseThemeName'],undefined)
+                                                            }
+                                                            console.log('value',value,'option',option)
+                                                            if(value!==undefined){
+
+                                                            }
+                                                        }} style={{ width: '80%' }} size='small' options={[{value:'aaa',label:'湖南'},{value:'bbb',label:'广东'}]}></Select>
                                                     </Form.Item>
                                                 </td>
                                                 <td >
@@ -202,7 +255,7 @@ const EditPage = () => {
                                                 </td>
                                             </tr> : <tr key={field.key}  {...trProps} >
                                                 <td>{i + 1}</td>
-                                                <td colSpan={2}>{record.exerciseTheme}</td>
+                                                <td colSpan={2}>{record.exerciseTheme+'——'+record.exerciseThemeName}</td>
                                                 <td>{record.exercisePersonnel}</td>
                                                 <td>{record.exerciseDate ? record.exerciseDate.format('YYYY-MM-DD') : record.exerciseDate}</td>
                                             </tr>
@@ -235,7 +288,8 @@ const EditPage = () => {
             // 8
             children: (<Form variant='outlined' scrollToFirstError initialValues={{
                 dipan: null,
-                num: null,
+                num: '322',
+                myFile:[],
                 machineryList: [{ editState: 'add' }],
                 machineryListEditIndex: 0,
                 exerciseList: [] // 应急

@@ -58,3 +58,7 @@
 [submodule "packages/react-hook-form"]
 	path = packages/react-hook-form
 	url = git@github.com:react-hook-form/react-hook-form.git
+[submodule "packages/lodash"]
+	path = packages/lodash
+	url = git@github.com:lodash/lodash.git
+	branch = v5-wip

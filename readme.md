@@ -1,3 +1,13 @@
+```bash
+usage: git submodule [--quiet] [--cached]
+   or: git submodule [--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
+   or: git submodule [--quiet] status [--cached] [--recursive] [--] [<path>...]
+   or: git submodule [--quiet] deinit [-f|--force] (--all| [--] <path>...)
+checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branc   or: git submodule [--quiet] set-branch (--default|--branch <branch>) [--] <path>
+   or: git submodule [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
+   or: git submodule [--quiet] sync [--recursive] [--] [<path>...]
+```
+
 ```
 git submodule add --depth=1 git@github.com:ant-design/ant-design.git packages/antd
 
@@ -19,7 +29,7 @@ git submodule add --depth=1  git@github.com:reduxjs/redux.git packages/redux
 git submodule add --depth=1  git@github.com:reduxjs/react-redux.git packages/react-redux
 git submodule add --depth=1 git@github.com:immutable-js/immutable-js.git packages/immutable-js
 
-git submodule add --depth 1 -b npm -f git@github.com:lodash/lodash.git packages/lodash
+git submodule add -b v5-wip git@github.com:lodash/lodash.git packages/lodash
 
 git submodule add --depth 1 git@github.com:arco-design/arco-design.git packages/arco-design-react
 
