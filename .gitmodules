@@ -62,3 +62,6 @@
 	path = packages/lodash
 	url = git@github.com:lodash/lodash.git
 	branch = v5-wip
+[submodule "packages/react-spring"]
+	path = packages/react-spring
+	url = git@github.com:pmndrs/react-spring.git
