@@ -1,4 +1,4 @@
-import { Form, Collapse, Tabs, Row, Space, Col, Input, Select, Upload, Checkbox, DatePicker, Table, Descriptions, Grid, Button, InputNumber, Popover, Alert, message, Switch, Modal } from 'antd'
+import { Form, Collapse, Tabs, Row, Space, Col, Input, Select, Upload, Checkbox, DatePicker, Table, Descriptions, Grid, Button, InputNumber, Popover, Alert, message, Switch, Modal, Typography, Radio } from 'antd'
 import type { FormItemProps, TabsProps, CollapseProps, GetProp, GetProps, GetRef, FormListOperation } from 'antd'
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
@@ -119,6 +119,31 @@ const EditPage = () => {
             label: '表单',
             children: <>
             <Row>
+                <Col span={24}>
+                <Form.Item label='协认' tooltip={{
+                    title:'分零五要求',
+                    color:'#fff'
+                }} layout='horizontal' wrapperCol={{span:18}} labelCol={{span:3}}>
+                    <Row>
+                        <Col span={14}>
+                        <Typography.Paragraph>
+                            获奖奖项已由组织机构正式发布、颁奖（可提供颁发的证书、奖牌、文件等证明）；且获奖单位近一年内未发生一般及以上安全、消防事故；未因安全、消防及文明施工被政府有关部门处罚。
+                        </Typography.Paragraph>
+
+                        </Col>
+                        <Col flex='none' offset={1}>
+                            <Form.Item name={'xieyi'} rules={[{
+                                required:true,
+                                message:'请选择'
+                            }]}>
+                                <Radio.Group options={[{value:'1',label:'是'},{value:'0',label:'否'}]}></Radio.Group>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Form.Item>
+                </Col>
+            </Row>
+            <Row>
                 <Col span={12}>
                 <Form.Item label='自定下拉内容' name='opNames'>
                     <Select options={[
@@ -144,6 +169,17 @@ const EditPage = () => {
                     </>
                 }}></Select>
                 </Form.Item>
+                </Col>
+                <Col span={12}>
+                    <Form.Item tooltip='8位數字' rules={[{
+                        required:true,
+                        message:'请输入${label}'
+                    },{
+                        pattern:/\d{8}/,
+                        message:'必须是8位数字'
+                    }]} label='8位数字编码' name='no_8'>
+                        <Input></Input>
+                    </Form.Item>
                 </Col>
             </Row>
                 <Row>

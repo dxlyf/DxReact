@@ -65,3 +65,6 @@
 [submodule "packages/react-spring"]
 	path = packages/react-spring
 	url = git@github.com:pmndrs/react-spring.git
+[submodule "packages/zustand"]
+	path = packages/zustand
+	url = git@github.com:pmndrs/zustand.git
