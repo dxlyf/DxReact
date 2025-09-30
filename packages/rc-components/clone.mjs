@@ -5,7 +5,7 @@ import os from 'os';
 import chalk  from 'chalk';
 
 const repository='git@github.com:react-component'
-const tasks=['context', 'mini-decimal', 'mutate-observer', 'portal', 'tour', 'https://github.com/yiminghe/async-validator', 'https://github.com/yiminghe/dom-align', 'align', 'banner-anim', 'calendar', 'cascader', 'checkbox', 'collapse', 'dialog', 'drawer', 'dropdown', 'field-form', 'footer', 'form', 'gesture', 'image', 'input', 'input-number', 'mentions', 'menu', 'motion', 'notification', 'overflow', 'pagination', 'picker', 'progress', 'resize-observer', 'resize-observer', 'segmented', 'select', 'slider', 'steps', 'swipeout', 'switch', 'table', 'tabs', 'textarea', 'texty', 'time-picker', 'tooltip', 'touchable', 'tree', 'tree-select', 'trigger', 'tween-one', 'upload', 'util', 'virtual-list', 'm-calendar', 'm-date-picker', 'm-dialog', 'm-drawer', 'm-input-number', 'm-list-view', 'm-picker', 'm-pull-to-refresh', 'm-pull-to-refresh', 'm-tabs']
+const tasks=['git@github.com:react-component/tween-one.git']//['context', 'mini-decimal', 'mutate-observer', 'portal', 'tour', 'git@github.com:yiminghe/async-validator.git', 'git@github.com:yiminghe/dom-align.git', 'align', 'banner-anim', 'calendar', 'cascader', 'checkbox', 'collapse', 'dialog', 'drawer', 'dropdown', 'field-form', 'footer', 'form', 'gesture', 'image', 'input', 'input-number', 'mentions', 'menu', 'motion', 'notification', 'overflow', 'pagination', 'picker', 'progress', 'git@github.com:devrelm/resize-observer.git', 'resize-observer', 'segmented', 'select', 'slider', 'steps', 'swipeout', 'switch', 'table', 'tabs', 'textarea', 'texty', 'time-picker', 'tooltip', 'touchable', 'tree', 'tree-select', 'trigger', 'tween-one', 'upload', 'util', 'virtual-list', 'm-calendar', 'm-date-picker', 'm-dialog', 'm-drawer', 'm-input-number', 'm-list-view', 'm-picker', 'm-pull-to-refresh', 'm-tabs']
 const maxExecuteCount=5;
 
 async function clone(){
@@ -126,7 +126,7 @@ class GitCloneManager {
       console.log(chalk.yellow(`开始克隆: ${task.url}`));
       console.log(chalk.gray(`目标路径: ${clonePath}`));
       
-      const cloneProcess = exec(`git clone --depth=1 ${task.url} "${clonePath}"`, {
+      const cloneProcess = exec(`git clone --depth 1 ${task.url} "${clonePath}"`, {
         timeout: 300000 // 5分钟超时
       });
       
@@ -374,7 +374,7 @@ async function main() {
     //   return;
     // }
     tasks.forEach(name=>{
-        if(name.startsWith('http')){
+        if(name.startsWith('http')||name.startsWith('git@')){
              manager.addRepos(name)
         }else{
             manager.addRepos(`${repository}/${name}.git`)

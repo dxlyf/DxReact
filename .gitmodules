@@ -68,3 +68,9 @@
 [submodule "packages/zustand"]
 	path = packages/zustand
 	url = git@github.com:pmndrs/zustand.git
+[submodule "packages/inferno"]
+	path = packages/inferno
+	url = git@github.com:infernojs/inferno.git
+[submodule "packages/preact"]
+	path = packages/preact
+	url = git@github.com:preactjs/preact.git

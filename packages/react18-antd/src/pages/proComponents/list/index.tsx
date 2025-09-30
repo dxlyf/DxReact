@@ -5,7 +5,8 @@ import {SchemaForm,useSchemaForm,useSchemaFormColumns} from '../components/Schem
 import {Table,useTable,useTableRequest,useTableColumns,type TableColumn,type ActionType} from '../components/Table'
 import {request} from 'src/utils/request'
 import {SettingOutlined} from '@ant-design/icons'
-import { Button,Col,Dropdown,Input,Popover, Row, Space } from 'antd'
+import { Button,Col,Dropdown,Input,Popover, Row, Space,Form, Radio} from 'antd'
+
 
 export default ()=>{
     const actionRef=useRef<ActionType>(null)
@@ -38,7 +39,7 @@ export default ()=>{
             name:'李三',
         },
         columns:useSchemaFormColumns(()=>[
-            {
+        {
                 dataIndex:'name',
                 fieldProps:{
                     placeholder:'请输入名称'
@@ -65,6 +66,30 @@ export default ()=>{
                     return  [{value:'郴州',label:'郴州'},{value:'长沙',label:'长沙'}]
                  }
 
+            },
+                {
+                order:101,
+            
+                dataIndex:'是否已上锁',
+                valueType:'radioButton',
+                fieldProps:{
+                    buttonStyle:'solid',
+                    options:[{label:'已上锁',value:'a'},{label:'已解锁',value:'b'}],
+                    onChange(v){
+                        schemaForm.submit()
+                      // actionRef.current?.reset()
+                    }
+                },
+                //ignoreFormItem:true,
+                // renderFormItem(schema){
+                //     return <Form.Item>
+                //        <Radio.Group buttonStyle='solid'>
+                //             <Radio.Button value={'已上锁'}>已上锁</Radio.Button>
+                //             <Radio.Button value={'已解锁'}>已解锁</Radio.Button>
+                //        </Radio.Group>
+                //     </Form.Item>
+                // }
+                
             }
         ],[])
     })

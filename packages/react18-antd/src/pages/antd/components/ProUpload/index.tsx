@@ -3,9 +3,9 @@ import type {ButtonProps, GetProp, GetProps} from 'antd'
 import type React from 'react'
 import {} from 'antd'
 import { useMemoizedFn } from 'ahooks'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import useControllableValue from 'src/hooks/useControllableValue' 
-import useUpdate from 'src/hooks/useUpdate' 
+import { useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
+ import useControllableValue from 'src/hooks/useControllableValue' 
+// import useUpdate from 'src/hooks/useUpdate' 
 
 type UploadProps=GetProps<typeof Upload>
 type ProUploadProps=UploadProps&{
@@ -19,27 +19,18 @@ type ProUploadProps=UploadProps&{
 const ProUpload=(props:React.PropsWithChildren<ProUploadProps>)=>{
     const {disabled,onChange,defaultFileList:propDefaultFileList,fileList:propFileList,maxUploadCount=Infinity,headers,uploadBtnProps={},uploadText='上傳',children,visibleUploadBtn=true,onPreview,...restProps}=props
     
-    // const [fileList,setFileList]=useControllableValue<GetProp<typeof Upload,'fileList'>>(props,{
-    //     defaultValue:[],
-    //     valuePropName:'fileList',
-    //     defaultValuePropName:'defaultFileList',
-    //     strict:false
-    // })
-    const update=useUpdate()
-    const fileListRef=useRef(propDefaultFileList)
-    const isControlled=propFileList!==undefined
-    if(isControlled){
-        fileListRef.current=propFileList
-    }
-    const fileList=fileListRef.current
+    const [fileList,setFileList]=useControllableValue<GetProp<typeof Upload,'fileList'>>(props,{
+        defaultValue:[],
+        valuePropName:'fileList',
+        defaultValuePropName:'defaultFileList',
+        strict:false
+    })
     const handlePreview=useMemoizedFn<GetProp<typeof Upload,'onPreview'>>((file)=>{
             
     })
+    
     const handleChange=useMemoizedFn<GetProp<typeof Upload,'onChange'>>((info)=>{
-         const {file,fileList}=info
-         if(!isControlled){
-            fileListRef.current=fileList
-         }
+         //const {file,fileList}=info
          onChange?.(info)
     })
     const uploadBtn=useMemo(()=>{
