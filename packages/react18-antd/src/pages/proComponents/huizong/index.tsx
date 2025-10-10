@@ -1,4 +1,4 @@
-import { Button, Collapse, Tabs } from 'antd'
+import { Button, Collapse, Row, Tabs } from 'antd'
 import type { CollapseProps,GetProps,GetProp } from 'antd'
 import { ProForm, EditableProTable, ProFormItem, ProFormDependency, ProFormSelect,ProTable, ProFormText, ProFormGroup, ProFormDatePicker, ProFormDateRangePicker, BetaSchemaForm } from '@ant-design/pro-components'
 import type { ProFormProps, ProFormInstance, ProFormItemProps, ProFormFieldProps } from '@ant-design/pro-components'
@@ -77,6 +77,7 @@ const EditPage = (props) => {
         }
     ]
     return <>
+
     <ProTable  toolbar={{
         settings:[],
         search:{},

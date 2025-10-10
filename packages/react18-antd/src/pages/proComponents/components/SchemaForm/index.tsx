@@ -1,5 +1,5 @@
 import {BetaSchemaForm} from '@ant-design/pro-components'
-import type {ProFormColumnsType,ActionType,ProFormProps,ProFormInstance} from '@ant-design/pro-components'
+import type {ProFormColumnsType,ProColumns,ActionType,ProFormProps,ProFormInstance} from '@ant-design/pro-components'
 import { useMemoizedFn } from 'ahooks'
 import {Form} from 'antd'
 import type {FormInstance} from 'antd'
@@ -12,12 +12,13 @@ type UseSchemaFormProps={
     actionRef?:React.RefObject<ActionType>
     defaultFilterParams?:any
     delayInitTime?:number
-}&BetaSchemaFormProps
+    columns?:ProColumns[]
+}&Omit<BetaSchemaFormProps,'columns'>
 export type {
-    ProFormColumnsType as SearchFormColumn
+    ProColumns as SearchFormColumn
 }
 
- const useSchemaFormColumns=(factory:()=>ProFormColumnsType<unknown,unknown>[],deps:readonly unknown[])=>{
+ const useSchemaFormColumns=(factory:()=>ProColumns[],deps:readonly unknown[])=>{
     return useMemo(factory,deps)
  }
  type UseProFormInstanceOptions={

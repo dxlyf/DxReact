@@ -1,29 +1,23 @@
 import { Button, Col, Form, Modal, Row, Space, Table,type TableProps,Input } from "antd"
 import { useCallback, useEffect, useMemo } from "react"
 import {useAntdTable} from 'ahooks'
-import {useModal,ModalStore} from '../hooks/useModal'
+import {useModal,type ModalInstance} from '../hooks/useModal2'
 
-const EditDetail=(props:{modal:ModalStore})=>{
+const EditDetail=(props:{modal:ModalInstance})=>{
     const {modal}=props
     const [form]=Form.useForm()
-    modal.register({
-        onSubmit:async ()=>{
-           return form.validateFields().then((res)=>res,()=>false)
-
-        },
-        onCancel:async()=>{
-           return form.validateFields().then((res)=>res,()=>false)
-        }
-    })
-    useEffect(()=>{
-        console.log('modal.modalStore',)
-    },[modal])
+    
     const handleFinish=useCallback(async (values:any)=>{
         console.log('handleFinish',values)
+        modal.setLoading(true)
+        //modal.submit(values,true)
     },[])
       const handleFinishFailed=useCallback(async (values:any)=>{
         console.log('handleFinishFailed',values)
     },[])
+    modal.onSubmit(()=>{
+         form.submit()
+    })
     return <Form form={form} layout='vertical'  onFinish={handleFinish} onFinishFailed={handleFinishFailed}>
         <Form.Item label='名称' name='name' required rules={[{type:'string',whitespace:true,required:true,message:'请输入名称'}]}>
             <Input></Input>
@@ -60,17 +54,21 @@ export default ()=>{
         Component:Input
     }],[])
 
-    const [modalProps,modal]=useModal({
+    const [modalDom,modal]=useModal({
         title:'工人原因',
+        destroyOnHidden:false,
         getModalStageProps(store){
             return {
                 title:store.data?.title
             }
         },
-        children:(istance)=><EditDetail modal={istance}></EditDetail>
+        onSubmit(values){
+            console.log('values',values)
+        },
+        children:(istance)=><EditDetail></EditDetail>
     })
     return <>
-    <Modal {...modalProps}></Modal>
+    {modalDom}
     <Form form={form}>
         <Form.Item label='名称' name={'name'}>
             <Input></Input>

@@ -48,6 +48,10 @@ export default ()=>{
                     
                 }
             },{
+                order:99,
+                valueType:'dateRange',
+                dataIndex:'startTimes'
+            },{
                // title:'日期',
                 dataIndex:'date',
                 valueType:'date'
