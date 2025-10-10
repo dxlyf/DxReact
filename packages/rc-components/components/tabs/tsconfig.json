@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": "./",
+    "lib": [
+      "dom",
+      "es2017"
+    ],
+    "jsx": "react",
+    "declaration": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@@/*": [
+        ".dumi/tmp/*"
+      ],
+      "rc-tabs": [
+        "src/"
+      ],
+      "@rc-component/tabs": [
+        "src/"
+      ]
+    }
+  },
+  "include": [
+    ".dumirc.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ]
+}

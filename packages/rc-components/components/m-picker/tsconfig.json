@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": false,
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "target": "es6",
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "baseUrl": "src",
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  }
+}
