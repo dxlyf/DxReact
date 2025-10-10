@@ -1,118 +1,123 @@
 import { useMemoizedFn } from 'ahooks'
 import {Modal} from 'antd'
 import type {GetProps,GetProp} from 'antd'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 type ModalProps=GetProps<typeof Modal>
 
 type UseModalProps=Omit<ModalProps,'onOk'|'onCancel'|'children'>&{
-    children?:React.ReactNode|((instance:UseModalInstance)=>React.ReactNode)
+    children?:(instance:ModalStore)=>React.ReactNode
     onOk?(result?:any):any|Promise<any>
-    onCancel?():any|Promise<any>
-    getStageProps?:(istance:UseModalInstance)=>ModalProps
+    onCancel?(result?:any):any|Promise<any>
+    getModalStageProps?:(istance:ModalStore)=>ModalProps
 }
-export type UseModalInstance={
-    loading:boolean
-    modalStore:ModalStore
-    data:any
-    open(data?:any):void
-    close(data?:any):void
-}
-type SubmitHandle=()=>(any|Promise<any>)
-type ModalCallbacks={
-    onSubmit?:SubmitHandle
-}
-class ModalStore{
-    callbacks:ModalCallbacks={}
-    constructor(){
 
+type CallbackHandle=()=>(any|Promise<any>)
+type ModalCallbacks={
+    onSubmit?:CallbackHandle
+    onCancel?:CallbackHandle
+}
+export class ModalStore{
+    callbacks:ModalCallbacks={}
+    data:any=null
+    visible=false
+    loading=false
+    updateCallback:()=>void
+    constructor(update:()=>void){
+        this.updateCallback=update
     }
     register(callbacks:ModalCallbacks){
         this.callbacks=callbacks
     }
+    forceUpdate=()=>{
+        this.updateCallback?.()
+    }
+    open(data={}){
+      this.data=data
+      this.visible=true
+      this.forceUpdate()
+    }
     close(){
+        this.visible=false
+        this.data=null
+        this.forceUpdate()
+    }
+    setLoading(loading:boolean){
+        this.loading=loading
+        this.forceUpdate()
+    }
+    async cancel(){
+        this.setLoading(true)
+         try{
+            let res=await this.callbacks.onCancel?.()
+            return res
+         }catch{
+            return false
+         }finally{
+            this.setLoading(false)
+         }
+    }
+    async submit(){
+         this.setLoading(true)
+         try{
+            let res=await this.callbacks.onSubmit?.()
+            return res
+         }catch{
+            return false
+         }finally{
+            this.setLoading(false)
+         }
+    }
+    destroy(){
         this.callbacks={}
     }
 }
 const useModal=(props:UseModalProps={})=>{
-    const {getStageProps,onCancel,onOk,children,...restModalProps}=props
-    const [state,setState]=useState<any>({visible:false})
-    const [data,setData]=useState<any>(null)
-    const [loading,setLoading]=useState(false)
-    const [modalStore]=useState(()=>new ModalStore())
-    const open=useCallback((data:any=null)=>{
-            setState({visible:true})
-            setData(data)
-    },[])
-    const close=useCallback((data:any=null)=>{
-            setState({visible:false})
-            setData(data)
-    },[])
+    const {getModalStageProps,children,...restModalProps}=props
+    const [,forceUpdate]=useReducer(v=>v+1,0)
+    const [modalStore]=useState(()=>new ModalStore(forceUpdate))
+
     const handleOk=useMemoizedFn(async (e)=>{
-         setLoading(true)
          try{
-            let res=await modalStore.callbacks.onSubmit?.()
-            if(onOk){
-                res=onOk(res)
-            }
+            let res=await modalStore.submit()
             if(res!==false){
-                close()
+                modalStore.close()
             }
          }catch{
 
-         }finally{
-            setLoading(false)
          }
-            // Promise.resolve().then(()=>modalStore.callbacks.onSubmit?.()).then((ret)=>onOk?onOk():ret).then(result=>{
-            //     if(result!==false){
-            //         close()
-            //     }
-            // }).finally(()=>{
-            //     setLoading(false)
-            // })
-            //modalStore.callbacks.onSubmit?.()
     })
-    const handleCancel=useMemoizedFn((e)=>{
-       if(onCancel){
-            Promise.resolve().then(()=>onCancel()).then(result=>{
-                if(result!==false){
-                    close()
-                }
-            })
-        }else{
-             close()
+    const handleCancel=useMemoizedFn(async (e)=>{
+        try{
+            let res=await modalStore.cancel()
+            if(res!==false){
+                modalStore.close()
+            }
+        }catch{
+
         }
     })
-   
-    const modalInstance=useRef<UseModalInstance>()
-     modalInstance.current= {
-            loading,
-            modalStore,
-            data,
-            open,
-            close
-    }
-    const modalStateProps=getStageProps?getStageProps(modalInstance.current):{}
+    const modalStateProps=getModalStageProps?getModalStageProps(modalStore):{}
     const modalProps:ModalProps={
         okButtonProps:{
-            loading:loading
+            loading:modalStore.loading
         },
         cancelButtonProps:{
-            loading:loading
+            loading:modalStore.loading
         },
         onOk:handleOk,
         onCancel:handleCancel,
-        open:state.visible,
-        children:typeof children==='function'?children(modalInstance.current):children,
+        open:modalStore.visible,
+        children:children?children(modalStore):null,
         ...restModalProps,
         ...modalStateProps,
     }
-    useEffect(()=>{
-        if(!state.visible){
-            modalStore.close()
+    useLayoutEffect(()=>{
+        return ()=>{
+             modalStore.destroy()
         }
-    },[state.visible])
-    return [modalProps,modalInstance] as [ModalProps,React.MutableRefObject<UseModalInstance>]
+    },[])
+    return [modalProps,modalStore] as [ModalProps,ModalStore]
 }
 export {
     useModal

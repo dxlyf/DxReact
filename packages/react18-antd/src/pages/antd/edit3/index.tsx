@@ -44,6 +44,16 @@ const EditPage = () => {
                         <Form.Item label={true?'上鎖/解鎖':'上鎖狀態'}>
                             {true?'解鎖':'上鎖'}
                         </Form.Item>
+
+                                <Form.Item label={'身份证'} name='cid' rules={[{
+                                    required:true,
+                                    message:'请输入${label}'
+                                },{
+                                    pattern:/^\d{17}[\dXx]$/,
+                                    message:'身份证格式不正确'
+                                }]}>
+                                <Input></Input>
+                        </Form.Item>
             </Form>)
         }]
     }, [])

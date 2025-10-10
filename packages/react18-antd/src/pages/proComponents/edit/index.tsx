@@ -4,6 +4,7 @@ import { ProForm, EditableProTable, ProFormItem, ProFormDependency, ProFormSelec
 import type { ProFormProps, ProFormInstance, ProFormItemProps, ProFormFieldProps } from '@ant-design/pro-components'
 import React, { useImperativeHandle, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
+import { uniqueId } from 'lodash-es'
 
 
 type EditPageInstance = {
@@ -12,9 +13,9 @@ type EditPageInstance = {
 const EditPage = (props: { editRef: React.Ref<EditPageInstance> }) => {
     const { editRef } = props
     const formRef = useRef<ProFormInstance>()
-    const [data, setData] = useState([])
-    const collapseItems = useMemo<Required<CollapseProps>['items']>(() => {
-        return [
+    const [editableKeys, setEditableRowKeys] = useState<React.Key[]>([]);
+    const [data, setData] = useState([{id:1,name:'李三'}])
+    const collapseItems = [
             {
                 key: 'a',
                 label: '基本信息',
@@ -87,19 +88,34 @@ const EditPage = (props: { editRef: React.Ref<EditPageInstance> }) => {
                                     删除
                                 </a>,]
                             }
-                        }]} value={data} onDataSourceChange={(value: any[]) => {
-                            console.log('dataSource', value)
-                        }} onValuesChange={(value: any[]) => {
-                            console.log('value', value)
+                        }]} value={data}  onChange={(value: any[],record:any) => {
+                            console.log('onChange', value,'record',record)
                             setData(value)
+                        }} editable={{
+                            editableKeys:editableKeys,
+                            // onSave:async (key,row,originRow,newLine)=>{
+                            //     console.log('save','data',data,'row',row)
+                            //     let index=data.findIndex(d=>d.id===row.id)
+                            //     let newData=[...data]
+                            //     if(index!==-1){
+                            //         newData[index]=row
+                            //     }else{
+                            //         newData.push(row)
+                            //     }
+                            //       setData(newData)
+                            // },
+                            onChange:(editableKeys, editableRows)=>{
+                                setEditableRowKeys(editableKeys)
+                                console.log('change',editableKeys)
+                            }
                         }} recordCreatorProps={{
                             record: (index) => {
                                 return {
-                                    id:index,
-                                    name: '李三'
+                                    id:uniqueId('row'),
+                                    isNew:true
                                 }
                             },
-                            newRecordType:"cache",
+                            newRecordType:'cache',
                             position:'bottom'
                         }}></EditableProTable>
                     </>
@@ -107,7 +123,6 @@ const EditPage = (props: { editRef: React.Ref<EditPageInstance> }) => {
                 )
             }
         ]
-    }, [data])
     return <>
         <ProForm formRef={formRef} layout='vertical' grid={true} >
             <Collapse style={{ width: '100%' }} items={collapseItems} defaultActiveKey={collapseItems.map(d => d.key as string)}></Collapse>

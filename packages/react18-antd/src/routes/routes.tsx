@@ -41,6 +41,14 @@ const routes:RouteObjectAndMenu[]=[
                         path:'edit',
                         name:'常用编辑页',
                         Component:React.lazy(()=>import('src/pages/proComponents/edit'))
+                    },   {
+                        path:'huizong',
+                        name:'汇总',
+                        Component:React.lazy(()=>import('src/pages/proComponents/huizong'))
+                    },   {
+                        path:'huizongedit',
+                        name:'汇总编辑',
+                        Component:React.lazy(()=>import('src/pages/proComponents/huizongedit'))
                     }
                 ]
             },{

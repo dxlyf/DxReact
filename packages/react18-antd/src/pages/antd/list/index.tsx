@@ -1,30 +1,30 @@
 import { Button, Col, Form, Modal, Row, Space, Table,type TableProps,Input } from "antd"
 import { useCallback, useEffect, useMemo } from "react"
 import {useAntdTable} from 'ahooks'
-import {useModal,type UseModalInstance} from '../hooks/useModal'
+import {useModal,ModalStore} from '../hooks/useModal'
 
-const EditDetail=(props:{modal:UseModalInstance})=>{
+const EditDetail=(props:{modal:ModalStore})=>{
     const {modal}=props
     const [form]=Form.useForm()
-    modal.modalStore.register({
+    modal.register({
         onSubmit:async ()=>{
-            try{
-                console.log('ffff')
-                await form.validateFields()
-                
-            }catch {
-                return false
-            }
+           return form.validateFields().then((res)=>res,()=>false)
 
+        },
+        onCancel:async()=>{
+           return form.validateFields().then((res)=>res,()=>false)
         }
     })
     useEffect(()=>{
         console.log('modal.modalStore',)
-    },[modal.modalStore])
+    },[modal])
     const handleFinish=useCallback(async (values:any)=>{
         console.log('handleFinish',values)
     },[])
-    return <Form form={form}  onFinish={handleFinish}>
+      const handleFinishFailed=useCallback(async (values:any)=>{
+        console.log('handleFinishFailed',values)
+    },[])
+    return <Form form={form} layout='vertical'  onFinish={handleFinish} onFinishFailed={handleFinishFailed}>
         <Form.Item label='名称' name='name' required rules={[{type:'string',whitespace:true,required:true,message:'请输入名称'}]}>
             <Input></Input>
         </Form.Item>
@@ -54,6 +54,7 @@ export default ()=>{
     },{
         form
     })
+
     const SearchFormItems=useMemo(()=>[{
         dataIndex:'name',
         Component:Input
@@ -61,7 +62,11 @@ export default ()=>{
 
     const [modalProps,modal]=useModal({
         title:'工人原因',
-        
+        getModalStageProps(store){
+            return {
+                title:store.data?.title
+            }
+        },
         children:(istance)=><EditDetail modal={istance}></EditDetail>
     })
     return <>
@@ -75,7 +80,7 @@ export default ()=>{
         <Col flex={'none'}>
             <Space>
                 <Button onClick={()=>{
-                    modal.current.open()
+                    modal.open({title:'新增'})
                 }} type="primary">新增</Button>
             </Space>
         </Col> 

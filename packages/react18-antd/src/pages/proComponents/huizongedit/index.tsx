@@ -1,0 +1,137 @@
+import { Button, Card, Collapse, Form, Space, Tabs } from 'antd'
+import type { CollapseProps,GetProps,GetProp } from 'antd'
+import { ProForm, EditableProTable, ProFormItem, ProFormDependency, ProFormSelect,ProTable, ProFormText, ProFormGroup, ProFormDatePicker, ProFormDateRangePicker, BetaSchemaForm } from '@ant-design/pro-components'
+import type {ActionType,EditableFormInstance, ProFormProps,ProColumns, ProFormInstance, ProFormItemProps, ProFormFieldProps } from '@ant-design/pro-components'
+import React, { useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import dayjs from 'dayjs'
+import { uniqueId } from 'lodash-es'
+import mockjs from 'mockjs'
+import { useMemoizedFn } from 'ahooks'
+
+const data=mockjs.mock({
+    'list|100':[{
+        'id|+1':0,
+        'jxmc':'@word'
+    }]
+}).list;
+
+
+type ProEditTableProps=Omit<GetProps<typeof EditableProTable>,'columns'|'rowKey'>&{
+columns:ProColumns[]
+rowKey?:string
+recordCreator?:()=>any
+
+}
+let row_uid=0
+
+const ProEditTable=(props:ProEditTableProps)=>{
+    const {columns,rowKey='__edit_id__',recordCreator}=props
+    const actionRef=useRef<ActionType>()
+    const editableFormRef=useRef<EditableFormInstance>()
+    const [editableKeys,setEditableKeys]=useState([])
+    const getRowKey=useCallback((record:any)=>{
+        return record[rowKey]
+    },[rowKey])
+    const mergeColumns=useMemo(()=>{
+        return columns.concat([{
+            title:'操作',
+            valueType:'option',
+            width:200,
+            fixed:'right',
+            render(dom,record,index,action){
+                //const editing=actionRef.current?.isEditable(record)
+                return   <Space>
+                    <a onClick={()=>{
+                        actionRef.current!.startEditable(getRowKey(record))
+                    }}>编辑</a>
+                    <a>删除</a>
+                    </Space>
+            }
+        }])
+    },[columns,actionRef,getRowKey])
+    const handleAddRow=useCallback(()=>{
+       actionRef.current?.addEditRecord({
+        ...(recordCreator?recordCreator():{}),
+        [rowKey]:'row_'+(row_uid++),
+       })
+    },[recordCreator,rowKey])
+    const handleSelectionEditableRows=useCallback((editableKeys:any)=>{
+        console.log('editableKeys',editableKeys)
+        setEditableKeys(editableKeys)
+    },[setEditableKeys])
+    const handleDelete=useCallback(()=>{
+
+    },[])
+    return <>
+    <EditableProTable name={'list'} editableFormRef={editableFormRef} actionRef={actionRef} bordered size='small' toolbar={{
+        settings:[],
+        actions:[<Button onClick={handleAddRow}>插入行</Button>,<Button onClick={handleDelete}>删除行</Button>]
+    }} onChange={(value:any[])=>{
+
+    }} editable={{
+       // type:'multiple',
+        editableKeys:editableKeys,
+        onChange:handleSelectionEditableRows,
+        // actionRender:(row,config,defaultDoms)=>{
+        //     return [defaultDoms.save,defaultDoms.cancel]
+        // }
+    }} recordCreatorProps={false} rowKey={rowKey} columns={mergeColumns}></EditableProTable>
+    </>
+}
+const EditPage = () => {
+    
+    const [dataSource,setDataSource]=useState<any[]>([])
+    const columns:ProColumns[]=[
+        {
+            title:'序号',
+            editable:false,
+            renderText(text, record, index, action) {
+                return index+1
+            },
+        },{
+            title:'评审月份',
+            dataIndex:'psyf',
+            valueType:'date',
+            formItemProps:{
+                rules:[{
+                    required:true,
+                    type:'object',
+                    message:'请选择${label}'
+                }],
+                
+            },
+            transform(value){
+                console.log('value',value)
+                return value.format('YYYY-MM-DD')
+            }
+            
+        },
+        {
+            title:'工程公司',
+            dataIndex:'gcgs',
+            valueType:'text'
+        },
+        {
+            title:'地盘名称',
+            dataIndex:'dpmc',
+            valueType:'select',
+            request:async ()=>{
+                return [{label:'地盘1',value:'地盘1'},{label:'地盘2',value:'地盘2'}]
+            }
+        }
+        
+    ]
+    return <>
+    <Form onFinish={(values)=>{
+        console.log('onFinish',values)
+    }}>
+        <Button htmlType='submit'>提交</Button>
+        <Card title='奖金明细'>
+            <ProEditTable columns={columns}></ProEditTable>
+        </Card>
+    </Form>
+    
+    </>
+}
+
+export default EditPage

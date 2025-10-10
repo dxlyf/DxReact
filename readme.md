@@ -1,11 +1,17 @@
 ```bash
-usage: git submodule [--quiet] [--cached]
-   or: git submodule [--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
-   or: git submodule [--quiet] status [--cached] [--recursive] [--] [<path>...]
-   or: git submodule [--quiet] deinit [-f|--force] (--all| [--] <path>...)
-checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branc   or: git submodule [--quiet] set-branch (--default|--branch <branch>) [--] <path>
-   or: git submodule [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
-   or: git submodule [--quiet] sync [--recursive] [--] [<path>...]
+git submodule [--quiet] [--cached]
+git submodule [--quiet] add [<options>] [--] <repository> [<path>]
+git submodule [--quiet] status [--cached] [--recursive] [--] [<path>…​]
+git submodule [--quiet] init [--] [<path>…​]
+git submodule [--quiet] deinit [-f|--force] (--all|[--] <path>…​)
+git submodule [--quiet] update [<options>] [--] [<path>…​]
+git submodule [--quiet] set-branch [<options>] [--] <path>
+git submodule [--quiet] set-url [--] <path> <newurl>
+git submodule [--quiet] summary [<options>] [--] [<path>…​]
+git submodule [--quiet] foreach [--recursive] <command>
+git submodule [--quiet] sync [--recursive] [--] [<path>…​]
+git submodule [--quiet] absorbgitdirs [--] [<path>…​]
+git rm --cached
 ```
 
 ```
