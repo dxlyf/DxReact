@@ -5,24 +5,32 @@ import {SchemaForm,useSchemaForm,useSchemaFormColumns} from '../components/Schem
 import {Table,useTable,useTableRequest,useTableColumns,type TableColumn,type ActionType} from '../components/Table'
 import {request} from 'src/utils/request'
 import {SettingOutlined} from '@ant-design/icons'
-import { Button,Col,Dropdown,Input,Popover, Row, Space,Form, Radio} from 'antd'
+import { Button,Col,Dropdown,Input,Popover, Row, Space,Form, Radio, Flex} from 'antd'
+import dayjs from 'dayjs'
 
 
 export default ()=>{
     const actionRef=useRef<ActionType>(null)
+    
     const {searchFormProps,form:schemaForm,formFieldValues}=useSchemaForm({
         // submitterColSpanProps:{
         //     offset:0,
         //     span:2
         // },
        // layout:'inline',
-        defaultColsNumber:4,
+        
+        // submitterColSpanProps:{
+        //     flex:'none',
+        // },
+      //  layout:'inline',
         searchGutter:4,
+       // defaultFormItemsNumber:10,
+      // collapsed:false,
         colProps:{
             flex:"none"
         },
         labelWidth:0,
-        rowProps:{gutter:4},
+       // rowProps:{gutter:4},
         // span:{
         //    xs: 24, sm: 12, md: 8, lg: 6, xl: 6, xxl: 6 
         // },
@@ -50,7 +58,19 @@ export default ()=>{
             },{
                 order:99,
                 valueType:'dateRange',
-                dataIndex:'startTimes'
+                dataIndex:'startTimes',
+                fieldProps:{
+                    placeholder:['开始','结束']
+                },
+                formItemProps:{
+                    getValueFromEvent(value){
+                        return value
+                    }
+                },
+                transform(value){
+                    console.log('transform',value)
+                    return value
+                }
             },{
                // title:'日期',
                 dataIndex:'date',

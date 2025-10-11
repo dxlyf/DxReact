@@ -79,6 +79,11 @@ const routes:RouteObjectAndMenu[]=[
                         path:'edit4',
                         name:'常用编辑页4',
                           Component:React.lazy(()=>import('src/pages/antd/edit4'))
+                    },
+                    {
+                        path:'edit5',
+                        name:'常用编辑页5',
+                          Component:React.lazy(()=>import('src/pages/antd/edit5'))
                     }
                 ]
             }

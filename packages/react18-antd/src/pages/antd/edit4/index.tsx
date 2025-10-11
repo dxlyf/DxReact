@@ -11,7 +11,7 @@ import Decimal from 'decimal.js'
 import { chain, pick } from 'lodash-es'
 import AntTableEditDemo from './AntTableEditDemo'
 import { useModal } from '../hooks/useModal2'
-import { EditableProTable, ProTable } from '@ant-design/pro-components'
+import { EditableProTable, ProTable,useMountMergeState} from '@ant-design/pro-components'
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
 const CategoryOptions=[
     {
@@ -198,6 +198,7 @@ const DianPanList = ({modal,selectedRows:propsselectedRows}) => {
     {detailModalDom}
     </>
 }
+const Summary=Table.Summary
 const EditPage = () => {
     const [form] = Form.useForm()
     const [data, setData] = useState([])
@@ -257,6 +258,7 @@ const EditPage = () => {
     })
     return <>
         {modalDom}
+        
         <Row justify={'end'}>
             <Col flex="none">
                 <Space>
@@ -268,8 +270,15 @@ const EditPage = () => {
             </Col>
         </Row>
         <EditableProTable recordCreatorProps={false}></EditableProTable>
-        <ProTable showSorterTooltip={false} search={false} options={false} tableAlertRender={false} bordered size='small' columns={columns} dataSource={data} rowSelection={rowSelection} rowKey={'id'}></ProTable>
-
+        <ProTable  showSorterTooltip={false} search={false} options={false} tableAlertRender={false} bordered size='small' columns={columns} dataSource={data} rowSelection={rowSelection} rowKey={'id'}></ProTable>
+                    <Table summary={()=>{
+                        return <Summary.Row>
+                                <Summary.Cell index={0}></Summary.Cell>
+                                   <Summary.Cell index={0}></Summary.Cell>
+                                      <Summary.Cell index={0}></Summary.Cell>
+                                         <Summary.Cell colSpan={5} index={0}></Summary.Cell>
+                        </Summary.Row>
+                    }}></Table>
     </>
 }
 
