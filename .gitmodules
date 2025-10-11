@@ -74,3 +74,6 @@
 [submodule "packages/preact"]
 	path = packages/preact
 	url = git@github.com:preactjs/preact.git
+[submodule "packages/moment"]
+	path = packages/moment
+	url = git@github.com:moment/moment.git
