@@ -3,7 +3,7 @@ import type { FormItemProps, TabsProps, CollapseProps,GetProp,GetProps,GetRef,Fo
 import React,{ useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import styles from './index.module.scss'
-import { InfoCircleOutlined, MinusOutlined, PlusOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons'
+import { InfoCircleOutlined, MinusOutlined, PlusOutlined, CopyOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 import { useMemoizedFn, useLatest, useUpdateEffect ,useClickAway} from 'ahooks'
 import classNames from 'classnames'
 import {EditableTable} from './EditTable'
@@ -478,11 +478,27 @@ const EditPage = () => {
                         <>
                      <Form.Item noStyle shouldUpdate>
                     {(form) => {
-
+             
                         const errors = Array.from(new Set(form.getFieldsError().filter(d=>d.name.includes('checkList')).flatMap(d => d.errors)))
-                        return <Popover placement='topRight' open={errors.length > 0} content={<div style={{ fontSize: 12, color: 'red' }}>
+                        return <div className='curpopover-place' style={{width:'100%',height:1,position:'relative'}}>
+                            <Popover zIndex={9999} title={<Row justify='space-between'>
+                                <Col flex="auto">安全检查</Col>
+                                <Col flex='none'>
+                                <CloseOutlined onClick={()=>{
+                                    form.setFields(form.getFieldsError().filter(d=>d.name.includes('checkList')).map(d=>{
+                                        return {
+                                            name:d.name,
+                                            errors:[]
+                                        }
+                                    }))
+                                }}></CloseOutlined>
+                                </Col>
+                            </Row>} getPopupContainer={(target) => {
+                                            return target.closest('.curpopover-place') || document.body
+                                        }} placement='topRight' open={errors.length > 0} content={<div style={{ fontSize: 12, color: 'red' }}>
                             <Form.ErrorList errors={errors}></Form.ErrorList>
                         </div>}><div></div></Popover>
+                        </div>
                     }}
                 </Form.Item>
                             {/* <Form.Item shouldUpdate>
@@ -592,9 +608,12 @@ const EditPage = () => {
                             // console.log('trainingNumErrors',trainingNumErrors,attendanceErrors)
                             return (
                                 <>
-                                    <Popover placement='topRight' open={errors.length > 0} content={<div style={{ fontSize: 12, color: 'red' }}>
-                                        <Form.ErrorList errors={errors}></Form.ErrorList>
-                                    </div>}><div></div></Popover>
+                                    <div className='curpopover-place' style={{width:'100%',height:1,position:'relative'}}>
+                                        <Popover  placement='topRight'  getPopupContainer={(target) => {
+                                            return target.closest('.curpopover-place') || document.body
+                                        }} defaultOpen={errors.length > 0} content={<div style={{ fontSize: 12, color: 'red' }}>
+                       <Form.ErrorList errors={errors}></Form.ErrorList>
+                                    </div>}><div></div></Popover></div>
                                     <table className={styles.table}>
                                         <colgroup>
                                             <col ></col>
@@ -902,11 +921,12 @@ const EditPage = () => {
                                             const editState = record.editState
                                             const isEdit = i === machineryListEditIndex
                                             const selected = i === machineryListEditIndex
+                            
                                             return isEdit ? <tr key={field.key} className={classNames({
                                                 [styles.selectedRow]: selected
                                             })}>
                                                 <td>
-                                                    <Popover placement='leftBottom' getPopupContainer={(target) => {
+                                                    <Popover placement='leftBottom'  getPopupContainer={(target) => {
                                                         return target.closest('.ant-collapse-content') || document.body
                                                     }} open={true} content={
                                                         <Space direction='vertical'>

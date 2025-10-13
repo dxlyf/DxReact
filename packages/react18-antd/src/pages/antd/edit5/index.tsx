@@ -1,7 +1,7 @@
 import { ConfigProvider, Form, Collapse, Tabs, Row, Space, Col, Input, Select, Upload, Checkbox, DatePicker, Table, Descriptions, Grid, Button, InputNumber, Popover, Alert, message, Switch, Modal, Typography, Radio } from 'antd'
 import type { FormItemProps, TabsProps, CollapseProps, GetProp, GetProps, GetRef, FormListOperation } from 'antd'
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
 import styles from './index.module.scss'
 import { InfoCircleOutlined, MinusOutlined, PlusOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useMemoizedFn, useLatest, useUpdateEffect, useClickAway } from 'ahooks'
@@ -15,6 +15,7 @@ import { EditableProTable, ProTable,useMountMergeState} from '@ant-design/pro-co
 import type { ActionType, ProColumns } from '@ant-design/pro-components'
 import {useTable} from '../hooks/useTable'
 import mockjs from 'mockjs'
+
 const data=mockjs.mock({'list|100':[{'id|+1':0,'name':'@name','age|10-100':0}]}).list
 async function query(params:any) {
         const {current,pageSize}=params
@@ -58,9 +59,16 @@ const EditPage = () => {
             }
         ]
     })
-    console.log('data',data)
+  
+    const showPrice=(v:any,f=2)=>{
+        let d=new Decimal(v)
+      //  Decimal.
+        return Decimal.isDecimal(d)?d.toFixed(f):''
+    }
+    dayjs
     return <>
-     
+   {showPrice('43.65445645',0)}
+   {dayjs('2025-09-30T16:00:00.000Z').format('YYYY-MM-DD')}
     <Table {...tableProps} ></Table>
     </>
 }

@@ -56,6 +56,17 @@ export default ()=>{
                     
                 }
             },{
+                dataIndex:'year',
+                valueType:'dateYear',
+                fieldProps:{
+                    placeholder:'年度'
+                },
+                initialValue:dayjs().format('YYYY'),
+                formItemProps:{
+                    
+                }
+                
+            },{
                 order:99,
                 valueType:'dateRange',
                 dataIndex:'startTimes',
@@ -158,7 +169,8 @@ export default ()=>{
                 dataIndex:'name',
                 sorter:true,
                 defaultSortOrder:'descend',
-                width:100,
+                width:100
+                
                 
             },{
                 title:'创建时间',
