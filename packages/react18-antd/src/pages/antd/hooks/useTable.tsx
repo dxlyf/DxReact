@@ -7,11 +7,13 @@ import type { ColumnsType, FilterValue, SorterResult } from 'antd/es/table/inter
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 type RequestResult<D> = { data: D[], total?: number }
-type UseTableProps<D> = Omit<TableProps,'rowKey'> & {
+type UseTableProps<D> = Omit<TableProps,'rowKey'|'onChange'> & {
     rowKey?:string
     showSerialNumber?: boolean
     manualRequest?: boolean
     requestDeps?: any[]
+    onChange?:(data:D[])=>D[]
+    onTableChange?:TableProps['onChange']
     request?: (params: any, sorter: any, filter: any) => (RequestResult<D> | Promise<RequestResult<D>>)
 }
 type TableColumn = Omit<TableColumnType, 'children'> & {
@@ -20,15 +22,15 @@ type TableColumn = Omit<TableColumnType, 'children'> & {
 }
 type RequiredTableProps = Required<TableProps>
 
-const set=(obj:any,path:string[]|string,value:any)=>{
+const setPath=(obj:any,path:string[]|string,value:any)=>{
     if(!Array.isArray(path)){
         path=[path]
     }
     let cur=obj,len=path.length-1,key=path[len]
     for(let i=0;i<len;i++){
         cur=cur[path[i]]
-        if(cur!==null&&typeof cur!=='object'){
-            return
+        if(!cur){
+            cur[path[i]]={}
         }
     }
     cur[key]=value
@@ -37,7 +39,7 @@ const isLocalSort=(sorter:any)=>{
     return sorter&&typeof sorter.compare==='function'
 }
 const useTable = <D = any>(props: UseTableProps<D>) => {
-    const {rowKey='id',columns, showSerialNumber = true, request: propRequest, onChange,rowSelection:propRowSelection, manualRequest = false, requestDeps = [], pagination={}, ...restTableProps } = props
+    const {rowKey='id',columns, showSerialNumber = true, request: propRequest,onChange, onTableChange,rowSelection:propRowSelection, manualRequest = false, requestDeps = [], pagination={}, ...restTableProps } = props
     const [data, setData] = useState<D[]>([])
     const [loading, setLoading] = useState(false)
     const [selectedRows,setSelectedRows]=useState([])
@@ -112,7 +114,6 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
         if(!Array.isArray(sorter)){
             sorter=[sorter]
         }
-        console.log('sort',sorter)
         const newSortedInfo={}
         sorter.forEach((c)=>{
             if(c.column?.sorter&&!isLocalSort(c.column?.sorter)){
@@ -121,10 +122,10 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
         })
         setSortedInfo(newSortedInfo)
         request(lastParams.current, false)
-        onChange?.(pagination, filters, sorter, extra)
+        onTableChange?.(pagination, filters, sorter, extra)
 
     })
-    console.log('sortedInfo',sortedInfo,'mergeColumns',mergeColumns)
+   
     const selectedRowKeys=useMemo(()=>selectedRows.map(d=>d[rowKey]),[selectedRows,rowKey])
     const tableProps: TableProps<any> = {
         rowKey: rowKey,
