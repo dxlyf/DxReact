@@ -1,7 +1,7 @@
-import {BetaSchemaForm} from '@ant-design/pro-components'
+import {BetaSchemaForm, ProForm} from '@ant-design/pro-components'
 import type {ProFormColumnsType,ProColumns,ActionType,ProFormProps,ProFormInstance} from '@ant-design/pro-components'
 import { useMemoizedFn } from 'ahooks'
-import {Form} from 'antd'
+import {Form, Row} from 'antd'
 import type {FormInstance} from 'antd'
 import React, { useMemo, useRef, useState } from 'react'
 type BetaSchemaFormProps=Parameters<typeof BetaSchemaForm>[0]
@@ -56,6 +56,7 @@ export type {
     const formRef=((propFormRef as any)??__formRef) as React.MutableRefObject<ProFormInstance>
     const [form]=useProFormInstance(propForm,useProFormInstanceOptions)
     const [formFieldValues,setFormFieldValues]=useState(()=>defaultFilterParams)
+    
     const handleFinish=useMemoizedFn(async (values:any)=>{
             //    const values2=formRef.current.getFieldsFormatValue!();
         setFormFieldValues({...values})
@@ -86,6 +87,19 @@ export type {
          })
     })
     const searchFormProps:BetaSchemaFormProps={
+        submitter:{
+            render(props,dom){
+                return dom.reverse()
+            },
+            searchConfig:{
+                submitText:'查询'
+            }
+        },
+        split:6,
+        span:6,
+        rowProps:{
+            justify:'end'
+        },
         onFinish:handleFinish,
         onReset:handleReset,
         onInit:handleInit,
@@ -104,7 +118,7 @@ export type {
 }
  const SchemaForm=(props:BetaSchemaFormProps)=>{
 
-    return <BetaSchemaForm layoutType='QueryFilter' {...(props as any)}></BetaSchemaForm>
+    return <BetaSchemaForm  layoutType='QueryFilter' {...(props as any)}></BetaSchemaForm>
 }
 export {
     SchemaForm,

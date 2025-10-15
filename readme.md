@@ -45,6 +45,8 @@ git submodule add --depth 1 git@github.com:iamkun/dayjs.git  packages/dayjs
 git submodule add --depth 1 git@github.com:react-component/dialog.git packages/rc-dialog
 git submodule add --depth 1 git@github.com:react-component/upload.git
 git submodule add --depth 1 git@github.com:react-hook-form/react-hook-form.git packages/react-hook-form
+
+git submodule add --depth 1 git@github.com:moment/moment.git packages/moment
 ```
 
 为 `packages` 目录添加 GitHub 开源仓库作为子模块是个好主意，这能方便你管理依赖并同步更新。你想知道具体如何操作，下面我来为你详细说明。

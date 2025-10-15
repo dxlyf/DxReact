@@ -74,6 +74,7 @@
 [submodule "packages/preact"]
 	path = packages/preact
 	url = git@github.com:preactjs/preact.git
+<<<<<<< HEAD
 [submodule "packages/vue"]
 	path = packages/vue
 	url = git@github.com:vuejs/core.git
@@ -89,3 +90,8 @@
 [submodule "packages/javascript-algorithms"]
 	path = packages/javascript-algorithms
 	url = git@github.com:trekhleb/javascript-algorithms.git
+=======
+[submodule "packages/moment"]
+	path = packages/moment
+	url = git@github.com:moment/moment.git
+>>>>>>> 496dca6859aedda15ef476e54d440f050c5c3bfe

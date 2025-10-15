@@ -78,7 +78,7 @@ const EditPage = (props) => {
     ]
     return <>
 
-    <ProTable  toolbar={{
+    <ProTable   toolbar={{
         settings:[],
         search:{},
         tabs:{

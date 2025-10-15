@@ -88,6 +88,9 @@ const routes:RouteObjectAndMenu[]=[
                         name:'动态多功能Table',
                           Component:React.lazy(()=>import('src/pages/antd/edit/edit10'))
                     }]
+                        path:'edit5',
+                        name:'常用编辑页5',
+                          Component:React.lazy(()=>import('src/pages/antd/edit5'))
                     }
                 ]
             }
