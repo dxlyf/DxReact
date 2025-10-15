@@ -1,10 +1,15 @@
 import {BetaSchemaForm, ProForm} from '@ant-design/pro-components'
 import type {ProFormColumnsType,ProColumns,ActionType,ProFormProps,ProFormInstance} from '@ant-design/pro-components'
 import { useMemoizedFn } from 'ahooks'
-import {Form, Row} from 'antd'
+import {Button, Form, Row, Space} from 'antd'
 import type {FormInstance} from 'antd'
+import classNames from 'classnames'
 import React, { useMemo, useRef, useState } from 'react'
+import styles from './index.module.scss'
 type BetaSchemaFormProps=Parameters<typeof BetaSchemaForm>[0]
+type SchemaFormProps=BetaSchemaFormProps&{
+formRender?:(dom:React.ReactNode)=>React.ReactNode
+}
 type UseSchemaFormProps={
     useProFormInstanceOptions?:UseProFormInstanceOptions
     manualRequest?:boolean
@@ -86,19 +91,43 @@ export type {
             },delayInitRequest)
          })
     })
-    const searchFormProps:BetaSchemaFormProps={
-        submitter:{
-            render(props,dom){
-                return dom.reverse()
-            },
-            searchConfig:{
-                submitText:'查询'
-            }
-        },
-        split:6,
-        span:6,
-        rowProps:{
-            justify:'end'
+    const searchFormProps:SchemaFormProps={
+        // submitter:{
+        //     render(props,dom){
+        //         return dom.reverse()
+        //     },
+        //     searchConfig:{
+        //         submitText:'查询'
+        //     }
+        // },
+       // layout:'inline',
+     //   split:6,
+      //  span:6,
+        // rowProps:{
+        //     justify:'end'
+        // },
+        submitter:false,
+        className:'ah-search-form',
+        formRender:(dom)=>{
+            let isModal=false,isHeaderRight=true
+            return  <div className={classNames(!isModal && styles['base-box'])}>
+                <div className={classNames(styles.header)}>
+                    <div className={classNames(styles['header-children'], isHeaderRight && styles['header-right'])}>
+                      <Space >
+            {dom}
+            <Button type='primary' onClick={()=>{
+                formRef?.current.submit()
+            }}>查询</Button>
+               <Button  onClick={()=>{
+                formRef?.current.resetFields()
+                const values=formRef?.current.getFieldFormatValue?.()
+                handleReset(values)
+            }}>重置</Button>
+    </Space>
+                    </div>
+                </div>
+        </div>
+             
         },
         onFinish:handleFinish,
         onReset:handleReset,
@@ -116,9 +145,11 @@ export type {
         searchFormProps
     }
 }
- const SchemaForm=(props:BetaSchemaFormProps)=>{
-
-    return <BetaSchemaForm  layoutType='QueryFilter' {...(props as any)}></BetaSchemaForm>
+ const SchemaForm=(props:SchemaFormProps)=>{
+    const {formRender,className,...restProps}=props
+    const dom=<BetaSchemaForm className={classNames(className)} {...restProps}></BetaSchemaForm>
+    return formRender?formRender(dom):dom
+     
 }
 export {
     SchemaForm,

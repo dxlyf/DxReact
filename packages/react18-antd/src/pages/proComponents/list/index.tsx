@@ -23,13 +23,17 @@ export default ()=>{
         //     flex:'none',
         // },
       //  layout:'inline',
-        searchGutter:4,
+      //  searchGutter:4,
+       // span:6,
        // defaultFormItemsNumber:10,
       // collapsed:false,
-        colProps:{
-            flex:"none"
-        },
-        labelWidth:0,
+        // colProps:{
+        //     flex:"none"
+        // },
+        // labelWidth:0,
+        // wrapperCol:{
+        //     flex:200
+        // },
        // rowProps:{gutter:4},
         // span:{
         //    xs: 24, sm: 12, md: 8, lg: 6, xl: 6, xxl: 6 
@@ -46,87 +50,16 @@ export default ()=>{
         initialValues:{
             name:'李三',
         },
-        columns:useSchemaFormColumns(()=>[
-        {
-                dataIndex:'name',
+        columns:useSchemaFormColumns(()=>Array.from({
+            length:5,
+        },(v,i)=>{
+            return {
+                dataIndex:'name'+i,
                 fieldProps:{
                     placeholder:'请输入名称'
-                },
-                formItemProps:{
-                    
                 }
-            },{
-                dataIndex:'year',
-                valueType:'dateYear',
-                fieldProps:{
-                    placeholder:'年度'
-                },
-                initialValue:dayjs().format('YYYY'),
-                formItemProps:{
-                    
-                }
-                
-            },{
-                order:99,
-                valueType:'dateRange',
-                dataIndex:'startTimes',
-                fieldProps:{
-                    placeholder:['开始','结束']
-                },
-                formItemProps:{
-                    getValueFromEvent(value){
-                        return value
-                    }
-                },
-                transform(value){
-                    console.log('transform',value)
-                    return value
-                }
-            },{
-               // title:'日期',
-                dataIndex:'date',
-                valueType:'date'
-            },{
-                 dataIndex:'city',
-                // title:'城市',
-                 valueType:'select',
-                 fieldProps:{
-                    mode:'multiple',
-                   // allowClear:true,
-                 },
-                 transform:(value)=>{
-                     return Array.isArray(value)?value.join(','):undefined
-                 },
-                 request:async ()=>{
-                    return  [{value:'郴州',label:'郴州'},{value:'长沙',label:'长沙'}]
-                 }
-
-            },
-                {
-                order:101,
-            
-                dataIndex:'是否已上锁',
-                valueType:'radioButton',
-                fieldProps:{
-                    buttonStyle:'solid',
-                    options:[{label:'已上锁',value:'a'},{label:'已解锁',value:'b'}],
-                    onChange(v){
-                        schemaForm.submit()
-                      // actionRef.current?.reset()
-                    }
-                },
-                //ignoreFormItem:true,
-                // renderFormItem(schema){
-                //     return <Form.Item>
-                //        <Radio.Group buttonStyle='solid'>
-                //             <Radio.Button value={'已上锁'}>已上锁</Radio.Button>
-                //             <Radio.Button value={'已解锁'}>已解锁</Radio.Button>
-                //        </Radio.Group>
-                //     </Form.Item>
-                // }
-                
             }
-        ],[])
+        }),[])
     })
     const handleNewAdd=useCallback(()=>{
 
