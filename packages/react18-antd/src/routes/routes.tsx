@@ -60,7 +60,10 @@ const routes:RouteObjectAndMenu[]=[
                         name:'常用列表页',
                           Component:React.lazy(()=>import('src/pages/antd/list'))
                     },
-                    {
+                    {   
+                        path:'alledit',
+                        name:'编辑页',
+                       children:[{
                         path:'edit',
                         name:'常用编辑页',
                           Component:React.lazy(()=>import('src/pages/antd/edit'))
@@ -79,6 +82,12 @@ const routes:RouteObjectAndMenu[]=[
                         path:'edit4',
                         name:'常用编辑页4',
                           Component:React.lazy(()=>import('src/pages/antd/edit4'))
+                    },
+                    {
+                        path:'edit10',
+                        name:'动态多功能Table',
+                          Component:React.lazy(()=>import('src/pages/antd/edit/edit10'))
+                    }]
                     }
                 ]
             }
