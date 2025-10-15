@@ -74,6 +74,21 @@
 [submodule "packages/preact"]
 	path = packages/preact
 	url = git@github.com:preactjs/preact.git
+[submodule "packages/vue"]
+	path = packages/vue
+	url = git@github.com:vuejs/core.git
+[submodule "packages/usehooks"]
+	path = packages/usehooks
+	url = git@github.com:juliencrn/usehooks-ts.git
+[submodule "packages/react-use"]
+	path = packages/react-use
+	url = git@github.com:streamich/react-use.git
+[submodule "packages/swr"]
+	path = packages/swr
+	url = git@github.com:vercel/swr.git
+[submodule "packages/javascript-algorithms"]
+	path = packages/javascript-algorithms
+	url = git@github.com:trekhleb/javascript-algorithms.git
 [submodule "packages/moment"]
 	path = packages/moment
 	url = git@github.com:moment/moment.git

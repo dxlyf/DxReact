@@ -269,6 +269,9 @@ const EditPage = () => {
                 </Space>
             </Col>
         </Row>
+        <Form.Item shouldUpdate={(prevValues,nextValues)=>{
+            return nextValues
+        }}></Form.Item>
         <EditableProTable recordCreatorProps={false}></EditableProTable>
         <ProTable  showSorterTooltip={false} search={false} options={false} tableAlertRender={false} bordered size='small' columns={columns} dataSource={data} rowSelection={rowSelection} rowKey={'id'}></ProTable>
                     <Table summary={()=>{
