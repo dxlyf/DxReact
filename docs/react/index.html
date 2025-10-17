@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-presets="env,react">
+        /** @jsx createElement */
+        /** @jsxFrag Preact.Fragment */
+        function createElement(type, config, ...children) {
+            const props = {}
+            let key = null
+            if (config) {
+                Object.keys(config).forEach(name => {
+                    if (name === 'key') {
+                        key = config[name] + ''
+                    } else {
+                        props[name] = config[name]
+                    }
+                })
+            }
+            if (children.length) {
+                props.children = children.length === 1 ? children[0] : children
+            }
+            return { type, key, props }
+        }
+        let HostComponent = 1
+        let HostRoot = 2
+        let HostText = 3
+        let FunctionComponent = 4
+        function createFiber(tag, peddingProps) {
+            return {
+                tag,
+                peddingProps,
+                alternate: null,
+                stateNode: null,
+                key: null,
+                index: 0,
+                return: null,
+                child: null,
+                sibling: null,
+                flags:0
+            }
+        }
+        function getRoot(fiber) {
+            if (fiber.tag === HostRoot) {
+                return fiber
+            }
+            let current = fiber
+            while (current) {
+                if (current.tag === HostRoot) {
+                    return current
+                }
+                current = current.return
+            }
+            return null
+        }
+        function workloop(dead) {
+            while (workInProcess && deadtime.timeRemaining() > 5) {
+                performWork()
+            }
+            if (workInProcess && wipRoot) {
+                requestIdleCallback(workloop)
+            } else {
+                wipRoot = null
+            }
+        }
+        requestIdleCallback((deadtime) => {
+            deadtime.timeRemaining()
+        })
+        function createChildReconciler(shouldTrackSideEffects) {
+            function placeChild(newFiber, lastPlacedIndex, newIndex) {
+                newFiber.index = newIndex;
+                if (!shouldTrackSideEffects) {
+                    // During hydration, the useId algorithm needs to know which fibers are
+                    // part of a list of children (arrays, iterators).
+                    newFiber.flags |= Forked;
+                    return lastPlacedIndex;
+                }
+                const current = newFiber.alternate;
+                if (current !== null) {
+                    const oldIndex = current.index;
+                    if (oldIndex < lastPlacedIndex) {
+                        // This is a move.
+                        newFiber.flags |= Placement | PlacementDEV;
+                        return lastPlacedIndex;
+                    } else {
+                        // This item can stay in place.
+                        return oldIndex;
+                    }
+                } else {
+                    // This is an insertion.
+                    newFiber.flags |= Placement | PlacementDEV;
+                    return lastPlacedIndex;
+                }
+            }
+
+            function placeSingleChild(newFiber) {
+                // This is simpler for the single child case. We only need to do a
+                // placement for inserting new children.
+                if (shouldTrackSideEffects && newFiber.alternate === null) {
+                    newFiber.flags |= Placement | PlacementDEV;
+                }
+                return newFiber;
+            }
+            function reconcileChildFibers(returnFiber, currentFirstChild, newChild, lanes) {
+                if (newChild !== null && typeof newChild === 'object') {
+                    if (Array.isArray(newChild)) {
+
+                    } else {
+
+                    }
+                }
+            }
+            return reconcileChildFibers
+        }
+        const reconcileChildFibers = createChildReconciler(true);
+        const mountChildFibers = createChildReconciler(false);
+        function updateHostRoot(fiber, current) {
+            if (!current) {
+                mountChildFibers(fiber, fiber.child, fiber.peddingProps.children)
+            }
+        }
+        function beginWork(fiber) {
+            const current = fiber.alternate
+            switch (fiber.tag) {
+                case HostRoot:
+                    updateHostRoot(fiber, current)
+                    break
+            }
+        }
+        function performWork() {
+            let next = beginWork(workInProcess)
+
+        }
+        function schedulerUpdate(fiber) {
+            if (wipRoot) {
+                return
+            }
+            const root = getRoot(fiber)
+            wipRoot = root
+            workInProcess = root
+            requestIdleCallback(workloop)
+        }
+        let wipRoot = null;
+        let workInProcess = null
+        function render(element, container) {
+            let root = createFiber(HostRoot, { children: element })
+            root.stateNode = {
+                container
+            }
+            schedulerUpdate(root)
+        }
+        function App() {
+            return <h1>Hello World</h1>
+        }
+        render(<App></App>, document.querySelector('#root'))
+    </script>
+</body>
+
+</html>

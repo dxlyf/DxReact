@@ -7,6 +7,7 @@ import {request} from 'src/utils/request'
 import {SettingOutlined} from '@ant-design/icons'
 import { Button,Col,Dropdown,Input,Popover, Row, Space,Form, Radio, Flex} from 'antd'
 import dayjs from 'dayjs'
+import { ProTable } from '@ant-design/pro-components'
 
 
 export default ()=>{
@@ -81,7 +82,7 @@ export default ()=>{
         //     search:true
         // },
         request:useTableRequest(async (params,sorter,filter)=>{
-            console.log('pa',params,'sort',sorter,'filter',filter)
+            console.log('params',params,'sorter',sorter,'filter',filter)
             await (new Promise((resolve)=>setTimeout(resolve,2000)))
                 const ret=await request<{data:any[],total:number}>({
                     url:'list',
@@ -100,7 +101,9 @@ export default ()=>{
             return [{
                 title:'名称',
                 dataIndex:'name',
-                sorter:true,
+                sorter:{
+                    multiple:1
+                },
                 defaultSortOrder:'descend',
                 width:100
                 
@@ -108,6 +111,11 @@ export default ()=>{
             },{
                 title:'创建时间',
                 dataIndex:'createTime',
+                width:200,
+                sorter:{
+                    multiple:2
+                },
+                defaultSortOrder:'descend'
                 
             },{
                 title:'操作',
@@ -118,12 +126,13 @@ export default ()=>{
             }]
         },[])
     })
+    console.log('tableProps',tableProps.columns)
     return <>
     <div className='bg-white'>
         <SchemaForm {...searchFormProps}></SchemaForm>
     </div>
     <div className='mt-4 px-2 pt-2 pb-4 bg-white shadow-md rounded-md'>
-        <Table {...tableProps}></Table>
+        <ProTable options={false} search={false} {...tableProps}></ProTable>
     </div>
     </>
 }

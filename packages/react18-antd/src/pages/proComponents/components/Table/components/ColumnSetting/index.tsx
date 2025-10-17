@@ -26,7 +26,7 @@ const useColumnSetting=(props:UseColumnSettingProps)=>{
              }
              return true
         })
-    },[columnNames,propColumns])
+    },[columnNames,propColumns,storageKey])
 
     const handleCheckedChange=useCallback((checkedValue:string[])=>{
         setColumnNames(checkedValue)
@@ -66,11 +66,17 @@ const useColumnSetting=(props:UseColumnSettingProps)=>{
         })();
        }
     },[storageKey])
-    const children=<Dropdown open={open} placement='bottom' menu={menu} trigger={['click']}>
+    const children=<Dropdown open={open} placement='bottom' menu={menu} onOpenChange={(open)=>{
+        if(open){
+           /// handleCheckedChange(propColumns.filter(d=>typeof d.dataIndex==='string').map(d=>d.dataIndex as string))   
+        }
+        setOpen(open)
+    }} trigger={['click']}>
             <Button type={open?'primary':'default'} ghost={open} onClick={()=>{
                 setOpen(!open)
             }} icon={<SettingOutlined></SettingOutlined>}></Button>
         </Dropdown>;
+
     return {
         columns,
         children,
