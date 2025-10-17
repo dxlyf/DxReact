@@ -1,8 +1,8 @@
 import { useMemoizedFn } from 'ahooks'
-import { Modal } from 'antd'
+import { Modal,ConfigProvider, Row, Col, Space } from 'antd'
 import type { GetProps, GetProp } from 'antd'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
-
+import {FullscreenOutlined,FullscreenExitOutlined} from '@ant-design/icons'
 type ModalProps = GetProps<typeof Modal>
 type RenderModal = (dom: React.ReactNode, props?: ModalProps) => React.ReactElement
 type UseModalProps = Omit<ModalProps, 'children'> & {
@@ -10,6 +10,7 @@ type UseModalProps = Omit<ModalProps, 'children'> & {
     children?: (instance: ModalInstance) => React.ReactElement
     onSubmit?: (values: any) => void
     getModalStageProps?: (istance: ModalInstance) => ModalProps
+    fullScreen?:boolean
 }
 export type ModalInstance = {
     callbacks: {
@@ -26,7 +27,7 @@ export type ModalInstance = {
 }
 
 const useModal = (props: UseModalProps = {}) => {
-    const { getModalStageProps, noWrap = false, onSubmit, children, okButtonProps, cancelButtonProps, visible: propsVisible = false, ...restModalProps } = props
+    const { getModalStageProps, noWrap = false,fullScreen, onSubmit, children, okButtonProps, cancelButtonProps, visible: propsVisible = false, ...restModalProps } = props
     const [visible, setVisible] = useState(() => propsVisible)
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(false)
@@ -71,12 +72,22 @@ const useModal = (props: UseModalProps = {}) => {
          modalInstance.current!.close()
        }
     })
+    const titleDom=<Row>
+        <Col></Col>
+        <Col>
+            <Space>
+                
+            </Space>
+        </Col>
+    </Row>
     const modalStateProps = getModalStageProps ? getModalStageProps(modalInstance.current!) : {}
     const modalProps: ModalProps = {
         open: visible,
+        title:titleDom,
         onCancel: handleCancel,
         onOk: handleOk,
         destroyOnHidden: true,
+        
         okButtonProps: {
             loading,
             ...(okButtonProps ? okButtonProps : {})

@@ -92,3 +92,15 @@
 [submodule "packages/moment"]
 	path = packages/moment
 	url = git@github.com:moment/moment.git
+[submodule "packages/chakra-ui"]
+	path = packages/chakra-ui
+	url = git@github.com:chakra-ui/chakra-ui.git
+[submodule "packages/threejs"]
+	path = packages/threejs
+	url = git@github.com:mrdoob/three.js.git
+[submodule "packages/pixijs"]
+	path = packages/pixijs
+	url = git@github.com:pixijs/pixijs.git
+[submodule "packages/zrender"]
+	path = packages/zrender
+	url = git@github.com:ecomfe/zrender.git

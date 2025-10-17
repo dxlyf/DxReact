@@ -1,6 +1,6 @@
 import { Button, Card, Collapse, Form, Input, Modal, Space, Tabs, Popover, Popconfirm, Select, DatePicker, Table } from 'antd'
 import type { CollapseProps, GetProps, GetProp } from 'antd'
-import { useMountMergeState, ProForm, EditableProTable, ProFormItem, ProFormDependency, ProFormSelect, ProTable, ProFormText, ProFormGroup, ProFormDatePicker, ProFormDateRangePicker, BetaSchemaForm } from '@ant-design/pro-components'
+import { useMountMergeState, ProForm, EditableProTable,ProFormDatePicker, ProFormItem, ProFormDependency, ProFormSelect, ProTable, ProFormText, ProFormGroup, ProFormDateRangePicker, BetaSchemaForm } from '@ant-design/pro-components'
 import type { ActionType, EditableFormInstance, ProFormProps, ProColumns, ProFormInstance, ProFormItemProps, ProFormFieldProps } from '@ant-design/pro-components'
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import dayjs, { Dayjs } from 'dayjs'
@@ -64,15 +64,22 @@ const ProEditTable = (props: ProEditTableProps) => {
                         actionRef.current!.startEditable(getRowKey(record))
                     }}>编辑</a>
                     <a onClick={() => {
+                           const newData=[...getData()]
+                        const index=newData.findIndex(d=>getRowKey(d)==getRowKey(record))
+                        const newItem={
+                            id:uniqueId('__new__')
+                        }
+                     newData.splice(index+1,0,newItem)
+                     setData(newData)
+                     setEditableKeys(editableKeys.concat(getRowKey(newItem)))
+                        // actionRef.current?.addEditRecord({
+                        //       'id': uniqueId('__new__')
+                        // }, {
+                        //     position: 'bottom',
+                        //     newRecordType:'cache',
+                        //    // parentKey: getRowKey(record)
 
-                        actionRef.current?.addEditRecord({
-                              'id': uniqueId('__new__')
-                        }, {
-                            position: 'bottom',
-                            newRecordType:'cache',
-                           // parentKey: getRowKey(record)
-
-                        })
+                        // })
                     }}>插入行</a>
                     <Popconfirm title='确定删除？' onConfirm={() => {
                        //setData([])
@@ -124,7 +131,9 @@ const ProEditTable = (props: ProEditTableProps) => {
             actions: [<Button onClick={handleAddRow}>添加行</Button>, <Popconfirm onConfirm={handleDelete} title='确定要删除全部?'><Button>删除全部</Button></Popconfirm>]
         }}  editable={{
             type:'multiple',
+            editableKeys:editableKeys,
             onChange(keys,rows){
+                setEditableKeys(keys)
                 console.log('editable:onChange','keys',keys,'rows',rows)
             },
             onValuesChange(record,data){
@@ -222,13 +231,30 @@ const EditPage = () => {
             })
         }, 200)
     }, [])
+
     //const list=ProForm.useWatch('list',form)||[]
     return <>
-        <ProForm form={form} submitter={false} initialValues={{ list: [],person:['张三','李四'] }} onFinish={(values) => {
+        {dayjs().toISOString()}
+        <ProForm form={form} submitter={false} onFieldsChange={(changeFields,allFields)=>{
+            console.log('onFieldsChange','changeFields',changeFields)  
+        }}  onValuesChange={(changedValues,allValues)=>{
+            console.log('onValuesChange','changedValues',changedValues)  
+        }} initialValues={{ 
+            year:dayjs().year(2025),
+            month:dayjs().month(8),
+            list: [],person:['张三','李四'] }} onFinish={(values) => {
             console.log('onFinish', values)
         }}>
             <Button htmlType='submit'>提交</Button>
-            <Form.Item name='month' >
+            <ProFormDatePicker name='proYear' format='YYYY'  ></ProFormDatePicker>
+            <ProFormItem   name='proFormYear'  transform={(v)=>dayjs(v).format('YYYY')} label='proForm年份' valueType='date'>
+                  <DatePicker picker='year' format={'YYYY'}></DatePicker>
+            </ProFormItem>
+            <Form.Item name='year' label='年份'  >
+                <DatePicker picker='year' format={'YYYY'} ></DatePicker>
+   
+            </Form.Item>
+            <Form.Item name='month' label='月份' >
                 <DatePicker picker='month' format={'M'}></DatePicker>
             </Form.Item>
             <Form.Item name='name' label='獎項名稱' rules={[{ required: true, message: '請填寫' }]}>
