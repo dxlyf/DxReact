@@ -2,194 +2,307 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Mini React-like with Hooks — Demo</title>
+  <title>MiniReact Pro — Full: Hooks / LIS Diff / Delegation / Scheduler / Fiber / ErrorBoundary / Suspense</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto; padding: 16px; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto; padding: 18px; }
+    .card { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 920px; }
+    .row { margin: 8px 0; }
     button { margin-right: 8px; }
-    .card { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 650px; }
-    .row { margin: 6px 0; }
+    .suspense { padding:8px; border-radius:6px; background:#f4f7ff; }
+    .error { padding:8px; border-radius:6px; background:#ffecec; color:#900; }
   </style>
 </head>
 <body>
-  <h2>Mini React-like library — Hooks demo</h2>
+  <h2>MiniReact Pro — All features demo</h2>
   <div id="app" class="card"></div>
 
 <script>
-/* ====================== Mini React-like Implementation ====================== */
+/* ===================== MiniReact Pro =====================
+   Features:
+   - createElement (JSX pragma compatible)
+   - Hooks (state, reducer, ref, memo, callback, effects, imperative handle, context)
+   - Fiber + cooperative scheduler (priority levels)
+   - Reconciler with keyed diff + LIS for minimal moves
+   - Event delegation
+   - ErrorBoundary
+   - Suspense-like: throw Promise in render to suspend and show fallback
+   - Demo app showing features
+   ======================================================== */
 
-/** createElement: jsx-like helper */
-function createElement(type, props, ...children) {
-  return { type, props: props || {}, children: children.flat().map(c => (typeof c === 'object' ? c : String(c))) };
-}
+/* ---------------- Utilities ---------------- */
+const isFn = v => typeof v === 'function';
+const isStr = v => typeof v === 'string' || typeof v === 'number';
+const RESERVED = { children: true, key: true, ref: true };
 
-/* === Global renderer state === */
-const Renderer = {
-  rootVNode: null,
-  rootContainer: null,
-  isRendering: false,
-  // pending microtask queues for effects
-  pendingLayoutEffects: [],
-  pendingEffects: []
-};
-
-/* === Component instance model ===
-   Each function component has an instance:
-   { type, props, hooks: [], hookIndex, dom, childVNode, effects: [] }
+/* ---------------- JSX support ----------------
+ If you have Babel/TSX, add at top of file to compile JSX:
+ /** @jsx MiniReact.createElement *\/
 */
-function createInstance(vnode) {
-  return {
-    type: vnode.type,
-    props: vnode.props,
-    hooks: [],
-    hookIndex: 0,
-    dom: null,
-    childVNode: null,
-    effects: [] // {type: 'layout'|'effect', create, deps, cleanup}
-  };
+function createElement(type, props, ...children) {
+  props = props || {};
+  const flat = children.flat().map(c => (c === null || c === undefined) ? null : (isStr(c) ? String(c) : c));
+  return { type, props: { ...props, children: flat } };
 }
 
-/* === Current rendering instance (set while running a function component) === */
-let currentInstance = null;
+/* ---------------- Scheduler (priority + cooperative) ----------------
+ Priority: 1 Immediate, 2 UserBlocking, 3 Normal, 4 Low
+ We'll schedule tasks and yield based on timeRemaining or time budget.
+*/
+const Scheduler = (function() {
+  const Immediate = 1, UserBlocking = 2, Normal = 3, Low = 4;
+  let queue = [];
+  let hostCB = null;
 
-/* === Hook primitives === */
+  function ensureHost() {
+    if (typeof requestIdleCallback !== 'undefined') {
+      return (cb) => requestIdleCallback(cb, { timeout: 50 });
+    }
+    // postMessage fallback
+    const channel = new MessageChannel();
+    const tasks = [];
+    channel.port1.onmessage = () => {
+      const t = tasks.shift();
+      if (t) t({ timeRemaining: () => 5, didTimeout: false, startTime: performance.now(), timeout: 50 });
+    };
+    return (cb) => {
+      tasks.push(cb);
+      channel.port2.postMessage(null);
+    };
+  }
+  hostCB = ensureHost();
 
+  function schedule(task, priority = Normal) {
+    queue.push({ task, priority });
+    // sort by priority (simple)
+    queue.sort((a,b) => a.priority - b.priority);
+    hostCB(run);
+  }
+
+  function run(deadline) {
+    const start = performance.now();
+    while (queue.length) {
+      const item = queue.shift();
+      try { item.task(deadline); } catch (e) { console.error('Scheduled task error', e); }
+      // yield heuristics
+      if (deadline.timeRemaining && deadline.timeRemaining() < 2) break;
+      if (performance.now() - start > 30) break;
+    }
+    if (queue.length) hostCB(run);
+  }
+
+  return { schedule, Immediate, UserBlocking, Normal, Low };
+})();
+
+/* ---------------- Event Delegation ----------------
+  We'll attach listener(s) to root container and dispatch to VNode props.
+  We map DOM node -> fiber via dataset attribute.
+*/
+const Delegator = (function() {
+  const delegatedTypes = new Set();
+  const rootMap = new WeakMap(); // container -> attached
+  function ensureRoot(container) {
+    if (!rootMap.has(container)) {
+      rootMap.set(container, { handlers: {} });
+    }
+    return rootMap.get(container);
+  }
+  function addEvent(container, eventName) {
+    const root = ensureRoot(container);
+    if (delegatedTypes.has(eventName)) return;
+    delegatedTypes.add(eventName);
+    container.addEventListener(eventName, (ev) => {
+      // walk up from ev.target to container, find the nearest dom with data-mini-id and call handlers on fiber vnode mapping
+      let node = ev.target;
+      while (node && node !== container) {
+        const id = node.__mini_fiber_id;
+        if (id) {
+          const handler = node.__mini_handlers && node.__mini_handlers[eventName];
+          if (handler) {
+            try { handler.call(node, ev); } catch (e) { console.error(e); }
+            if (ev.cancelBubble) return;
+          }
+        }
+        node = node.parentNode;
+      }
+    }, false);
+  }
+  function updateNodeHandlers(dom, props) {
+    // store handlers in dom for delegation
+    dom.__mini_handlers = dom.__mini_handlers || {};
+    for (const k in props) {
+      if (/^on[A-Z]/.test(k)) {
+        const event = k.slice(2).toLowerCase();
+        dom.__mini_handlers[event] = props[k];
+        addEvent(getRootContainer(dom), event);
+      }
+    }
+  }
+  function getRootContainer(dom) {
+    // walk up to find element with mini root marker
+    let node = dom;
+    while (node && !node.__mini_root) node = node.parentNode;
+    return node || document;
+  }
+  return { updateNodeHandlers };
+})();
+
+/* ---------------- Fiber & Renderer State ----------------
+ Fiber: { vnode, type, props, dom, parent, child, sibling, alternate, effectTag, hooks, effects, key }
+*/
+let nextUnitOfWork = null;
+let wipRoot = null;
+let currentRoot = null;
+let deletions = [];
+let fiberId = 1; // used to tag DOM nodes for delegation
+
+/* ---------------- Hooks (attached to fiber) ---------------- */
+let wipFiber = null;
+let hookIndex = 0;
+function prepareHooks(fiber) {
+  wipFiber = fiber;
+  hookIndex = 0;
+  if (!wipFiber.hooks) wipFiber.hooks = [];
+}
 function useHookSlot() {
-  if (!currentInstance) throw new Error('Hooks can only be called inside function components.');
-  const idx = currentInstance.hookIndex++;
-  if (!currentInstance.hooks[idx]) currentInstance.hooks[idx] = { value: undefined };
-  return currentInstance.hooks[idx];
+  if (!wipFiber) throw new Error('Hooks can only be called inside function components.');
+  const idx = hookIndex++;
+  if (!wipFiber.hooks[idx]) wipFiber.hooks[idx] = { value: undefined };
+  return wipFiber.hooks[idx];
 }
-
 function useState(initial) {
   const slot = useHookSlot();
-  if (slot.value === undefined) {
-    slot.value = typeof initial === 'function' ? initial() : initial;
-    slot.queue = [];
-  }
-  // reducer-like enqueue
+  if (slot.value === undefined) slot.value = (isFn(initial) ? initial() : initial);
   const setState = (action) => {
-    const next = typeof action === 'function' ? action(slot.value) : action;
-    if (next === slot.value) return;
+    const next = (isFn(action) ? action(slot.value) : action);
+    if (Object.is(next, slot.value)) return;
     slot.value = next;
-    scheduleRender();
+    scheduleUpdate();
   };
   return [slot.value, setState];
 }
-
 function useReducer(reducer, initial, init) {
   const slot = useHookSlot();
-  if (slot.value === undefined) {
-    slot.value = init ? init(initial) : initial;
-  }
+  if (slot.value === undefined) slot.value = init ? init(initial) : initial;
   const dispatch = (action) => {
     const next = reducer(slot.value, action);
-    if (next === slot.value) return;
+    if (Object.is(next, slot.value)) return;
     slot.value = next;
-    scheduleRender();
+    scheduleUpdate();
   };
   return [slot.value, dispatch];
 }
-
 function useRef(initial = null) {
   const slot = useHookSlot();
   if (slot.value === undefined) slot.value = { current: initial };
   return slot.value;
 }
-
 function useMemo(factory, deps) {
   const slot = useHookSlot();
-  if (!slot.value) slot.value = {};
   const prev = slot.value;
-  const same = deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=> Object.is(d, prev.deps[i]));
+  const same = prev && deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=>Object.is(d, prev.deps[i]));
   if (!same) {
-    const val = factory();
-    slot.value = { value: val, deps: deps ? deps.slice() : undefined };
+    const v = factory();
+    slot.value = { value: v, deps: deps ? deps.slice() : undefined };
   }
   return slot.value.value;
 }
+function useCallback(fn, deps) { return useMemo(()=>fn, deps); }
 
-function useCallback(fn, deps) {
-  return useMemo(()=>fn, deps);
-}
-
-function useContext(context) {
-  // Just read the currentValue stored on context object
-  return context._currentValue !== undefined ? context._currentValue : context._defaultValue;
-}
-
-/* Effects */
-function enqueueEffect(type, create, deps) {
+/* Effects (collected on fiber) */
+function useEffect(create, deps) {
   const slot = useHookSlot();
-  if (!slot.value) slot.value = {};
   const prev = slot.value;
-  const same = deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=> Object.is(d, prev.deps[i]));
+  const same = prev && deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=>Object.is(d, prev.deps[i]));
   if (!same) {
-    slot.value = { deps: deps ? deps.slice() : undefined, create, cleanup: prev.cleanup };
-    // register into currentInstance.effects for after commit
-    currentInstance.effects.push({ type, slot: slot.value });
+    slot.value = { create, deps, cleanup: prev && prev.cleanup };
+    if (!wipFiber.effects) wipFiber.effects = [];
+    wipFiber.effects.push({ type: 'effect', slot: slot.value });
   }
 }
-
-/* useEffect and useLayoutEffect store into instance.effects */
-function useEffect(create, deps) {
-  enqueueEffect('effect', create, deps);
-}
 function useLayoutEffect(create, deps) {
-  enqueueEffect('layout', create, deps);
+  const slot = useHookSlot();
+  const prev = slot.value;
+  const same = prev && deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=>Object.is(d, prev.deps[i]));
+  if (!same) {
+    slot.value = { create, deps, cleanup: prev && prev.cleanup };
+    if (!wipFiber.effects) wipFiber.effects = [];
+    wipFiber.effects.push({ type: 'layout', slot: slot.value });
+  }
 }
-
-/* useImperativeHandle: set ref.current to factory() during layout effect */
 function useImperativeHandle(ref, factory, deps) {
   useLayoutEffect(() => {
     const inst = factory();
     if (ref) ref.current = inst;
-    return () => {
-      if (ref && ref.current === inst) ref.current = null;
-    };
+    return () => { if (ref && ref.current === inst) ref.current = null; };
   }, deps);
 }
 
-/* ====================== Rendering / reconciliation ====================== */
-
-/* create DOM for host element or text node */
-function createDomNode(vnode) {
-  if (typeof vnode === 'string') {
-    return document.createTextNode(vnode);
+/* Context */
+function createContext(defaultValue) {
+  const ctx = { _default: defaultValue, _value: defaultValue };
+  function Provider(props) {
+    ctx._value = props.value;
+    return props.children && props.children.length ? props.children[0] : null;
   }
-  const dom = document.createElement(vnode.type);
-  updateDomProps(dom, {}, vnode.props);
-  (vnode.children || []).forEach(child => {
-    const childDom = renderVNode(child, null); // childDom is DOM node
-    dom.appendChild(childDom);
-  });
-  return dom;
+  ctx.Provider = Provider;
+  return ctx;
+}
+function useContext(ctx) {
+  return ctx._value !== undefined ? ctx._value : ctx._default;
 }
 
-/* update DOM props (very small) */
-function updateDomProps(dom, prevProps, nextProps) {
-  // remove old props not present anymore
+/* ---------------- Suspense support ----------------
+  If during rendering a component throws a Promise, we catch it and mark fiber as suspended.
+  We render a fallback vnode in its place (provided via props.fallback on the Suspense component).
+  When promise resolves, we retry by re-rendering root.
+*/
+function isPromise(x) { return x && typeof x.then === 'function'; }
+
+/* ---------------- Reconciler helpers ---------------- */
+function createDom(fiber) {
+  if (isStr(fiber.vnode)) {
+    const t = document.createTextNode(String(fiber.vnode));
+    return t;
+  }
+  const type = fiber.vnode.type;
+  if (typeof type === 'string') {
+    const dom = document.createElement(type);
+    // assign id for delegation
+    dom.__mini_fiber_id = fiberId++;
+    // store reference from dom to fiber
+    dom.__mini_fiber = fiber;
+    // set attributes
+    updateDomProperties(dom, {}, fiber.vnode.props || {});
+    return dom;
+  }
+  return null;
+}
+function updateDomProperties(dom, prevProps, nextProps) {
+  prevProps = prevProps || {};
+  nextProps = nextProps || {};
+  // remove old
   for (const k in prevProps) {
     if (k === 'children') continue;
-    if (!(k in nextProps)) {
-      setProp(dom, k, null);
-    }
+    if (!(k in nextProps)) setProp(dom, k, null);
   }
-  // set new props
+  // set new
   for (const k in nextProps) {
     if (k === 'children') continue;
-    setProp(dom, k, nextProps[k]);
+    const prev = prevProps[k];
+    const next = nextProps[k];
+    if (prev !== next) setProp(dom, k, next);
   }
+  // set up event delegation stored on DOM
+  Delegator.updateNodeHandlers(dom, nextProps);
 }
-
 function setProp(dom, name, value) {
   if (name === 'style') {
     if (!value) dom.removeAttribute('style');
-    else {
-      for (const s in value) dom.style[s] = value[s];
-    }
+    else Object.assign(dom.style, value);
   } else if (/^on[A-Z]/.test(name)) {
-    const ev = name.slice(2).toLowerCase();
-    dom[ev] = value || null;
+    // handled by delegation; keep handler in dom.__mini_handlers via Delegator.updateNodeHandlers
+  } else if (name === 'ref') {
+    // handled in commit
   } else if (name in dom && !(dom instanceof SVGElement)) {
     if (value == null) dom.removeAttribute(name);
     else dom[name] = value;
@@ -198,135 +311,339 @@ function setProp(dom, name, value) {
     else dom.setAttribute(name, value);
   }
 }
-
-/* renderVNode returns a DOM node. For component VNodes, it will set vnode._instance */
-function renderVNode(vnode, parentInstance) {
-  // text node (string)
-  if (typeof vnode === 'string') return document.createTextNode(vnode);
-
-  // Host element (type is string)
-  if (typeof vnode.type === 'string') {
-    const dom = document.createElement(vnode.type);
-    updateDomProps(dom, {}, vnode.props);
-    (vnode.children || []).forEach(child => {
-      dom.appendChild(renderVNode(child, parentInstance));
-    });
-    return dom;
-  }
-
-  // Function component
-  if (typeof vnode.type === 'function') {
-    // reuse instance if available
-    let inst = vnode._instance;
-    if (!inst || inst.type !== vnode.type) {
-      inst = createInstance(vnode);
-      vnode._instance = inst;
-    }
-    inst.props = vnode.props;
-    inst.hookIndex = 0;
-    inst.effects = [];
-    // render component
-    currentInstance = inst;
-    const child = vnode.type(vnode.props || {});
-    currentInstance = null;
-    inst.childVNode = child;
-    // render child vnode to dom
-    const childDom = renderVNode(child, inst);
-    inst.dom = childDom;
-    return childDom;
-  }
-
-  throw new Error('Unknown vnode type: ' + vnode);
+function sameType(a, b) {
+  if (a == null || b == null) return false;
+  if (isStr(a) || isStr(b)) return (isStr(a) && isStr(b));
+  return a.type === b.type;
 }
 
-/* Full re-render of root (simple strategy) */
-function performRender() {
-  if (Renderer.isRendering) return;
-  Renderer.isRendering = true;
-  // Clear pending effect queues; we'll rebuild effects from instances during render
-  Renderer.pendingLayoutEffects = [];
-  Renderer.pendingEffects = [];
+/* ---------------- Keyed diff + LIS (for minimizing moves) ----------------
+  We'll implement a reconcileChildren that:
+  - Matches keyed children to old keyed
+  - For non-keyed, uses index-based matching
+  - For keyed children we compute newIndices -> oldIndex sequence and LIS to minimize moves
+*/
+function reconcileChildrenArray(parentFiber, elements) {
+  // elements: array of vnode (may be string)
+  let oldFiber = parentFiber.alternate && parentFiber.alternate.child;
+  // collect old keyed map and old list
+  const oldChildren = [];
+  while (oldFiber) {
+    oldChildren.push(oldFiber);
+    oldFiber = oldFiber.sibling;
+  }
 
-  // render root
-  const newDom = renderVNode(Renderer.rootVNode, null);
+  const keyedMap = new Map();
+  const oldNoKey = [];
+  for (const ofib of oldChildren) {
+    const key = ofib.vnode && ofib.vnode.props && ofib.vnode.props.key;
+    if (key != null) keyedMap.set(key, ofib);
+    else oldNoKey.push(ofib);
+  }
 
-  // commit: replace container content with newDom
-  const container = Renderer.rootContainer;
-  // remove all children and append newDom
-  while (container.firstChild) container.removeChild(container.firstChild);
-  container.appendChild(newDom);
+  // first pass: create fibermap for new elements
+  const newFibers = [];
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (el == null) continue;
+    const key = el.props && el.props.key;
+    let matched = null;
+    if (key != null) {
+      matched = keyedMap.get(key);
+      if (matched) keyedMap.delete(key);
+    } else {
+      matched = oldNoKey.shift() || null;
+    }
+    if (matched && sameType(matched.vnode, el)) {
+      const nf = { vnode: el, dom: matched.dom, parent: parentFiber, alternate: matched, effectTag: 'UPDATE', key };
+      newFibers.push(nf);
+    } else {
+      const nf = { vnode: el, dom: null, parent: parentFiber, alternate: null, effectTag: 'PLACEMENT', key };
+      newFibers.push(nf);
+    }
+  }
 
-  // Collect layout and regular effects from every instance reachable.
-  // Simple walk of instances by traversing tree (vnode._instance)
-  function collectEffects(vnode) {
-    if (!vnode) return;
-    if (typeof vnode === 'string') return;
-    if (typeof vnode.type === 'function') {
-      const inst = vnode._instance;
-      if (inst && inst.effects.length) {
-        inst.effects.forEach(e => {
-          if (e.type === 'layout') Renderer.pendingLayoutEffects.push(e.slot);
-          else Renderer.pendingEffects.push(e.slot);
-        });
+  // leftovers are deletions
+  for (const [,v] of keyedMap) deletions.push(v);
+  for (const of of oldNoKey) deletions.push(of);
+
+  // if no keys at all, simple re-link by index
+  const hasKeyed = newFibers.some(f => f.key != null);
+  if (!hasKeyed) {
+    // attach as child/sibling
+    let prev = null;
+    for (let i = 0; i < newFibers.length; i++) {
+      const nf = newFibers[i];
+      if (prev) prev.sibling = nf;
+      else parentFiber.child = nf;
+      prev = nf;
+    }
+    return;
+  }
+
+  // For keyed case: use algorithm to minimize moves.
+  // Build array of old indices in order of newFibers
+  const oldIndexForNew = [];
+  const oldList = oldChildren;
+  const oldIndexMap = new Map();
+  for (let i=0;i<oldList.length;i++) {
+    const k = oldList[i].vnode && oldList[i].vnode.props && oldList[i].vnode.props.key;
+    if (k != null) oldIndexMap.set(k, i);
+  }
+  for (let i=0;i<newFibers.length;i++) {
+    const k = newFibers[i].key;
+    if (k == null) oldIndexForNew.push(-1);
+    else {
+      const idx = oldIndexMap.has(k) ? oldIndexMap.get(k) : -1;
+      oldIndexForNew.push(idx);
+    }
+  }
+
+  // compute LIS on oldIndexForNew (ignoring -1)
+  const seq = longestIncreasingSubsequence(oldIndexForNew);
+
+  // mark which new positions are part of LIS (to keep)
+  const keep = new Set(seq.map(i => i.index));
+
+  // Apply: link siblings; mark effectTag: if dom exists and not kept -> MOVE (we'll treat as PLACEMENT+DELETE)
+  let prev = null;
+  for (let i=0;i<newFibers.length;i++) {
+    const nf = newFibers[i];
+    if (prev) prev.sibling = nf;
+    else parentFiber.child = nf;
+    prev = nf;
+    if (nf.alternate && nf.alternate.dom) {
+      if (!keep.has(i)) {
+        nf.effectTag = 'PLACEMENT'; // requires move (we'll append and old will be deleted)
+      } else {
+        nf.effectTag = 'UPDATE';
       }
-      // traverse to child vnode
-      collectEffects(inst ? inst.childVNode : null);
-    } else if (typeof vnode.type === 'string') {
-      (vnode.children || []).forEach(collectEffects);
+    } else {
+      nf.effectTag = 'PLACEMENT';
     }
   }
-  collectEffects(Renderer.rootVNode);
-
-  // run layout effects synchronously (before painting)
-  Renderer.pendingLayoutEffects.forEach(slot => {
-    // run cleanup if exists
-    try { if (typeof slot.cleanup === 'function') slot.cleanup(); } catch(e){ console.error(e); }
-    try {
-      const ret = slot.create();
-      if (typeof ret === 'function') slot.cleanup = ret;
-    } catch(e){ console.error(e); }
-  });
-
-  // schedule macrotask for regular effects
-  setTimeout(() => {
-    Renderer.pendingEffects.forEach(slot => {
-      try { if (typeof slot.cleanup === 'function') slot.cleanup(); } catch(e){ console.error(e); }
-      try {
-        const ret = slot.create();
-        if (typeof ret === 'function') slot.cleanup = ret;
-      } catch(e){ console.error(e); }
-    });
-  }, 0);
-
-  Renderer.isRendering = false;
 }
 
-/* Public render API */
-function render(vnode, container) {
-  Renderer.rootVNode = vnode;
-  Renderer.rootContainer = container;
-  performRender();
-}
-
-/* schedule re-render of root */
-function scheduleRender() {
-  // naive: immediate re-render; could be debounced / scheduled
-  performRender();
-}
-
-/* Simple createContext */
-function createContext(defaultValue) {
-  const ctx = { _defaultValue: defaultValue, _currentValue: defaultValue };
-  function Provider(props) {
-    // When Provider is rendered, update context value and render children
-    ctx._currentValue = props.value;
-    return props.children && props.children.length ? props.children[0] : null;
+/* Helper: LIS - returns sequence of {value,index} of LIS among numbers where -1 are ignored.
+   Implementation returns indexes of the LIS in the array.
+*/
+function longestIncreasingSubsequence(arr) {
+  const n = arr.length;
+  const predecessors = new Array(n).fill(-1);
+  const piles = [];
+  const pileIdx = [];
+  for (let i = 0; i < n; i++) {
+    const val = arr[i];
+    if (val === -1) continue;
+    // binary search on piles by last value
+    let left = 0, right = piles.length;
+    while (left < right) {
+      const mid = (left + right) >> 1;
+      if (piles[mid][piles[mid].length-1].value < val) left = mid + 1;
+      else right = mid;
+    }
+    if (left === piles.length) piles.push([]);
+    piles[left].push({ value: val, index: i });
+    if (left > 0) {
+      predecessors[i] = piles[left-1][piles[left-1].length-1].index;
+    }
   }
-  ctx.Provider = Provider;
-  return ctx;
+  // rebuild LIS
+  if (piles.length === 0) return [];
+  const lis = [];
+  let last = piles[piles.length-1][piles[piles.length-1].length-1];
+  let idx = last.index;
+  while (idx !== -1) {
+    lis.push({ value: arr[idx], index: idx });
+    idx = predecessors[idx];
+  }
+  lis.reverse();
+  return lis;
 }
 
-/* Expose API */
+/* ---------------- Core work loop (fiber) ----------------
+  performUnitOfWork builds fibers for one node, handling function components (hooks),
+  host nodes, Suspense (promise thrown) and ErrorBoundary (exceptions)
+*/
+function performUnitOfWork(fiber) {
+  try {
+    // Function component
+    if (typeof fiber.vnode.type === 'function') {
+      // prepare hooks
+      prepareHooks(fiber);
+      // call component
+      let children;
+      try {
+        children = fiber.vnode.type(fiber.vnode.props || {});
+      } catch (thrown) {
+        if (isPromise(thrown)) {
+          // Suspension: render fallback if provided via fiber.vnode.props.fallback (if component is Suspense)
+          // We'll mark fiber as suspended and attach promise to retry on resolve.
+          fiber.suspended = true;
+          thrown.then(() => scheduleUpdate()); // retry render when resolved
+          // create fallback vnode if provided (we'll set as single child)
+          const fallback = (fiber.vnode.props && fiber.vnode.props.fallback) || createElement('div', null, 'Loading...');
+          children = fallback;
+        } else {
+          // If an error and there is an ErrorBoundary ancestor, bubble up by throwing to parent handling
+          throw thrown;
+        }
+      }
+      const childArray = children == null ? [] : (Array.isArray(children) ? children : [children]);
+      reconcileChildrenArray(fiber, childArray);
+    } else if (isStr(fiber.vnode)) {
+      // text node - nothing to reconcile children-wise
+      if (!fiber.dom) fiber.dom = createDom(fiber);
+    } else if (typeof fiber.vnode.type === 'string') {
+      // host node
+      if (!fiber.dom) fiber.dom = createDom(fiber);
+      const children = (fiber.vnode.props && fiber.vnode.props.children) || [];
+      reconcileChildrenArray(fiber, children);
+    } else {
+      // null / unsupported - nothing
+    }
+  } catch (err) {
+    // Error handling: find nearest ErrorBoundary up the tree (parent chain)
+    let boundary = fiber.parent;
+    while (boundary) {
+      if (boundary.vnode && boundary.vnode.type && boundary.vnode.type.isErrorBoundary) break;
+      boundary = boundary.parent;
+    }
+    if (boundary) {
+      // mount fallback UI from ErrorBoundary.props.fallback or its renderError method
+      boundary.error = err;
+      // set its child to the fallback element
+      const fallback = (boundary.vnode.props && boundary.vnode.props.fallback) || createElement('div', null, 'Error');
+      reconcileChildrenArray(boundary, [fallback]);
+      return null; // stop descending into branch
+    } else {
+      // no boundary -> rethrow (will show in console)
+      console.error('Uncaught render error', err);
+      throw err;
+    }
+  }
+
+  // return next unit
+  if (fiber.child) return fiber.child;
+  let next = fiber;
+  while (next) {
+    if (next.sibling) return next.sibling;
+    next = next.parent;
+  }
+  return null;
+}
+
+/* ---------------- Commit phase ---------------- */
+function commitRoot() {
+  deletions.forEach(commitWorkDeletion);
+  commitWork(wipRoot.child);
+  currentRoot = wipRoot;
+  wipRoot = null;
+  // after commit, run collected effects
+  runEffects(currentRoot);
+}
+function commitWorkDeletion(fiber) {
+  if (!fiber) return;
+  if (fiber.dom) {
+    const parentDom = findParentDom(fiber.parent);
+    if (parentDom && fiber.dom.parentNode === parentDom) parentDom.removeChild(fiber.dom);
+  } else {
+    commitWorkDeletion(fiber.child);
+  }
+}
+function commitWork(fiber) {
+  if (!fiber) return;
+  const parentDom = findParentDom(fiber.parent);
+
+  if (fiber.effectTag === 'PLACEMENT' && fiber.dom != null) {
+    parentDom.appendChild(fiber.dom);
+  } else if (fiber.effectTag === 'UPDATE' && fiber.dom != null) {
+    updateDomProperties(fiber.dom, fiber.alternate ? (fiber.alternate.vnode.props || {}) : {}, fiber.vnode.props || {});
+  }
+  // set ref
+  if (fiber.dom && fiber.vnode && fiber.vnode.props && fiber.vnode.props.ref) {
+    const r = fiber.vnode.props.ref;
+    if (typeof r === 'function') r(fiber.dom);
+    else if (typeof r === 'object') r.current = fiber.dom;
+  }
+  // attach dom.__mini_fiber to updated fiber
+  if (fiber.dom) fiber.dom.__mini_fiber = fiber;
+
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
+}
+function findParentDom(fiber) {
+  let parent = fiber;
+  while (parent && !parent.dom) parent = parent.parent;
+  return parent ? parent.dom : null;
+}
+
+/* Effects runner (layout sync, effect async) */
+function runEffects(rootFiber) {
+  const layout = [];
+  const effects = [];
+  function walk(f) {
+    if (!f) return;
+    if (f.effects) {
+      for (const e of f.effects) {
+        if (e.type === 'layout') layout.push(e.slot);
+        else effects.push(e.slot);
+      }
+    }
+    walk(f.child); walk(f.sibling);
+  }
+  walk(rootFiber);
+  // layout effects sync
+  for (const slot of layout) {
+    try { if (slot.cleanup) slot.cleanup(); } catch (e) { console.error(e); }
+    try { const ret = slot.create(); if (typeof ret === 'function') slot.cleanup = ret; } catch (e) { console.error(e); }
+  }
+  // normal effects async
+  setTimeout(() => {
+    for (const slot of effects) {
+      try { if (slot.cleanup) slot.cleanup(); } catch (e) { console.error(e); }
+      try { const ret = slot.create(); if (typeof ret === 'function') slot.cleanup = ret; } catch (e) { console.error(e); }
+    }
+  }, 0);
+}
+
+/* ---------------- Work loop scheduling ---------------- */
+function workLoop(deadline) {
+  while (nextUnitOfWork && (deadline.timeRemaining ? deadline.timeRemaining() > 1 : true)) {
+    nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+  }
+  if (!nextUnitOfWork && wipRoot) {
+    // commit
+    commitRoot();
+  } else {
+    // schedule remaining
+    Scheduler.schedule(() => workLoop({ timeRemaining: () => 5 }), Scheduler.Normal);
+  }
+}
+
+/* ---------------- Public render API ---------------- */
+function render(vnode, container) {
+  // mark container as root for delegation
+  container.__mini_root = container;
+  wipRoot = {
+    vnode: { type: 'div', props: { children: [vnode] } }, // wrap
+    dom: container,
+    parent: null,
+    alternate: currentRoot,
+    effectTag: null,
+    child: null
+  };
+  deletions = [];
+  nextUnitOfWork = wipRoot;
+  Scheduler.schedule(() => workLoop({ timeRemaining: () => 50 }), Scheduler.UserBlocking);
+}
+function scheduleUpdate() {
+  if (!currentRoot) return;
+  const rootVNode = currentRoot.vnode.props.children;
+  render(rootVNode, currentRoot.dom);
+}
+
+/* ---------------- Export API ---------------- */
 const MiniReact = {
   createElement,
   render,
@@ -340,165 +657,142 @@ const MiniReact = {
   useImperativeHandle,
   createContext,
   useContext,
+  // extras
+  Scheduler,
 };
+window.MiniReact = MiniReact;
 
-/* ====================== Demo Application ====================== */
+/* ---------------- Demo Application ---------------- */
 
-/* Example: Counter with useState, useReducer, useRef, useMemo, useCallback, effects, imperative handle, context */
+/* Context */
+const CountContext = createContext(0);
 
-const CountContext = MiniReact.createContext(0);
-
-function CounterWithState() {
-  const [n, setN] = MiniReact.useState(0);
-  const inc = () => setN(x => x + 1);
-  const dec = () => setN(x => x - 1);
-
-  MiniReact.useEffect(() => {
-    console.log('CounterWithState mounted or n changed:', n);
-    return () => console.log('CounterWithState cleanup for n:', n);
-  }, [n]);
-
-  return MiniReact.createElement('div', { className: 'row' },
-    `useState count: ${n} `,
-    MiniReact.createElement('button', { onclick: inc }, '＋'),
-    MiniReact.createElement('button', { onclick: dec }, '－')
-  );
-}
-
-function CounterWithReducer() {
-  const reducer = (state, action) => {
-    switch (action.type) {
-      case 'inc': return { c: state.c + 1 };
-      case 'dec': return { c: state.c - 1 };
-      default: return state;
-    }
-  };
-  const [state, dispatch] = MiniReact.useReducer(reducer, { c: 0 });
-
-  MiniReact.useLayoutEffect(() => {
-    // runs synchronously after commit
-    // (here just a console log to illustrate)
-    console.log('useLayoutEffect - CounterWithReducer', state.c);
-  }, [state.c]);
-
-  return MiniReact.createElement('div', { className: 'row' },
-    `useReducer count: ${state.c} `,
-    MiniReact.createElement('button', { onclick: ()=>dispatch({type:'inc'}) }, '＋'),
-    MiniReact.createElement('button', { onclick: ()=>dispatch({type:'dec'}) }, '－')
-  );
-}
-
-function InnerImperative(props, ref) {
-  // the component returns a DOM node; useImperativeHandle will publish methods to ref
-  const localRef = MiniReact.useRef();
-  MiniReact.useImperativeHandle(ref, () => ({
-    focus: () => {
-      if (localRef.current) {
-        if (localRef.current.focus) localRef.current.focus();
-        else console.log('no focusable element');
-      }
-    },
-  }), []);
-  return MiniReact.createElement('input', { ref: localRef, value: props.value || '', oninput: props.oninput });
-}
-// To support forwarding "ref" in our minimal system, we'll emulate by passing a prop named "ref".
-// (Not full forwardRef behavior, but sufficient for demo)
-
-/* A component demonstrating useRef/useMemo/useCallback/useContext/useImperativeHandle */
-function ComplexDemo() {
-  const [text, setText] = MiniReact.useState('');
-  const ctx = MiniReact.useContext(CountContext);
-
-  const inputRef = MiniReact.useRef();
-  const externalRef = MiniReact.useRef();
-
-  const memoed = MiniReact.useMemo(() => {
-    return { len: text.length, upper: text.toUpperCase() };
-  }, [text]);
-
-  const onInput = MiniReact.useCallback((e) => {
-    // event is browser event - in this minimal renderer we assigned DOM events directly
-    setText(e.target.value);
-  }, []);
-
-  MiniReact.useEffect(() => {
-    console.log('ComplexDemo effect: text changed to', text);
-    return () => console.log('ComplexDemo effect cleanup for text', text);
-  }, [text]);
-
-  return MiniReact.createElement('div', { className: 'row' },
-    MiniReact.createElement('div', null, `useContext count from provider: ${ctx}`),
-    MiniReact.createElement('div', null, `useMemo: len=${memoed.len}, upper=${memoed.upper}`),
-    MiniReact.createElement('div', null,
-      'input: ',
-      // simulate forwarding ref by passing ref prop to InnerImperative
-      MiniReact.createElement('input', { ref: inputRef, value: text, oninput: onInput })
-    ),
-    MiniReact.createElement('div', null,
-      MiniReact.createElement('button', { onclick: () => {
-        // call imperative handle on inputRef
-        if (inputRef.current && inputRef.current.focus) inputRef.current.focus();
-      } }, 'Focus input')
-    )
-  );
-}
-
-/* Top-level App showing everything */
-function App() {
-  const [providerCount, setProviderCount] = MiniReact.useState(5);
-
-  return MiniReact.createElement('div', null,
-    MiniReact.createElement('h3', null, 'MiniReact Hooks Demo'),
-    MiniReact.createElement('div', { className: 'row' },
-      MiniReact.createElement('button', { onclick: () => setProviderCount(x => x + 1) }, 'Increase Provider Count'),
-      ` Provider value: ${providerCount}`
-    ),
-    // Provider wraps children
-    MiniReact.createElement(CountContext.Provider, { value: providerCount },
-      MiniReact.createElement(CounterWithState, null),
-      MiniReact.createElement(CounterWithReducer, null),
-      MiniReact.createElement(ComplexDemo, null)
-    )
-  );
-}
-
-/* Initial render */
-MiniReact.render(MiniReact.createElement(App, null), document.getElementById('app'));
-
-/* Small helper: when using 'ref' prop set on host nodes, we need to assign the DOM node to ref.current.
-   Our renderVNode created host elements and set props (including 'ref') — we didn't handle 'ref' specially.
-   Let's patch host element creation to support passing a function or object ref via props.ref.
-   For simplicity, we add a global post-processing loop: after first render, attach refs */
-function attachRefs(vnode, dom) {
-  if (!vnode) return;
-  if (typeof vnode === 'string') return;
-  if (typeof vnode.type === 'function') {
-    const inst = vnode._instance;
-    if (inst) attachRefs(inst.childVNode, inst.dom);
-  } else if (typeof vnode.type === 'string') {
-    // dom correponds to vnode
-    if (vnode.props && vnode.props.ref) {
-      const r = vnode.props.ref;
-      if (typeof r === 'function') r(dom);
-      else if (typeof r === 'object') r.current = dom;
-    }
-    // process children
-    const children = vnode.children || [];
-    let childNode = dom.firstChild;
-    for (let i=0;i<children.length;i++) {
-      const ch = children[i];
-      if (!childNode) break;
-      attachRefs(ch, childNode);
-      childNode = childNode.nextSibling;
-    }
+/* ErrorBoundary component */
+function ErrorBoundary(props) {
+  // mark as error boundary
+  ErrorBoundary.isErrorBoundary = true;
+  // if there's an error attached, render fallback
+  const hasErr = props && props._internal && props._internal.error;
+  if (hasErr) {
+    return createElement('div', { className: 'error' }, 'Caught error: ', String(props._internal.error && props._internal.error.message || 'Error'));
   }
+  // else render children
+  return props.children && props.children.length ? props.children[0] : null;
 }
-// attach refs after initial render and after each render
-const originalPerformRender = performRender;
-performRender = function() {
-  originalPerformRender();
-  attachRefs(Renderer.rootVNode, Renderer.rootContainer.firstChild);
-};
+ErrorBoundary.isErrorBoundary = true;
+
+/* Suspense wrapper: component that expects its child to possibly throw a Promise in render.
+   Accepts fallback prop.
+*/
+function Suspense(props) {
+  // just render children normally - actual catching is in fiber try/catch
+  return props.children && props.children.length ? props.children[0] : null;
+}
+
+/* Component that deliberately throws a Promise (simulate lazy loading) */
+function AsyncText({ delay = 1000, text = 'Hello' }) {
+  const [state] = useState(0); // just to use hooks
+  // on render we create a promise and throw it if not ready
+  if (!AsyncText.cache) AsyncText.cache = {};
+  if (AsyncText.cache[text]) return AsyncText.cache[text];
+  // create a promise that resolves after delay and set cache
+  throw new Promise((res) => {
+    setTimeout(() => {
+      AsyncText.cache[text] = createElement('span', null, text + ' (loaded)');
+      res();
+      // after resolved schedule update
+      scheduleUpdate();
+    }, delay);
+  });
+}
+
+/* Demo components using hooks and imperative handle */
+function Counter() {
+  const [n, setN] = useState(0);
+  useEffect(()=> { console.log('Counter effect', n); return ()=>console.log('Counter cleanup', n); }, [n]);
+  return createElement('div', { className: 'row' },
+    `Count: ${n} `,
+    createElement('button', { onclick: ()=>setN(x=>x+1) }, '+'),
+    createElement('button', { onclick: ()=>setN(x=>x-1) }, '-')
+  );
+}
+
+function BigList({ n }) {
+  // heavy list to show scheduler interrupts & LIS diff on toggles
+  const arr = [];
+  for (let i = 0; i < n; i++) arr.push(createElement('div', { key: 'item-' + i, style: { padding: '2px 0' } }, 'Item #' + i));
+  return createElement('div', null, ...arr);
+}
+
+function Editable({ onChangeRef }) {
+  const ref = useRef();
+  useImperativeHandle(onChangeRef, () => ({
+    focus: () => ref.current && ref.current.focus(),
+    value: () => ref.current && ref.current.value
+  }), []);
+  return createElement('input', { ref, oninput: (e)=>{ /* no-op, direct DOM event */ } });
+}
+
+function App() {
+  const [providerCount, setProviderCount] = useState(1);
+  const [showHeavy, setShowHeavy] = useState(false);
+  const [listSize, setListSize] = useState(100);
+  const impRef = useRef();
+  const [showError, setShowError] = useState(false);
+  const [suspendId, setSuspendId] = useState(0);
+
+  return createElement('div', null,
+    createElement('h3', null, 'MiniReact Pro — Demo'),
+    createElement('div', { className: 'row' },
+      createElement('button', { onclick: ()=>setProviderCount(x=>x+1) }, 'Inc Provider: ' + providerCount),
+      createElement('button', { onclick: ()=>setShowHeavy(x=>!x) }, showHeavy ? 'Hide heavy' : 'Show heavy'),
+      createElement('button', { onclick: ()=>setListSize(s=>s+50) }, 'Increase list size: ' + listSize),
+      createElement('button', { onclick: ()=>setShowError(x=>!x) }, showError ? 'Clear error' : 'Trigger error'),
+      createElement('button', { onclick: ()=>setSuspendId(id=>id+1) }, 'Reload async')
+    ),
+    createElement(CountContext.Provider, { value: providerCount },
+      // ErrorBoundary usage
+      createElement(ErrorBoundary, { fallback: createElement('div', null, 'Boundary fallback') },
+        createElement('div', null,
+          createElement(Counter, null),
+          createElement('div', { className: 'row' }, 'Context value: ', createElement('strong', null, providerCount)),
+          createElement(Editable, { onChangeRef: impRef }),
+          createElement('div', { className: 'row' },
+            createElement('button', { onclick: ()=>impRef.current && impRef.current.focus() }, 'Focus child input'),
+            createElement('button', { onclick: ()=>console.log('Child value:', impRef.current && impRef.current.value()) }, 'Log child value')
+          ),
+          // Suspense example: child AsyncText will throw Promise first render
+          createElement(Suspense, { fallback: createElement('div', { className:'suspense' }, 'Loading async...') },
+            createElement('div', null,
+              createElement(AsyncText, { delay: 1500, text: 'Async #' + suspendId }),
+              createElement(AsyncText, { delay: 700, text: 'Quick #' + suspendId })
+            )
+          ),
+          // show heavy list toggled
+          showHeavy ? createElement(BigList, { n: listSize }) : null,
+          // error trigger: a component that throws
+          showError ? createElement(() => { throw new Error('Demo error'); }) : null
+        )
+      )
+    )
+  );
+}
+
+/* initial render */
+render(createElement(App, null), document.getElementById('app'));
+
+/* ---------------- Notes on usage & JSX ----------------
+ - This demo uses createElement directly so it runs without compilation.
+ - To use JSX with Babel/TSX, set the pragma at your file top:
+   /** @jsx MiniReact.createElement *\/
+   and compile — produced JSX will call MiniReact.createElement automatically.
+ - Event props: use onClick -> becomes onClick in props; internally delegation maps onXxx handlers.
+ - Suspense: wrap nodes with <Suspense fallback={...}>; inside, if a component throws a Promise, the fallback shows.
+ - ErrorBoundary: provide a component with .isErrorBoundary = true (this demo provides ErrorBoundary function with that flag).
+*/
+
+/* expose for debugging */
+window.MiniReact = MiniReact;
 
 </script>
 </body>
