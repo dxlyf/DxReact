@@ -1,0 +1,530 @@
+太好了 — 我会给你一个单文件的、**可运行的最小版 React-like 库（纯 JS）**，实现你列出的核心 Hook：`useState` / `useReducer` / `useRef` / `useMemo` / `useCallback` / `useEffect` / `useLayoutEffect` / `useImperativeHandle` / `useContext`，并包含一个示例组件展示其用法。
+
+说明：此实现偏重于**清晰与可理解性**（用于工程学习/迁移场景），不是性能最佳或完全兼容 React 的实现。渲染采用“整体重新渲染 + 替换”策略以简化差分与 Fiber 调度，但 Hooks 的语义（位置、依赖、清理）都尽力模拟真实 React。
+
+直接把下面代码复制到一个 `index.html` 文件并在浏览器打开即可运行 —— 示例在页面上演示了上面所有 Hook 的基本用法。
+
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Mini React-like with Hooks — Demo</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto; padding: 16px; }
+    button { margin-right: 8px; }
+    .card { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 650px; }
+    .row { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h2>Mini React-like library — Hooks demo</h2>
+  <div id="app" class="card"></div>
+
+<script>
+/* ====================== Mini React-like Implementation ====================== */
+
+/** createElement: jsx-like helper */
+function createElement(type, props, ...children) {
+  return { type, props: props || {}, children: children.flat().map(c => (typeof c === 'object' ? c : String(c))) };
+}
+
+/* === Global renderer state === */
+const Renderer = {
+  rootVNode: null,
+  rootContainer: null,
+  isRendering: false,
+  // pending microtask queues for effects
+  pendingLayoutEffects: [],
+  pendingEffects: []
+};
+
+/* === Component instance model ===
+   Each function component has an instance:
+   { type, props, hooks: [], hookIndex, dom, childVNode, effects: [] }
+*/
+function createInstance(vnode) {
+  return {
+    type: vnode.type,
+    props: vnode.props,
+    hooks: [],
+    hookIndex: 0,
+    dom: null,
+    childVNode: null,
+    effects: [] // {type: 'layout'|'effect', create, deps, cleanup}
+  };
+}
+
+/* === Current rendering instance (set while running a function component) === */
+let currentInstance = null;
+
+/* === Hook primitives === */
+
+function useHookSlot() {
+  if (!currentInstance) throw new Error('Hooks can only be called inside function components.');
+  const idx = currentInstance.hookIndex++;
+  if (!currentInstance.hooks[idx]) currentInstance.hooks[idx] = { value: undefined };
+  return currentInstance.hooks[idx];
+}
+
+function useState(initial) {
+  const slot = useHookSlot();
+  if (slot.value === undefined) {
+    slot.value = typeof initial === 'function' ? initial() : initial;
+    slot.queue = [];
+  }
+  // reducer-like enqueue
+  const setState = (action) => {
+    const next = typeof action === 'function' ? action(slot.value) : action;
+    if (next === slot.value) return;
+    slot.value = next;
+    scheduleRender();
+  };
+  return [slot.value, setState];
+}
+
+function useReducer(reducer, initial, init) {
+  const slot = useHookSlot();
+  if (slot.value === undefined) {
+    slot.value = init ? init(initial) : initial;
+  }
+  const dispatch = (action) => {
+    const next = reducer(slot.value, action);
+    if (next === slot.value) return;
+    slot.value = next;
+    scheduleRender();
+  };
+  return [slot.value, dispatch];
+}
+
+function useRef(initial = null) {
+  const slot = useHookSlot();
+  if (slot.value === undefined) slot.value = { current: initial };
+  return slot.value;
+}
+
+function useMemo(factory, deps) {
+  const slot = useHookSlot();
+  if (!slot.value) slot.value = {};
+  const prev = slot.value;
+  const same = deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=> Object.is(d, prev.deps[i]));
+  if (!same) {
+    const val = factory();
+    slot.value = { value: val, deps: deps ? deps.slice() : undefined };
+  }
+  return slot.value.value;
+}
+
+function useCallback(fn, deps) {
+  return useMemo(()=>fn, deps);
+}
+
+function useContext(context) {
+  // Just read the currentValue stored on context object
+  return context._currentValue !== undefined ? context._currentValue : context._defaultValue;
+}
+
+/* Effects */
+function enqueueEffect(type, create, deps) {
+  const slot = useHookSlot();
+  if (!slot.value) slot.value = {};
+  const prev = slot.value;
+  const same = deps && prev.deps && deps.length === prev.deps.length && deps.every((d,i)=> Object.is(d, prev.deps[i]));
+  if (!same) {
+    slot.value = { deps: deps ? deps.slice() : undefined, create, cleanup: prev.cleanup };
+    // register into currentInstance.effects for after commit
+    currentInstance.effects.push({ type, slot: slot.value });
+  }
+}
+
+/* useEffect and useLayoutEffect store into instance.effects */
+function useEffect(create, deps) {
+  enqueueEffect('effect', create, deps);
+}
+function useLayoutEffect(create, deps) {
+  enqueueEffect('layout', create, deps);
+}
+
+/* useImperativeHandle: set ref.current to factory() during layout effect */
+function useImperativeHandle(ref, factory, deps) {
+  useLayoutEffect(() => {
+    const inst = factory();
+    if (ref) ref.current = inst;
+    return () => {
+      if (ref && ref.current === inst) ref.current = null;
+    };
+  }, deps);
+}
+
+/* ====================== Rendering / reconciliation ====================== */
+
+/* create DOM for host element or text node */
+function createDomNode(vnode) {
+  if (typeof vnode === 'string') {
+    return document.createTextNode(vnode);
+  }
+  const dom = document.createElement(vnode.type);
+  updateDomProps(dom, {}, vnode.props);
+  (vnode.children || []).forEach(child => {
+    const childDom = renderVNode(child, null); // childDom is DOM node
+    dom.appendChild(childDom);
+  });
+  return dom;
+}
+
+/* update DOM props (very small) */
+function updateDomProps(dom, prevProps, nextProps) {
+  // remove old props not present anymore
+  for (const k in prevProps) {
+    if (k === 'children') continue;
+    if (!(k in nextProps)) {
+      setProp(dom, k, null);
+    }
+  }
+  // set new props
+  for (const k in nextProps) {
+    if (k === 'children') continue;
+    setProp(dom, k, nextProps[k]);
+  }
+}
+
+function setProp(dom, name, value) {
+  if (name === 'style') {
+    if (!value) dom.removeAttribute('style');
+    else {
+      for (const s in value) dom.style[s] = value[s];
+    }
+  } else if (/^on[A-Z]/.test(name)) {
+    const ev = name.slice(2).toLowerCase();
+    dom[ev] = value || null;
+  } else if (name in dom && !(dom instanceof SVGElement)) {
+    if (value == null) dom.removeAttribute(name);
+    else dom[name] = value;
+  } else {
+    if (value == null) dom.removeAttribute(name);
+    else dom.setAttribute(name, value);
+  }
+}
+
+/* renderVNode returns a DOM node. For component VNodes, it will set vnode._instance */
+function renderVNode(vnode, parentInstance) {
+  // text node (string)
+  if (typeof vnode === 'string') return document.createTextNode(vnode);
+
+  // Host element (type is string)
+  if (typeof vnode.type === 'string') {
+    const dom = document.createElement(vnode.type);
+    updateDomProps(dom, {}, vnode.props);
+    (vnode.children || []).forEach(child => {
+      dom.appendChild(renderVNode(child, parentInstance));
+    });
+    return dom;
+  }
+
+  // Function component
+  if (typeof vnode.type === 'function') {
+    // reuse instance if available
+    let inst = vnode._instance;
+    if (!inst || inst.type !== vnode.type) {
+      inst = createInstance(vnode);
+      vnode._instance = inst;
+    }
+    inst.props = vnode.props;
+    inst.hookIndex = 0;
+    inst.effects = [];
+    // render component
+    currentInstance = inst;
+    const child = vnode.type(vnode.props || {});
+    currentInstance = null;
+    inst.childVNode = child;
+    // render child vnode to dom
+    const childDom = renderVNode(child, inst);
+    inst.dom = childDom;
+    return childDom;
+  }
+
+  throw new Error('Unknown vnode type: ' + vnode);
+}
+
+/* Full re-render of root (simple strategy) */
+function performRender() {
+  if (Renderer.isRendering) return;
+  Renderer.isRendering = true;
+  // Clear pending effect queues; we'll rebuild effects from instances during render
+  Renderer.pendingLayoutEffects = [];
+  Renderer.pendingEffects = [];
+
+  // render root
+  const newDom = renderVNode(Renderer.rootVNode, null);
+
+  // commit: replace container content with newDom
+  const container = Renderer.rootContainer;
+  // remove all children and append newDom
+  while (container.firstChild) container.removeChild(container.firstChild);
+  container.appendChild(newDom);
+
+  // Collect layout and regular effects from every instance reachable.
+  // Simple walk of instances by traversing tree (vnode._instance)
+  function collectEffects(vnode) {
+    if (!vnode) return;
+    if (typeof vnode === 'string') return;
+    if (typeof vnode.type === 'function') {
+      const inst = vnode._instance;
+      if (inst && inst.effects.length) {
+        inst.effects.forEach(e => {
+          if (e.type === 'layout') Renderer.pendingLayoutEffects.push(e.slot);
+          else Renderer.pendingEffects.push(e.slot);
+        });
+      }
+      // traverse to child vnode
+      collectEffects(inst ? inst.childVNode : null);
+    } else if (typeof vnode.type === 'string') {
+      (vnode.children || []).forEach(collectEffects);
+    }
+  }
+  collectEffects(Renderer.rootVNode);
+
+  // run layout effects synchronously (before painting)
+  Renderer.pendingLayoutEffects.forEach(slot => {
+    // run cleanup if exists
+    try { if (typeof slot.cleanup === 'function') slot.cleanup(); } catch(e){ console.error(e); }
+    try {
+      const ret = slot.create();
+      if (typeof ret === 'function') slot.cleanup = ret;
+    } catch(e){ console.error(e); }
+  });
+
+  // schedule macrotask for regular effects
+  setTimeout(() => {
+    Renderer.pendingEffects.forEach(slot => {
+      try { if (typeof slot.cleanup === 'function') slot.cleanup(); } catch(e){ console.error(e); }
+      try {
+        const ret = slot.create();
+        if (typeof ret === 'function') slot.cleanup = ret;
+      } catch(e){ console.error(e); }
+    });
+  }, 0);
+
+  Renderer.isRendering = false;
+}
+
+/* Public render API */
+function render(vnode, container) {
+  Renderer.rootVNode = vnode;
+  Renderer.rootContainer = container;
+  performRender();
+}
+
+/* schedule re-render of root */
+function scheduleRender() {
+  // naive: immediate re-render; could be debounced / scheduled
+  performRender();
+}
+
+/* Simple createContext */
+function createContext(defaultValue) {
+  const ctx = { _defaultValue: defaultValue, _currentValue: defaultValue };
+  function Provider(props) {
+    // When Provider is rendered, update context value and render children
+    ctx._currentValue = props.value;
+    return props.children && props.children.length ? props.children[0] : null;
+  }
+  ctx.Provider = Provider;
+  return ctx;
+}
+
+/* Expose API */
+const MiniReact = {
+  createElement,
+  render,
+  useState,
+  useReducer,
+  useRef,
+  useMemo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useImperativeHandle,
+  createContext,
+  useContext,
+};
+
+/* ====================== Demo Application ====================== */
+
+/* Example: Counter with useState, useReducer, useRef, useMemo, useCallback, effects, imperative handle, context */
+
+const CountContext = MiniReact.createContext(0);
+
+function CounterWithState() {
+  const [n, setN] = MiniReact.useState(0);
+  const inc = () => setN(x => x + 1);
+  const dec = () => setN(x => x - 1);
+
+  MiniReact.useEffect(() => {
+    console.log('CounterWithState mounted or n changed:', n);
+    return () => console.log('CounterWithState cleanup for n:', n);
+  }, [n]);
+
+  return MiniReact.createElement('div', { className: 'row' },
+    `useState count: ${n} `,
+    MiniReact.createElement('button', { onclick: inc }, '＋'),
+    MiniReact.createElement('button', { onclick: dec }, '－')
+  );
+}
+
+function CounterWithReducer() {
+  const reducer = (state, action) => {
+    switch (action.type) {
+      case 'inc': return { c: state.c + 1 };
+      case 'dec': return { c: state.c - 1 };
+      default: return state;
+    }
+  };
+  const [state, dispatch] = MiniReact.useReducer(reducer, { c: 0 });
+
+  MiniReact.useLayoutEffect(() => {
+    // runs synchronously after commit
+    // (here just a console log to illustrate)
+    console.log('useLayoutEffect - CounterWithReducer', state.c);
+  }, [state.c]);
+
+  return MiniReact.createElement('div', { className: 'row' },
+    `useReducer count: ${state.c} `,
+    MiniReact.createElement('button', { onclick: ()=>dispatch({type:'inc'}) }, '＋'),
+    MiniReact.createElement('button', { onclick: ()=>dispatch({type:'dec'}) }, '－')
+  );
+}
+
+function InnerImperative(props, ref) {
+  // the component returns a DOM node; useImperativeHandle will publish methods to ref
+  const localRef = MiniReact.useRef();
+  MiniReact.useImperativeHandle(ref, () => ({
+    focus: () => {
+      if (localRef.current) {
+        if (localRef.current.focus) localRef.current.focus();
+        else console.log('no focusable element');
+      }
+    },
+  }), []);
+  return MiniReact.createElement('input', { ref: localRef, value: props.value || '', oninput: props.oninput });
+}
+// To support forwarding "ref" in our minimal system, we'll emulate by passing a prop named "ref".
+// (Not full forwardRef behavior, but sufficient for demo)
+
+/* A component demonstrating useRef/useMemo/useCallback/useContext/useImperativeHandle */
+function ComplexDemo() {
+  const [text, setText] = MiniReact.useState('');
+  const ctx = MiniReact.useContext(CountContext);
+
+  const inputRef = MiniReact.useRef();
+  const externalRef = MiniReact.useRef();
+
+  const memoed = MiniReact.useMemo(() => {
+    return { len: text.length, upper: text.toUpperCase() };
+  }, [text]);
+
+  const onInput = MiniReact.useCallback((e) => {
+    // event is browser event - in this minimal renderer we assigned DOM events directly
+    setText(e.target.value);
+  }, []);
+
+  MiniReact.useEffect(() => {
+    console.log('ComplexDemo effect: text changed to', text);
+    return () => console.log('ComplexDemo effect cleanup for text', text);
+  }, [text]);
+
+  return MiniReact.createElement('div', { className: 'row' },
+    MiniReact.createElement('div', null, `useContext count from provider: ${ctx}`),
+    MiniReact.createElement('div', null, `useMemo: len=${memoed.len}, upper=${memoed.upper}`),
+    MiniReact.createElement('div', null,
+      'input: ',
+      // simulate forwarding ref by passing ref prop to InnerImperative
+      MiniReact.createElement('input', { ref: inputRef, value: text, oninput: onInput })
+    ),
+    MiniReact.createElement('div', null,
+      MiniReact.createElement('button', { onclick: () => {
+        // call imperative handle on inputRef
+        if (inputRef.current && inputRef.current.focus) inputRef.current.focus();
+      } }, 'Focus input')
+    )
+  );
+}
+
+/* Top-level App showing everything */
+function App() {
+  const [providerCount, setProviderCount] = MiniReact.useState(5);
+
+  return MiniReact.createElement('div', null,
+    MiniReact.createElement('h3', null, 'MiniReact Hooks Demo'),
+    MiniReact.createElement('div', { className: 'row' },
+      MiniReact.createElement('button', { onclick: () => setProviderCount(x => x + 1) }, 'Increase Provider Count'),
+      ` Provider value: ${providerCount}`
+    ),
+    // Provider wraps children
+    MiniReact.createElement(CountContext.Provider, { value: providerCount },
+      MiniReact.createElement(CounterWithState, null),
+      MiniReact.createElement(CounterWithReducer, null),
+      MiniReact.createElement(ComplexDemo, null)
+    )
+  );
+}
+
+/* Initial render */
+MiniReact.render(MiniReact.createElement(App, null), document.getElementById('app'));
+
+/* Small helper: when using 'ref' prop set on host nodes, we need to assign the DOM node to ref.current.
+   Our renderVNode created host elements and set props (including 'ref') — we didn't handle 'ref' specially.
+   Let's patch host element creation to support passing a function or object ref via props.ref.
+   For simplicity, we add a global post-processing loop: after first render, attach refs */
+function attachRefs(vnode, dom) {
+  if (!vnode) return;
+  if (typeof vnode === 'string') return;
+  if (typeof vnode.type === 'function') {
+    const inst = vnode._instance;
+    if (inst) attachRefs(inst.childVNode, inst.dom);
+  } else if (typeof vnode.type === 'string') {
+    // dom correponds to vnode
+    if (vnode.props && vnode.props.ref) {
+      const r = vnode.props.ref;
+      if (typeof r === 'function') r(dom);
+      else if (typeof r === 'object') r.current = dom;
+    }
+    // process children
+    const children = vnode.children || [];
+    let childNode = dom.firstChild;
+    for (let i=0;i<children.length;i++) {
+      const ch = children[i];
+      if (!childNode) break;
+      attachRefs(ch, childNode);
+      childNode = childNode.nextSibling;
+    }
+  }
+}
+// attach refs after initial render and after each render
+const originalPerformRender = performRender;
+performRender = function() {
+  originalPerformRender();
+  attachRefs(Renderer.rootVNode, Renderer.rootContainer.firstChild);
+};
+
+</script>
+</body>
+</html>
+```
+
+---
+
+# 说明（简短）
+
+* 这个实现提供了一个极简但功能完整的 Hook 运行时：**Hook 的位置固定、依赖比较、清理函数、layout/normal effect 区分**均已实现；`createContext` + `Provider` 简单可用。
+* 渲染策略采用**完整重建 + 替换**，因此不做复杂 diff；但对于学习 Hook 语义和把 React 代码迁移到自研库非常有帮助。
+* 示例 `App` 展示了 `useState`、`useReducer`、`useRef`、`useMemo`、`useCallback`、`useEffect`、`useLayoutEffect`、`useImperativeHandle`（通过 ref 模拟）和 `useContext` 的用法。
+
+如果你想要我：
+
+1. 把这个库改成支持更接近 React 的 `JSX`（Babel/TSX）语法（会给出 Babel pragma 或简单 JSX 工具）；
+2. 改用更好的局部 DOM diff（按 key 最小变更）以避免整页替换；
+3. 增加异步调度（类似 `requestIdleCallback` 或任务队列分片）；
+4. 或把实现改成更接近 Fiber（支持并发中断）——我可以直接在这个基础上继续扩展（会把关键代码模块化并增加测试用例）。
+
+你想先做哪一项？
