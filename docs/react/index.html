@@ -9,12 +9,157 @@
 
 <body>
     <div id="root"></div>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js" data-type="module"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script type="text/babel" data-presets="env,react">
-        import 
+
         /** @jsx createElement */
         /** @jsxFrag Preact.Fragment */
+        function createElement(type, config, ...children) {
+            const props = {}
+            let key = null,ref=null
+            if (config) {
+                Object.keys(config).forEach(name => {
+                    if (name === 'key') {
+                        key = config[name] + ''
+                    } else if (name === 'ref') {
+                        ref = config[name] 
+                    }else {
+                        props[name] = config[name]
+                    }
+                })
+            }
+            if (children.length) {
+                props.children = children.length === 1 ? children[0] : children
+            }
+            return {type, props, key,ref}
+        }
 
+        let nextUnitOfWork=null
+        let wipRoot=null
+        let workingInProgress=null
+        
+        function commitRoot() {
+
+        }
+        const HostRoot=1
+        const HostComponent=2
+        const HostText=3
+        const Fragment=4
+        const FunctionComponent=5
+
+        const PLACEMENT=1
+        const UPDATE=2
+        const DELETION=3
+        
+        function createFiber(tag,pendingProps,key){
+            return {
+                tag,
+                key:key===undefined?null:key,
+                type:null,
+                stateNode:null,
+
+                pendingProps,
+                memoizedProps:null,
+                memoizedState:null,
+                updateQueue:null,
+                hooks:[],
+
+
+                return:null,
+                child:null,
+                sibling:null,
+                index:0,
+
+
+                alternate:null,
+                effectTag:null,
+                effects:[],
+                deletions:null
+            }
+        }
+        function updateFunctionComponent(unitOfWork) {
+
+        }
+        function updateHostRoot(unitOfWork) {
+
+        }
+        function updateHostComponent(current,workInProgress) {
+
+        }
+        function performUnitOfWork(unitOfWork) {
+            const current=unitOfWork.alternate
+            let next=null
+            switch(unitOfWork.tag){
+                case FunctionComponent:
+                next=updateFunctionComponent(unitOfWork)
+                    break
+                case HostRoot:
+                next=updateHostRoot(unitOfWork)
+                    break
+                case HostComponent:
+                next=updateHostComponent(unitOfWork)
+                    break
+                case HostText:
+                    break
+            }
+            if(next!==null){
+
+                return next
+            }
+
+        }
+        function workLoop(deadline) {
+            while (nextUnitOfWork && deadline.timeRemaining() > 1) {
+                nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
+            }
+            if(!nextUnitOfWork&&wipRoot){
+                commitRoot()
+            }else{
+                requestIdleCallback(workLoop)
+            }
+        }
+        function createWorkInProgress(current,pendingProps){
+            let wip=current.alternate
+            if(!wip){
+                wip=createFiber(current.tag,pendingProps,current.key)
+
+                wip.alternate=current
+                current.alternate=wip
+            }else{
+                wip.pendingProps=pendingProps
+            }
+            Object.assign(wip,current)
+            wip.deletions=null
+            return wip
+        }
+        function scheduleRoot(fiberRoot) {
+            wipRoot = fiberRoot;
+            const root=createWorkInProgress(wipRoot.current,null)
+            nextUnitOfWork = root;
+            requestWorkLoop();
+        }
+
+        function requestWorkLoop() {
+            if (typeof requestIdleCallback !== 'undefined') {
+                requestIdleCallback(workLoop);
+            } else {
+                setTimeout(() => workLoop({ timeRemaining: () => 50 }), 1);
+            }
+        }
+
+        function render(element,container) {
+            const fiberRoot={
+                container,
+                current:null
+            }
+            const rootFiber=createFiber(HostRoot,null)
+            rootFiber.memoizedState={
+                element
+            }
+            rootFiber.stateNode=fiberRoot
+            fiberRoot.current=rootFiber
+            scheduleRoot(fiberRoot)
+        }
         function App() {
             return <h1>Hello World</h1>
         }
