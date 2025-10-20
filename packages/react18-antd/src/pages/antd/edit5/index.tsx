@@ -1,76 +1,137 @@
-import { ConfigProvider, Form, Collapse, Tabs, Row, Space, Col, Input, Select, Upload, Checkbox, DatePicker, Table, Descriptions, Grid, Button, InputNumber, Popover, Alert, message, Switch, Modal, Typography, Radio } from 'antd'
-import type { FormItemProps, TabsProps, CollapseProps, GetProp, GetProps, GetRef, FormListOperation } from 'antd'
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import dayjs, { Dayjs } from 'dayjs'
-import styles from './index.module.scss'
-import { InfoCircleOutlined, MinusOutlined, PlusOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useMemoizedFn, useLatest, useUpdateEffect, useClickAway } from 'ahooks'
-import classNames from 'classnames'
-import { ProUpload } from '../components/ProUpload'
-import Decimal from 'decimal.js'
-import { chain, pick } from 'lodash-es'
-import AntTableEditDemo from './AntTableEditDemo'
-import { useModal } from '../hooks/useModal2'
-import { EditableProTable, ProTable,useMountMergeState} from '@ant-design/pro-components'
-import type { ActionType, ProColumns } from '@ant-design/pro-components'
-import {useTable} from '../hooks/useTable'
-import mockjs from 'mockjs'
+import { Button, Col, Form, Input, Popover, Row, Space, Table } from 'antd'
+import { useTableEdit } from '../hooks/useEditTable'
+import { useMemo, useState } from 'react'
+import React from 'react'
 
-const data=mockjs.mock({'list|100':[{'id|+1':0,'name':'@name','age|10-100':0}]}).list
-async function query(params:any) {
-        const {current,pageSize}=params
-        return {
-            data:data.slice(current*pageSize-pageSize,current*pageSize),
-            total:data.length,
-        }
+const ProFormItemInner = (props: any) => {
+    const { children, ...restProps } = props
+    const [open, setOpen] = useState(false)
+    const { errors } = Form.Item.useStatus()
+    const popoverContent = (
+        <>
+            <div style={{ color: '#ff4d4f', fontSize: '12px' }}>
+                {errors.map((error, index) => (
+                    <div key={index}>{error}</div>
+                ))}
+            </div>
+        </>
+    );
+    const hasError = errors.length > 0
+    return <>
+        <Popover onOpenChange={(open) => setOpen(open)}
+            content={popoverContent}
+            trigger='click' // 获得焦点时显示（例如点击或 tab 聚焦）
+            open={hasError} // 有错误且字段被操作过时才打开
+            placement='top' // 提示出现的位置
+        >
+            {React.cloneElement(children, restProps)}
+        </Popover>
+    </>
 }
-function formatAmount(amount) {
-  // 将数字转换为字符串
-  const str = amount.toString();
-  
-  // 使用正则表达式进行格式化
-  return str.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const ProFormItem = (props: any) => {
+    const { children, ...restProps } = props
+    return <Form.Item noStyle {...restProps}>
+        <ProFormItemInner {...(children?.props ?? {})}>{children}</ProFormItemInner>
+    </Form.Item>
 }
+const TableEdit = (props: any) => {
+    const {children,renderAction,...restProps } = props
+    const [tableProps, editableInstance] = useTableEdit({
+        ...restProps,
+        size: 'small',
+        alwarysEdit: true,
+        columns: useMemo(() => {
+            return [
+                {
+                    title: 'name',
+                    dataIndex: 'name',
+                    editable: true,
+                    renderFormItem: (editInfo) => {
+                        return <ProFormItem noStyle name={editInfo.name} rules={[
+                            {
+                                required: true,
+                                message: '不能为空'
+                            }
+                        ]}>
+                            <Input size='small'></Input>
 
-const Summary=Table.Summary
-const EditPage = () => {
-    const [form] = Form.useForm()
-    const [tableProps,{data}]=useTable({
-        request:async (params,sorter,filtes)=>{
-            console.log('param',params,sorter,filtes)
-            const data=await query(params)
-            return data
-        },
-        columns:[
-            {
-                title:'姓名',
-                dataIndex:'name',
-                sorter:{        
-                    multiple:1
-                },    
-                sortOrder:'ascend',
-            },
-               {
-                title:'年龄',
-                dataIndex:'age',
-                sorter:{
-                    multiple:2
+                        </ProFormItem>
+                    }
+                },
+                {
+                    title: 'age',
+                    dataIndex: 'age',
+                    editable: false,
+                    renderFormItem: (editInfo) => {
+                        return <ProFormItem noStyle name={editInfo.name} rules={[
+                            {
+                                required: true,
+                                message: '不能为空'
+                            }
+                        ]}>
+                            <Input></Input>
+                        </ProFormItem>
+                    }
+                }
+            ]
+        }, []),
+        rowSelection: {
+            getTitleCheckboxProps() {
+                return {
+                    style: {
+                        display: 'none'
+                    }
                 }
             }
-        ]
+        }
     })
-  
-    const showPrice=(v:any,f=2)=>{
-        let d=new Decimal(v)
-      //  Decimal.
-        return Decimal.isDecimal(d)?d.toFixed(f):''
+    const handleBatchDelete=()=>{
+             editableInstance.removeRowKeys(editableInstance.selectedRowKeys)
     }
-    dayjs
+    const handleAdd=()=>{
+         editableInstance.insertRow({})
+        editableInstance.setEditRowKeys([editableInstance.dataSource.length])
+    }
+    let okText
+    const hiddenLabel=false,label='表格',hiddenAddButton=false
+    const selectedRowKeys=editableInstance.selectedRowKeys
+    const actionDom=<Space>
+                            <Button type="primary" danger size="small" onClick={handleBatchDelete} disabled={!selectedRowKeys.length}>
+                                刪除{selectedRowKeys.length ? ` ${selectedRowKeys.length} 條數據` : ''}
+                            </Button>
+                            <Button type="primary" size="small" onClick={handleAdd}>新增{okText || label}</Button>
+                        </Space>
+    const tableDom= <Table  {...tableProps}></Table>
     return <>
-   {showPrice('43.65445645',0)}
-   {dayjs('2025-09-30T16:00:00.000Z').format('YYYY-MM-DD')}
-    <Table {...tableProps} ></Table>
+        {typeof children==='function'?children({
+            tableDom,
+            actionDom
+        }):<>
+             {actionDom}
+            {tableDom}
+        </>}
     </>
 }
 
-export default EditPage
+const Demo = (props: TableEditProps) => {
+
+
+    return <div>
+        <Form layout='vertical' onFinish={(values) => {
+            console.log('onFinish', values)
+        }}>
+            <Form.Item noStyle   name='list' valuePropName='dataSource'>
+                <TableEdit name='list'>{({tableDom,actionDom})=>{
+                    return <Form.Item  labelCol={{span:24}}  label={<><Row justify={'space-between'}>
+                            <Col>表格</Col>
+                             <Col>{actionDom}</Col>
+                        </Row></>}  >
+                        {tableDom}
+                    </Form.Item>
+                }}</TableEdit>
+            </Form.Item>
+            <Button htmlType='submit'>提交</Button>
+        </Form>
+    </div>
+}
+export default Demo

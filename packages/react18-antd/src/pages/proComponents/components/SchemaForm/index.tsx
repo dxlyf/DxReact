@@ -4,7 +4,7 @@ import { useMemoizedFn } from 'ahooks'
 import {Button, Form, Row, Space} from 'antd'
 import type {FormInstance} from 'antd'
 import classNames from 'classnames'
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import styles from './index.module.scss'
 type BetaSchemaFormProps=Parameters<typeof BetaSchemaForm>[0]
 type SchemaFormProps=BetaSchemaFormProps&{
@@ -61,11 +61,12 @@ export type {
     const formRef=((propFormRef as any)??__formRef) as React.MutableRefObject<ProFormInstance>
     const [form]=useProFormInstance(propForm,useProFormInstanceOptions)
     const [formFieldValues,setFormFieldValues]=useState(()=>defaultFilterParams)
-    
+    const [effectInit,setEffectInit]=useState({init:false,values:{}})
     const handleFinish=useMemoizedFn(async (values:any)=>{
             //    const values2=formRef.current.getFieldsFormatValue!();
         setFormFieldValues({...values})
         onFinish?.(values)
+        
         actionRef?.current?.reloadAndRest()
     })
     const handleReset=useMemoizedFn(async (values:any)=>{
@@ -73,13 +74,16 @@ export type {
         setFormFieldValues({...values})
         onReset?.(values)
         actionRef?.current?.reloadAndRest()
+
     })
     const handleInit=useMemoizedFn((values,form)=>{
         onInit?.(values,form)
         if(!manualRequest){
           setTimeout(()=>{
+            console.log('handleInit')
             handleFinish(values)
           },delayInitTime)
+            //setEffectInit({init:true,values:values})
         }
     })
     const handleInitRequest=useMemoizedFn(async (params,props)=>{
@@ -91,6 +95,12 @@ export type {
             },delayInitRequest)
          })
     })
+    useEffect(()=>{
+        if(effectInit.init){
+            console.log('初始化')
+            handleFinish(effectInit.values)
+        }
+    },[effectInit])
     const searchFormProps:SchemaFormProps={
         // submitter:{
         //     render(props,dom){

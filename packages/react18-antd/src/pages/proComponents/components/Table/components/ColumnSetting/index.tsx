@@ -9,19 +9,23 @@ type ColumnSettingProps={
 }
 type UseColumnSettingProps={
     storageKey?:string
+    strageType?:'local'|'session'
     stoarge:Storage
     columns:ProColumnType[]
 }
+const useStorage=()=>{
+    
+}
 const useColumnSetting=(props:UseColumnSettingProps)=>{
     const {storageKey,stoarge=localStorage,columns:propColumns}=props
-    const [columnNames,setColumnNames]=useState<string[]>([])
+    const [columnNames,setColumnNames]=useState<string[]|undefined>(undefined)
     const [open,setOpen]=useState(false)
     const columns=useMemo(()=>{
         if(!storageKey){
             return propColumns
         }
         return propColumns.filter(d=>{
-             if(typeof d.dataIndex==='string'){
+             if(columnNames&&typeof d.dataIndex==='string'){
                 return columnNames.includes(d.dataIndex as string)
              }
              return true
