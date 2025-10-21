@@ -49,24 +49,24 @@ const useTableEdit = (props: UseTableEditProps) => {
     const prefixName=useMemo(()=>{
         return [...getNamePath(name)] 
     },[name])
-    const getRowId = useCallback((record: any) => {
+    const getRowKey = useCallback((record: any) => {
         return record[tableRowKey] as number
     }, [])
     const isEditing = useCallback((record: any) => {
-        return alwarysEdit?alwarysEdit:editRowKeys.includes(getRowId(record))
-    }, [getRowId,editRowKeys,alwarysEdit])
+        return alwarysEdit?alwarysEdit:editRowKeys.includes(getRowKey(record))
+    }, [getRowKey,editRowKeys,alwarysEdit])
 
  
     const transformColumn = useCallback((col: TableEditColumnType,parentCol?:TableColumnType) => {
-        const { render, editable, renderFormItem,dataIndex, ...restCol } = col
-        if (editable) {
+        if (col.editable) {
+            const { render, editable, renderFormItem,dataIndex, ...restCol } = col
             return {
                 ...restCol,
                 dataIndex,
                 render: (text, record, index) => {
                     const editing = isEditing(record)
                     if (editing) {
-                        const rowKey=getRowId(record)
+                        const rowKey=getRowKey(record)
                         const eidtInfo:EditColInfo={
                             title:col.title,
                             index,
@@ -85,7 +85,7 @@ const useTableEdit = (props: UseTableEditProps) => {
             col.children = col.children.map(childCol => transformColumn(childCol,col))
         }
         return col
-    }, [isEditing,getRowId,prefixName])
+    }, [isEditing,getRowKey,prefixName])
     const mergeColumns = useMemo<TableEditColumnType[]>(() => {
         return (Array.isArray(columns) ? columns.map((col, index) => {
             return transformColumn(col)
@@ -114,7 +114,7 @@ const useTableEdit = (props: UseTableEditProps) => {
         }
         onChange?.(pureData);
     })
-    const selectedRowKeys=useMemo(()=>selectedRows.map(d=>getRowId(d)),[selectedRows,getRowId])
+    const selectedRowKeys=useMemo(()=>selectedRows.map(d=>getRowKey(d)),[selectedRows,getRowKey])
     const tableProps: TableProps = {
         ...restProps,
         pagination:false,
@@ -132,16 +132,16 @@ const useTableEdit = (props: UseTableEditProps) => {
     }
     const editableInstance=useMemo(() => ({
         removeRowKeys: (keys:number[]) => {
-            const newData = mergeDataSource.filter(d =>!keys.includes(getRowId(d)))
+            const newData = mergeDataSource.filter(d =>!keys.includes(getRowKey(d)))
             setMergeDataSource(newData)
         },
         removeRows: (records:any[]) => {
-            const keys=records.map(d=>getRowId(d))
-            const newData = mergeDataSource.filter(d =>!keys.includes(getRowId(d)))
+            const keys=records.map(d=>getRowKey(d))
+            const newData = mergeDataSource.filter(d =>!keys.includes(getRowKey(d)))
             setMergeDataSource(newData)
         },
         removeRow: (record: any) => {
-            const newData = mergeDataSource.filter(d => getRowId(d) !== getRowId(record))
+            const newData = mergeDataSource.filter(d => getRowKey(d) !== getRowKey(record))
             setMergeDataSource(newData)
         },
         insertRow: (record: any, index?: number) => {
@@ -160,8 +160,10 @@ const useTableEdit = (props: UseTableEditProps) => {
         selectedRows,
         setSelectedRows,
         setEditRowKeys,
-        setDataSource:setMergeDataSource
-    }), [mergeDataSource,setInnerDataSource, dataSource, editRowKeys,setEditRowKeys,selectedRowKeys,selectedRows,setSelectedRows])
+        setDataSource:setMergeDataSource,
+        getRowKey,
+        isEditing
+    }), [mergeDataSource,isEditing,setInnerDataSource,getRowKey, dataSource, editRowKeys,setEditRowKeys,selectedRowKeys,selectedRows,setSelectedRows])
 
     return [tableProps, editableInstance] as [TableProps,typeof editableInstance]
 }

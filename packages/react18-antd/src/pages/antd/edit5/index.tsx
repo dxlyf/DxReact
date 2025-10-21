@@ -1,6 +1,6 @@
 import { Button, Col, Form, Input, Popover, Row, Space, Table } from 'antd'
 import { useTableEdit } from '../hooks/useEditTable'
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import React from 'react'
 
 const ProFormItemInner = (props: any) => {
@@ -17,11 +17,18 @@ const ProFormItemInner = (props: any) => {
         </>
     );
     const hasError = errors.length > 0
+    useLayoutEffect(()=>{
+        setOpen(hasError)
+    },[hasError])
     return <>
-        <Popover onOpenChange={(open) => setOpen(open)}
+        <Popover onOpenChange={(open) => {
+            if(!open){
+                setOpen(open)
+            }
+        }}
             content={popoverContent}
             trigger='click' // 获得焦点时显示（例如点击或 tab 聚焦）
-            open={hasError} // 有错误且字段被操作过时才打开
+            open={open} // 有错误且字段被操作过时才打开
             placement='top' // 提示出现的位置
         >
             {React.cloneElement(children, restProps)}
@@ -39,9 +46,25 @@ const TableEdit = (props: any) => {
     const [tableProps, editableInstance] = useTableEdit({
         ...restProps,
         size: 'small',
-        alwarysEdit: true,
+       //alwarysEdit: true,
         columns: useMemo(() => {
             return [
+                {
+                    title:'序号',
+                    width:80,
+                    onCell(record){
+                        const editing=editableInstance.isEditing(record)
+                        console.log('editing',editing,'s',editableInstance)
+                        return {
+                            style:{
+                                background:editing?'blue':'#fff'
+                            }
+                        }
+                    },
+                    render(text,r,i){
+                        return i+1
+                    }
+                },
                 {
                     title: 'name',
                     dataIndex: 'name',
@@ -83,6 +106,13 @@ const TableEdit = (props: any) => {
                     }
                 }
             }
+        },
+        onRow:(record,index)=>{
+            return {
+                onMouseDown:()=>{
+                   // editableInstance.setEditRowKeys([index])
+                }
+            }
         }
     })
     const handleBatchDelete=()=>{
@@ -122,7 +152,7 @@ const Demo = (props: TableEditProps) => {
         }}>
             <Form.Item noStyle   name='list' valuePropName='dataSource'>
                 <TableEdit name='list'>{({tableDom,actionDom})=>{
-                    return <Form.Item  labelCol={{span:24}}  label={<><Row justify={'space-between'}>
+                    return <Form.Item label={<><Row justify={'space-between'}>
                             <Col>表格</Col>
                              <Col>{actionDom}</Col>
                         </Row></>}  >
