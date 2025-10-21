@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="root"></div>
+  
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-presets="env,react">
+
+        /** @jsx createElement */
+        /** @jsxFrag Fragment */
+        function createElement(type, config, ...children) {
+            const props = {}
+            let key = null, ref = null
+            if (config) {
+                Object.keys(config).forEach(name => {
+                    if (name === 'key') {
+                        key = config[name] + ''
+                    } else if (name === 'ref') {
+                        ref = config[name]
+                    } else {
+                        props[name] = config[name]
+                    }
+                })
+            }
+            if (children.length) {
+                props.children = children.length === 1 ? children[0] : children
+            }
+            return { type, props, key, ref }
+        }
+        let nextUnitOfWork=null
+        let nextRoot=null
+
+        const HostRoot=0
+        const HostComponent=1
+        const HostText=2
+        const FunctionComponent=3
+        const Fragment=4
+        function performWorkOnRoot(root){
+
+        }
+        function getRoot(fiber){
+            let current=fiber
+            while(current){
+                if(current.tag===HostRoot){
+                    return current
+                }
+                current=current.return
+            }
+            return null
+        }
+        function scheduleWork(fiber){
+            let root=getRoot(fiber)
+            if(root){
+                requestWork(root)
+            }
+        }
+        function workLoop(){
+
+        }
+        function requestWork(root){
+            nextRoot
+            requestIdleCallback(workLoop)
+        }
+        function render(element,container){
+
+        }
+        function App() {
+            return <h1>Hello World</h1>
+        }
+        render(<App></App>, document.querySelector('#root'))
+    </script>
+</body>
+
+</html>
