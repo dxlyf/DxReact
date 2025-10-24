@@ -104,3 +104,6 @@
 [submodule "packages/zrender"]
 	path = packages/zrender
 	url = git@github.com:ecomfe/zrender.git
+[submodule "packages/redux-saga"]
+	path = packages/redux-saga
+	url = git@github.com:redux-saga/redux-saga.git

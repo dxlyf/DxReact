@@ -1,23 +1,31 @@
 import { useMap, useMemoizedFn } from 'ahooks';
-import { Table, Row, Col, Button } from 'antd'
+import { Table, Row, Col, Button ,Input,Select,DatePicker,InputNumber, Form} from 'antd'
 import type { GetProp, GetProps, GetRef, TableProps, TableColumnType } from 'antd'
 import React, { useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 type DataIndex = Exclude<TableColumnType['dataIndex'], undefined>
 
 type EditColInfo={
+    valueType?:string
     title?:any
     index:number,
     record:any
     name:any[]
     dataIndex:DataIndex
     rowKey:number
+    fieldProps:any,
+    formItemProps:GetProps<typeof Form.Item>
+    col:TableColumnType
 } 
 type TableEditColumnType = Omit<TableColumnType, 'children'> & {
     renderFormItem?: (info:EditColInfo) => React.ReactElement
+    valueType?:string
     children?: TableEditColumnType[]
     editable?: boolean
+    fieldProps?:any|((record:any,index:number)=>any),
+    formItemProps?:GetProps<typeof Form.Item>|((record:any,index:number)=>GetProps<typeof Form.Item>),
 }
 type UseTableEditProps = Omit<TableProps, 'columns' | 'onChange'> & {
+    formFieldComponents:Record<string,React.ComponentType>
     name?:DataIndex
     columns?: TableEditColumnType[]
     alwarysEdit?:boolean
@@ -39,6 +47,12 @@ const getNamePath = (dataIndex?: DataIndex) => {
     }
     return [dataIndex]
 }
+const FormFieldComponentsMap={
+    text:Input,
+    integer:InputNumber,
+    date:DatePicker
+}
+
 const useTableEdit = (props: UseTableEditProps) => {
     const {name,alwarysEdit,rowSelection,dataSource: propDataSurce,onTableChange, columns, onChange, renderHeader, renderFooter, ...restProps } = props;
     const [innerDataSource, setInnerDataSource] = useState<any[]>([])
@@ -46,8 +60,10 @@ const useTableEdit = (props: UseTableEditProps) => {
     const [selectedRows,setSelectedRows]=useState<any[]>([])
     const isController = propDataSurce !== undefined
     const dataSource = isController ? propDataSurce : innerDataSource
+    const latestProps=useRef(props)
+    latestProps.current=props
     const prefixName=useMemo(()=>{
-        return [...getNamePath(name)] 
+        return getNamePath(name)
     },[name])
     const getRowKey = useCallback((record: any) => {
         return record[tableRowKey] as number
@@ -56,10 +72,32 @@ const useTableEdit = (props: UseTableEditProps) => {
         return alwarysEdit?alwarysEdit:editRowKeys.includes(getRowKey(record))
     }, [getRowKey,editRowKeys,alwarysEdit])
 
- 
+    const getFieldComponent=useCallback((type:string)=>{
+         const _FormFieldComponentsMap=latestProps.current.formFieldComponents||FormFieldComponentsMap
+        return _FormFieldComponentsMap[type]||FormFieldComponentsMap.text
+    },[])
+    const defaultRenderFormItem=useCallback((editInfo:EditColInfo,defaultDom:React.ReactNode)=>{
+        const {valueType='text',name,fieldProps,formItemProps}=editInfo
+        const {dependencies,shouldUpdate,...restFormItemProps}=formItemProps
+        const FieldComponent=getFieldComponent(valueType)
+        const dom=<Form.Item name={name} {...restFormItemProps}>
+            <FieldComponent {...fieldProps}></FieldComponent>
+        </Form.Item>
+        if(dependencies){
+            return <Form.Item noStyle dependencies={dependencies}>
+                {dom}
+            </Form.Item>
+        }
+        if(shouldUpdate){
+            return <Form.Item noStyle shouldUpdate={shouldUpdate}>
+                {dom}
+            </Form.Item>
+        }
+        return dom
+    },[getFieldComponent]);
     const transformColumn = useCallback((col: TableEditColumnType,parentCol?:TableColumnType) => {
         if (col.editable) {
-            const { render, editable, renderFormItem,dataIndex, ...restCol } = col
+            const { render, editable,valueType,fieldProps,formItemProps, renderFormItem,dataIndex, ...restCol } = col
             return {
                 ...restCol,
                 dataIndex,
@@ -67,15 +105,24 @@ const useTableEdit = (props: UseTableEditProps) => {
                     const editing = isEditing(record)
                     if (editing) {
                         const rowKey=getRowKey(record)
-                        const eidtInfo:EditColInfo={
+                        const editInfo:Partial<EditColInfo>={
+                            col:col,
+                            valueType,
                             title:col.title,
                             index,
                             record,
                             rowKey,
                             dataIndex:dataIndex!,
-                            name:[...prefixName,rowKey,...getNamePath(dataIndex)]
+                            name:prefixName.length>0?[...prefixName,rowKey,...getNamePath(dataIndex)]:getNamePath(dataIndex)
                         }
-                        return renderFormItem?.(eidtInfo)
+                        const _filedProps=typeof fieldProps==='function'?fieldProps(record,index):fieldProps
+                        const _formItemProps=typeof formItemProps==='function'?formItemProps(record,index):formItemProps
+                        editInfo.fieldProps=_filedProps
+                        editInfo.formItemProps=_formItemProps
+                        if(renderFormItem){
+                            return renderFormItem(editInfo as EditColInfo)
+                        }
+                        return defaultRenderFormItem(editInfo as EditColInfo)
                     }
                     return render ? render(text, record, index) : text
                 }
@@ -85,7 +132,7 @@ const useTableEdit = (props: UseTableEditProps) => {
             col.children = col.children.map(childCol => transformColumn(childCol,col))
         }
         return col
-    }, [isEditing,getRowKey,prefixName])
+    }, [isEditing,getRowKey,prefixName,defaultRenderFormItem])
     const mergeColumns = useMemo<TableEditColumnType[]>(() => {
         return (Array.isArray(columns) ? columns.map((col, index) => {
             return transformColumn(col)

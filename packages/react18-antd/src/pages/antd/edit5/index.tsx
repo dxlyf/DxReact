@@ -42,68 +42,48 @@ const ProFormItem = (props: any) => {
     </Form.Item>
 }
 const TableEdit = (props: any) => {
-    const {children,renderAction,...restProps } = props
+    const {name,children,renderAction,newAddBtnText='',...restProps } = props
     const [tableProps, editableInstance] = useTableEdit({
         ...restProps,
         size: 'small',
-       //alwarysEdit: true,
+        alwarysEdit: true,
         columns: useMemo(() => {
             return [
-                {
-                    title:'序号',
-                    width:80,
-                    onCell(record){
-                        const editing=editableInstance.isEditing(record)
-                        console.log('editing',editing,'s',editableInstance)
-                        return {
-                            style:{
-                                background:editing?'blue':'#fff'
-                            }
-                        }
-                    },
-                    render(text,r,i){
-                        return i+1
-                    }
-                },
                 {
                     title: 'name',
                     dataIndex: 'name',
                     editable: true,
-                    renderFormItem: (editInfo) => {
-                        return <ProFormItem noStyle name={editInfo.name} rules={[
-                            {
-                                required: true,
-                                message: '不能为空'
-                            }
-                        ]}>
-                            <Input size='small'></Input>
-
-                        </ProFormItem>
+                    colSpan:2,
+                    valueType:'text',
+                    width:100,
+                    onCell(){
+                        return {
+                            colSpan:2,
+                        }
+                    }
+                },{
+                    title:'address',
+                    colSpan:0,
+                    dataIndex:'a',
+                     onCell(){
+                        return {
+                            colSpan:0,
+                        }
                     }
                 },
                 {
                     title: 'age',
                     dataIndex: 'age',
-                    editable: false,
-                    renderFormItem: (editInfo) => {
-                        return <ProFormItem noStyle name={editInfo.name} rules={[
-                            {
-                                required: true,
-                                message: '不能为空'
-                            }
-                        ]}>
-                            <Input></Input>
-                        </ProFormItem>
-                    }
+                    editable: true,
+                    width:100,
+                    valueType:'integer'
                 }
             ]
         }, []),
         rowSelection: {
-            getTitleCheckboxProps() {
+            getTitleCheckboxProps(){
                 return {
-                    style: {
-                        display: 'none'
-                    }
+                    disabled:true
                 }
             }
         },
@@ -116,28 +96,41 @@ const TableEdit = (props: any) => {
         }
     })
     const handleBatchDelete=()=>{
-             editableInstance.removeRowKeys(editableInstance.selectedRowKeys)
+        editableInstance.removeRowKeys(editableInstance.selectedRowKeys)
+        editableInstance.setSelectedRows([])
     }
     const handleAdd=()=>{
          editableInstance.insertRow({})
         editableInstance.setEditRowKeys([editableInstance.dataSource.length])
     }
-    let okText
-    const hiddenLabel=false,label='表格',hiddenAddButton=false
     const selectedRowKeys=editableInstance.selectedRowKeys
+    Table.Summary.Cell
     const actionDom=<Space>
                             <Button type="primary" danger size="small" onClick={handleBatchDelete} disabled={!selectedRowKeys.length}>
                                 刪除{selectedRowKeys.length ? ` ${selectedRowKeys.length} 條數據` : ''}
                             </Button>
-                            <Button type="primary" size="small" onClick={handleAdd}>新增{okText || label}</Button>
+                            <Button type="primary" size="small" onClick={handleAdd}>新增{newAddBtnText}</Button>
                         </Space>
-    const tableDom= <Table  {...tableProps}></Table>
+    const tableDom= <Table tableLayout='fixed' summary={(data)=>{
+        let index=0
+        return <Table.Summary.Row>
+            <Table.Summary.Cell index={index++}></Table.Summary.Cell>
+              <Table.Summary.Cell  index={index++} style={{width:100}}>次数</Table.Summary.Cell>
+                <Table.Summary.Cell  index={index++}>34</Table.Summary.Cell>
+                      <Table.Summary.Cell index={index++}>34</Table.Summary.Cell>
+        </Table.Summary.Row>
+    }}  bordered {...tableProps}></Table>
     return <>
         {typeof children==='function'?children({
             tableDom,
             actionDom
         }):<>
-             {actionDom}
+             <Row justify={'space-between'} style={{marginBottom:8}}>
+                <Col flex='none'>
+                <span>應急演習</span>
+                </Col>
+                <Col flex='none'>{actionDom}</Col>
+             </Row>
             {tableDom}
         </>}
     </>
@@ -151,14 +144,7 @@ const Demo = (props: TableEditProps) => {
             console.log('onFinish', values)
         }}>
             <Form.Item noStyle   name='list' valuePropName='dataSource'>
-                <TableEdit name='list'>{({tableDom,actionDom})=>{
-                    return <Form.Item label={<><Row justify={'space-between'}>
-                            <Col>表格</Col>
-                             <Col>{actionDom}</Col>
-                        </Row></>}  >
-                        {tableDom}
-                    </Form.Item>
-                }}</TableEdit>
+                <TableEdit name='list'></TableEdit>
             </Form.Item>
             <Button htmlType='submit'>提交</Button>
         </Form>
