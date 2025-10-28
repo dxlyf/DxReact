@@ -1,8 +1,12 @@
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
 import useMemoizedFn from "./useMemoizedFn"
 
-type useDataOptions<Data>={
+type useRequestOptions<Data>={
     defaultData?:Data|(()=>Data)
+    params?:any
+    dependencies?:any[]
+    manualRequest?:boolean
+    ready?:boolean
     transform?:(data:Data,previous:Data|undefined,params:any)=>Data
     onSuccess?:(data:Data)=>void
     onFail?:(e:any)=>void
@@ -11,21 +15,26 @@ type useDataOptions<Data>={
 }
 type ServiceHandle<Data>=(params:any,lastParams?:any)=>Data|Promise<Data>
 
-const useRequest=<D=any>(service:ServiceHandle<D>,options:useDataOptions<D>={})=>{
-    const {onComplete,onFail,onSuccess,defaultData,transform}=options
-
+const useRequest=<D=any>(service:ServiceHandle<D>,options:useRequestOptions<D>={})=>{
+    const {onComplete,onFail,ready,manualRequest=false,onSuccess,defaultData,transform}=options
+    const lastOptions=useRef<useRequestOptions<D>>(options)
+    lastOptions.current=options
     const lastParams=useRef<any>({})
+    const [state]=useState({init:false})
     const [data,setData]=useState(defaultData)
     const [loading,setLoading]=useState(false)
     const request=useMemoizedFn(async (params:any)=>{
         let nextData:D|undefined=undefined
         try{
             setLoading(true)
-            nextData=await service(params,lastParams.current)
-            if(transform){
-                nextData=transform(nextData,data,params)
+            const newParams={
+                ...params
             }
-            lastParams.current=params
+            nextData=await service(newParams,lastParams.current)
+            if(transform){
+                nextData=transform(nextData,data,newParams)
+            }
+            lastParams.current=newParams
             setData(nextData)
             onSuccess?.(nextData)
         }catch(e){
@@ -34,14 +43,29 @@ const useRequest=<D=any>(service:ServiceHandle<D>,options:useDataOptions<D>={})=
             setLoading(false)
             onComplete?.(nextData,data)
         }
+        return nextData as D
     })
+    const read=useCallback(async (params:any={})=>{
+        return request({...lastParams.current,...params})
+    },[request])
+    const refresh=useCallback(async (params:any={})=>{
+        return request({...(lastOptions.current.params||{}),...params})
+    },[request])
+    useLayoutEffect(()=>{
+        if((ready===undefined||ready)&&!manualRequest&&!state.init){
+            state.init=true
+            refresh()
+        }
+    },[ready,manualRequest])
     const ret=useMemo(()=>({
         loading,
         data,
         lastParams,
         setData,
         setLoading,
-        request
+        request,
+        refresh,
+        read
     }),[data,loading])
     return ret
 }

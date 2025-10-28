@@ -25,7 +25,7 @@ type TableEditColumnType = Omit<TableColumnType, 'children'> & {
     formItemProps?:GetProps<typeof Form.Item>|((record:any,index:number)=>GetProps<typeof Form.Item>),
 }
 type UseTableEditProps = Omit<TableProps, 'columns' | 'onChange'> & {
-    formFieldComponents:Record<string,React.ComponentType>
+    fieldComponents:Record<string,React.ComponentType>
     name?:DataIndex
     columns?: TableEditColumnType[]
     alwarysEdit?:boolean
@@ -73,31 +73,22 @@ const useTableEdit = (props: UseTableEditProps) => {
     }, [getRowKey,editRowKeys,alwarysEdit])
 
     const getFieldComponent=useCallback((type:string)=>{
-         const _FormFieldComponentsMap=latestProps.current.formFieldComponents||FormFieldComponentsMap
+         const _FormFieldComponentsMap=latestProps.current.fieldComponents||FormFieldComponentsMap
         return _FormFieldComponentsMap[type]||FormFieldComponentsMap.text
     },[])
-    const defaultRenderFormItem=useCallback((editInfo:EditColInfo,defaultDom:React.ReactNode)=>{
+
+    const defaultRenderFormItem=useCallback((editInfo:EditColInfo)=>{
         const {valueType='text',name,fieldProps,formItemProps}=editInfo
-        const {dependencies,shouldUpdate,...restFormItemProps}=formItemProps
         const FieldComponent=getFieldComponent(valueType)
-        const dom=<Form.Item name={name} {...restFormItemProps}>
+        const dom=<Form.Item name={name} {...formItemProps}>
             <FieldComponent {...fieldProps}></FieldComponent>
         </Form.Item>
-        if(dependencies){
-            return <Form.Item noStyle dependencies={dependencies}>
-                {dom}
-            </Form.Item>
-        }
-        if(shouldUpdate){
-            return <Form.Item noStyle shouldUpdate={shouldUpdate}>
-                {dom}
-            </Form.Item>
-        }
+      
         return dom
     },[getFieldComponent]);
     const transformColumn = useCallback((col: TableEditColumnType,parentCol?:TableColumnType) => {
         if (col.editable) {
-            const { render, editable,valueType,fieldProps,formItemProps, renderFormItem,dataIndex, ...restCol } = col
+            const { render, editable,valueType,fieldProps={},formItemProps={}, renderFormItem,dataIndex, ...restCol } = col
             return {
                 ...restCol,
                 dataIndex,
@@ -116,13 +107,22 @@ const useTableEdit = (props: UseTableEditProps) => {
                             name:prefixName.length>0?[...prefixName,rowKey,...getNamePath(dataIndex)]:getNamePath(dataIndex)
                         }
                         const _filedProps=typeof fieldProps==='function'?fieldProps(record,index):fieldProps
-                        const _formItemProps=typeof formItemProps==='function'?formItemProps(record,index):formItemProps
+                        const {dependencies,shouldUpdate,..._formItemProps}=typeof formItemProps==='function'?formItemProps(record,index):formItemProps
                         editInfo.fieldProps=_filedProps
                         editInfo.formItemProps=_formItemProps
+                        let dom:React.ReactNode
                         if(renderFormItem){
-                            return renderFormItem(editInfo as EditColInfo)
+                            dom= renderFormItem(editInfo as EditColInfo)
+                        }else{
+                            dom= defaultRenderFormItem(editInfo as EditColInfo)
                         }
-                        return defaultRenderFormItem(editInfo as EditColInfo)
+                        if(shouldUpdate){
+                           return <Form.Item noStyle shouldUpdate={shouldUpdate}>{dom}</Form.Item>
+                        }
+                        if(dependencies){
+                            return <Form.Item noStyle dependencies={dependencies}>{dom}</Form.Item>
+                        }
+                        return dom
                     }
                     return render ? render(text, record, index) : text
                 }

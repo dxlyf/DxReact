@@ -116,3 +116,18 @@
 [submodule "packages/alien-signals"]
 	path = packages/alien-signals
 	url = git@github.com:stackblitz/alien-signals.git
+[submodule "packages/react-router"]
+	path = packages/react-router
+	url = git@github.com:remix-run/react-router.git
+[submodule "packages/mobx"]
+	path = packages/mobx
+	url = git@github.com:mobxjs/mobx.git
+[submodule "packages/immer"]
+	path = packages/immer
+	url = git@github.com:immerjs/immer.git
+[submodule "packages/react-draggable"]
+	path = packages/react-draggable
+	url = git@github.com:react-grid-layout/react-draggable.git
+[submodule "packages/axios"]
+	path = packages/axios
+	url = git@github.com:axios/axios.git
