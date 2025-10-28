@@ -7,6 +7,7 @@ type useRequestOptions<Data>={
     dependencies?:any[]
     manualRequest?:boolean
     ready?:boolean
+    debounce?:number
     transform?:(data:Data,previous:Data|undefined,params:any)=>Data
     onSuccess?:(data:Data)=>void
     onFail?:(e:any)=>void
@@ -16,13 +17,18 @@ type useRequestOptions<Data>={
 type ServiceHandle<Data>=(params:any,lastParams?:any)=>Data|Promise<Data>
 
 const useRequest=<D=any>(service:ServiceHandle<D>,options:useRequestOptions<D>={})=>{
-    const {onComplete,onFail,ready,manualRequest=false,onSuccess,defaultData,transform}=options
+    const {onComplete,onFail,ready,debounce,manualRequest=false,onSuccess,defaultData,transform}=options
     const lastOptions=useRef<useRequestOptions<D>>(options)
     lastOptions.current=options
     const lastParams=useRef<any>({})
     const [state]=useState({init:false})
     const [data,setData]=useState(defaultData)
     const [loading,setLoading]=useState(false)
+    const debounceService=useMemo(()=>{
+        if(typeof debounce==='number'&&debounce>0){
+            
+        }
+    },[debounce])
     const request=useMemoizedFn(async (params:any)=>{
         let nextData:D|undefined=undefined
         try{
