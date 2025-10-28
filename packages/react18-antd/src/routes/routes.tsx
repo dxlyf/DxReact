@@ -106,6 +106,11 @@ const routes: RouteObjectAndMenu[] = [
                             name: 'Table动态行',
                             Component: React.lazy(() => import('src/pages/antd/edit5'))
 
+                        }, {
+                            path: 'edit6',
+                            name: 'Form通用组件',
+                            Component: React.lazy(() => import('src/pages/antd/edit6'))
+
                         }
 
                         ]

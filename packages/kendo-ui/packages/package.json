@@ -1,0 +1,111 @@
+{
+  "name": "@progress/kendo-ui",
+  "license": "LicenseRef-LICENSE",
+  "version": "2025.3.1002",
+  "scripts": {
+    "clean": "rm -rf js esm umd chunks ../dist/raw-mjs ../dist/raw-js ../dist/mjs ../dist/js",
+    "build": "rollup -c",
+    "build:chunks": "rollup -c rollup.config.chunks.mjs && npx x-symlink ./chunks ../dist/raw-mjs",
+    "build:chunks:watch": "x-symlink ./chunks ../dist/raw-mjs && x-symlink ./chunks ../dist/mjs && rollup -c rollup.config.chunks.mjs -w",
+    "build:chunks:mjs": "x-symlink ./chunks ../dist/raw-mjs && x-symlink ./chunks ../dist/mjs && rollup -c rollup.config.chunks.mjs",
+    "build:umd": "rollup -c rollup.config.umd.mjs && npx x-symlink ./umd ../dist/raw-js && npx x-symlink ./umd ../dist/js",
+    "dev": "npm run clean && node dev-build.mjs"
+  },
+  "main": "js/kendo.all.js",
+  "module": "esm/kendo.all.js",
+  "typings": "index.d.ts",
+  "sideEffects": true,
+  "@progress": {
+    "package": {
+      "productName": "Kendo UI",
+      "productCode": "KENDOUICOMPLETE",
+      "redistributedBy": [
+        "KENDOUI",
+        "UIASPCORE",
+        "KENDOMVC",
+        "KENDOUIMVC"
+      ],
+      "licensingDocsUrl": "https://docs.telerik.com/kendo-ui/intro/installation/using-license-code?utm_medium=product&utm_source=kendojquery&utm_campaign=kendo-ui-jquery-purchase-license-keys-warning"
+    }
+  },
+  "dependencies": {
+    "@progress/kendo-charts": "^2.8.0",
+    "@progress/kendo-dateinputs-common": "^0.4.2-develop.2",
+    "@progress/kendo-diagram-common": "^1.2.2",
+    "@progress/kendo-draggable": "^3.1.0",
+    "@progress/kendo-drawing": "1.21.2",
+    "@progress/kendo-font-icons": "4.5.0",
+    "@progress/kendo-licensing": "^1.7.1",
+    "@progress/kendo-ooxml": "^1.9.3",
+    "@progress/kendo-pdfviewer-common": "^0.5.0",
+    "@progress/kendo-pivotgrid-common": "0.6.3",
+    "@progress/kendo-ripple": "^1.0.2",
+    "@progress/kendo-spreadsheet-common": "^1.2.5",
+    "@progress/kendo-svg-icons": "4.5.0",
+    "@progress/kendo-webspeech-common": "1.0.1",
+    "jquery": "1.10.0 - 3.7.0"
+  },
+  "devDependencies": {
+    "@local/kendo-meta-generator": "^0.0.1",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-virtual": "^3.0.2",
+    "@rollup/stream": "^3.0.1",
+    "esbuild": "^0.24.0",
+    "rollup": "^4.21.3",
+    "rollup-plugin-polyfill": "^4.2.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./esm/kendo.all.js",
+      "require": "./js/kendo.all.js"
+    },
+    "./*.js": {
+      "types": "./index.d.ts",
+      "import": "./esm/*.js",
+      "require": "./js/*.js"
+    },
+    "./esm": {
+      "types": "./index.d.ts",
+      "default": "./esm/kendo.all.js"
+    },
+    "./esm/*.js": {
+      "types": "./index.d.ts",
+      "import": "./esm/*.js"
+    },
+    "./js": {
+      "types": "./index.d.ts",
+      "default": "./js/kendo.all.js"
+    },
+    "./js/*.js": {
+      "types": "./index.d.ts",
+      "require": "./js/*.js"
+    },
+    "./umd": {
+      "types": "./index.d.ts",
+      "default": "./umd/kendo.all.min.js"
+    },
+    "./umd/*.js": {
+      "types": "./index.d.ts",
+      "import": "./umd/*.js",
+      "require": "./umd/*.js"
+    },
+    "./src": {
+      "types": "./index.d.ts",
+      "default": "./src/kendo.all.js"
+    },
+    "./src/*.js": {
+      "import": "./src/*.js",
+      "types": "./index.d.ts"
+    },
+    "./chunks": {
+      "types": "./index.d.ts",
+      "default": "./chunks/kendo.all.js"
+    },
+    "./chunks/*.js": {
+      "types": "./index.d.ts",
+      "import": "./chunks/*.js"
+    }
+  }
+}

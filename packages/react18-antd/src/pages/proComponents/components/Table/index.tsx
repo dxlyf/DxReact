@@ -47,6 +47,7 @@ const useSerialNumberColumn=(config:ProColumns={})=>{
     return {
         title:'序號',
         dataIndex:'_serialNo',
+        width:60,
         render:(text,record,index)=>{
             return index+1
         },
@@ -111,21 +112,26 @@ const useTable = (props: UseTableProps) => {
             return <></>
         },
         columns: useMemo(()=>{
+            let nextColumns=[...columns]
             if(serialNumberColumn){
-                return [{
+                nextColumns.unshift({
                      title:'序號',
                     dataIndex:'_serialNo',
+                    width:80,
                     render:(text,record,index)=>{
                         return indexRef.current.start+(index+1)
                     },
                     ...serialNumberColumn
-                }].concat(columns as any)
+                })
             }
-            return columns
+            nextColumns=nextColumns.map(col=>({...col,align:'center'}))
+            return nextColumns
         },[serialNumberColumn,columns]),
         request: handleRequest,
         pagination:{
-            defaultPageSize:20
+            defaultPageSize:20,
+            showQuickJumper:true,
+            showSizeChanger:true,
         },
         ...restProps
     }

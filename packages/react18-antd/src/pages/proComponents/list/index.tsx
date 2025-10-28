@@ -118,7 +118,7 @@ export default () => {
                 dataIndex: 'name',
                 //   sorter:true,
                 defaultSortOrder: 'descend',
-                width: 100
+                width: 200
 
 
             }, {
@@ -137,7 +137,7 @@ export default () => {
             }]
         }, [])
     })
-
+    console.log('tableProps',tableProps.columns)
     return <>
         <div className='bg-white'>
             <SchemaForm {...searchFormProps}></SchemaForm>

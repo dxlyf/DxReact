@@ -1,0 +1,57 @@
+import './kendo.toggleinputbase.js';
+import './kendo.html.input.js';
+import './kendo.core.js';
+import './kendo.licensing.js';
+import '@progress/kendo-licensing';
+import './kendo.html.base.js';
+
+const __meta__ = {
+    id: "checkbox",
+    name: "CheckBox",
+    category: "web",
+    description: "The CheckBox widget is used to display boolean value input.",
+    depends: [ "toggleinputbase", "html.input" ]
+};
+
+(function($, undefined$1) {
+    var kendo = window.kendo,
+        ui = kendo.ui,
+        ToggleInputBase = ui.ToggleInputBase;
+
+    var CheckBox = ToggleInputBase.extend({
+        options: {
+            name: "CheckBox",
+            checked: null,
+            enabled: true,
+            encoded: true,
+            label: null,
+            rounded: "medium",
+            size: "medium",
+            wrapperClass: "k-checkbox-wrap"
+        },
+
+        RENDER_INPUT: kendo.html.renderCheckBox,
+        NS: ".kendoCheckBox",
+
+        // alias for check, NG support
+        value: function(value) {
+            if (typeof value === "string") {
+                value = (value === "true");
+            }
+
+            return this.check.apply(this, [value]);
+        }
+    });
+
+    kendo.cssProperties.registerPrefix("CheckBox", "k-checkbox-");
+
+    kendo.cssProperties.registerValues("CheckBox", [{
+        prop: "rounded",
+        values: kendo.cssProperties.roundedValues.concat([['full', 'full']])
+    }]);
+
+    ui.plugin(CheckBox);
+})(window.kendo.jQuery);
+var kendo$1 = kendo;
+
+export { __meta__, kendo$1 as default };

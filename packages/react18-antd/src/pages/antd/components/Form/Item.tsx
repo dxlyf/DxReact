@@ -14,7 +14,16 @@ type ProFormFieldProps<P>={
 //type FieldComponentProps<T extends React.ComponentType<any>>=T extends React.ComponentType<infer P>?P:never
 //type Props=FieldComponentProps<typeof PPP>
 
-
+type ProFormItemFieldProps<P=any>=FormItemProps&{
+    component?:React.ComponentType
+    hideLabel?:boolean
+    valueType:string
+    fieldProps:P
+}
+type FormFieldConfigItem={
+    component:React.Component
+    
+}
 const defaultFormFieldMap={
     text:Input,
     number:InputNumber,
@@ -22,12 +31,15 @@ const defaultFormFieldMap={
     date:DatePicker,
     dateRange:DatePicker.RangePicker
 } as const
+
+
 type FormFieldMapType=typeof defaultFormFieldMap
 type FormFieldMapValueTypes=keyof FormFieldMapType
 // type FormFieldMapTypes={}
 // interface IFormFieldMap{
 
 // }
+
 
 const FormFieldMapContext=createContext<Record<string,React.ComponentType<any>>>(defaultFormFieldMap)
 const ProFormField=<P=any>(props:ProFormFieldProps<P>)=>{
@@ -45,6 +57,45 @@ const ProFormField=<P=any>(props:ProFormFieldProps<P>)=>{
     }
     return renderDom()
 }
+
+const ProFormItemField=(props:ProFormItemFieldProps)=>{
+    const {label,hideLabel=false,component:FormItem=Form.Item,valueType:propValueType,fieldProps={},...restProps}=props
+    const {placeholder,...restFieldProps}=fieldProps
+    const fieldMap=useContext(FormFieldMapContext)
+    const valueType=useMemo(()=>propValueType||'text',[propValueType])
+    const FieldComponent=useMemo(()=>fieldMap[valueType],[fieldMap,valueType])
+
+    const labelPrefix=''
+    const mergePlaceholder=useMemo(()=>{
+       if(placeholder!==undefined){
+        return placeholder
+       }
+       if(label!==undefined){
+          
+       }
+    },[valueType,label,placeholder])
+    const finalFieldProps={
+        placeholder:mergePlaceholder,
+        ...restFieldProps
+    }
+    const finalFormItemProps:FormItemProps={
+        ...(!hideLabel?{
+            label
+        }:{}),
+        ...restProps
+    }
+    return <FormItem {...finalFormItemProps}>
+        <FieldComponent {...finalFieldProps}></FieldComponent>
+    </FormItem>
+}
+/**
+ * [2,0]  [1,0]   [1,0] [0.5,0] [1,0] [0.5,0] [1,0] [0.5,0]
+ * [0,4]  [0,1]   [0,4] [0,1]   [0,4] [0,1]  [0,1] [0,0.25]
+ * 
+*/
+// d=8
+// [4,0]  [0.5,0]  [0.5,0]
+// [0,2]  [0,0.25] [0,0.25]
 export {
     ProFormField,
     FormFieldMapContext

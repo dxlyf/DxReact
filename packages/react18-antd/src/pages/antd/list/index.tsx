@@ -36,14 +36,23 @@ export default ()=>{
     const columns=useMemo<NonNullable<TableProps['columns']>>(()=>[
         {
             title:'名称',
-            dataIndex:'name'
+            dataIndex:'name',
+            align:'center',
+            width:200
+        } ,   {
+            title:'age',
+            dataIndex:'age'
         }
     ],[])
     const {tableProps,search}=useAntdTable(async (params,filters)=>{
         console.log('filters',filters)
          return {
             total:0,
-            list:[]
+            list:[{
+                id:1,
+                name:'fdfd',
+                age:18
+            }]
          }
     },{
         form
@@ -83,6 +92,6 @@ export default ()=>{
             </Space>
         </Col> 
     </Row>
-    <Table rowKey='id' columns={columns} {...tableProps}></Table> 
+    <Table rowKey='id' scroll={{x:'100%'}} columns={columns} {...tableProps}></Table> 
     </>
 }

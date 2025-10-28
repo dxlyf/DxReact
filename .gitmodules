@@ -107,3 +107,12 @@
 [submodule "packages/redux-saga"]
 	path = packages/redux-saga
 	url = git@github.com:redux-saga/redux-saga.git
+[submodule "packages/echarts"]
+	path = packages/echarts
+	url = git@github.com:apache/echarts.git
+[submodule "packages/signals"]
+	path = packages/signals
+	url = git@github.com:preactjs/signals.git
+[submodule "packages/alien-signals"]
+	path = packages/alien-signals
+	url = git@github.com:stackblitz/alien-signals.git
