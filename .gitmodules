@@ -131,3 +131,6 @@
 [submodule "packages/axios"]
 	path = packages/axios
 	url = git@github.com:axios/axios.git
+[submodule "packages/ant-design-pro"]
+	path = packages/ant-design-pro
+	url = git@github.com:ant-design/ant-design-pro.git
