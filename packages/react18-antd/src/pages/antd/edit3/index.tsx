@@ -18,6 +18,7 @@ const text=`蚂蚁集团的企业级产品是一个庞大且复杂的系统，�
 export const isNum=(value)=>{
     return value!==null&&Number.isFinite(Number(value))
 }
+
 //'1234567'.replace(/\d{1,3}(?=(\d{3})+$)/g,'$&,')
 // 格式化显示金额
 export function formatAmount(amount, precision = 2) {

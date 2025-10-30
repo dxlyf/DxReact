@@ -25,6 +25,16 @@ const routes: RouteObjectAndMenu[] = [
                 Component: React.lazy(() => import('src/pages/home'))
             },
             {
+                path:'tools',
+                name:'工具',
+                children:[{
+                    path:'simplifiedToTraditional',
+                    name: '简体转繁体',
+                    Component: React.lazy(() => import('src/pages/tools/SimplifiedToTraditional'))
+
+                }]
+            },
+            {
                 path: 'proComponents',
                 name: 'ProComponents',
                 children: [

@@ -1,12 +1,11 @@
 import { defineConfig ,type PluginOption} from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import UnoCSS from 'unocss/vite'
-import {dirname,resolve,join} from 'node:path'
-import {fileURLToPath} from 'node:url'
-import { mockDevServerPlugin } from 'vite-plugin-mock-dev-server'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import vitePluginExpress from './service/vite-express-plugin.mjs'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export function mockPlugin() {
   return {
     name: 'mock-plugin',
@@ -37,18 +36,12 @@ export function mockPlugin() {
 }
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [UnoCSS(),react(),mockPlugin(),false&&mockDevServerPlugin({
-    bodyParserOptions:{},
-    prefix: '^/api',
-    dir:resolve(__dirname,'mock'),
-    cors:true,
-    log:'error'
-  })].filter(Boolean),
+  plugins: [UnoCSS(),react(),vitePluginExpress()].filter(Boolean),
   resolve:{
     alias:{
-        src:resolve(__dirname,'src'),
-        components:resolve(__dirname,'src/components'),
-        store:resolve(__dirname,'src/store'),
+        src: resolve(__dirname, 'src'),
+        components: resolve(__dirname, 'src/components'),
+        store: resolve(__dirname, 'src/store'),
     }
   },
   css:{
