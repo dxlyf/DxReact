@@ -1,6 +1,7 @@
 import { Form, Input, Select, InputNumber, Checkbox, DatePicker, Cascader, message, Popover } from 'antd'
 import type { GetProps, GetProp, GetRef, FormInstance } from 'antd'
 import React, { createContext, useContext, useMemo, useLayoutEffect, useState } from 'react'
+import ProUpload from '../Upload'
 const { Item, useForm, useWatch, useFormInstance } = Form
 type FormItemProps = GetProps<typeof Item>
 
@@ -21,14 +22,14 @@ type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
     validateTipType?: 'normal' | 'popover'
     hideLabel?: boolean
     valueType?: 'text' | 'select' | 'integer' | 'decimal' | 'date' | 'dateRange' | string
-    fieldProps?: P|((form:FormInstance)=>P)
-    formItemProps?:((form:FormInstance)=>P)
-    children?: (info:{
-        form:FormInstance,
-        renderFormItem:(props:any,dom:React.ReactNode)=>React.ReactElement,
-        renderItem:(props:any)=>React.ReactNode,
-        formItemProps:any,
-        fieldProps:any
+    fieldProps?: P | ((form: FormInstance) => P)
+    formItemProps?: ((form: FormInstance) => P)
+    children?: (info: {
+        form: FormInstance,
+        renderFormItem: (props: any, dom: React.ReactNode) => React.ReactElement,
+        renderItem: (props: any) => React.ReactNode,
+        formItemProps: any,
+        fieldProps: any
     }) => React.ReactNode
 }
 type FormFieldConfigItem = {
@@ -39,6 +40,7 @@ type FormFieldMapType = Record<string, {
     // Component:React.ComponentType
     message: string
     placeholder?: string | string[]
+    transformFormItemProps?:(props:FormItemProps)=>FormItemProps
     render: (props: any) => React.ReactNode
 }>
 const defaultFormFieldMap: FormFieldMapType = {
@@ -87,6 +89,21 @@ const defaultFormFieldMap: FormFieldMapType = {
             return <DatePicker.RangePicker format={'YYYY-MM-DD'} {...props}></DatePicker.RangePicker>
         }
     },
+    proUpload: {
+        message: '请上传${label}',
+        transformFormItemProps(props){
+            const rules=(props.rules??[])
+            const required=props.required||rules.some(d=>!d.required)
+            return {
+                valuePropName:'uploadList',
+                ...props,
+                
+            }
+        },
+        render(props: GetProps<typeof ProUpload>) {
+            return <ProUpload {...props}></ProUpload>
+        }
+    }
 } as const
 const expr_reg = /\$\{([^\}]+?)\}/g
 const replaceExpr = (str: string, data: any = {}) => {
@@ -129,9 +146,9 @@ const ProFormField = <P = any>(props: ProFormFieldProps<P>) => {
 }
 
 const ProFormItemField = (props: ProFormItemFieldProps) => {
-    const { label, children, render, required, validateTipType = 'normal', rules, shouldUpdate, dependencies, hideLabel = false, component: FormItem = validateTipType == 'normal' ? Form.Item : PopoverFormItem, valueType: propValueType,formItemProps, fieldProps = {}, ...restFormItemProps } = props
+    const { label, children, render, required, validateTipType = 'normal', rules, shouldUpdate, dependencies, hideLabel = false, component: FormItem = validateTipType == 'normal' ? Form.Item : PopoverFormItem, valueType: propValueType, formItemProps, fieldProps = {}, ...restFormItemProps } = props
     const form = Form.useFormInstance()
-    const { placeholder, ...restFieldProps } = typeof fieldProps==='function'?fieldProps(form):fieldProps as any
+    const { placeholder, ...restFieldProps } = typeof fieldProps === 'function' ? fieldProps(form) : fieldProps as any
     const fieldMap = useContext(FormFieldMapContext)
     const valueType = useMemo(() => propValueType || 'text', [propValueType])
     const fieldConfig = useMemo(() => fieldMap[valueType], [fieldMap, valueType])
@@ -178,28 +195,29 @@ const ProFormItemField = (props: ProFormItemFieldProps) => {
         required,
         ...(mergeRules ? { rules: mergeRules as any } : {}),
         ...restFormItemProps,
-        ...(formItemProps&&typeof formItemProps==='function'?formItemProps(form):{})
+        ...(formItemProps && typeof formItemProps === 'function' ? formItemProps(form) : {})
     }
-    const renderFormItem = (formItemProps:FormItemProps,dom:React.ReactNode) => {
+    const renderFormItem = (formItemProps: FormItemProps, dom: React.ReactNode) => {
         return <FormItem {...formItemProps}>
             {dom}
-            </FormItem>
+        </FormItem>
     }
-    const renderItem= (props:FormItemProps) => {
+    const renderItem = (props: FormItemProps) => {
         const fieldDom = render ? render(props, form) : fieldConfig.render(props)
-         return fieldDom
+        return fieldDom
     }
     const renderChildren = (form: FormInstance) => {
-        if (children && typeof children === 'function') {
-            return children({
-                form:form,
-                formItemProps:finalFormItemProps,
-                fieldProps:finalFieldProps,
-                renderFormItem:renderFormItem,
-                renderItem:renderItem
-            })
+        let info = {
+            form: form,
+            formItemProps: fieldConfig.transformFormItemProps?fieldConfig.transformFormItemProps(finalFormItemProps):finalFormItemProps,
+            fieldProps: finalFieldProps,
+            renderFormItem: renderFormItem,
+            renderItem: renderItem
         }
-        return renderFormItem(finalFormItemProps,renderItem(finalFieldProps))
+        if (children && typeof children === 'function') {
+            return children(info)
+        }
+        return renderFormItem(info.formItemProps, renderItem(info.fieldProps))
     }
     if (shouldUpdate) {
         return <Form.Item noStyle shouldUpdate={shouldUpdate}>

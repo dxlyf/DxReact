@@ -6,6 +6,9 @@ type Pagation = {
     pageSize?: number
     total?: number
 }
+const USER_REQUEST=1<<0
+const INIT_REQUEST=1<<1
+const DEP_REQUEST=1<<2
 export type UseRequestOptions<Data> = {
     request?: ServiceHandle<Data>
     defaultData?: Data | (() => Data)
@@ -17,6 +20,7 @@ export type UseRequestOptions<Data> = {
     debounceWaitTime?: number
     pagation?: false | Pagation
     transform?: (data: Data, previous: Data | undefined, params: any) => Data
+    onChange?:(data:Data,flag:Number)=>void
 }
 type ServiceHandle<Data> = (params: any, lastParams?: any) => Data | Promise<Data>
 
@@ -32,10 +36,7 @@ const debounce = (fn: (...args: any[]) => any, wait: number) => {
         }
         lastArgs = args
         lastThat = this
-        setTimeout(() => {
-            if (!lastArgs) {
-                return
-            }
+        timeout=setTimeout(() => {
             lastResult = fn.apply(lastThat, lastArgs)
             lastArgs = null
             lastThat = null
@@ -80,7 +81,7 @@ const debouncePromise = (fn: (...args: any[]) => any, wait: number) => {
 
 
 const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
-    const {request:propRequest,data:propData,defaultData, dependencies = [], requestParams, pagation = false, ready, debounceWaitTime, manualRequest = false, transform } = options
+    const {request:propRequest,data:propData,defaultData,onChange, dependencies = [], requestParams, pagation = false, ready, debounceWaitTime, manualRequest = false, transform } = options
     const lastParams = useRef<any>({})
     const [state] = useState({ init:false,mounted: false, unMounted: false })
     const isControlled=propData!==undefined
@@ -105,10 +106,8 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
         }
     })
     const needPagation = pagation !== false
-    const innerRequest = useMemoizedFn(async (params: any) => {
-        if(isControlled){
-            return
-        }
+    const request = useMemoizedFn(async (params: any,flag:number=USER_REQUEST) => {
+
         let res: any = undefined
         try {
             setLoading(true)
@@ -120,20 +119,23 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
                     pageSize: pagationInfo.pageSize
                 } : {})
             }
-            res = await propRequest(newParams, lastParams.current)
-            if (state.unMounted) {
-                return
+            if(propRequest&&!isControlled){
+                 res = await propRequest(newParams, lastParams.current)
+                if (state.unMounted) {
+                    return
+                }
+                if (transform) {
+                    res = transform(res, data, newParams)
+                }
+                lastParams.current = newParams
+                if (needPagation) {
+                    setInnerData(res.data)
+                    setPagationInfo({ ...pagationInfo, total: res.total })
+                } else {
+                    setInnerData(res)
+                }
             }
-            if (transform) {
-                res = transform(res, data, newParams)
-            }
-            lastParams.current = newParams
-            if (needPagation) {
-                setInnerData(res.data)
-                setPagationInfo({ ...pagationInfo, total: res.total })
-            } else {
-                setInnerData(res)
-            }
+            onChange?.(res,flag)
         } catch (e) {
             setError(e)
         } finally {
@@ -141,28 +143,28 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
         }
         return res
     })
-    const request = useMemo(() => {
+    const debounceRequest = useMemo(() => {
         if (typeof debounceWaitTime === 'number') {
-            return debouncePromise(innerRequest, debounceWaitTime)
+            return debouncePromise(request, debounceWaitTime)
         }
-        return innerRequest
-    }, [debounceWaitTime, innerRequest])
+        return request
+    }, [debounceWaitTime, request])
     const read = useCallback(async (params: any = {}, memory: boolean = false) => {
         const newParams = {
             ...(memory ? lastParams.current : {}),
             ...params
         }
-        return request(newParams)
-    }, [request])
+        return debounceRequest(newParams)
+    }, [debounceRequest])
     useLayoutEffect(() => {
         if (state.mounted && dependencies.length > 0) {
-            read(requestParams)
+            request(requestParams,DEP_REQUEST)
         }
     }, dependencies)
     useLayoutEffect(() => {
         if ((ready === undefined || ready) && !manualRequest && !state.init) {
             state.init=true
-            read(requestParams)
+            request(requestParams,INIT_REQUEST)
         }
         state.mounted = true
         return () => {
@@ -178,8 +180,13 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
         setError,
         setData:setInnerData,
         setLoading,
-        read
+        read,
+        request
     }
 }
-
+useRequest.FLAGS={
+    USER_REQUEST,
+    INIT_REQUEST,
+    DEP_REQUEST
+}
 export default useRequest

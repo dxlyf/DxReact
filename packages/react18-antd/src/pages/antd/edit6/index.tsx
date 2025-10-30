@@ -9,7 +9,11 @@ import ProSelect from '../components/Select'
                 console.log('execu')
                 return 43
            },3000,{leading:false,trailing:true})
-
+ function delay(wait:number) {
+    return new Promise((resolve)=>{
+        setTimeout(resolve,wait)
+    })
+}
 const Demo=()=>{
 
     const [form]=Form.useForm()
@@ -28,7 +32,8 @@ const Demo=()=>{
                     request:async (params)=>{
                         const {keyword}=params
                         console.log('request',keyword)
-                        return [{value:'中国',label:'中国'},{value:'美国',label:'美国'}].filter(d=>{
+                        await delay(1000)
+                        return [{value:'中国',label:'中国'},{value:'美国',label:'美国'},{value:'俄罗斯',label:'俄罗斯'}].filter(d=>{
                             if(keyword===undefined){
                                 return true
                             }
@@ -70,9 +75,20 @@ const Demo=()=>{
     },{
         label:'申请日期',
         name:'applyDate',
-        required:true,
+       // required:true,
         valueType:'dateRange',
         validateTipType:'popover'
+    },{
+        name:'upload',
+        label:'图片',
+        valueType:'proUpload',
+        required:true,
+        fieldProps:{
+            limit:{
+                size:10,
+                types:['.png','.jpeg','.jpg']
+            }
+        }
     }],4).map((d,i)=>{
         return <Row key={i} gutter={16}>
             {d.map((col:any,k)=>{
