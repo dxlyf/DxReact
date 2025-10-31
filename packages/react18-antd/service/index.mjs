@@ -48,8 +48,14 @@ const server=app.listen(port, (err) => {
     console.log('\n') // 空行让信息更醒目
    
 })
+process.on('message',(message)=>{
+    const {type}=message
+    if(type==='closeServer'){
+        server.close()
+    }
+})
 // 优雅关闭处理
-process.on('SIGTERM', () => {
+process.on('SIGINT', () => {
   console.log('Received SIGTERM, shutting down Express gracefully');
   server.close(() => {
     console.log('Express server closed.');

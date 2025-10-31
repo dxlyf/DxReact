@@ -36,7 +36,7 @@ export function mockPlugin() {
 }
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [UnoCSS(),react(),vitePluginExpress()].filter(Boolean),
+  plugins: [UnoCSS(),react(),vitePluginExpress()] as PluginOption[],
   resolve:{
     alias:{
         src: resolve(__dirname, 'src'),
