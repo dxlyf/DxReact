@@ -50,9 +50,9 @@ export default defineConfig({
     }
   },
   server: {
-    // proxy: {
-    //   '^/api': 'http://example.com/',
-    // },
+    proxy: {
+      '^/api': 'http://localhost:9857',
+    },
   }
 })
 

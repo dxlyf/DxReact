@@ -1,6 +1,7 @@
 import express from 'express'
 import os from 'node:os'
 
+import mockjs from 'mockjs'
 // 获取本机IP地址的函数
 function getNetworkIp() {
   const interfaces = os.networkInterfaces()
@@ -17,14 +18,18 @@ function getNetworkIp() {
 }
 
 const app = express()
-
+app.use(express.json())
 const apiRouter=express.Router()
-
-apiRouter.get('/list',(req,res)=>{
+const listData=mockjs.mock({'list|100':[{'id|+1':0,name:'@cname','age|18-60':0,'createTime':'@datetime'}]}).list
+apiRouter.post('/list',(req,res)=>{
+  const {current,pageSize}=req.body
     res.json({
         msg:'',
         code:0,
-        data:'成功'
+        data:{
+           records:listData.slice((current-1)*pageSize,current*pageSize),
+           total:listData.length
+        }
     })
 })
 app.use('/api',apiRouter)

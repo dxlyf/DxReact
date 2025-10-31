@@ -10,7 +10,7 @@ const USER_REQUEST=1<<0
 const INIT_REQUEST=1<<1
 const DEP_REQUEST=1<<2
 export type UseRequestOptions<Data> = {
-    request?: ServiceHandle<Data>
+    request?: ServiceHandle<any>
     defaultData?: Data | (() => Data)
     data?:Data
     requestParams?: any
@@ -97,17 +97,20 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
     const data=isControlled?propData:innerData
     const [error, setError] = useState<any>(null)
     const [loading, setLoading] = useState(false)
-    const [pagationInfo, setPagationInfo] = useState<Required<Pagation>>(() => {
-        return {
+    const pagationInfoRef= useRef<Pagation>(null)
+    if(!pagationInfoRef.current){
+        pagationInfoRef.current={
             pageSize: 10,
             current: 1,
             total: 0,
             ...(pagation ? pagation : {})
         }
-    })
+    }
     const needPagation = pagation !== false
+    const setPagationInfo=useCallback((playload:Pagation|((p:Pagation)=>Pagation))=>{
+        pagationInfoRef.current=typeof playload==='function'?playload(pagationInfoRef.current):{...pagationInfoRef.current,...playload}
+    },[])
     const request = useMemoizedFn(async (params: any,flag:number=USER_REQUEST) => {
-
         let res: any = undefined
         try {
             setLoading(true)
@@ -115,8 +118,8 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
             const newParams = {
                 ...params,
                 ...(needPagation ? {
-                    current: pagationInfo.current,
-                    pageSize: pagationInfo.pageSize
+                    current: pagationInfoRef.current.current,
+                    pageSize: pagationInfoRef.current.pageSize
                 } : {})
             }
             if(propRequest&&!isControlled){
@@ -130,7 +133,7 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
                 lastParams.current = newParams
                 if (needPagation) {
                     setInnerData(res.data)
-                    setPagationInfo({ ...pagationInfo, total: res.total })
+                    setPagationInfo({ total: res.total })
                 } else {
                     setInnerData(res)
                 }
@@ -176,7 +179,8 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
         data:data as D,
         error,
         lastParams,
-        pagationInfo,
+        pagationInfo:pagationInfoRef.current,
+        setPagationInfo,
         setError,
         setData:setInnerData,
         setLoading,

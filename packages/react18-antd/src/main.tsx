@@ -2,13 +2,16 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import 'virtual:uno.css'
 import './index.css'
-import {ConfigProvider} from 'antd'
+import {ConfigProvider,App as AntApp} from 'antd'
 import { Provider as ReduxProdiver } from 'react-redux'
 import { store } from './store'
 import App from './app'
-import { app } from './utils/app'
+import app from './utils/App'
 
-
+ConfigProvider.config({
+  // 解决modal警告
+  holderRender: (dom) => dom 
+})
 async function render() {
   let root=createRoot(document.getElementById('root')!)
   root.render(<div>loading...</div>)
@@ -17,7 +20,9 @@ async function render() {
    root=createRoot(document.getElementById('root')!)
   root.render(
       <ReduxProdiver store={store}>
-        <ConfigProvider><App></App></ConfigProvider>
+        <AntApp>
+        <ConfigProvider ><App></App></ConfigProvider>
+        </AntApp>
       </ReduxProdiver>,
   )
 

@@ -10,10 +10,31 @@ const __dirname = path.dirname(__filename);
  * @returns {import('vite').PluginOption}
  */
 export default function vitePluginExpress() {
+  /**@type {import('node:child_process').ChildProcess} */
   let serviceProcess = null;
 
+  const exitHandle=()=> () => {
+       // console.log('手动退出 fdfdfdfdfdfd')
+         if (serviceProcess && serviceProcess.connected) {
+          serviceProcess.kill()
+          serviceProcess = null
+        }
+        setTimeout(()=>{
+            process.exit(0)
+        },100)
+      }
+    const clean=()=>{
+      process.off('SIGINT',exitHandle)
+      process.off('exit', exitHandle)
+      if(serviceProcess){
+        if(!serviceProcess.killed){
+          serviceProcess.kill()
+        }
+        serviceProcess = null
+      }
+    }
   const startService = () => {
-
+      clean()
        serviceProcess = fork(path.resolve(__dirname, './index.mjs'), [], {
         stdio: ['pipe','pipe','pipe','ipc']
       })
@@ -26,22 +47,9 @@ export default function vitePluginExpress() {
       serviceProcess.on('exit',()=>{
          console.log('serviceProcess退出')
       })
-      console.log('process', process.pid)
-      process.on('SIGINT', () => {
-       // console.log('手动退出 fdfdfdfdfdfd')
-         if (serviceProcess && serviceProcess.connected) {
-          serviceProcess.kill()
-          serviceProcess = null
-        }
-        process.exit(0)
-      })
-      process.on('exit', () => {
-        if (serviceProcess && serviceProcess.connected) {
-          serviceProcess.kill()
-          serviceProcess = null
-        }
-        console.log('exit')
-      })
+    //  console.log('process', process.pid)
+      process.once('SIGINT',exitHandle)
+      process.once('exit', exitHandle)
     
 
   }
@@ -51,6 +59,14 @@ export default function vitePluginExpress() {
     // Vite开发服务器配置完成后调用
     configureServer(server) {
       startService()
+      console.log('从新进入')
+      server.watcher.add(path.resolve(__dirname, './index.mjs'))
+    },
+    watchChange(id, change){
+    //  console.log('id',id,'change',change)
+      if(id.includes('service/index.mjs')){
+        startService()
+      }
 
     },
 
@@ -58,10 +74,7 @@ export default function vitePluginExpress() {
     closeBundle() {
       // cleanup();
      // console.log('closeBundle',serviceProcess)
-      if(serviceProcess&&serviceProcess){
-         serviceProcess.kill()
-         serviceProcess=null
-      }
+        clean()
     }
   };
 }

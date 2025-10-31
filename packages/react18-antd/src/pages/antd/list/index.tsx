@@ -1,8 +1,14 @@
-import { Button, Col, Form, Modal, Row, Space, Table,type TableProps,Input } from "antd"
+import { Button, Col, Form, Modal, Row, Space, Table,type TableProps,Input, Checkbox } from "antd"
 import { useCallback, useEffect, useMemo } from "react"
 import {useAntdTable} from 'ahooks'
 import {useModal,type ModalInstance} from '../hooks/useModal2'
+import useRequest from "src/hooks/useRequest"
+import request from "src/utils/request"
+import TableBtnAction from "../components/TableBtnAction"
 
+function delay(wait:number){
+    return new Promise(resolve=>setTimeout(()=>resolve(''),wait))
+}
 const EditDetail=(props:{modal:ModalInstance})=>{
     const {modal}=props
     const [form]=Form.useForm()
@@ -33,6 +39,19 @@ const EditDetail=(props:{modal:ModalInstance})=>{
 }
 export default ()=>{
     const [form]=Form.useForm()
+    const {data,pagationInfo,setPagationInfo,read}=useRequest({
+        defaultData:[],
+        pagation:{
+            pageSize:10,
+            current:1,
+        },
+        request:async (params)=>{  
+             const res=await request.post<{records:any[],total:number}>('/list',params)
+             const records=res.data.records
+             const total=res.data.total
+             return {data:records,total}
+        }
+    })
     const columns=useMemo<NonNullable<TableProps['columns']>>(()=>[
         {
             title:'名称',
@@ -42,22 +61,28 @@ export default ()=>{
         } ,   {
             title:'age',
             dataIndex:'age'
+        },{
+            width:200,
+            title:'操作',
+            fixed:'right',
+            render(_,record){
+                return <TableBtnAction items={[
+                    TableBtnAction.ACTIONS.EDIT,
+                    TableBtnAction.ACTIONS.DELETE,
+                    TableBtnAction.ACTIONS.DETAIL,
+                    TableBtnAction.ACTIONS.COPY
+                ]} onItemClick={async (item)=>{
+                    if(item.key=='del'){
+                        await delay(2000)
+                        return false
+                    }else{
+                        console.log(item.key)
+                    }
+                }}></TableBtnAction>
+            }
         }
     ],[])
-    const {tableProps,search}=useAntdTable(async (params,filters)=>{
-        console.log('filters',filters)
-         return {
-            total:0,
-            list:[{
-                id:1,
-                name:'fdfd',
-                age:18
-            }]
-         }
-    },{
-        form
-    })
-
+    
     const SearchFormItems=useMemo(()=>[{
         dataIndex:'name',
         Component:Input
@@ -78,10 +103,14 @@ export default ()=>{
     })
     return <>
     {modalDom}
-    <Form form={form}>
+    <Form form={form} onFinish={(values)=>{
+        setPagationInfo({current:1})
+        read({name:values.name})   
+    }}>
         <Form.Item label='名称' name={'name'}>
             <Input></Input>
         </Form.Item>
+        <Button htmlType="submit">查询</Button>
     </Form>
     <Row justify={'end'}>
         <Col flex={'none'}>
@@ -92,6 +121,15 @@ export default ()=>{
             </Space>
         </Col> 
     </Row>
-    <Table rowKey='id' scroll={{x:'100%'}} columns={columns} {...tableProps}></Table> 
+
+    <Table rowKey='id'  onChange={(pagationInfo)=>{
+            setPagationInfo((v)=>({...v,pageSize:pagationInfo.pageSize,current:pagationInfo.current}))
+            read({},true)
+    }} pagination={{
+        current:pagationInfo.current,
+        pageSize:pagationInfo.pageSize,
+        total:pagationInfo.total,
+    
+    }} dataSource={data} scroll={{x:'100%'}} columns={columns} ></Table> 
     </>
 }
