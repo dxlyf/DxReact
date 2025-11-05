@@ -2,7 +2,7 @@ import { RightOutlined } from "@ant-design/icons"
 import { useMemoizedFn } from "ahooks"
 import { Button, Dropdown, Space, Modal, Popconfirm } from "antd"
 import type { ButtonProps, PopconfirmProps, ModalFuncProps } from 'antd'
-import React, { useMemo } from "react"
+import React, { useMemo, useRef } from "react"
 import { useCallback } from "react"
 
 type ModalConfirmProps = ModalFuncProps & {
@@ -17,13 +17,15 @@ type ActionItem = {
     props?: ButtonProps
     popconfirmProps?: PopconfirmProps
     modalConfirmProps?: ModalConfirmProps
+    permissionCode?: string
+    order?: number
     onClick?: (item: ActionItem, e: React.MouseEvent) => boolean | Promise<boolean>
 }
 type TableBtnActionProps = {
     size?: 'small' | 'middle' | 'large';
     disabled?: boolean
     maxShowCount?: number
-    items: ActionItem[]
+    items?:ActionItem[]
     moreTrigger?: ('click' | 'hover' | 'contextMenu')[]
     transformItem?: (item: ActionItem) => ActionItem
     onItemClick?: (item: ActionItem, e: React.MouseEvent) => boolean | Promise<boolean>
@@ -32,7 +34,9 @@ type TableBtnActionProps = {
 const defaultMoreTrigger: TableBtnActionProps['moreTrigger'] = ['hover']
 const defaultBtnStyle = { margin: 0, padding: 0, fontSize: 12 }
 const TableBtnAction = (props: React.PropsWithChildren<TableBtnActionProps>) => {
-    const { maxShowCount = 3, transformItem, moreTrigger = defaultMoreTrigger, size = 'small', disabled, children, items, onItemClick } = props
+    const { maxShowCount = 3, transformItem, moreTrigger = defaultMoreTrigger, size = 'small', disabled, children, items:propItems=TableBtnAction.GeneralListAction, onItemClick } = props
+    const latestProps=useRef(props)
+    latestProps.current=props
 
     const handleItemClick = useMemoizedFn(async (item: ActionItem, e: React.MouseEvent) => {
         if(disabled||item.disabled){
@@ -80,6 +84,19 @@ const TableBtnAction = (props: React.PropsWithChildren<TableBtnActionProps>) => 
         }
 
     })
+    const items=useMemo(()=>{
+        return propItems.filter(item=>{
+             if (latestProps.current.transformItem) {
+                item = latestProps.current.transformItem(item)
+            }
+            if(item.permissionCode){
+                return true
+            }
+            return true
+        }).sort((a,b)=>{
+            return (b.order || 0) - (a.order || 0)
+        })
+    },[propItems])
     // 普通样式按丑
     const { normalItems, moreItems } = useMemo(() => {
         const normalItems: ActionItem[] = [], moreItems: ActionItem[] = []
@@ -113,9 +130,6 @@ const TableBtnAction = (props: React.PropsWithChildren<TableBtnActionProps>) => 
     }
     const renderNormalItems = (items: ActionItem[]) => {
         return items.map((item) => {
-            if (transformItem) {
-                item = transformItem(item)
-            }
             return renderNormalItem(item)
         })
     }
@@ -123,9 +137,6 @@ const TableBtnAction = (props: React.PropsWithChildren<TableBtnActionProps>) => 
         return <Dropdown
             menu={{
                 items: items.map(item => {
-                    if (transformItem) {
-                        item = transformItem(item)
-                    }
                     return {
                         key: item.key,
                         icon: item.icon,
@@ -159,11 +170,13 @@ const TableBtnAction = (props: React.PropsWithChildren<TableBtnActionProps>) => 
 const OPERATION_ACTIONS = {
     EDIT: {
         key: 'edit',
-        label: '編輯'
+        label: '編輯',
+        order:101,
     } as ActionItem,
     DELETE: {
         key: 'del',
         label: '删除',
+        order:100,
         props: {
             danger: true
         },
@@ -173,7 +186,7 @@ const OPERATION_ACTIONS = {
             content: '是否確認刪除？',
             okText: '確定',
             cancelText: '取消',
-            okButtonProps: { loading: false, danger: true },
+            okButtonProps: { loading: false, danger: false },
             cancelButtonProps: { disabled: false },
             stateProps(status) {
                 if (status === 'confirm') {
@@ -181,7 +194,7 @@ const OPERATION_ACTIONS = {
                         title: '删除中',
                         content: '正在刪除，請稍候...',
                         okText: '删除中',
-                        okButtonProps: { loading: true, danger: true },
+                        okButtonProps: { loading: true, danger: false },
                         cancelButtonProps: { disabled: true },
                     }
                 } else if (status === 'fail') {
@@ -189,7 +202,7 @@ const OPERATION_ACTIONS = {
                         title: '刪除失敗',
                         content: '刪除失敗，請重試',
                         okText: '重試',
-                        okButtonProps: { loading: false, danger: true },
+                        okButtonProps: { loading: false, danger: false },
                         cancelButtonProps: { disabled: false },
                     }
                 }
@@ -213,8 +226,10 @@ const OPERATION_ACTIONS = {
 TableBtnAction.ACTIONS = OPERATION_ACTIONS
 // 一般列表操作按钮
 TableBtnAction.GeneralListAction = [
+    OPERATION_ACTIONS.DETAIL,
     OPERATION_ACTIONS.EDIT,
     OPERATION_ACTIONS.DELETE,
-    OPERATION_ACTIONS.DETAIL
+    OPERATION_ACTIONS.COPY,
+    OPERATION_ACTIONS.SUBMIT,
 ]
 export default TableBtnAction

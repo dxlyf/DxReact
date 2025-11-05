@@ -42,13 +42,17 @@ export default ()=>{
         ]
     },[])
     const requestList=useCallback(async (param:any,sort:any,filter:any)=>{
-        const ret=await request<{total:number,data:any[]}>({
+        const ret=await request<{total:number,records:any[]}>({
             url:'list',
-            method:'post'
+            method:'post',
+            data:{
+                current:param.current,
+                pageSize:param.pageSize
+            }
         })
         return {
             total:ret.data.total,
-            data:ret.data.data,
+            data:ret.data.records,
             success:true
         }
     },[])
@@ -57,7 +61,7 @@ export default ()=>{
 
     },[])
 
-    return <><ProTable  toolbar={{
+    return <><ProTable options={false}  toolbar={{
         actions:[<ModalForm layout='inline' title='新增' trigger={<Button type='primary'>新增</Button>} onFinish={handleFinish}>
             <ProFormGroup>
                 <ProFormText label='名称' name={'name'} required width={200}></ProFormText>

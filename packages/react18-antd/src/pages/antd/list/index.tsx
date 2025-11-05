@@ -66,12 +66,7 @@ export default ()=>{
             title:'操作',
             fixed:'right',
             render(_,record){
-                return <TableBtnAction items={[
-                    TableBtnAction.ACTIONS.EDIT,
-                    TableBtnAction.ACTIONS.DELETE,
-                    TableBtnAction.ACTIONS.DETAIL,
-                    TableBtnAction.ACTIONS.COPY
-                ]} onItemClick={async (item)=>{
+                return <TableBtnAction onItemClick={async (item)=>{
                     if(item.key=='del'){
                         await delay(2000)
                         return false

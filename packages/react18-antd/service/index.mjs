@@ -19,6 +19,7 @@ function getNetworkIp() {
 
 const app = express()
 app.use(express.json())
+app.use(express.urlencoded({extended:true}))
 const apiRouter=express.Router()
 const listData=mockjs.mock({'list|100':[{'id|+1':0,name:'@cname','age|18-60':0,'createTime':'@datetime'}]}).list
 apiRouter.post('/list',(req,res)=>{
