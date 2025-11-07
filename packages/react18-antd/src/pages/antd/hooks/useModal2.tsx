@@ -83,7 +83,7 @@ const useModal = (props: UseModalProps = {}) => {
     const modalStateProps = getModalStageProps ? getModalStageProps(modalInstance.current!) : {}
     const modalProps: ModalProps = {
         open: visible,
-        title:titleDom,
+       // title:titleDom,
         onCancel: handleCancel,
         onOk: handleOk,
         destroyOnHidden: true,

@@ -2,6 +2,7 @@ import { Form, Input, Select, InputNumber, Checkbox, DatePicker, Cascader, messa
 import type { GetProps, GetProp, GetRef, FormInstance } from 'antd'
 import React, { createContext, useContext, useMemo, useLayoutEffect, useState } from 'react'
 import ProUpload from '../Upload'
+import ProSelect from '../Select'
 const { Item, useForm, useWatch, useFormInstance } = Form
 type FormItemProps = GetProps<typeof Item>
 
@@ -15,13 +16,13 @@ type ProFormFieldProps<P> = {
 } & P
 //type FieldComponentProps<T extends React.ComponentType<any>>=T extends React.ComponentType<infer P>?P:never
 //type Props=FieldComponentProps<typeof PPP>
-type A = typeof defaultFormFieldMap
+
 type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
     component?: React.ComponentType
     render?: (props: P, form: FormInstance) => React.ReactNode
     validateTipType?: 'normal' | 'popover'
     hideLabel?: boolean
-    valueType?: 'text' | 'select' | 'integer' | 'decimal' | 'date' | 'dateRange' | string
+    valueType?: FormFieldValueType
     fieldProps?: P | ((form: FormInstance) => P)
     formItemProps?: ((form: FormInstance) => P)
     children?: (info: {
@@ -43,7 +44,8 @@ type FormFieldMapType = Record<string, {
     transformFormItemProps?:(props:FormItemProps)=>FormItemProps
     render: (props: any) => React.ReactNode
 }>
-const defaultFormFieldMap: FormFieldMapType = {
+type FormFieldValueType=keyof typeof defaultFormFieldMap
+const defaultFormFieldMap = {
     text: {
         message: '请填写${label}',
         render(props: GetProps<typeof Input>) {
@@ -55,6 +57,12 @@ const defaultFormFieldMap: FormFieldMapType = {
         message: '请选择${label}',
         render(props: GetProps<typeof Select>) {
             return <Select  {...props}></Select>
+        }
+    },
+     proSelect: {
+        message: '请选择${label}',
+        render(props: GetProps<typeof ProSelect>) {
+            return <ProSelect  {...props}></ProSelect>
         }
     },
     integer: {
@@ -113,7 +121,7 @@ const replaceExpr = (str: string, data: any = {}) => {
     })
 }
 //GenericFormItem
-const FormFieldMapContext = createContext<FormFieldMapType>(defaultFormFieldMap)
+const FormFieldMapContext = createContext<FormFieldMapType>((defaultFormFieldMap as unknown) as any)
 const ProFormField = <P = any>(props: ProFormFieldProps<P>) => {
     const { valueType: propValueType, placeholder: propsPlaceholder, render, ...restProps } = props
     const fieldMap = useContext(FormFieldMapContext)

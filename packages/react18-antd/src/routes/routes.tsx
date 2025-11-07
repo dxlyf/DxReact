@@ -142,6 +142,11 @@ const routes: RouteObjectAndMenu[] = [
                             name: 'Form通用组件',
                             Component: React.lazy(() => import('src/pages/antd/edit6'))
 
+                        }, {
+                            path: 'edit7',
+                            name: '多表单联动',
+                            Component: React.lazy(() => import('src/pages/antd/edit7'))
+
                         }
 
                         ]

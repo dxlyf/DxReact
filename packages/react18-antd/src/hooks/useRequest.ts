@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import useMemoizedFn from "./useMemoizedFn"
 
 type Pagation = {
@@ -50,34 +50,54 @@ const debounce = (fn: (...args: any[]) => any, wait: number) => {
         lastArgs = null
         lastThat = null
     }
+    
     debounced.cancel = cancel
     return debounced
 }
 const debouncePromise = (fn: (...args: any[]) => any, wait: number) => {
-    let resolveCallback: any, rejectCallback: any, pendingPromise: any = null;
-    const debounceFn = debounce(async function (this: any, ...args: any[]) {
+    let resolveCallback: any, rejectCallback: any, pendingPromise: any = null,stoped=false;
+    let executing=false
+    const debounceFn = debounce(async function (this: any, ...args: any[]) {     
+        if(stoped){
+            return
+        }
         try {
+            executing=true
             const ret = await fn.apply(this, args)
             resolveCallback(ret)
         } catch (e) {
             rejectCallback(e)
+
         } finally {
             pendingPromise = null
             rejectCallback = null
             resolveCallback = null
+            executing=false
         }
     }, wait)
-    return function debouncedPromise(this: any, ...args: any[]): Promise<any> {
+     function debouncedPromise(this: any, ...args: any[]): Promise<any> {
         if (!pendingPromise) {
             pendingPromise = new Promise((resolve, reject) => {
                 resolveCallback = resolve;
                 rejectCallback = reject;
             });
         }
-        debounceFn.apply(this, args)
+        if(!executing){
+           debounceFn.apply(this, args)
+        }
         return pendingPromise
     }
+    debouncedPromise.destroy=()=>{
+        debounceFn.cancel()
+        stoped=true
+
+        pendingPromise = null
+        resolveCallback = null
+        rejectCallback = null
+    }
+    return debouncedPromise
 }
+
 
 
 const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
@@ -174,6 +194,12 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
             state.unMounted = true
         }
     }, [ready, manualRequest])
+    useEffect(()=>{
+        return ()=>{
+            (debounceRequest as any).destroy&&(debounceRequest as any).destroy()
+        }
+    },[debounceRequest])
+
     return {
         loading,
         data:data as D,

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import useRequest,{type UseRequestOptions} from './useRequest'
+import type {SelectProps} from 'antd'
+import useRequest,{type UseRequestOptions} from 'src/hooks/useRequest'
 type UseOptionsProps<D>=UseRequestOptions<D>&{
     labelPropName?:string
     valuePropName?:string
@@ -10,7 +11,7 @@ const useOptions=<D>(props:UseOptionsProps<D[]>)=>{
     const {valuePropName='value',value:propValue,labelPropName='label',...restRequestOptions}=props
     const {data}=useRequest(restRequestOptions)
      
-    const options=useMemo(()=>{
+    const options=useMemo<SelectProps['options']>(()=>{
         return data.map((d:any)=>{
             return {
                 ...d,

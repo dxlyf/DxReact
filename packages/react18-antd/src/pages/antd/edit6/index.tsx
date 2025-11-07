@@ -5,10 +5,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import {chunk} from 'src/utils/utils'
 import {ProFormItemField} from '../components/Form/Item'
 import ProSelect from '../components/Select'
-          const a=debounce(async ()=>{
-                console.log('execu')
-                return 43
-           },3000,{leading:false,trailing:true})
+ import {request} from 'src/utils/request'
  function delay(wait:number) {
     return new Promise((resolve)=>{
         setTimeout(resolve,wait)
@@ -19,6 +16,29 @@ const Demo=()=>{
     const [form]=Form.useForm()
 
     const columns=chunk([{
+        label:'用户',
+        name:'user',
+        valueType:'text',
+        fieldProps:{},
+        initialValue:26,
+        //required:true,
+        render(props:any,form){
+            return <ProSelect unmatchShow label='于明' {...props} serverFilter placeholder='请选择' requestOptions={{
+                debounceWaitTime:100,
+                request:async ({keyword})=>{
+               // await delay(2000)
+                const res= await request({
+                    url:'/users',
+                    method:'post',
+                    data:{
+                        keyword:keyword
+                    }
+                })
+                return res.data.map(d=>({value:d.id,label:d.name}))
+            }}}>
+            </ProSelect>
+    }
+},{
             label:'国家',
             name:'country',
             valueType:'select',
@@ -82,7 +102,7 @@ const Demo=()=>{
         name:'upload',
         label:'图片',
         valueType:'proUpload',
-        required:true,
+        //required:true,
         fieldProps:{
             limit:{
                 size:10,
@@ -127,6 +147,12 @@ const Demo=()=>{
     },[collapseItems])
     const handleFinish=useCallback<GetProp<typeof Form,'onFinish'>>(values=>{
            console.log('submit',values)
+    },[])
+    useEffect(()=>{
+        // form.setFieldsValue({
+        //     user:26,
+
+        // })
     },[])
     return <>
     <Form layout='vertical' form={form}  onFinish={handleFinish}>
