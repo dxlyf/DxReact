@@ -131,13 +131,28 @@ const Demo=()=>{
             }
         ]
     },[])
+       const handleFinish=useCallback<GetProp<typeof Form,'onFinish'>>(values=>{
+           console.log('submit',values)
+    },[])
     const tabItems=useMemo<GetProp<typeof Tabs,'items'>>(()=>{
 
         return [{
             key:'a',
             label:'基本信息',
             children:<>
+                <Form layout='vertical' name='jb' form={form}  onFinish={handleFinish}>
             <Collapse bordered={false} items={collapseItems} defaultActiveKey={collapseItems.map(d=>d.key as string)}></Collapse>
+           </Form>
+            </>
+        },{
+            key:'b',
+            label:'其它',
+            children:<>
+                <Form layout='vertical' name='jt' form={form}  onFinish={handleFinish}>
+                <Form.Item name={'other'} label='其它'>
+                    <Input></Input>
+                </Form.Item>
+           </Form>
             </>
         },{
             key:'a2',
@@ -145,9 +160,7 @@ const Demo=()=>{
             children:<Test></Test>
         }]
     },[collapseItems])
-    const handleFinish=useCallback<GetProp<typeof Form,'onFinish'>>(values=>{
-           console.log('submit',values)
-    },[])
+ 
     useEffect(()=>{
         // form.setFieldsValue({
         //     user:26,
@@ -155,10 +168,12 @@ const Demo=()=>{
         // })
     },[])
     return <>
-    <Form layout='vertical' form={form}  onFinish={handleFinish}>
+
         <Tabs items={tabItems} defaultActiveKey={tabItems[0].key}  style={{ background: '#fff' }}></Tabs>
-        <Button htmlType='submit'>提交</Button>
-    </Form>
+        <Button onClick={()=>{
+            form.submit()
+        }}>提交</Button>
+  
     </>
 }
 function Test(){
