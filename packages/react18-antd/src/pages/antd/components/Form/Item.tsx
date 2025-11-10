@@ -122,7 +122,7 @@ const replaceExpr = (str: string, data: any = {}) => {
 }
 //GenericFormItem
 const FormFieldMapContext = createContext<FormFieldMapType>((defaultFormFieldMap as unknown) as any)
-const ProFormField = <P = any>(props: ProFormFieldProps<P>) => {
+const ProFormField =<P=any>(props: ProFormFieldProps<P>) => {
     const { valueType: propValueType, placeholder: propsPlaceholder, render, ...restProps } = props
     const fieldMap = useContext(FormFieldMapContext)
     const valueType = useMemo(() => propValueType || 'text', [propValueType])
@@ -278,6 +278,7 @@ const PopoverFormItem = (props: any) => {
         <PopoverItemInner {...(children?.props ?? {})}>{children}</PopoverItemInner>
     </Form.Item>
 }
+
 export {
     ProFormField,
     ProFormItemField,
