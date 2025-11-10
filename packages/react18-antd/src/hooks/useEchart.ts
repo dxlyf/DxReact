@@ -24,17 +24,22 @@ registerTheme('dx',{
     backgroundColor:'#fff',
   //  backgroundColor: 'rgba(0,0,0,0)',
     textStyle: {},
-    axisTick:{
-        show:true
-    },
-    xAxis:{
-        type:'category',
+    categoryAxis:{
         show:true,
-        gridIndex:0,
-        nameLocation:'end',
+        axisLine:{
+            show:true,
+            lineStyle:{
+                type:'dashed',
+                color:'#000'
+            }
+        },
         axisTick:{
             show:true,
-        }
+            lineStyle:{
+                type:'dashed'
+            }
+        },
+      
     },
     yAxis:[{
         type:'value',

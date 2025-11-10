@@ -56,7 +56,6 @@ export default function Bar(){
            return barDataSet
       },
       onOption:(data)=>{
-        console.log('ddatafd',data)
           return {
               tooltip: {},
               legend: {},
@@ -66,11 +65,11 @@ export default function Bar(){
               },
               xAxis:[{
                 type:'category',
-               // data:data.map(item=>item.name)
               }],
               yAxis:[{
                 type:'value',
-                name:'价格(元)'
+                name:'价格(元)',
+              
               }],
               series:[{type:'bar'},{type:'bar'}]
           }
