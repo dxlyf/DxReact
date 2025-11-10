@@ -31,7 +31,7 @@ type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
         renderItem: (props: any) => React.ReactNode,
         formItemProps: any,
         fieldProps: any
-    }) => React.ReactNode
+    },dom:React.ReactNode) => React.ReactNode
 }
 type FormFieldConfigItem = {
     component: React.Component
@@ -222,10 +222,11 @@ const ProFormItemField = (props: ProFormItemFieldProps) => {
             renderFormItem: renderFormItem,
             renderItem: renderItem
         }
+        const dom=renderFormItem(info.formItemProps, renderItem(info.fieldProps))
         if (children && typeof children === 'function') {
-            return children(info)
+            return children(info,dom)
         }
-        return renderFormItem(info.formItemProps, renderItem(info.fieldProps))
+        return dom
     }
     if (shouldUpdate) {
         return <Form.Item noStyle shouldUpdate={shouldUpdate}>

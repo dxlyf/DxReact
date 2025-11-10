@@ -6,6 +6,10 @@ import {chunk} from 'src/utils/utils'
 import {ProFormItemField} from '../components/Form/Item'
 import ProSelect from '../components/Select'
  import {request} from 'src/utils/request'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import { info } from 'console'
+ dayjs.extend(utc)
  function delay(wait:number) {
     return new Promise((resolve)=>{
         setTimeout(resolve,wait)
@@ -109,6 +113,21 @@ const Demo=()=>{
                 types:['.png','.jpeg','.jpg']
             }
         }
+    },{
+        label:'utc日期',
+        name:'utfDate',
+       // required:true,
+        valueType:'date'
+    },{
+        label:'utc格式化',
+        name:'utfDateFormat',
+        dependencies:['utfDate'],
+        children({form,formItemProps}){
+            const utfDate=form.getFieldValue('utfDate')
+            return <Form.Item label={formItemProps.label}>
+                <Input value={utfDate?.utc().toISOString()}></Input>
+            </Form.Item>
+        }
     }],4).map((d,i)=>{
         return <Row key={i} gutter={16}>
             {d.map((col:any,k)=>{
@@ -171,7 +190,7 @@ const Demo=()=>{
 
         <Tabs items={tabItems} defaultActiveKey={tabItems[0].key}  style={{ background: '#fff' }}></Tabs>
         <Button onClick={()=>{
-            form.submit()
+            form.validateFields()
         }}>提交</Button>
   
     </>

@@ -17,7 +17,7 @@ type ActionItem = {
     props?: ButtonProps
     popconfirmProps?: PopconfirmProps
     modalConfirmProps?: ModalConfirmProps
-    permissionCode?: string
+    permissionCode?: string|string[]
     order?: number
     onClick?: (item: ActionItem, e: React.MouseEvent) => boolean | Promise<boolean>
 }

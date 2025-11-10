@@ -1,6 +1,7 @@
 import { useMap, useMemoizedFn } from 'ahooks';
 import { Table, Row, Col, Button ,Input,Select,DatePicker,InputNumber, Form} from 'antd'
-import type { GetProp, GetProps, GetRef, TableProps, TableColumnType } from 'antd'
+import type { GetProp, GetProps, GetRef, TableProps, TableColumnType, FormInstance } from 'antd'
+import dayjs from 'dayjs';
 import React, { useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 type DataIndex = Exclude<TableColumnType['dataIndex'], undefined>
 
@@ -18,6 +19,7 @@ type EditColInfo={
 } 
 type TableEditColumnType = Omit<TableColumnType, 'children'> & {
     renderFormItem?: (info:EditColInfo) => React.ReactElement
+    formItemChildren?:(form:FormInstance,dom:React.ReactNode)=>React.ReactNode
     valueType?:string
     children?: TableEditColumnType[]
     editable?: boolean
@@ -86,9 +88,10 @@ const useTableEdit = (props: UseTableEditProps) => {
       
         return dom
     },[getFieldComponent]);
+
     const transformColumn = useCallback((col: TableEditColumnType,parentCol?:TableColumnType) => {
         if (col.editable) {
-            const { render, editable,valueType,fieldProps={},formItemProps={}, renderFormItem,dataIndex, ...restCol } = col
+            const { render, editable,valueType,fieldProps={},formItemProps={},formItemChildren, renderFormItem,dataIndex, ...restCol } = col
             return {
                 ...restCol,
                 dataIndex,
@@ -117,10 +120,10 @@ const useTableEdit = (props: UseTableEditProps) => {
                             dom= defaultRenderFormItem(editInfo as EditColInfo)
                         }
                         if(shouldUpdate){
-                           return <Form.Item noStyle shouldUpdate={shouldUpdate}>{dom}</Form.Item>
+                           return <Form.Item noStyle shouldUpdate={shouldUpdate}>{(form)=>formItemChildren?formItemChildren(form,dom):dom}</Form.Item>
                         }
                         if(dependencies){
-                            return <Form.Item noStyle dependencies={dependencies}>{dom}</Form.Item>
+                            return <Form.Item noStyle dependencies={dependencies}>{(form)=>formItemChildren?formItemChildren(form,dom):dom}</Form.Item>
                         }
                         return dom
                     }
