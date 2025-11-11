@@ -1,290 +1,1274 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-
-
+    <title>Canvas富文本编辑器（支持文本选中和样式设置）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2c3e50;
+            font-size: 2.5rem;
+        }
+        h2 {
+            color: #3498db;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .editor-container {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            margin-bottom: 20px;
+        }
+        #editor-canvas {
+            display: block;
+            width: 100%;
+            height: 500px;
+            background-color: white;
+            cursor: text;
+        }
+        .hidden-input {
+            position: absolute;
+            top: -1000px;
+            left: -1000px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        button {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .active {
+            background: #2c3e50;
+        }
+        select, input[type="color"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #d1d5da;
+        }
+        .status-bar {
+            padding: 8px 15px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e1e4e8;
+            font-size: 12px;
+            color: #586069;
+            display: flex;
+            justify-content: space-between;
+        }
+        .block-info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .explanation {
+            margin-bottom: 25px;
+        }
+        .color-picker {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .composition-indicator {
+            position: absolute;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+        .selection-info {
+            background: #e8f4fd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <h1>Canvas富文本编辑器（支持文本选中和样式设置）</h1>
+    
+    <div class="container">
+        <div class="card">
+            <h2>编辑器</h2>
+            <div class="toolbar">
+                <select id="font-family">
+                    <option value="Arial">Arial</option>
+                    <option value="SimSun" selected>宋体</option>
+                    <option value="Microsoft YaHei">微软雅黑</option>
+                    <option value="SimHei">黑体</option>
+                    <option value="KaiTi">楷体</option>
+                </select>
+                <select id="font-size">
+                    <option value="12">12px</option>
+                    <option value="14">14px</option>
+                    <option value="16" selected>16px</option>
+                    <option value="18">18px</option>
+                    <option value="20">20px</option>
+                    <option value="24">24px</option>
+                </select>
+                <button id="bold-btn" title="粗体">B</button>
+                <button id="italic-btn" title="斜体">I</button>
+                <button id="underline-btn" title="下划线">U</button>
+                <div class="color-picker">
+                    <input type="color" id="text-color" value="#000000">
+                </div>
+                <button id="align-left" title="左对齐">左</button>
+                <button id="align-center" title="居中对齐">中</button>
+                <button id="align-right" title="右对齐">右</button>
+                <button id="apply-selection-style" title="应用到选中文本">应用到选中</button>
+            </div>
+            <div class="editor-container">
+                <canvas id="editor-canvas"></canvas>
+                <textarea id="hidden-input" class="hidden-input"></textarea>
+                <div id="composition-indicator" class="composition-indicator" style="display: none;"></div>
+            </div>
+            <div class="status-bar">
+                <div>行: <span id="line-count">1</span> | 列: <span id="col-count">0</span> | 选中: <span id="selection-count">0</span>字符</div>
+                <div>块: <span id="block-count">1</span> | 类型: <span id="block-type">文本</span></div>
+            </div>
+            
+            <div class="selection-info" id="selection-info" style="display: none;">
+                <h3>选中文本信息</h3>
+                <p>选中内容: "<span id="selected-text"></span>"</p>
+                <p>位置: 从 <span id="selection-start"></span> 到 <span id="selection-end"></span></p>
+                <button id="clear-selection">清除选中</button>
+            </div>
+            
+            <div class="block-info">
+                <h3>操作说明</h3>
+                <p>✅ 鼠标拖动选择文本</p>
+                <p>✅ Shift+方向键扩展选择</p>
+                <p>✅ 点击"应用到选中"设置选中文本样式</p>
+                <p>✅ 支持中文输入法</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>实现原理</h2>
+            
+            <div class="explanation">
+                <h3>文本选中实现</h3>
+                <p>Canvas文本选中需要处理：</p>
+                <ul>
+                    <li><strong>鼠标事件处理</strong> - mousedown, mousemove, mouseup</li>
+                    <li><strong>文本位置计算</strong> - 字符级精确定位</li>
+                    <li><strong>选择区域渲染</strong> - 高亮显示选中文本</li>
+                    <li><strong>样式应用</strong> - 对选中文本应用独立样式</li>
+                </ul>
+            </div>
+            
+            <div class="code-block">
+// 文本选中数据结构
+this.selection = {
+    start: { blockIndex: 0, position: 10 },
+    end: { blockIndex: 0, position: 20 },
+    active: true
+};
+
+// 选中文本样式存储
+this.textSpans = [
+    {
+        start: 0,
+        end: 10,
+        styles: { color: '#000000', bold: false }
+    },
+    {
+        start: 10,
+        end: 20,
+        styles: { color: '#ff0000', bold: true }
+    }
+];
+
+// 渲染选中区域
+drawSelection() {
+    if (!this.selection.active) return;
+    
+    const block = this.blocks[this.selection.start.blockIndex];
+    const start = Math.min(this.selection.start.position, this.selection.end.position);
+    const end = Math.max(this.selection.start.position, this.selection.end.position);
+    
+    // 计算选中区域的视觉位置并绘制高亮
+    this.ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
+    // ... 绘制选中矩形
+}
+            </div>
+            
+            <div class="explanation">
+                <h3>样式应用流程</h3>
+                <ol>
+                    <li>用户选择文本范围</li>
+                    <li>设置想要的格式（颜色、粗体等）</li>
+                    <li>点击"应用到选中"按钮</li>
+                    <li>系统将选中文本拆分为独立的样式片段</li>
+                    <li>重新渲染显示更新后的样式</li>
+                </ol>
+            </div>
+            
+            <div class="block-info">
+                <h3>当前块信息</h3>
+                <p id="current-block-info">类型: 文本 | 行数: 1 | 位置: (10, 50) | 尺寸: 600×24px</p>
+            </div>
+            
+            <div class="code-block">
+// 应用样式到选中文本
+applyStyleToSelection(styles) {
+    if (!this.selection.active) return;
+    
+    const block = this.blocks[this.selection.start.blockIndex];
+    const start = Math.min(this.selection.start.position, this.selection.end.position);
+    const end = Math.max(this.selection.start.position, this.selection.end.position);
+    
+    // 将选中范围拆分为样式片段
+    this.splitTextSpan(block, start, end, styles);
+    this.render();
+}
+
+// 拆分文本样式片段
+splitTextSpan(block, start, end, styles) {
+    const newSpans = [];
+    
+    // 遍历现有样式片段，在选中位置进行拆分
+    block.textSpans.forEach(span => {
+        if (span.end <= start || span.start >= end) {
+            // 不在选中范围内，保持原样
+            newSpans.push(span);
+        } else {
+            // 需要拆分的片段
+            if (span.start < start) {
+                newSpans.push({
+                    start: span.start,
+                    end: start,
+                    styles: { ...span.styles }
+                });
+            }
+            
+            // 选中部分应用新样式
+            newSpans.push({
+                start: Math.max(span.start, start),
+                end: Math.min(span.end, end),
+                styles: { ...span.styles, ...styles }
+            });
+            
+            if (span.end > end) {
+                newSpans.push({
+                    start: end,
+                    end: span.end,
+                    styles: { ...span.styles }
+                });
+            }
+        }
+    });
+    
+    block.textSpans = newSpans;
+}
+            </div>
+        </div>
+    </div>
 
     <script>
-        function Mitt(all=new Map()){
-            return {
-                on(type, handler) {
-                    let handlers = all.get(type);
-                    if (!handlers) {
-                        handlers = new Set();
-                        all.set(type, handlers);
+        class CanvasTextEditor {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.hiddenInput = document.getElementById('hidden-input');
+                this.compositionIndicator = document.getElementById('composition-indicator');
+                
+                // 编辑器状态
+                this.blocks = [{
+                    id: 'block-1',
+                    type: 'text',
+                    content: '欢迎使用Canvas富文本编辑器！\n支持文本选中和样式设置功能。\n请尝试选中一些文本并应用样式。',
+                    styles: {
+                        fontFamily: 'SimSun',
+                        fontSize: 16,
+                        fontWeight: 'normal',
+                        fontStyle: 'normal',
+                        textDecoration: 'none',
+                        color: '#000000',
+                        textAlign: 'left',
+                        lineHeight: 1.5
+                    },
+                    position: { x: 10, y: 50 },
+                    dimensions: { width: 600, height: 150 },
+                    lines: 3,
+                    // 文本样式片段
+                    textSpans: [
+                        {
+                            start: 0,
+                            end: 45, // 整个文本长度
+                            styles: {
+                                fontFamily: 'SimSun',
+                                fontSize: 16,
+                                fontWeight: 'normal',
+                                fontStyle: 'normal',
+                                textDecoration: 'none',
+                                color: '#000000'
+                            }
+                        }
+                    ]
+                }];
+                
+                this.currentBlockIndex = 0;
+                this.cursor = {
+                    line: 0,
+                    position: 0,
+                    visible: true,
+                    x: 10,
+                    y: 50
+                };
+                
+                // 选择状态
+                this.selection = {
+                    start: null,
+                    end: null,
+                    active: false,
+                    isSelecting: false
+                };
+                
+                this.fontSize = 16;
+                this.fontFamily = 'SimSun';
+                this.textColor = '#000000';
+                this.bold = false;
+                this.italic = false;
+                this.underline = false;
+                this.align = 'left';
+                
+                // 输入法状态
+                this.isComposing = false;
+                this.compositionText = '';
+                
+                // 初始化
+                this.init();
+            }
+            
+            init() {
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.setupToolbar();
+                this.setupInputHandling();
+                this.render();
+                
+                // 光标闪烁
+                setInterval(() => {
+                    this.cursor.visible = !this.cursor.visible;
+                    this.render();
+                }, 500);
+            }
+            
+            setupCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = this.canvas.getBoundingClientRect();
+                
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                this.canvas.style.width = `${rect.width}px`;
+                this.canvas.style.height = `${rect.height}px`;
+                
+                this.ctx.scale(dpr, dpr);
+                this.ctx.font = `${this.fontSize}px ${this.fontFamily}`;
+                this.ctx.textBaseline = 'top';
+            }
+            
+            setupEventListeners() {
+                // 鼠标事件处理文本选择
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                
+                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                this.canvas.setAttribute('tabindex', '0');
+                
+                window.addEventListener('resize', () => this.setupCanvas());
+                
+                // 键盘选择支持
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+            }
+            
+            setupInputHandling() {
+                // 监听composition事件处理中文输入
+                this.hiddenInput.addEventListener('compositionstart', (e) => {
+                    this.isComposing = true;
+                    this.compositionText = '';
+                    this.clearSelection();
+                });
+                
+                this.hiddenInput.addEventListener('compositionupdate', (e) => {
+                    this.compositionText = e.data;
+                    this.updateCompositionIndicator();
+                    this.render();
+                });
+                
+                this.hiddenInput.addEventListener('compositionend', (e) => {
+                    this.isComposing = false;
+                    if (this.selection.active) {
+                        this.deleteSelection();
                     }
-                    handlers.add(handler);
-                },
-                off(type, handler) {
-                    const handlers = all.get(type);
-                    if (handlers) {
-                        if(handler){
-                            handlers.delete(handler);
-                        }else{
-                            handlers.clear()
+                    this.insertText(e.data);
+                    this.compositionText = '';
+                    this.hideCompositionIndicator();
+                    this.hiddenInput.value = '';
+                    this.render();
+                });
+                
+                // 监听普通输入
+                this.hiddenInput.addEventListener('input', (e) => {
+                    if (!this.isComposing && e.data) {
+                        if (this.selection.active) {
+                            this.deleteSelection();
+                        }
+                        this.insertText(e.data);
+                        this.hiddenInput.value = '';
+                        this.render();
+                    }
+                });
+                
+                // 监听键盘事件
+                this.hiddenInput.addEventListener('keydown', (e) => {
+                    this.handleKeyDown(e);
+                });
+            }
+            
+            setupToolbar() {
+                // 字体选择
+                document.getElementById('font-family').addEventListener('change', (e) => {
+                    this.fontFamily = e.target.value;
+                    if (this.selection.active) {
+                        document.getElementById('apply-selection-style').click();
+                    } else {
+                        this.applyFormatting();
+                    }
+                });
+                
+                // 字号选择
+                document.getElementById('font-size').addEventListener('change', (e) => {
+                    this.fontSize = parseInt(e.target.value);
+                    if (this.selection.active) {
+                        document.getElementById('apply-selection-style').click();
+                    } else {
+                        this.applyFormatting();
+                    }
+                });
+                
+                // 格式按钮
+                document.getElementById('bold-btn').addEventListener('click', () => {
+                    this.bold = !this.bold;
+                    document.getElementById('bold-btn').classList.toggle('active', this.bold);
+                    if (this.selection.active) {
+                        document.getElementById('apply-selection-style').click();
+                    } else {
+                        this.applyFormatting();
+                    }
+                });
+                
+                document.getElementById('italic-btn').addEventListener('click', () => {
+                    this.italic = !this.italic;
+                    document.getElementById('italic-btn').classList.toggle('active', this.italic);
+                    if (this.selection.active) {
+                        document.getElementById('apply-selection-style').click();
+                    } else {
+                        this.applyFormatting();
+                    }
+                });
+                
+                document.getElementById('underline-btn').addEventListener('click', () => {
+                    this.underline = !this.underline;
+                    document.getElementById('underline-btn').classList.toggle('active', this.underline);
+                    if (this.selection.active) {
+                        document.getElementById('apply-selection-style').click();
+                    } else {
+                        this.applyFormatting();
+                    }
+                });
+                
+                // 颜色选择
+                document.getElementById('text-color').addEventListener('change', (e) => {
+                    this.textColor = e.target.value;
+                    if (this.selection.active) {
+                        document.getElementById('apply-selection-style').click();
+                    } else {
+                        this.applyFormatting();
+                    }
+                });
+                
+                // 对齐按钮
+                document.getElementById('align-left').addEventListener('click', () => {
+                    this.align = 'left';
+                    this.applyFormatting();
+                });
+                
+                document.getElementById('align-center').addEventListener('click', () => {
+                    this.align = 'center';
+                    this.applyFormatting();
+                });
+                
+                document.getElementById('align-right').addEventListener('click', () => {
+                    this.align = 'right';
+                    this.applyFormatting();
+                });
+                
+                // 应用到选中文本
+                document.getElementById('apply-selection-style').addEventListener('click', () => {
+                    this.applyStyleToSelection();
+                });
+                
+                // 清除选中
+                document.getElementById('clear-selection').addEventListener('click', () => {
+                    this.clearSelection();
+                });
+            }
+            
+            handleMouseDown(e) {
+                e.preventDefault()
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                this.selection.isSelecting = true;
+                this.clearSelection();
+                
+                // 找到点击的块和位置
+                const position = this.getTextPositionFromCoords(x, y);
+                if (position) {
+                    this.selection.start = {
+                        blockIndex: position.blockIndex,
+                        position: position.charIndex
+                    };
+                    this.cursor.position = position.charIndex;
+                    this.currentBlockIndex = position.blockIndex;
+                    this.updateCursorPosition();
+                    this.hiddenInput.focus();
+                }
+            }
+            
+            handleMouseMove(e) {
+                if (!this.selection.isSelecting) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const position = this.getTextPositionFromCoords(x, y);
+                if (position && position.blockIndex === this.selection.start.blockIndex) {
+                    this.selection.end = {
+                        blockIndex: position.blockIndex,
+                        position: position.charIndex
+                    };
+                    this.selection.active = true;
+                    this.cursor.position = position.charIndex;
+                    this.updateCursorPosition();
+                    this.updateSelectionInfo();
+                    this.render();
+                }
+            }
+            
+            handleMouseUp(e) {
+                this.selection.isSelecting = false;
+                if (this.selection.start && this.selection.end && 
+                    this.selection.start.position === this.selection.end.position) {
+                    this.clearSelection();
+                }
+            }
+            
+            getTextPositionFromCoords(x, y) {
+                for (let blockIndex = 0; blockIndex < this.blocks.length; blockIndex++) {
+                    const block = this.blocks[blockIndex];
+                    if (block.type !== 'text') continue;
+                    
+                    if (x >= block.position.x && 
+                        x <= block.position.x + block.dimensions.width &&
+                        y >= block.position.y && 
+                        y <= block.position.y + block.dimensions.height) {
+                        
+                        this.ctx.font = this.getFontString(block.styles);
+                        const lines = block.content.split('\n');
+                        const lineHeight = block.styles.fontSize * block.styles.lineHeight;
+                        
+                        // 找到点击的行
+                        let lineIndex = 0;
+                        let currentY = block.position.y + 10;
+                        
+                        for (let i = 0; i < lines.length; i++) {
+                            if (y >= currentY && y < currentY + lineHeight) {
+                                lineIndex = i;
+                                break;
+                            }
+                            currentY += lineHeight;
+                        }
+                        
+                        // 找到行中的字符位置
+                        const line = lines[lineIndex];
+                        let charPos = 0;
+                        let currentX = this.getLineStartX(block, lineIndex);
+                        
+                        for (let i = 0; i <= line.length; i++) {
+                            const textBefore = line.substring(0, i);
+                            const textWidth = this.ctx.measureText(textBefore).width;
+                            
+                            if (x <= currentX + textWidth || i === line.length) {
+                                charPos = i;
+                                break;
+                            }
+                        }
+                        
+                        // 计算全局位置
+                        let globalPos = 0;
+                        for (let i = 0; i < lineIndex; i++) {
+                            globalPos += lines[i].length + 1;
+                        }
+                        globalPos += charPos;
+                        
+                        return {
+                            blockIndex: blockIndex,
+                            charIndex: globalPos
+                        };
+                    }
+                }
+                return null;
+            }
+            
+            updateCompositionIndicator() {
+                if (this.compositionText) {
+                    this.compositionIndicator.textContent = this.compositionText;
+                    this.compositionIndicator.style.display = 'block';
+                    this.compositionIndicator.style.left = this.cursor.x + 'px';
+                    this.compositionIndicator.style.top = (this.cursor.y + 20) + 'px';
+                }
+            }
+            
+            hideCompositionIndicator() {
+                this.compositionIndicator.style.display = 'none';
+            }
+            
+            insertText(text) {
+                const block = this.blocks[this.currentBlockIndex];
+                if (block.type !== 'text') return;
+                
+                block.content = block.content.substring(0, this.cursor.position) + 
+                               text + 
+                               block.content.substring(this.cursor.position);
+                
+                this.cursor.position += text.length;
+                this.calculateBlockDimensions(block);
+                this.updateCursorPosition();
+                this.updateStatusBar();
+                
+                // 更新文本样式片段
+                this.updateTextSpansForInsertion(block, this.cursor.position - text.length, text.length);
+            }
+            
+            deleteSelection() {
+                if (!this.selection.active) return;
+                
+                const block = this.blocks[this.selection.start.blockIndex];
+                const start = Math.min(this.selection.start.position, this.selection.end.position);
+                const end = Math.max(this.selection.start.position, this.selection.end.position);
+                
+                block.content = block.content.substring(0, start) + block.content.substring(end);
+                this.cursor.position = start;
+                this.clearSelection();
+                this.calculateBlockDimensions(block);
+                this.updateCursorPosition();
+                this.updateStatusBar();
+                
+                // 更新文本样式片段
+                this.updateTextSpansForDeletion(block, start, end);
+            }
+            
+            updateTextSpansForInsertion(block, position, length) {
+                // 简化实现：在插入位置拆分样式片段
+                const newSpans = [];
+                block.textSpans.forEach(span => {
+                    if (position >= span.start && position <= span.end) {
+                        // 在片段内插入，需要拆分
+                        newSpans.push({
+                            start: span.start,
+                            end: position,
+                            styles: { ...span.styles }
+                        });
+                        newSpans.push({
+                            start: position,
+                            end: position + length,
+                            styles: { ...span.styles }
+                        });
+                        newSpans.push({
+                            start: position + length,
+                            end: span.end + length,
+                            styles: { ...span.styles }
+                        });
+                    } else if (span.start >= position) {
+                        // 在插入点之后的片段，需要移动位置
+                        newSpans.push({
+                            start: span.start + length,
+                            end: span.end + length,
+                            styles: { ...span.styles }
+                        });
+                    } else {
+                        // 在插入点之前的片段，保持不变
+                        newSpans.push(span);
+                    }
+                });
+                block.textSpans = newSpans;
+            }
+            
+            updateTextSpansForDeletion(block, start, end) {
+                const length = end - start;
+                const newSpans = [];
+                block.textSpans.forEach(span => {
+                    if (span.end <= start) {
+                        // 在删除点之前的片段，保持不变
+                        newSpans.push(span);
+                    } else if (span.start >= end) {
+                        // 在删除点之后的片段，需要移动位置
+                        newSpans.push({
+                            start: span.start - length,
+                            end: span.end - length,
+                            styles: { ...span.styles }
+                        });
+                    } else {
+                        // 与删除区域重叠的片段，需要调整
+                        const newStart = Math.max(span.start, start);
+                        const newEnd = Math.min(span.end, end);
+                        
+                        if (span.start < start) {
+                            newSpans.push({
+                                start: span.start,
+                                end: start,
+                                styles: { ...span.styles }
+                            });
+                        }
+                        
+                        if (span.end > end) {
+                            newSpans.push({
+                                start: start,
+                                end: span.end - length,
+                                styles: { ...span.styles }
+                            });
                         }
                     }
-                },
-                emit(type, ...args) {
-                    
-                    for (const handler of all.get(type) || []) {
-                        handler(...args);
-                    }
-                    for (const handler of all.get('*') || []) {
-                        handler(type, ...args);
-                    }
-                },
-                clear() {
-                    all.clear();
-                }
-
-            };
-        }
-
-       
-      
-        class RichTextEditor{
-            constructor() {
-                this.mitt = Mitt();
-                Object.assign(this, this.mitt)
+                });
+                block.textSpans = newSpans;
             }
-            createMeasurementCanvas(){
-                if(this.measurementCanvas){
-                    return
-                }
-                const canvas=this.measurementCanvas = document.createElement('canvas')
-                this.measurementCtx=canvas.getContext('2d')
-                canvas.width=100
-                canvas.height=100
-
+            
+            applyStyleToSelection() {
+                if (!this.selection.active) return;
+                
+                const block = this.blocks[this.selection.start.blockIndex];
+                const start = Math.min(this.selection.start.position, this.selection.end.position);
+                const end = Math.max(this.selection.start.position, this.selection.end.position);
+                
+                const styles = {
+                    fontFamily: this.fontFamily,
+                    fontSize: this.fontSize,
+                    fontWeight: this.bold ? 'bold' : 'normal',
+                    fontStyle: this.italic ? 'italic' : 'normal',
+                    textDecoration: this.underline ? 'underline' : 'none',
+                    color: this.textColor
+                };
+                
+                this.splitTextSpan(block, start, end, styles);
+                this.render();
             }
-            getDefaultOptions(){
-                return {
-
-                }
-            }
-            init(options){
-                 this.createMeasurementCanvas()
-                this.ctx=options.ctx
-
-                // 当前样式
-                this.curStyle={
-                    fontSize:16,
-                    color:'#000',
-                    lineHeight:1.5,
-                    fontFamily:'Arial',
-
-
-                }
-                this.blocks=[]
-                // 边框信息
-                this.border={
-                    borderColor:'#000',
-                    borderWidth:1,
-                    borderStyle:'solid',
-                }
-                // 编辑基本样式
-                this.x=options.x??0
-                this.y=options.y??0
-                this.width=options.width??this.ctx.canvas.width
-                this.height=options.height??'auto'
-                this._scrollHeight=0
-                this.borderRadius=options.borderRadius??6
-                this.borderColor=options.borderColor??'#000'
-                this.borderWidth=options.borderWidth??1
-                this.borderStyle=options.borderStyle??'solid'
-                // 当前选中区域信息
-                this.selection={
-                    start:0,
-                    end:0
-                }
-                // 当前光标位置信息
-                this.cursor={
-                    visible:true,
-                    offset:0,
-                    line:0
-                }
-                // 文本输入框样式
-                const input=document.createElement('input')
-                input.style.position='absolute'
-                input.style.width='1px'
-                input.style.opacity=0
-                input.style.pointerEvents='none'
-                input.style.zIndex=-1
-                document.body.appendChild(input)
-                this.input=input
-                this.handleEvent=this.handleEvent.bind(this)
-                this.attachEvents()
-                this.registerCommands()
-            }
-            registerCommands(){
-                    this.on('bold',()=>{
+            
+            splitTextSpan(block, start, end, newStyles) {
+                const newSpans = [];
+                
+                block.textSpans.forEach(span => {
+                    if (span.end <= start || span.start >= end) {
+                        // 不在选中范围内，保持原样
+                        newSpans.push(span);
+                    } else {
+                        // 需要拆分的片段
+                        if (span.start < start) {
+                            newSpans.push({
+                                start: span.start,
+                                end: start,
+                                styles: { ...span.styles }
+                            });
+                        }
                         
-                    })
-                    this.on('undo',()=>{
-
-                    })
-                    this.on('redo',()=>{
-
-                    })
-            }
-            executeCommand(command, ...args){
-                this.emit(cmmand, ...args)
-            }
-            handleEvent(e){
-               this.emit(e.type,e)
-            }
-            attachEvents(){
-                this.ctx.canvas.addEventListener('mousedown', this)
-            }
-            detachEvents(){
-                this.ctx.canvas.removeEventListener('mousedown', this)
-            }
-
-            get computedHeight(){
-                if(this.height==='auto'){
-                    return this.scrollHeight
-                }else{
-                    return this.height
-                }
-            }
-            get scrollHeight(){
-                return this._scrollHeight||0
-
-            }
-            createPragraph(){
-                return {
-                    type:'pragraph',
-                    data:[],
-                    style:{
-                        ...this.curStyle
+                        // 选中部分应用新样式
+                        newSpans.push({
+                            start: Math.max(span.start, start),
+                            end: Math.min(span.end, end),
+                            styles: { ...span.styles, ...newStyles }
+                        });
+                        
+                        if (span.end > end) {
+                            newSpans.push({
+                                start: end,
+                                end: span.end,
+                                styles: { ...span.styles }
+                            });
+                        }
                     }
+                });
+                
+                block.textSpans = newSpans;
+            }
+            
+            clearSelection() {
+                this.selection.active = false;
+                this.selection.start = null;
+                this.selection.end = null;
+                this.updateSelectionInfo();
+                this.render();
+            }
+            
+            updateSelectionInfo() {
+                const selectionInfo = document.getElementById('selection-info');
+                if (this.selection.active) {
+                    const block = this.blocks[this.selection.start.blockIndex];
+                    const start = Math.min(this.selection.start.position, this.selection.end.position);
+                    const end = Math.max(this.selection.start.position, this.selection.end.position);
+                    const selectedText = block.content.substring(start, end);
+                    
+                    document.getElementById('selected-text').textContent = selectedText;
+                    document.getElementById('selection-start').textContent = start;
+                    document.getElementById('selection-end').textContent = end;
+                    document.getElementById('selection-count').textContent = end - start;
+                    selectionInfo.style.display = 'block';
+                } else {
+                    selectionInfo.style.display = 'none';
+                    document.getElementById('selection-count').textContent = '0';
                 }
             }
-    
-            measureCache=new Map()
-            measure(text,options={}){
-                const ctx=this.measurementCtx
-                const {fontSize=16,fontFamily='sans-serif',bold=false,textBaseline='middle'}=options
-                const key=JSON.stringify(options)+'_'+text
-                if(this.measureCache.has(key)){
-                    return this.measureCache.get(key)
+            
+            // 其他方法保持不变（applyFormatting, calculateBlockDimensions, getFontString, handleClick, handleKeyDown等）
+            // 由于代码长度限制，这里省略了部分重复的方法，实际实现中需要保留所有方法
+            
+            applyFormatting() {
+                const block = this.blocks[this.currentBlockIndex];
+                if (block.type === 'text') {
+                    // 应用样式到整个块
+                    block.textSpans = [{
+                        start: 0,
+                        end: block.content.length,
+                        styles: {
+                            fontFamily: this.fontFamily,
+                            fontSize: this.fontSize,
+                            fontWeight: this.bold ? 'bold' : 'normal',
+                            fontStyle: this.italic ? 'italic' : 'normal',
+                            textDecoration: this.underline ? 'underline' : 'none',
+                            color: this.textColor
+                        }
+                    }];
+                    block.styles.textAlign = this.align;
+                    
+                    this.calculateBlockDimensions(block);
                 }
                 
-                ctx.font=`${fontSize}px ${fontFamily}`
-                ctx.fontStretchWeight=bold?'bold':'normal'
-                ctx.textBaseline='top'
-                ctx.textAlign='left'
-                ctx.letterSpacing=0 // 字母间距
-                ctx.wordSpacing=0 // 单词间距
-                const measureInfo=ctx.measureText(text)
-                this.measureCache.set(key, measureInfo)
-                if(this.measureCache.size>20){
-                    this.measureCache.delete(this.measureCache.keys().next().value)
-                }
-                return measureInfo
+                this.updateStatusBar();
+                this.render();
             }
-            getFontHeight(text,options={}){
-                const measureInfo=this.measure(text, options)
-                return measureInfo.fontBoundingBoxAscent+measureInfo.fontBoundingBoxDescent
-            }
-            getPragraphInfo(pragraph){
-                 if(pragraph.data.length<=0){
-                    return pragraph.style.lineHeight*pragraph.style.fontSize
-                 }
-                 let maxHeight=0
-                 let width=0
-                 let lines=[]
-                 let text=''
-                 pragraph.data.forEach((d)=>{
-                        const measureInfo=this.measure(d.text, d.style||pragraph.style)
-                        const height= measureInfo.fontBoundingBoxAscent+measureInfo.fontBoundingBoxDescent
-                        width+=measureInfo.width
-                        maxHeight=Math.max(maxHeight,height)
-                        text+=d.text
+            
+            calculateBlockDimensions(block) {
+                if (block.type === 'text') {
+                    this.ctx.font = this.getFontString(block.styles);
+                    
+                    const lines = block.content.split('\n');
+                    let totalHeight = 0;
+                    let maxWidth = 0;
+                    
+                    lines.forEach(line => {
+                        const metrics = this.ctx.measureText(line);
+                        const lineWidth = metrics.width;
+                        const lineHeight = block.styles.fontSize * block.styles.lineHeight;
                         
-                })
-                if(width>0){
-                    lines.push({
-                        text,
-                        width,
-                        height:maxHeight
-                    })
+                        maxWidth = Math.max(maxWidth, lineWidth);
+                        totalHeight += lineHeight;
+                    });
+                    
+                    block.dimensions.width = maxWidth + 20;
+                    block.dimensions.height = totalHeight + 20;
+                    block.lines = lines.length;
                 }
-                return lines[0]
             }
-
-            updateEditState(){
-                this.lines=[]
-                let lastY=0
-                let height=0
-                let scrollHeight=0
-                this.blocks.forEach((block,i)=>{
-                    const texts=this.getPragraphInfo(block)
-                    block.width=info.width
-                    block.height=info.height
-                    lines.push({width:info.width,y0:lastY, y2:info.height+lastY,blockIndex:i})
-                    lastY+=info.height
-                    scrollHeight+=info.height
-                    this.lines.push(lines)
-                })
-                this._scrollHeight=scrollHeight
+            
+            getFontString(styles) {
+                return `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize}px ${styles.fontFamily}`;
             }
-            // 绘制边框
-            renderBorder(ctx){
-                ctx.save()
-                ctx.beginPath()
-                ctx.strokeStyle=this.borderColor
-                ctx.lineWidth=this.borderWidth
-                if(this.borderRadius>0){
-                    ctx.roundRect(this.x, this.y, this.width, this.computedHeight, this.borderRadius)
-                }else{
-                    ctx.rect(this.x, this.y, this.width, this.computedHeight)
+            
+            handleClick(e) {
+                this.hiddenInput.focus({preventScroll:true});
+            }
+            
+            handleKeyDown(e) {
+                const block = this.blocks[this.currentBlockIndex];
+                if (block.type !== 'text') return;
+                
+                // Shift选择支持
+                if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || 
+                                   e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    e.preventDefault();
+                    if (!this.selection.active) {
+                        this.selection.start = {
+                            blockIndex: this.currentBlockIndex,
+                            position: this.cursor.position
+                        };
+                        this.selection.active = true;
+                    }
                 }
-                ctx.stroke()
-                ctx.restore()
-
-            }
-            renderCursor(ctx){
-              
-                if(!this.cursor.visible){
-                    return
+                
+                switch(e.key) {
+                    case 'Backspace':
+                        e.preventDefault();
+                        if (this.selection.active) {
+                            this.deleteSelection();
+                        } else if (this.cursor.position > 0) {
+                            block.content = block.content.substring(0, this.cursor.position - 1) + 
+                                           block.content.substring(this.cursor.position);
+                            this.cursor.position--;
+                        }
+                        break;
+                        
+                    case 'Delete':
+                        e.preventDefault();
+                        if (this.selection.active) {
+                            this.deleteSelection();
+                        } else if (this.cursor.position < block.content.length) {
+                            block.content = block.content.substring(0, this.cursor.position) + 
+                                           block.content.substring(this.cursor.position + 1);
+                        }
+                        break;
+                        
+                    case 'Enter':
+                        e.preventDefault();
+                        if (this.selection.active) {
+                            this.deleteSelection();
+                        }
+                        block.content = block.content.substring(0, this.cursor.position) + 
+                                       '\n' + 
+                                       block.content.substring(this.cursor.position);
+                        this.cursor.position++;
+                        break;
+                        
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        if (this.cursor.position > 0) {
+                            this.cursor.position--;
+                        }
+                        if (!e.shiftKey) {
+                            this.clearSelection();
+                        }
+                        break;
+                        
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        if (this.cursor.position < block.content.length) {
+                            this.cursor.position++;
+                        }
+                        if (!e.shiftKey) {
+                            this.clearSelection();
+                        }
+                        break;
+                        
+                    case 'ArrowUp':
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        // 简化实现
+                        if (!e.shiftKey) {
+                            this.clearSelection();
+                        }
+                        break;
                 }
-
-                ctx.save()
-                ctx.beginPath()
-                ctx.strokeStyle=this.borderColor
-                ctx.lineWidth=1
-                ctx.restore()
-
+                
+                if (e.shiftKey && this.selection.active) {
+                    this.selection.end = {
+                        blockIndex: this.currentBlockIndex,
+                        position: this.cursor.position
+                    };
+                    this.updateSelectionInfo();
+                }
+                
+                this.calculateBlockDimensions(block);
+                this.updateCursorPosition();
+                this.updateStatusBar();
+                this.render();
             }
-            render(){
-                this.renderBorder(this.ctx)
+            
+            updateCursorPosition() {
+                const block = this.blocks[this.currentBlockIndex];
+                if (block.type !== 'text') return;
+                
+                this.ctx.font = this.getFontString(block.styles);
+                
+                const textBeforeCursor = block.content.substring(0, this.cursor.position);
+                const lines = textBeforeCursor.split('\n');
+                const currentLine = lines[lines.length - 1];
+                const lineIndex = lines.length - 1;
+                
+                const lineWidth = this.ctx.measureText(currentLine).width;
+                const lineStartX = this.getLineStartX(block, lineIndex);
+                
+                this.cursor.x = lineStartX + lineWidth;
+                this.cursor.y = block.position.y + 10 + lineIndex * block.styles.fontSize * block.styles.lineHeight;
+            }
+            
+            getLineStartX(block, lineIndex) {
+                const lines = block.content.split('\n');
+                const line = lines[lineIndex];
+                
+                switch(block.styles.textAlign) {
+                    case 'center':
+                        return block.position.x + (block.dimensions.width - this.ctx.measureText(line).width) / 2;
+                    case 'right':
+                        return block.position.x + block.dimensions.width - this.ctx.measureText(line).width - 10;
+                    default:
+                        return block.position.x + 10;
+                }
+            }
+            
+            render() {
+                // 清除画布
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 绘制所有块
+                this.blocks.forEach((block, index) => {
+                    this.drawBlock(block, index === this.currentBlockIndex);
+                });
+                
+                // 绘制选中区域
+                this.drawSelection();
+                
+                // 绘制光标
+                if (this.cursor.visible && this.blocks[this.currentBlockIndex].type === 'text') {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.cursor.x, this.cursor.y);
+                    this.ctx.lineTo(this.cursor.x, this.cursor.y + this.fontSize);
+                    this.ctx.strokeStyle = '#000000';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.stroke();
+                }
+                
+                // 绘制输入法组合文本
+                if (this.isComposing && this.compositionText) {
+                    this.ctx.fillStyle = 'rgba(52, 152, 219, 0.8)';
+                    this.ctx.fillRect(this.cursor.x, this.cursor.y + 20, 
+                                    this.ctx.measureText(this.compositionText).width + 10, 20);
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = '14px SimSun';
+                    this.ctx.fillText(this.compositionText, this.cursor.x + 5, this.cursor.y + 35);
+                }
+            }
+            
+            drawSelection() {
+                if (!this.selection.active) return;
+                
+                const block = this.blocks[this.selection.start.blockIndex];
+                const start = Math.min(this.selection.start.position, this.selection.end.position);
+                const end = Math.max(this.selection.start.position, this.selection.end.position);
+                
+                this.ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
+                
+                const lines = block.content.split('\n');
+                let currentPos = 0;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const lineStart = currentPos;
+                    const lineEnd = currentPos + line.length;
+                    
+                    // 检查这一行是否有选中部分
+                    if (end > lineStart && start < lineEnd) {
+                        const lineStartX = this.getLineStartX(block, i);
+                        const lineY = block.position.y + 10 + i * block.styles.fontSize * block.styles.lineHeight;
+                        
+                        // 计算选中部分在这一行的起始和结束位置
+                        const selectionStartInLine = Math.max(0, start - lineStart);
+                        const selectionEndInLine = Math.min(line.length, end - lineStart);
+                        
+                        if (selectionStartInLine < selectionEndInLine) {
+                            const textBeforeSelection = line.substring(0, selectionStartInLine);
+                            const selectedText = line.substring(selectionStartInLine, selectionEndInLine);
+                            
+                            const selectionStartX = lineStartX + this.ctx.measureText(textBeforeSelection).width;
+                            const selectionWidth = this.ctx.measureText(selectedText).width;
+                            
+                            this.ctx.fillRect(
+                                selectionStartX,
+                                lineY,
+                                selectionWidth,
+                                block.styles.fontSize * block.styles.lineHeight
+                            );
+                        }
+                    }
+                    
+                    currentPos += line.length + 1; // +1 for newline
+                }
+            }
+            
+            drawBlock(block, isSelected) {
+                // 绘制块背景
+                this.ctx.fillStyle = isSelected ? '#e8f4fd' : '#f8f9fa';
+                this.ctx.strokeStyle = isSelected ? '#3498db' : '#e0e0e0';
+                this.ctx.lineWidth = isSelected ? 2 : 1;
+                
+                this.ctx.beginPath();
+                this.ctx.rect(
+                    block.position.x, 
+                    block.position.y, 
+                    block.dimensions.width, 
+                    block.dimensions.height
+                );
+                this.ctx.fill();
+                this.ctx.stroke();
+                
+                // 绘制块内容
+                if (block.type === 'text') {
+                    this.drawTextBlock(block);
+                }
+            }
+            
+            drawTextBlock(block) {
+                const lines = block.content.split('\n');
+                const lineHeight = block.styles.fontSize * block.styles.lineHeight;
+                
+                lines.forEach((line, lineIndex) => {
+                    let currentX = this.getLineStartX(block, lineIndex);
+                    const lineY = block.position.y + 10 + lineIndex * lineHeight;
+                    let currentPos = 0;
+                    
+                    // 计算这一行的全局起始位置
+                    let globalLineStart = 0;
+                    for (let i = 0; i < lineIndex; i++) {
+                        globalLineStart += lines[i].length + 1;
+                    }
+                    
+                    // 按样式片段绘制文本
+                    block.textSpans.forEach(span => {
+                        // 检查这个片段是否在这一行有内容
+                        const spanStartInLine = Math.max(0, span.start - globalLineStart);
+                        const spanEndInLine = Math.min(line.length, span.end - globalLineStart);
+                        
+                        if (spanStartInLine < spanEndInLine) {
+                            const fragment = line.substring(spanStartInLine, spanEndInLine);
+                            
+                            // 设置片段样式
+                            this.ctx.font = this.getFontString(span.styles);
+                            this.ctx.fillStyle = span.styles.color;
+                            this.ctx.textAlign = 'left';
+                            
+                            // 计算片段位置
+                            const textBeforeFragment = line.substring(0, spanStartInLine);
+                            const fragmentX = currentX + this.ctx.measureText(textBeforeFragment).width;
+                            
+                            // 绘制文本片段
+                            this.ctx.fillText(fragment, fragmentX, lineY);
+                            
+                            // 绘制下划线
+                            if (span.styles.textDecoration === 'underline') {
+                                const fragmentWidth = this.ctx.measureText(fragment).width;
+                                this.ctx.beginPath();
+                                this.ctx.moveTo(fragmentX, lineY + block.styles.fontSize + 2);
+                                this.ctx.lineTo(fragmentX + fragmentWidth, lineY + block.styles.fontSize + 2);
+                                this.ctx.strokeStyle = span.styles.color;
+                                this.ctx.lineWidth = 1;
+                                this.ctx.stroke();
+                            }
+                        }
+                    });
+                });
+            }
+            
+            updateStatusBar() {
+                const block = this.blocks[this.currentBlockIndex];
+                const lines = block.type === 'text' ? block.content.split('\n').length : block.lines;
+                
+                document.getElementById('line-count').textContent = lines;
+                document.getElementById('col-count').textContent = this.cursor.position;
+                document.getElementById('block-count').textContent = this.blocks.length;
+                document.getElementById('block-type').textContent = this.getBlockTypeName(block.type);
+                
+                // 更新块信息
+                document.getElementById('current-block-info').textContent = 
+                    `类型: ${this.getBlockTypeName(block.type)} | 行数: ${block.lines} | 位置: (${block.position.x}, ${block.position.y}) | 尺寸: ${block.dimensions.width}×${block.dimensions.height}px`;
+            }
+            
+            getBlockTypeName(type) {
+                const typeMap = {
+                    'text': '文本',
+                    'image': '图片',
+                    'table': '表格'
+                };
+                return typeMap[type] || type;
             }
         }
         
-
-        function init(){
-            var canvas = document.getElementById('canvas');
-            canvas.width=500
-            canvas.height=500
-            var ctx = canvas.getContext('2d');
-
-            const rich=new RichTextEditor()
-            rich.init({
-                ctx:ctx
-            })
-            rich.render()
-
-        }
-        init()
-
+        // 初始化编辑器
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = new CanvasTextEditor('editor-canvas');
+        });
     </script>
 </body>
 </html>

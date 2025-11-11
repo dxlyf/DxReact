@@ -146,3 +146,6 @@
 [submodule "packages/gl-matrix"]
 	path = packages/gl-matrix
 	url = git@github.com:toji/gl-matrix.git
+[submodule "packages/lexical"]
+	path = packages/lexical
+	url = git@github.com:facebook/lexical.git
