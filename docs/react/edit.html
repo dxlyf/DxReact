@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        function Mitt(all=new Map()){
+            return {
+                on(type, handler) {
+                    let handlers = all.get(type);
+                    if (!handlers) {
+                        handlers = new Set();
+                        all.set(type, handlers);
+                    }
+                    handlers.add(handler);
+                },
+                off(type, handler) {
+                    const handlers = all.get(type);
+                    if (handlers) {
+                        if(handler){
+                            handlers.delete(handler);
+                        }else{
+                            handlers.clear()
+                        }
+                    }
+                },
+                emit(type, ...args) {
+                    
+                    for (const handler of all.get(type) || []) {
+                        handler(...args);
+                    }
+                    for (const handler of all.get('*') || []) {
+                        handler(type, ...args);
+                    }
+                },
+                clear() {
+                    all.clear();
+                }
+
+            };
+        }
+
+       
+      
+        class RichTextEditor{
+            constructor() {
+                this.mitt = Mitt();
+                Object.assign(this, this.mitt)
+            }
+            createMeasurementCanvas(){
+                if(this.measurementCanvas){
+                    return
+                }
+                const canvas=this.measurementCanvas = document.createElement('canvas')
+                this.measurementCtx=canvas.getContext('2d')
+                canvas.width=100
+                canvas.height=100
+
+            }
+            getDefaultOptions(){
+                return {
+
+                }
+            }
+            init(options){
+                 this.createMeasurementCanvas()
+                this.ctx=options.ctx
+
+                // 当前样式
+                this.curStyle={
+                    fontSize:16,
+                    color:'#000',
+                    lineHeight:1.5,
+                    fontFamily:'Arial',
+
+
+                }
+                this.blocks=[]
+                // 边框信息
+                this.border={
+                    borderColor:'#000',
+                    borderWidth:1,
+                    borderStyle:'solid',
+                }
+                // 编辑基本样式
+                this.x=options.x??0
+                this.y=options.y??0
+                this.width=options.width??this.ctx.canvas.width
+                this.height=options.height??'auto'
+                this._scrollHeight=0
+                this.borderRadius=options.borderRadius??6
+                this.borderColor=options.borderColor??'#000'
+                this.borderWidth=options.borderWidth??1
+                this.borderStyle=options.borderStyle??'solid'
+                // 当前选中区域信息
+                this.selection={
+                    start:0,
+                    end:0
+                }
+                // 当前光标位置信息
+                this.cursor={
+                    visible:true,
+                    offset:0,
+                    line:0
+                }
+                // 文本输入框样式
+                const input=document.createElement('input')
+                input.style.position='absolute'
+                input.style.width='1px'
+                input.style.opacity=0
+                input.style.pointerEvents='none'
+                input.style.zIndex=-1
+                document.body.appendChild(input)
+                this.input=input
+                this.handleEvent=this.handleEvent.bind(this)
+                this.attachEvents()
+                this.registerCommands()
+            }
+            registerCommands(){
+                    this.on('bold',()=>{
+                        
+                    })
+                    this.on('undo',()=>{
+
+                    })
+                    this.on('redo',()=>{
+
+                    })
+            }
+            executeCommand(command, ...args){
+                this.emit(cmmand, ...args)
+            }
+            handleEvent(e){
+               this.emit(e.type,e)
+            }
+            attachEvents(){
+                this.ctx.canvas.addEventListener('mousedown', this)
+            }
+            detachEvents(){
+                this.ctx.canvas.removeEventListener('mousedown', this)
+            }
+
+            get computedHeight(){
+                if(this.height==='auto'){
+                    return this.scrollHeight
+                }else{
+                    return this.height
+                }
+            }
+            get scrollHeight(){
+                return this._scrollHeight||0
+
+            }
+            createPragraph(){
+                return {
+                    type:'pragraph',
+                    data:[],
+                    style:{
+                        ...this.curStyle
+                    }
+                }
+            }
+    
+            measureCache=new Map()
+            measure(text,options={}){
+                const ctx=this.measurementCtx
+                const {fontSize=16,fontFamily='sans-serif',bold=false,textBaseline='middle'}=options
+                const key=JSON.stringify(options)+'_'+text
+                if(this.measureCache.has(key)){
+                    return this.measureCache.get(key)
+                }
+                
+                ctx.font=`${fontSize}px ${fontFamily}`
+                ctx.fontStretchWeight=bold?'bold':'normal'
+                ctx.textBaseline='top'
+                ctx.textAlign='left'
+                ctx.letterSpacing=0 // 字母间距
+                ctx.wordSpacing=0 // 单词间距
+                const measureInfo=ctx.measureText(text)
+                this.measureCache.set(key, measureInfo)
+                if(this.measureCache.size>20){
+                    this.measureCache.delete(this.measureCache.keys().next().value)
+                }
+                return measureInfo
+            }
+            getFontHeight(text,options={}){
+                const measureInfo=this.measure(text, options)
+                return measureInfo.fontBoundingBoxAscent+measureInfo.fontBoundingBoxDescent
+            }
+            getPragraphInfo(pragraph){
+                 if(pragraph.data.length<=0){
+                    return pragraph.style.lineHeight*pragraph.style.fontSize
+                 }
+                 let maxHeight=0
+                 let width=0
+                 let lines=[]
+                 let text=''
+                 pragraph.data.forEach((d)=>{
+                        const measureInfo=this.measure(d.text, d.style||pragraph.style)
+                        const height= measureInfo.fontBoundingBoxAscent+measureInfo.fontBoundingBoxDescent
+                        width+=measureInfo.width
+                        maxHeight=Math.max(maxHeight,height)
+                        text+=d.text
+                        
+                })
+                if(width>0){
+                    lines.push({
+                        text,
+                        width,
+                        height:maxHeight
+                    })
+                }
+                return lines[0]
+            }
+
+            updateEditState(){
+                this.lines=[]
+                let lastY=0
+                let height=0
+                let scrollHeight=0
+                this.blocks.forEach((block,i)=>{
+                    const texts=this.getPragraphInfo(block)
+                    block.width=info.width
+                    block.height=info.height
+                    lines.push({width:info.width,y0:lastY, y2:info.height+lastY,blockIndex:i})
+                    lastY+=info.height
+                    scrollHeight+=info.height
+                    this.lines.push(lines)
+                })
+                this._scrollHeight=scrollHeight
+            }
+            // 绘制边框
+            renderBorder(ctx){
+                ctx.save()
+                ctx.beginPath()
+                ctx.strokeStyle=this.borderColor
+                ctx.lineWidth=this.borderWidth
+                if(this.borderRadius>0){
+                    ctx.roundRect(this.x, this.y, this.width, this.computedHeight, this.borderRadius)
+                }else{
+                    ctx.rect(this.x, this.y, this.width, this.computedHeight)
+                }
+                ctx.stroke()
+                ctx.restore()
+
+            }
+            renderCursor(ctx){
+              
+                if(!this.cursor.visible){
+                    return
+                }
+
+                ctx.save()
+                ctx.beginPath()
+                ctx.strokeStyle=this.borderColor
+                ctx.lineWidth=1
+                ctx.restore()
+
+            }
+            render(){
+                this.renderBorder(this.ctx)
+            }
+        }
+        
+
+        function init(){
+            var canvas = document.getElementById('canvas');
+            canvas.width=500
+            canvas.height=500
+            var ctx = canvas.getContext('2d');
+
+            const rich=new RichTextEditor()
+            rich.init({
+                ctx:ctx
+            })
+            rich.render()
+
+        }
+        init()
+
+    </script>
+</body>
+</html>
