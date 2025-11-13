@@ -1,23 +1,39 @@
-import {ProLayout,getMenuData} from '@ant-design/pro-components'
-import { useMemo } from 'react'
-import {routes} from 'src/routes/routes'
-import {NavLink, useOutlet,Outlet} from 'react-router-dom'
+import { ProLayout, getMenuData} from '@ant-design/pro-components'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { routes } from 'src/routes/routes'
+import { NavLink, useOutlet, Outlet, useLocation, useMatch } from 'react-router-dom'
+import { Tabs } from 'antd'
+import PageNavTabs from 'src/components/NavPageTabs'
 
-const C=()=>{
-     const outlet=useOutlet()
-     return outlet
-}
-export const AdminLayout=()=>{
-    const outlet=useOutlet()
-    const menuData=useMemo(()=>getMenuData(routes),[routes])
-    return <ProLayout title='Demo'
-     menuDataRender={()=>menuData.menuData}
-     menuItemRender={(item,defaultDom)=>{
+export const AdminLayout = () => {
+    const { pathname } = useLocation()
+    const menuData = useMemo(() => getMenuData(routes), [routes])
+    const [menuState, setMenuState] = useState(() => {
+        const state: { menuKeys: string[], navItems: any[] } = {
+            menuKeys: [],
+            navItems: []
+        }
+        state.menuKeys.push(pathname)
+        return state
+    })
+    const match = useMatch(location.pathname)
+
+    useEffect(() => {
+
+    }, [])
+
+
+    return <ProLayout location={location} title='Demo'
+        menuDataRender={() => menuData.menuData}
+        menuItemRender={(item, defaultDom) => {
+            if (!item.path) {
+                return defaultDom
+            }
             return <NavLink to={item.path!}>
                 {defaultDom}
             </NavLink>
-     }}
-     >
-       {outlet}
+        }}
+    >
+        <PageNavTabs></PageNavTabs>
     </ProLayout>
 } 

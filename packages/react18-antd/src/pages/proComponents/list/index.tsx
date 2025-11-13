@@ -101,7 +101,7 @@ export default () => {
         //     search:true
         // },
         request: useTableRequest(async (params, sorter, filter) => {
-            console.log('params', params, 'sorter', sorter, 'filter', filter)
+          //  console.log('params', params, 'sorter', sorter, 'filter', filter)
             await (new Promise((resolve) => setTimeout(resolve, 2000)))
             const ret = await getList({
                 ...params
@@ -137,7 +137,7 @@ export default () => {
             }]
         }, [])
     })
-    console.log('tableProps',tableProps.columns)
+
     return <>
         <div className='bg-white'>
             <SchemaForm {...searchFormProps}></SchemaForm>

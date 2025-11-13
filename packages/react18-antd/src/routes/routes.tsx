@@ -34,6 +34,22 @@ const routes: RouteObjectAndMenu[] = [
 
                 }]
             },
+             {
+                path:'chart',
+                name:'图表',
+                children:[{
+                    path:'echart',
+                    name: 'echart',
+                    children:[
+                        {
+                            name:'柱状图',
+                            path:'bar',
+                            Component: React.lazy(() => import('src/pages/chart/echart/bar'))
+                        }
+                    ]
+
+                }]
+            },
             {
                 path: 'proComponents',
                 name: 'ProComponents',
@@ -84,6 +100,11 @@ const routes: RouteObjectAndMenu[] = [
                         name: '常用列表页',
                         Component: React.lazy(() => import('src/pages/antd/list'))
                     },
+                      {
+                        path: 'roleList',
+                        name: '角角列表',
+                        Component: React.lazy(() => import('src/pages/antd/roleList'))
+                    },
                     {
                         path: 'alledit',
                         name: '编辑页',
@@ -120,6 +141,11 @@ const routes: RouteObjectAndMenu[] = [
                             path: 'edit6',
                             name: 'Form通用组件',
                             Component: React.lazy(() => import('src/pages/antd/edit6'))
+
+                        }, {
+                            path: 'edit7',
+                            name: '多表单联动',
+                            Component: React.lazy(() => import('src/pages/antd/edit7'))
 
                         }
 

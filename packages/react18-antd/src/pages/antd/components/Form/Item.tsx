@@ -1,7 +1,9 @@
 import { Form, Input, Select, InputNumber, Checkbox, DatePicker, Cascader, message, Popover } from 'antd'
-import type { GetProps, GetProp, GetRef, FormInstance } from 'antd'
+import type { GetProps, GetProp, GetRef, FormInstance, Table } from 'antd'
 import React, { createContext, useContext, useMemo, useLayoutEffect, useState } from 'react'
 import ProUpload from '../Upload'
+import ProSelect from '../Select'
+import TableEdit from '../TableEdit'
 const { Item, useForm, useWatch, useFormInstance } = Form
 type FormItemProps = GetProps<typeof Item>
 
@@ -15,13 +17,14 @@ type ProFormFieldProps<P> = {
 } & P
 //type FieldComponentProps<T extends React.ComponentType<any>>=T extends React.ComponentType<infer P>?P:never
 //type Props=FieldComponentProps<typeof PPP>
-type A = typeof defaultFormFieldMap
-type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
+
+export type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
     component?: React.ComponentType
     render?: (props: P, form: FormInstance) => React.ReactNode
+    renderFormItem?: (props: FormItemProps,dom:React.ReactNode, form: FormInstance) => React.ReactElement
     validateTipType?: 'normal' | 'popover'
     hideLabel?: boolean
-    valueType?: 'text' | 'select' | 'integer' | 'decimal' | 'date' | 'dateRange' | string
+    valueType?: FormFieldValueType
     fieldProps?: P | ((form: FormInstance) => P)
     formItemProps?: ((form: FormInstance) => P)
     children?: (info: {
@@ -30,12 +33,9 @@ type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
         renderItem: (props: any) => React.ReactNode,
         formItemProps: any,
         fieldProps: any
-    }) => React.ReactNode
+    },dom:React.ReactNode) => React.ReactNode
 }
-type FormFieldConfigItem = {
-    component: React.Component
 
-}
 type FormFieldMapType = Record<string, {
     // Component:React.ComponentType
     message: string
@@ -43,7 +43,8 @@ type FormFieldMapType = Record<string, {
     transformFormItemProps?:(props:FormItemProps)=>FormItemProps
     render: (props: any) => React.ReactNode
 }>
-const defaultFormFieldMap: FormFieldMapType = {
+type FormFieldValueType=keyof typeof defaultFormFieldMap
+const defaultFormFieldMap = {
     text: {
         message: '请填写${label}',
         render(props: GetProps<typeof Input>) {
@@ -55,6 +56,12 @@ const defaultFormFieldMap: FormFieldMapType = {
         message: '请选择${label}',
         render(props: GetProps<typeof Select>) {
             return <Select  {...props}></Select>
+        }
+    },
+     proSelect: {
+        message: '请选择${label}',
+        render(props: GetProps<typeof ProSelect>) {
+            return <ProSelect  {...props}></ProSelect>
         }
     },
     integer: {
@@ -97,11 +104,27 @@ const defaultFormFieldMap: FormFieldMapType = {
             return {
                 valuePropName:'uploadList',
                 ...props,
+                ...(required)
                 
             }
         },
         render(props: GetProps<typeof ProUpload>) {
             return <ProUpload {...props}></ProUpload>
+        }
+    },
+    editable:{
+        message: '请添加${label}',
+        transformFormItemProps(props){
+            const rules=(props.rules??[])
+            const required=props.required||rules.some(d=>!d.required)
+            return {
+                valuePropName:'dataSource',
+                ...props,
+                
+            }
+        },
+        render(props:GetProps<typeof TableEdit>){
+            return <TableEdit {...props}></TableEdit>
         }
     }
 } as const
@@ -113,8 +136,8 @@ const replaceExpr = (str: string, data: any = {}) => {
     })
 }
 //GenericFormItem
-const FormFieldMapContext = createContext<FormFieldMapType>(defaultFormFieldMap)
-const ProFormField = <P = any>(props: ProFormFieldProps<P>) => {
+const FormFieldMapContext = createContext<FormFieldMapType>((defaultFormFieldMap as unknown) as any)
+const ProFormField =<P=any>(props: ProFormFieldProps<P>) => {
     const { valueType: propValueType, placeholder: propsPlaceholder, render, ...restProps } = props
     const fieldMap = useContext(FormFieldMapContext)
     const valueType = useMemo(() => propValueType || 'text', [propValueType])
@@ -146,7 +169,7 @@ const ProFormField = <P = any>(props: ProFormFieldProps<P>) => {
 }
 
 const ProFormItemField = (props: ProFormItemFieldProps) => {
-    const { label, children, render, required, validateTipType = 'normal', rules, shouldUpdate, dependencies, hideLabel = false, component: FormItem = validateTipType == 'normal' ? Form.Item : PopoverFormItem, valueType: propValueType, formItemProps, fieldProps = {}, ...restFormItemProps } = props
+    const { label, children, render:propRender,renderFormItem:propRenderFormItem, required, validateTipType = 'normal', rules, shouldUpdate, dependencies, hideLabel = false, component: FormItem = validateTipType == 'normal' ? Form.Item : PopoverFormItem, valueType: propValueType, formItemProps, fieldProps = {}, ...restFormItemProps } = props
     const form = Form.useFormInstance()
     const { placeholder, ...restFieldProps } = typeof fieldProps === 'function' ? fieldProps(form) : fieldProps as any
     const fieldMap = useContext(FormFieldMapContext)
@@ -198,12 +221,13 @@ const ProFormItemField = (props: ProFormItemFieldProps) => {
         ...(formItemProps && typeof formItemProps === 'function' ? formItemProps(form) : {})
     }
     const renderFormItem = (formItemProps: FormItemProps, dom: React.ReactNode) => {
-        return <FormItem {...formItemProps}>
+        const itemDom = propRenderFormItem ? propRenderFormItem(formItemProps,dom, form) :  <FormItem {...formItemProps}>
             {dom}
         </FormItem>
+        return itemDom
     }
     const renderItem = (props: FormItemProps) => {
-        const fieldDom = render ? render(props, form) : fieldConfig.render(props)
+        const fieldDom = propRender ? propRender(props, form) : fieldConfig.render(props)
         return fieldDom
     }
     const renderChildren = (form: FormInstance) => {
@@ -214,10 +238,11 @@ const ProFormItemField = (props: ProFormItemFieldProps) => {
             renderFormItem: renderFormItem,
             renderItem: renderItem
         }
+        const dom=renderFormItem(info.formItemProps, renderItem(info.fieldProps))
         if (children && typeof children === 'function') {
-            return children(info)
+            return children(info,dom)
         }
-        return renderFormItem(info.formItemProps, renderItem(info.fieldProps))
+        return dom
     }
     if (shouldUpdate) {
         return <Form.Item noStyle shouldUpdate={shouldUpdate}>
@@ -269,6 +294,7 @@ const PopoverFormItem = (props: any) => {
         <PopoverItemInner {...(children?.props ?? {})}>{children}</PopoverItemInner>
     </Form.Item>
 }
+
 export {
     ProFormField,
     ProFormItemField,

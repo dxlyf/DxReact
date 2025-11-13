@@ -1,9 +1,9 @@
-import {createHashRouter} from 'react-router-dom'
+import {createHashRouter,createBrowserRouter} from 'react-router-dom'
 import type {RouteObject} from 'react-router-dom'
 import {routes} from './routes'
 
 
-const router=createHashRouter(routes as any,{})
+const router=createBrowserRouter(routes as any,{})
 
 export {
     router
