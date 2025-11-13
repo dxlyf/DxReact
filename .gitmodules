@@ -134,3 +134,6 @@
 [submodule "packages/ant-design-pro"]
 	path = packages/ant-design-pro
 	url = git@github.com:ant-design/ant-design-pro.git
+[submodule "packages/tldraw"]
+	path = packages/tldraw
+	url = git@github.com:tldraw/tldraw.git
