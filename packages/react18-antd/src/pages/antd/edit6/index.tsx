@@ -1,12 +1,12 @@
 import {Tabs,Collapse, Form, Input, Button, Row, Col} from 'antd'
-import type {GetProp,GetProps,GetRef} from 'antd'
+import type {DatePicker, GetProp,GetProps,GetRef} from 'antd'
 import { debounce } from 'lodash-es'
 import { useCallback, useEffect, useMemo } from 'react'
 import {chunk} from 'src/utils/utils'
-import {ProFormItemField} from '../components/Form/Item'
+import {ProFormItemField, type ProFormItemFieldProps} from '../components/Form/Item'
 import ProSelect from '../components/Select'
  import {request} from 'src/utils/request'
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs} from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { info } from 'console'
  dayjs.extend(utc)
@@ -19,6 +19,31 @@ const Demo=()=>{
 
     const [form]=Form.useForm()
 
+    const buildMonthTable=(month:Dayjs)=>{
+        let result:any[]=[]
+        if(month){
+            const days=month.daysInMonth()
+          //  const obj=month.toObject()
+            const start=month.startOf('month')
+            const end=month.endOf('month')
+            const diffDays=end.diff(start,'day')+1
+            for(let i=0,cur=start.clone();i<diffDays;i++){
+                result.push({
+                    month:cur.format('YYYY年MM月'),
+                    date:cur.format('YYYY-MM-DD'),
+                    count:undefined
+                })
+                cur=cur.add(1,'day')
+            }
+            form.setFieldsValue({
+                monthTable:result
+            })
+        }else{
+              form.setFieldsValue({
+                monthTable:[]
+            })
+        }
+    }
     const columns=chunk([{
         label:'用户',
         name:'user',
@@ -128,11 +153,47 @@ const Demo=()=>{
                 <Input value={utfDate?.utc().toISOString()}></Input>
             </Form.Item>
         }
-    }],4).map((d,i)=>{
+    },{
+        label:'月份',
+        name:'month',
+        valueType:'date',
+        fieldProps:{
+            format:'YYYY年MM月',
+            picker:'month',
+            onChange(value){
+                       buildMonthTable(value)
+            }
+        } as GetProps<typeof DatePicker>
+    },{
+        label:'月份统计表格',
+        name:'monthTable',
+        valueType:'editable',
+        fieldProps:{
+            name:'monthTable',
+            columns:[{
+                title:'月份',
+                dataIndex:'month',
+                width:200,
+            },{
+                title:'日期',
+                dataIndex:'date',
+                width:200
+            },{
+                title:'人数',
+                dataIndex:'count',
+                editable:true,
+                valueType:'integer'
+            }]
+        },
+        colProps:{
+            span:24
+        }
+    }] as ProFormItemFieldProps[],4).map((d,i)=>{
         return <Row key={i} gutter={16}>
             {d.map((col:any,k)=>{
-                return <Col span={12} key={k}>
-                    <ProFormItemField  {...col}></ProFormItemField>
+                const {colProps={},...restProps}=col
+                return <Col span={12} {...colProps} key={k}>
+                    <ProFormItemField  {...restProps}></ProFormItemField>
                 </Col>
             })}
         </Row>
@@ -188,8 +249,9 @@ const Demo=()=>{
     return <>
 
         <Tabs items={tabItems} defaultActiveKey={tabItems[0].key}  style={{ background: '#fff' }}></Tabs>
-        <Button onClick={()=>{
-            form.validateFields()
+        <Button onClick={async ()=>{
+            const values=await form.validateFields()
+            console.log('values',values)
         }}>提交</Button>
   
     </>

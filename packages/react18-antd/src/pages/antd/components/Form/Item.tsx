@@ -1,8 +1,9 @@
 import { Form, Input, Select, InputNumber, Checkbox, DatePicker, Cascader, message, Popover } from 'antd'
-import type { GetProps, GetProp, GetRef, FormInstance } from 'antd'
+import type { GetProps, GetProp, GetRef, FormInstance, Table } from 'antd'
 import React, { createContext, useContext, useMemo, useLayoutEffect, useState } from 'react'
 import ProUpload from '../Upload'
 import ProSelect from '../Select'
+import TableEdit from '../TableEdit'
 const { Item, useForm, useWatch, useFormInstance } = Form
 type FormItemProps = GetProps<typeof Item>
 
@@ -17,9 +18,10 @@ type ProFormFieldProps<P> = {
 //type FieldComponentProps<T extends React.ComponentType<any>>=T extends React.ComponentType<infer P>?P:never
 //type Props=FieldComponentProps<typeof PPP>
 
-type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
+export type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
     component?: React.ComponentType
     render?: (props: P, form: FormInstance) => React.ReactNode
+    renderFormItem?: (props: FormItemProps,dom:React.ReactNode, form: FormInstance) => React.ReactElement
     validateTipType?: 'normal' | 'popover'
     hideLabel?: boolean
     valueType?: FormFieldValueType
@@ -33,10 +35,7 @@ type ProFormItemFieldProps<P = any> = Omit<FormItemProps, 'children'> & {
         fieldProps: any
     },dom:React.ReactNode) => React.ReactNode
 }
-type FormFieldConfigItem = {
-    component: React.Component
 
-}
 type FormFieldMapType = Record<string, {
     // Component:React.ComponentType
     message: string
@@ -105,11 +104,27 @@ const defaultFormFieldMap = {
             return {
                 valuePropName:'uploadList',
                 ...props,
+                ...(required)
                 
             }
         },
         render(props: GetProps<typeof ProUpload>) {
             return <ProUpload {...props}></ProUpload>
+        }
+    },
+    editable:{
+        message: '请添加${label}',
+        transformFormItemProps(props){
+            const rules=(props.rules??[])
+            const required=props.required||rules.some(d=>!d.required)
+            return {
+                valuePropName:'dataSource',
+                ...props,
+                
+            }
+        },
+        render(props:GetProps<typeof TableEdit>){
+            return <TableEdit {...props}></TableEdit>
         }
     }
 } as const
@@ -154,7 +169,7 @@ const ProFormField =<P=any>(props: ProFormFieldProps<P>) => {
 }
 
 const ProFormItemField = (props: ProFormItemFieldProps) => {
-    const { label, children, render, required, validateTipType = 'normal', rules, shouldUpdate, dependencies, hideLabel = false, component: FormItem = validateTipType == 'normal' ? Form.Item : PopoverFormItem, valueType: propValueType, formItemProps, fieldProps = {}, ...restFormItemProps } = props
+    const { label, children, render:propRender,renderFormItem:propRenderFormItem, required, validateTipType = 'normal', rules, shouldUpdate, dependencies, hideLabel = false, component: FormItem = validateTipType == 'normal' ? Form.Item : PopoverFormItem, valueType: propValueType, formItemProps, fieldProps = {}, ...restFormItemProps } = props
     const form = Form.useFormInstance()
     const { placeholder, ...restFieldProps } = typeof fieldProps === 'function' ? fieldProps(form) : fieldProps as any
     const fieldMap = useContext(FormFieldMapContext)
@@ -206,12 +221,13 @@ const ProFormItemField = (props: ProFormItemFieldProps) => {
         ...(formItemProps && typeof formItemProps === 'function' ? formItemProps(form) : {})
     }
     const renderFormItem = (formItemProps: FormItemProps, dom: React.ReactNode) => {
-        return <FormItem {...formItemProps}>
+        const itemDom = propRenderFormItem ? propRenderFormItem(formItemProps,dom, form) :  <FormItem {...formItemProps}>
             {dom}
         </FormItem>
+        return itemDom
     }
     const renderItem = (props: FormItemProps) => {
-        const fieldDom = render ? render(props, form) : fieldConfig.render(props)
+        const fieldDom = propRender ? propRender(props, form) : fieldConfig.render(props)
         return fieldDom
     }
     const renderChildren = (form: FormInstance) => {

@@ -26,7 +26,7 @@ type TableEditColumnType = Omit<TableColumnType, 'children'> & {
     fieldProps?:any|((record:any,index:number)=>any),
     formItemProps?:GetProps<typeof Form.Item>|((record:any,index:number)=>GetProps<typeof Form.Item>),
 }
-type UseTableEditProps = Omit<TableProps, 'columns' | 'onChange'> & {
+export type UseTableEditProps = Omit<TableProps, 'columns' | 'onChange'> & {
     fieldComponents:Record<string,React.ComponentType>
     name?:DataIndex
     columns?: TableEditColumnType[]
@@ -52,7 +52,8 @@ const getNamePath = (dataIndex?: DataIndex) => {
 const FormFieldComponentsMap={
     text:Input,
     integer:InputNumber,
-    date:DatePicker
+    date:DatePicker,
+    select:Select
 }
 
 const useTableEdit = (props: UseTableEditProps) => {
@@ -174,7 +175,7 @@ const useTableEdit = (props: UseTableEditProps) => {
                 setSelectedRows(selectedRows)
             },  
             ...rowSelection,
-        }:undefined,
+        }:rowSelection,
         rowKey: tableRowKey,
         dataSource: mergeDataSource,
         columns: mergeColumns,
@@ -215,7 +216,7 @@ const useTableEdit = (props: UseTableEditProps) => {
         isEditing
     }), [mergeDataSource,isEditing,setInnerDataSource,getRowKey, dataSource, editRowKeys,setEditRowKeys,selectedRowKeys,selectedRows,setSelectedRows])
 
-    return [tableProps, editableInstance] as [TableProps,typeof editableInstance]
+    return [tableProps, editableInstance] as const
 }
 export {
     useTableEdit
