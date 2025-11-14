@@ -1,3 +1,4 @@
+import { faIRIntl } from '@ant-design/pro-components'
 import {init,dataTool,registerTheme,registerLoading} from 'echarts'
 import type {ChartView,SeriesModel,BarSeriesOption,ResizeOpts,SetOptionOpts,EChartsInitOpts,EChartsOption, EChartsType} from 'echarts'
 import { debounce } from 'lodash-es'
@@ -19,34 +20,68 @@ registerTheme('dx',{
         }
     },
     grid:{
-
+       
+    },
+    tooltip:{
+        show:false
+    },
+    series:{
+         tooltip:{
+            show:true
+        },
     },
     backgroundColor:'#fff',
   //  backgroundColor: 'rgba(0,0,0,0)',
     textStyle: {},
+    // axisPointer:{
+    //     show:true,
+    //     type:'line'
+    // },
+    xAxis:{
+        
+    },
+    valueAxis:{
+        //show:true,
+        axisLine:{
+            show:true
+        },
+        axisTick:{
+            show:true,
+        },
+                minorTick:{
+            show:true,
+        },
+        splitLine:{
+            lineStyle:{
+                type:'dashed',
+                color:'#333'
+            }
+        }
+
+    },
     categoryAxis:{
         show:true,
         axisLine:{
             show:true,
             lineStyle:{
-                type:'dashed',
-                color:'#000'
+              //  type:'solid',//'solid''dashed''dotted'
+              //  color:'#333'
             }
         },
         axisTick:{
             show:true,
             lineStyle:{
-                type:'dashed'
+               // type:'solid'
             }
         },
+        axisLabel:{
+
+        },
+        axisPointer:{
+            show:true
+        }
       
     },
-    yAxis:[{
-        type:'value',
-        axisTick:{
-            show:true,
-        }
-    }],
     bar:{
         
     }

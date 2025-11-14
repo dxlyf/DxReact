@@ -151,7 +151,18 @@ const routes: RouteObjectAndMenu[] = [
 
                         ]
 
-                    }
+                    },
+                     {
+                        path: 'dataBoard',
+                        name: '数据看板',
+                        children:[
+                            {
+                                path:'wljk',
+                                name:'违例检控',
+                                Component: React.lazy(() => import('src/pages/antd/data-board/wljk'))
+                            }
+                        ]
+                    },
                 ]
             }
         ]

@@ -8,8 +8,10 @@ import ProSelect from '../components/Select'
  import {request} from 'src/utils/request'
 import dayjs, { type Dayjs} from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import objectSupport from 'dayjs/plugin/objectSupport'
 import { info } from 'console'
  dayjs.extend(utc)
+ dayjs.extend(objectSupport)
  function delay(wait:number) {
     return new Promise((resolve)=>{
         setTimeout(resolve,wait)
@@ -247,7 +249,7 @@ const Demo=()=>{
         // })
     },[])
     return <>
-
+        {/* {dayjs().year(2025).month(10).format('YYYY-MM')} */}
         <Tabs items={tabItems} defaultActiveKey={tabItems[0].key}  style={{ background: '#fff' }}></Tabs>
         <Button onClick={async ()=>{
             const values=await form.validateFields()
