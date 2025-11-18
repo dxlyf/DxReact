@@ -1,0 +1,60 @@
+.bodyBg {
+    
+}
+.wrap{
+
+}
+.head{
+   padding:8px 6px;
+   background-color: #fff;
+   margin-top: 12px;
+}
+.headSubTitle{
+    font-size: 16px;
+    font-weight: bold;
+
+}
+.headContent{
+
+}
+.headContent :global(.ant-space-item)>span>label{
+}
+
+.headContent :global(.ant-space-item)>span>span{
+    margin-left: 6px;
+}
+
+.cardInfo{
+     border: solid 1px #e3e3e3;
+     border-radius: 6px;
+     background-color: #fff;
+     padding:6px 8px;
+     text-align: center;
+     box-sizing: border-box;
+     box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+}
+/* html{
+    font-size: calc(100vw / 980px * 16px);
+} */
+.cardDesc{
+    font-size: 12px;
+}
+.cardTitle{
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 12px;
+}
+.tjBlockWrap{
+    margin-top: 16px;
+}
+.gxBlock{
+    /* background-color: #fff; */
+    display: flex;
+    justify-content: end;
+    font-size: 12px;
+    box-sizing: border-box;
+    padding: 4px 8px;
+}
+.gxBlock>div:last-of-type{
+        margin-left: 12px;
+}

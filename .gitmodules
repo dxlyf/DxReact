@@ -152,3 +152,6 @@
 [submodule "packages/lexical"]
 	path = packages/lexical
 	url = git@github.com:facebook/lexical.git
+[submodule "packages/vtable"]
+	path = packages/vtable
+	url = git@github.com:VisActor/VTable.git
