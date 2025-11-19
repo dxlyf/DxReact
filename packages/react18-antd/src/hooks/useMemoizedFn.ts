@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 type noop = (this: any, ...args: any[]) => any;
 
@@ -10,20 +10,23 @@ type PickFunction<T extends noop> = (
 const useMemoizedFn = <T extends noop>(fn: T) => {
 
   const fnRef = useRef<T>(fn);
-
+  fnRef.current=fn
   // why not write `fnRef.current = fn`?
   // https://github.com/alibaba/hooks/issues/728
-  fnRef.current = useMemo<T>(() => fn, [fn]);
+ // fnRef.current = useMemo<T>(() => fn, [fn]);
 
-  const memoizedFn = useRef<PickFunction<T>>(undefined);
+  return useCallback(function(this:any,...args:any[]){
+    return fnRef.current.apply(this,args)
+  },[])
+  // const memoizedFn = useRef<PickFunction<T>>(undefined);
 
-  if (!memoizedFn.current) {
-    memoizedFn.current = function (this, ...args) {
-      return fnRef.current.apply(this, args);
-    };
-  }
+  // if (!memoizedFn.current) {
+  //   memoizedFn.current = function (this, ...args) {
+  //     return fnRef.current.apply(this, args);
+  //   };
+  // }
 
-  return memoizedFn.current;
+ // return memoizedFn.current;
 };
 
 export default useMemoizedFn;

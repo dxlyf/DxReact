@@ -1,8 +1,13 @@
 import { useMemoizedFn } from 'ahooks'
-import { Modal,ConfigProvider, Row, Col, Space } from 'antd'
+import { Modal,ConfigProvider, Row, Col, Space, Button } from 'antd'
 import type { GetProps, GetProp } from 'antd'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
-import {FullscreenOutlined,FullscreenExitOutlined} from '@ant-design/icons'
+import {FullscreenOutlined,FullscreenExitOutlined,CloseOutlined} from '@ant-design/icons'
+// import {useFullscreen} from 'rooks'
+import  classNames from 'classnames'
+import useFullScreen from 'src/hooks/useFullScreen'
+import useKeyboard from 'src/hooks/useKeyboard'
+import {useDraggable} from 'src/hooks/useDraggable'
 type ModalProps = GetProps<typeof Modal>
 type RenderModal = (dom: React.ReactNode, props?: ModalProps) => React.ReactElement
 type UseModalProps = Omit<ModalProps, 'children'> & {
@@ -10,7 +15,9 @@ type UseModalProps = Omit<ModalProps, 'children'> & {
     children?: (instance: ModalInstance) => React.ReactElement
     onSubmit?: (values: any) => void
     getModalStageProps?: (istance: ModalInstance) => ModalProps
-    fullScreen?:boolean
+    showFullScreen?:boolean
+    draggable?:boolean
+
 }
 export type ModalInstance = {
     callbacks: {
@@ -27,10 +34,17 @@ export type ModalInstance = {
 }
 
 const useModal = (props: UseModalProps = {}) => {
-    const { getModalStageProps, noWrap = false,fullScreen, onSubmit, children, okButtonProps, cancelButtonProps, visible: propsVisible = false, ...restModalProps } = props
+    const { getModalStageProps,draggable=true, noWrap = false,showFullScreen=true, onSubmit, children, okButtonProps, cancelButtonProps, visible: propsVisible = false, ...restModalProps } = props
     const [visible, setVisible] = useState(() => propsVisible)
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(false)
+    const panelRef=useRef<HTMLDivElement>(null)
+    const [fullScreen,{toggleFullscreen}]=useFullScreen(panelRef)
+    const { dragHandlers,style:dragStyle,dragHandlerStyle } = useDraggable({
+        onDragEnd(){
+            console.log('拖拽结束')
+        }
+    })
     const modalInstance = useRef<ModalInstance>()
     if (!modalInstance.current) {
         modalInstance.current = {
@@ -72,20 +86,45 @@ const useModal = (props: UseModalProps = {}) => {
          modalInstance.current!.close()
        }
     })
-    const titleDom=<Row>
-        <Col></Col>
-        <Col>
-            <Space>
-                
+    const modalStateProps = getModalStageProps ? getModalStageProps(modalInstance.current!) : {}
+    const {title,closable,className,...finalModalProps}:ModalProps={
+        ...restModalProps,
+        ...modalStateProps,
+    }
+    const rnederFullScreen=()=>{
+        if(!showFullScreen){
+            return null
+        }
+        if(fullScreen){
+            return <FullscreenExitOutlined onClick={()=>toggleFullscreen()}></FullscreenExitOutlined>
+        }
+        return <FullscreenOutlined onClick={()=>toggleFullscreen()}></FullscreenOutlined>
+    }
+    const titleDom=<Row   justify={'space-between'} align={'middle'}>
+       <Col flex={'auto'} {...(draggable?{...dragHandlers,style:dragHandlerStyle}:{})}>
+        {title}
+       </Col>
+        <Col flex='none'>
+            <div style={{position:'relative'}}>
+                <Space style={{position:'absolute',top:-23,right:-15}}>
+             {rnederFullScreen()}
+             {closable!==false&&<Button type='text' >
+                <CloseOutlined></CloseOutlined>    
+            </Button>}
             </Space>
+            </div>
         </Col>
     </Row>
-    const modalStateProps = getModalStageProps ? getModalStageProps(modalInstance.current!) : {}
+   
     const modalProps: ModalProps = {
         open: visible,
-       // title:titleDom,
+        title:titleDom,
+        closable:false,
         onCancel: handleCancel,
         onOk: handleOk,
+        style:{
+            ...(draggable?dragStyle:{})
+        },
         destroyOnHidden: true,
         
         okButtonProps: {
@@ -96,8 +135,8 @@ const useModal = (props: UseModalProps = {}) => {
             loading,
             ...(cancelButtonProps ? cancelButtonProps : {})
         },
-        ...restModalProps,
-        ...modalStateProps,
+        className:classNames(className,fullScreen?'modal-full-screen':''),
+        ...finalModalProps
     }
     useLayoutEffect(() => {
         if (!visible) {
@@ -106,7 +145,7 @@ const useModal = (props: UseModalProps = {}) => {
     }, [visible])
 
     const renderModal = (dom: React.ReactNode, props: ModalProps = {}) => {
-        return <Modal {...modalProps} {...props}>{dom}</Modal>
+        return <Modal panelRef={panelRef} {...modalProps} {...props}>{dom}</Modal>
     }
     const render = () => {
         const childrenDom = children ? React.cloneElement(children(modalInstance.current!), {
@@ -118,7 +157,16 @@ const useModal = (props: UseModalProps = {}) => {
         }
         return renderModal(childrenDom)
     }
-
+    useKeyboard({
+        onKeyPress:(key,e)=>{
+             if(visible&&key==='f11'){
+                if(!fullScreen){
+                    toggleFullscreen()
+                }
+                e.preventDefault()
+             }
+        }
+    })
     return [render(), modalInstance.current, modalProps] as [React.ReactNode, ModalInstance, ModalProps]
 }
 export {

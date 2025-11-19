@@ -1,12 +1,9 @@
-import { useCallback, useState } from "react"
+import { useReducer } from "react"
 
+const reducerHandle=(v:boolean)=>!v
 
 const useUpdate=()=>{
-    const [_,setUpdate]=useState(false)
-
-    const forceUpdate=useCallback(()=>{
-    setUpdate(v=>!v)
-    },[])
+    const [_,forceUpdate]=useReducer(reducerHandle,false)
     return forceUpdate
 }
 export default useUpdate

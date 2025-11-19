@@ -45,6 +45,11 @@ const routes: RouteObjectAndMenu[] = [
                             name:'柱状图',
                             path:'bar',
                             Component: React.lazy(() => import('src/pages/chart/echart/bar'))
+                        },
+                         {
+                            name:'折线图',
+                            path:'line',
+                            Component: React.lazy(() => import('src/pages/chart/echart/line'))
                         }
                     ]
 
@@ -160,6 +165,11 @@ const routes: RouteObjectAndMenu[] = [
                                 path:'wljk',
                                 name:'违例检控',
                                 Component: React.lazy(() => import('src/pages/antd/data-board/wljk'))
+                            },
+                             {
+                                path:'wljkDetail',
+                                name:'违例检控详情',
+                                Component: React.lazy(() => import('src/pages/antd/data-board/wljk/Detail'))
                             }
                         ]
                     },

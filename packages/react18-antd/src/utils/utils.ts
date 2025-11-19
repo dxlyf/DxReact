@@ -15,7 +15,13 @@ export function isFunction(value: any): value is (...args: any[]) => any {
 export function isNumber(value: any): value is number {
   return typeof value === 'number' && !isNaN(value);
 }
-
+export function delay(time:number){
+    return new Promise((resolve)=>{
+        setTimeout(()=>{
+            resolve('')
+        },time)
+    })
+}
 // ======================
 // Deep Clone & Equality
 // ======================

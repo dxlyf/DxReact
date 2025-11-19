@@ -8,6 +8,7 @@ import { store } from './store'
 import App from './app'
 import app from './utils/App'
 
+
 ConfigProvider.config({
   // 解决modal警告
   holderRender: (dom) => dom 

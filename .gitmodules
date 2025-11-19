@@ -155,3 +155,12 @@
 [submodule "packages/vtable"]
 	path = packages/vtable
 	url = git@github.com:VisActor/VTable.git
+[submodule "packages/rooks"]
+	path = packages/rooks
+	url = git@github.com:imbhargav5/rooks.git
+[submodule "packages/motion"]
+	path = packages/motion
+	url = git@github.com:motiondivision/motion.git
+[submodule "packages/anime"]
+	path = packages/anime
+	url = git@github.com:juliangarnier/anime.git

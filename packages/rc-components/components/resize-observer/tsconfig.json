@@ -10,6 +10,7 @@
     "paths": {
       "@/*": ["src/*"],
       "@@/*": [".dumi/tmp/*"],
+      "@rc-component/util/*":["../util/src/*"],
       "rc-resize-observer": ["src/index.tsx"]
     }
   }

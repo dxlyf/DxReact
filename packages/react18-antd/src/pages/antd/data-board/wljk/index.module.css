@@ -2,15 +2,29 @@
     
 }
 .wrap{
+    box-sizing: border-box;
+    padding: 4px 8px;
+    background-color: #ececec;
 
 }
+.wrap :global(.ant-card-body){
+    padding: 12px!important;
+}
+.mainTitle{
+    font-size: 24px;
+    font-weight: bold;
+}
+
 .head{
    padding:8px 6px;
-   background-color: #fff;
-   margin-top: 12px;
+   /* margin-top: 12px; */
+}
+.headSubWrap{
+    box-sizing: border-box;
+    padding:0 6px;
 }
 .headSubTitle{
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
 
 }
@@ -25,13 +39,14 @@
 }
 
 .cardInfo{
-     border: solid 1px #e3e3e3;
+     border: solid 1px #ececec;
      border-radius: 6px;
      background-color: #fff;
      padding:6px 8px;
      text-align: center;
      box-sizing: border-box;
-     box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+     /* box-shadow: 0px 2px 4px rgba(0,0,0,0.1); */
+     margin-top: 8px;
 }
 /* html{
     font-size: calc(100vw / 980px * 16px);
@@ -39,13 +54,19 @@
 .cardDesc{
     font-size: 12px;
 }
+.cardDesc>label{
+    color:rgba(0,0,0,0.4);
+    margin-right: 6px;
+}
 .cardTitle{
+    font-size: 16px;
+    font-weight: 500;
+}
+.cardSubTitle{
     font-size: 14px;
-    font-weight: bold;
-    margin-top: 12px;
 }
 .tjBlockWrap{
-    margin-top: 16px;
+    margin-top: 2px;
 }
 .gxBlock{
     /* background-color: #fff; */
@@ -53,7 +74,12 @@
     justify-content: end;
     font-size: 12px;
     box-sizing: border-box;
-    padding: 4px 8px;
+    padding: 10px 8px;
+}
+.gxBlock2{
+    display: flex;
+    font-size: 12px;
+    box-sizing: border-box;
 }
 .gxBlock>div:last-of-type{
         margin-left: 12px;

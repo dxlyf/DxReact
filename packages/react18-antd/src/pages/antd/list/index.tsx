@@ -54,6 +54,18 @@ export default ()=>{
     })
     const columns=useMemo<NonNullable<TableProps['columns']>>(()=>[
         {
+            title:'姓名与年龄',
+            children:[
+                {
+                    dataIndex:'name',
+                    width:120
+                },
+                {
+                    dataIndex:'age',
+                    width:120
+                }
+            ]
+        },{
             title:'名称',
             dataIndex:'name',
             align:'center',
