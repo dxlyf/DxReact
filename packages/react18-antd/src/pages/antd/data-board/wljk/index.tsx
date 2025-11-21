@@ -6,7 +6,7 @@ import WLTJChart from './WLTJChart'
 import { ShouldRender } from 'src/hooks/useShouldRender2'
 import WLTJList from './WLTJList'
 import useCallbacks from 'src/hooks/useCallbacks'
-import {ExportOutlined} from '@ant-design/icons'
+import {ExportOutlined,RedoOutlined} from '@ant-design/icons'
 import YearQuarterMonthSelect from './YearMonthSelect'
 
 function useScale(designWidth,designHeight) {

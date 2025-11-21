@@ -12,10 +12,10 @@ type BarDataItem={
 }
 const lineDataSet:BarDataItem[]=[{
     name:'张三',
-    age:20
+    age:1
 },{
     name:'李四',
-    age:50
+    age:0
 }]
 
 function delay(time:number){
@@ -44,11 +44,17 @@ const BarDemo=()=>{
               xAxis:[{
                 type:'category',
               }],
-              yAxis:[{
+              yAxis:{
                 type:'value',
                 name:'年',
+              //  min:0,
+                max:(value)=>Math.min(Math.ceil(value.max/5)*5,5),
+                minInterval:1,
+             //   maxInterval:5,
+                splitNumber:5,
+               
               
-              }],
+              },
               series:[{type:'bar'}]
           }
       }
@@ -88,11 +94,11 @@ const LineDemo=()=>{
               series:[{
                 type:'line',
                 name:'年龄',
-                data:[18,20]
+                data:[1,0]
               },{
                 type:'bar',
                 name:'得分',
-                data:[90,80]
+                data:[0,1]
               }]
           }
       }

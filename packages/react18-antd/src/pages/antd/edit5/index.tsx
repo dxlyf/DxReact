@@ -1,8 +1,8 @@
-import { Button, Col, Form, Input, Popover, Row, Space, Table } from 'antd'
+import { Button, Col, Form, Input, Popover, Row, Space, Table,Typography } from 'antd'
 import { useTableEdit } from '../hooks/useEditTable'
 import { useLayoutEffect, useMemo, useState } from 'react'
 import React from 'react'
-
+Typography.Paragraph
 const ProFormItemInner = (props: any) => {
     const { children, ...restProps } = props
     const [open, setOpen] = useState(false)
@@ -14,6 +14,7 @@ const ProFormItemInner = (props: any) => {
                     <div key={index}>{error}</div>
                 ))}
             </div>
+            <Typography.Text title='' content='' ellipsis></Typography.Text>
         </>
     );
     const hasError = errors.length > 0
@@ -113,12 +114,12 @@ const TableEdit = (props: any) => {
                         </Space>
     const tableDom= <Table tableLayout='fixed' summary={(data)=>{
         let index=0
-        return <Table.Summary.Row>
+        return <Table.Summary fixed><Table.Summary.Row >
             <Table.Summary.Cell index={index++}></Table.Summary.Cell>
               <Table.Summary.Cell  index={index++} style={{width:100}}>次数</Table.Summary.Cell>
                 <Table.Summary.Cell  index={index++}>34</Table.Summary.Cell>
                       <Table.Summary.Cell index={index++}>34</Table.Summary.Cell>
-        </Table.Summary.Row>
+        </Table.Summary.Row></Table.Summary>
     }}  bordered {...tableProps}></Table>
     return <>
         {typeof children==='function'?children({

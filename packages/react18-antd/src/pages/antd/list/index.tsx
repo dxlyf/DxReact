@@ -1,4 +1,4 @@
-import { Button, Col, Form, Modal, Row, Space, Table,type TableProps,Input, Checkbox } from "antd"
+import { Button, Col, Form, Modal, Row,Divider, Space, Table,type TableProps,Input, Checkbox, Typography } from "antd"
 import { useCallback, useEffect, useMemo } from "react"
 import {useAntdTable} from 'ahooks'
 import {useModal,type ModalInstance} from '../hooks/useModal2'
@@ -47,8 +47,8 @@ export default ()=>{
         },
         request:async (params)=>{  
              const res=await request.post<{records:any[],total:number}>('/list',params)
-             const records=res.data.records
-             const total=res.data.total
+             const records=res.data
+             const total=res.data.length
              return {data:records,total}
         }
     })
@@ -73,6 +73,14 @@ export default ()=>{
         } ,   {
             title:'age',
             dataIndex:'age'
+        },{
+            title:'备注',
+            dataIndex:'remark',
+            width:250,
+            render(text,record){
+                text='FDAFDA FDAFDA土土土寺城城不需要大本营 奔FDA在地FDA'.repeat(2)
+                return <Typography.Text ellipsis={{tooltip:text}} style={{maxWidth:250}} >{text}</Typography.Text>
+            }
         },{
             width:200,
             title:'操作',
@@ -129,7 +137,7 @@ export default ()=>{
         </Col> 
     </Row>
 
-    <Table rowKey='id'  onChange={(pagationInfo)=>{
+    <Table  tableLayout='fixed' rowKey='id'  onChange={(pagationInfo)=>{
             setPagationInfo((v)=>({...v,pageSize:pagationInfo.pageSize,current:pagationInfo.current}))
             read({},true)
     }} pagination={{
