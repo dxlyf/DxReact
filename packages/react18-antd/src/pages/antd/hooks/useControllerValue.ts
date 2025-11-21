@@ -19,12 +19,13 @@ const useControllerValue=<T>(props:UseControllerValueProps<T>)=>{
         return defaultValue
     })
     const value=isControlled?propValue:innerValue
-    const triggerChange=useMemoizedFn((value:T,...extra:any[])=>{
+    const triggerChange=useMemoizedFn((predicate:T|((value:T)=>T),...extra:any[])=>{
+        const newVal=typeof predicate==='function'?(predicate as Function)(value):predicate
         if(!isControlled){
-            setInnerValue(value)
+            setInnerValue(newVal)
         }
-        onChange?.(value,...extra)
+        onChange?.(newVal,...extra)
     })
-    return [value,triggerChange] as [T,typeof triggerChange]
+    return [value,triggerChange] as const
 }
 export default useControllerValue

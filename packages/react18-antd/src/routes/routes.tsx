@@ -32,6 +32,14 @@ const routes: RouteObjectAndMenu[] = [
                     name: '简体转繁体',
                     Component: React.lazy(() => import('src/pages/tools/SimplifiedToTraditional'))
 
+                },{
+                    path:'css',
+                    name: 'css',
+                    children:[{
+                        name:'flex布局',
+                        path:'flex',
+                        Component: React.lazy(() => import('src/pages/tools/css/flex'))
+                    }]
                 }]
             },
              {
@@ -170,6 +178,11 @@ const routes: RouteObjectAndMenu[] = [
                                 path:'wljkDetail',
                                 name:'违例检控详情',
                                 Component: React.lazy(() => import('src/pages/antd/data-board/wljk/Detail'))
+                            },
+                             {
+                                path:'wljkUi',
+                                name:'违例检控ui',
+                                Component: React.lazy(() => import('src/pages/antd/data-board/wljk/ui'))
                             }
                         ]
                     },

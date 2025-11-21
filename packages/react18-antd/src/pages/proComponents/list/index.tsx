@@ -118,8 +118,8 @@ export default () => {
                 dataIndex: 'name',
                 //   sorter:true,
                 defaultSortOrder: 'descend',
-                width: 200
-
+                width: 200,
+                valueType:'dateRange'
 
             }, {
                 title: '创建时间',
@@ -137,13 +137,13 @@ export default () => {
             }]
         }, [])
     })
-
+    
     return <>
         <div className='bg-white'>
             <SchemaForm {...searchFormProps}></SchemaForm>
         </div>
         <div className='mt-4 px-2 pt-2 pb-4 bg-white shadow-md rounded-md'>
-            <Table {...tableProps}></Table>
+            <Table  {...tableProps}></Table>
         </div>
     </>
 }

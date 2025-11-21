@@ -101,6 +101,6 @@ export default function WLTJList(props:{callbacks:CallbacksResult<['onExport']>}
          
     })
     return <>
-    <Table {...tableProps}></Table>
+    <Table size='small' {...tableProps}></Table>
     </>
 }

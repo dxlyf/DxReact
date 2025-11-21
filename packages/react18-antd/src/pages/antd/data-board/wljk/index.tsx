@@ -1,25 +1,85 @@
-import {useMemo,useLayoutEffect,useCallback, useState} from 'react'
-import styles from './index.module.css'
+import {useMemo,useLayoutEffect,useCallback, useState, useEffect} from 'react'
+import styles from './index.module.scss'
 import { Card,Col,Skeleton , Row,Space,Typography,Descriptions, Select, DatePicker, Radio, Button, Spin} from 'antd'
 import classNames from 'classnames'
 import WLTJChart from './WLTJChart'
 import { ShouldRender } from 'src/hooks/useShouldRender2'
 import WLTJList from './WLTJList'
 import useCallbacks from 'src/hooks/useCallbacks'
+import {ExportOutlined} from '@ant-design/icons'
+import YearQuarterMonthSelect from './YearMonthSelect'
 
-function CardInfo(props:any){
-    const {title,content} = props;
-    return <div className={classNames(styles.cardInfo,'animate__animated animate__flash animate__delay-2s animate__slow')}>
-        <Space direction='vertical' size={1}>
-             <div className={styles.cardTitle}>房屋工程部</div>
-             <div className={styles.cardSubTitle}>20宗</div>
-             <div className={styles.cardDesc}><label>安全违例:</label><span>20宗</span></div>
-             <div className={styles.cardDesc}><label>安全违例:</label><span>20宗</span></div>
-             <div className={styles.cardDesc}><label>安全违例:</label><span>20宗</span></div>
-        </Space>
+function useScale(designWidth,designHeight) {
+  const [scale, setScale] = useState(1);
+  
+  useEffect(() => {
+    const updateScale = () => {
+    //   const designWidth = 1920;
+    //   const designHeight = 1080;
+      const minWidth = 1280;
+      const minHeight = 720;
+      
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      
+      // 计算宽度和高度比例，取较小值
+      const widthScale = windowWidth / designWidth;
+      const heightScale = windowHeight / designHeight;
+      
+      let newScale = Math.min(widthScale, heightScale);
+      
+      // 设置最小缩放限制
+      const minScale = Math.min(minWidth / designWidth, minHeight / designHeight);
+      newScale = Math.max(newScale, minScale);
+      
+      setScale(newScale);
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+  
+  return scale;
+}
+
+function FangWuCard(props:any){
+
+    return  <div className={classNames(styles.box,styles.cursor)} onClick={()=>{
+
+    }}>
+        <div className={styles.boxTitle}>房屋工程部</div>
+        <div className={styles.boxContent}>
+            <div className={styles.boxSubTitle}>
+                <span>20</span>
+                <span>宗</span>
+            </div>
+            <div className={styles.boxItem}>
+                <div className={styles.boxControl}>
+                    <label>安全违例</label>
+                    <span>10</span>
+                    <label>宗</label>
+                </div>
+                 <div className={styles.boxControl}>
+                    <label>环保违例</label>
+                    <span>10</span>
+                    <label>宗</label>
+                </div>
+            </div>
+              <div className={styles.boxItem}>
+                <div className={styles.boxControl}>
+                    <label>蚊虫违例</label>
+                    <span>10</span>
+                    <label>宗</label>
+                </div>
+
+            </div>
+        </div>
     </div>
 }
 export default function Wljk(){
+  //  const scale=useScale(1648,720)
     const [tabKey,setTabKey] = useState('a')
 
     useLayoutEffect(()=>{
@@ -30,71 +90,52 @@ export default function Wljk(){
         }
     },[])
     const callbacks=useCallbacks(['onExport'] as const)
-
-    return <Spin spinning={false}> <div className={styles.wrap}>
-        <Card className={styles.head}>
-            <div className={styles.mainTitle}>违例控数据看板</div>
-        <Row justify={'space-between'} align={'middle'} className={styles.headSubWrap} >
-            <Col flex={'auto'}>
-                <Space size={16}  className={styles.headContent}>
-                  <span className={styles.headSubTitle}>中建香港</span>
-                  <span>30宗</span>
-                  <span><label>字全违例:</label><span>10宗</span></span>
-                  <span><label>环保违例:</label><span>20宗</span></span>
-                  <span><label>蚊虫违例:</label><span>0宗</span></span>
-                </Space>
-            </Col>
-            <Col flex={'none'}>
-                <Space>
-                    <Select options={[]} placeholder='年度'></Select>
-                    <DatePicker picker='year'></DatePicker>
-                </Space>
-
-            </Col>
-        </Row>
-        </Card>
-        <Row className={styles.tjBlockWrap} gutter={[10,20]} justify={'space-between'}>
-            {[1,2,3,4].map((v,i)=>{
-                return <Col key={i} flex={'auto'} >
-                    <CardInfo key={i}></CardInfo>
+    const renderTabContent=()=>{
+        if(tabKey==='a'){
+            return <WLTJChart></WLTJChart>
+        }
+        return <WLTJList callbacks={callbacks}></WLTJList>
+    }
+    return <div className={styles.page} >
+        <div className={styles.wrap} >
+            <div className={classNames(styles.head)}>
+            <div className={styles.headContent}>
+                <Row className={styles.toolbar} justify={'space-between'}>
+                <Col flex={'auto'}>
+                <span className={styles.subTitle}>中建香港</span>
+                <span className={styles.subText}> 总数量：30宗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;安全违例：10宗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;环保违例：5宗</span>
                 </Col>
-            })}
-        </Row>
-         <div className={styles.gxBlock}>
-            <div>
-                   数据统计规则：以上违例数据均按事发日期统计
+                <Col flex={'none'}>
+                    <YearQuarterMonthSelect></YearQuarterMonthSelect>
+                </Col>
+            </Row>
+            <div className={styles.boxWrap}>
+                <FangWuCard></FangWuCard>
+                <FangWuCard></FangWuCard>
+                <FangWuCard></FangWuCard>
+                <FangWuCard></FangWuCard>
+                <FangWuCard></FangWuCard>
             </div>
-            <div>
-                 数据更新时间：2925-10-10 12:00:00
-            </div>
-         </div>
-         <Card>
-         <Row justify={'space-around'} align={'middle'}>
-            <Col flex={'auto'}>
-            <Radio.Group buttonStyle='solid' onChange={(e)=>{
-            setTabKey(e.target.value)
-         }}  value={tabKey}>
-            <Radio.Button value={'a'}>违例检控统计图</Radio.Button>
-            <Radio.Button value={'b'}>违例检控统计图</Radio.Button>
-         </Radio.Group>
-            </Col>
-            <Col flex="none">
-                {tabKey==='b'&&<Button size='small' type="primary" onClick={()=>{
-                        callbacks.export('1234').then(()=>{
-                            console.log('完成导出数据')
-                        })
-                }}>导出数据</Button>}
-            </Col>
-         </Row>
-          <div style={{marginTop:16}}>
-               <ShouldRender destroyOnClose active={tabKey==='a'} render={({style})=>{
-                return <div style={style}><WLTJChart></WLTJChart></div>
-            }}></ShouldRender>
-            <ShouldRender destroyOnClose active={tabKey==='b'} render={({style})=>{
-                return <div style={style}><WLTJList callbacks={callbacks}></WLTJList></div>
-            }}></ShouldRender>
-            </div>
-         </Card>
+            <div className={styles.updateTime}>数据统计规则：以上违例数据均按事发日期统计&nbsp;&nbsp;数据更新时间：2025-10-28 06:00:00</div>
         
-    </div> </Spin>
+            </div>
+        </div>
+        <div className={styles.mainContentBox}>
+            <Row>
+                <Col flex={'auto'}>
+                    <Radio.Group className={styles.btnTab} buttonStyle='solid' value={tabKey} onChange={(e)=>{setTabKey(e.target.value)}}>
+                         <Radio.Button value='a'>违例检控统计图</Radio.Button>
+                         <Radio.Button value='b'>违例检控统计列表</Radio.Button>
+                    </Radio.Group>
+                </Col>
+                <Col flex={'none'}>
+                    {tabKey==='b'&&<Button icon={<ExportOutlined></ExportOutlined>}>导出数据</Button>}
+                </Col>
+            </Row>
+            <div style={{marginTop:16}}>
+                {renderTabContent()}
+            </div>
+        </div>
+    </div>
+    </div>
 }
