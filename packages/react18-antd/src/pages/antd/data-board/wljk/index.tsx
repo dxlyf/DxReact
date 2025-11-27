@@ -8,6 +8,7 @@ import WLTJList from './WLTJList'
 import useCallbacks from 'src/hooks/useCallbacks'
 import {ExportOutlined,RedoOutlined} from '@ant-design/icons'
 import YearQuarterMonthSelect from './YearMonthSelect'
+import useAnimation,{CubicBezierSolver} from 'src/hooks/useAnimation'
 
 function useScale(designWidth,designHeight) {
   const [scale, setScale] = useState(1);
@@ -78,6 +79,18 @@ function FangWuCard(props:any){
         </div>
     </div>
 }
+let a=new CubicBezierSolver(0.9,0.8,1,1)
+const AnimationPlaceholder=({from,to,delay=0,duration=3000,children}:{from:any,to:any,duration?:number,delay?:number,children:(props:any)=>React.ReactNode})=>{
+    const [props,animation]=useAnimation({
+        from,
+        to,
+    },{
+        delay,
+        duration,
+        easing:(t)=>a.solve(t)
+    })
+    return children(props)
+}
 export default function Wljk(){
   //  const scale=useScale(1648,720)
     const [tabKey,setTabKey] = useState('a')
@@ -103,7 +116,7 @@ export default function Wljk(){
                 <Row className={styles.toolbar} justify={'space-between'}>
                 <Col flex={'auto'}>
                 <span className={styles.subTitle}>中建香港</span>
-                <span className={styles.subText}> 总数量：30宗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;安全违例：10宗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;环保违例：5宗</span>
+                <span className={styles.subText}> 总数量：<AnimationPlaceholder from={{count:0}} to={{count:30}}>{(props)=>parseInt(props.count)}</AnimationPlaceholder>宗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;安全违例：10宗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;环保违例：5宗</span>
                 </Col>
                 <Col flex={'none'}>
                     <YearQuarterMonthSelect></YearQuarterMonthSelect>

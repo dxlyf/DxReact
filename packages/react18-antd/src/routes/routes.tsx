@@ -112,6 +112,10 @@ const routes: RouteObjectAndMenu[] = [
                         path: 'list',
                         name: '常用列表页',
                         Component: React.lazy(() => import('src/pages/antd/list'))
+                    },{
+                        path: 'mullist',
+                        name: '多列大数据列表',
+                        Component: React.lazy(() => import('src/pages/antd/mullist'))
                     },
                       {
                         path: 'roleList',
@@ -186,6 +190,22 @@ const routes: RouteObjectAndMenu[] = [
                             }
                         ]
                     },
+                ]
+            },{
+                path:'graphic',
+                name:'Graphics',
+                children:[
+                    {
+                        name:'canvas',
+                        path:'canvas',
+                        children:[
+                            {
+                                name:'ShuoHan',
+                                path:'shuoHan',
+                                Component: React.lazy(() => import('src/pages/graphic/canvas/shuoHan'))
+                            }
+                        ]
+                    }
                 ]
             }
         ]

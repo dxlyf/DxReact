@@ -22,3 +22,9 @@ body{
 .modal-full-screen .ant-modal-content>.ant-modal-footer{
     flex: 0 0 auto;
 }
+
+.adminLayout{
+    .ant-layout-sider.ant-pro-sider {
+       background-color: #fff!important;
+   }
+}

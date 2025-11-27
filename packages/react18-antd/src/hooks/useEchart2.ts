@@ -55,7 +55,8 @@ registerTheme('blue',{
         label:{
             show:true,
             position:'top'
-        }
+        },
+        barMinWidth:100
     } as EChartsOption['series'],
     line:{
         // tooltip:{
@@ -71,6 +72,10 @@ registerTheme('blue',{
     } as EChartsOption['series'],
     valueAxis:{
         axisTick:{show:true},
+        interval:1,
+        max(extent) {
+            return Math.max(Math.ceil(extent.max/5)*5,5)
+        },
         axisLine:{
             show:true
         },
@@ -83,11 +88,25 @@ registerTheme('blue',{
                 type:'dashed'
             }
         }
-    } as EChartsOption['xAxis'],
+    } as EChartsOption['yAxis'],
     categoryAxis:{
+       // show:true,
+        nameLocation:'start',
+        nameTextStyle:{
+            fontSize:24,
+            fontWeight:'bold'
+        },
         axisTick:{
-            show:true
-        }
+            show:true,
+         //   alignWithLabel:true
+        },
+        axisLabel:{
+            rotate:0,
+            width:100,
+            hideOverlap:false,
+            interval:0,
+            overflow:'breakAll'
+        },
         // axisLabel:{
         //     color:'#fff',
         //     fontSize:12,

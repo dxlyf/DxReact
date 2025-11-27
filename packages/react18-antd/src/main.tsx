@@ -1,9 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import 'virtual:uno.css'
-import './index.css'
+import './index.scss'
 import {ConfigProvider,App as AntApp} from 'antd'
 import { Provider as ReduxProdiver } from 'react-redux'
+
 import { store } from './store'
 import App from './app'
 import app from './utils/App'
