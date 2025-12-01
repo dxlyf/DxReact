@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import UnoCSS from 'unocss/vite'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import vitePluginExpress from './service/vite-express-plugin.mjs'
+// import vitePluginExpress from './service/vite-express-plugin.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export function mockPlugin() {
