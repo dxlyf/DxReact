@@ -32,13 +32,10 @@ const depCompare=(a:any,b:any)=>{
     return true
 }
 const useDependency=(value:any)=>{
-    const prev=useRef({value:undefined,version:0})
-    useMemo(()=>{
-        if(prev.current.value!==undefined&&!depCompare(prev.current.value,value)){
-            prev.current.version++
-            prev.current.value=value
-        }
-    },[value])
-    return [prev.current.version]
+    const prev=useRef()
+    if(!depCompare(prev.current,value)){
+        prev.current=value
+    }
+    return [prev.current]
 }
 export default useDependency

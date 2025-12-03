@@ -1,4 +1,3 @@
-import {createElement} from './react'
+const div=<div>fdafd</div>
 
-const d=<div>4353</div>;
-console.log('d',d)
+console.log('div',div)

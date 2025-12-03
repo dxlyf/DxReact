@@ -1,219 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+     <script src="./react19/react.production.js"></script>
+     <script src="./react19/scheduler.production.js"></script>
+     <script src="./react19/react-dom.production.js"></script>
+     <script src="./react19/react-dom-client.production.js"></script>
 </head>
-
 <body>
-    <div id="root"></div>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script type="text/babel" data-presets="env,react">
-
-        /** @jsx createElement */
-        /** @jsxFrag Preact.Fragment */
-        function createElement(type, config, ...children) {
-            const props = {}
-            let key = null, ref = null
-            if (config) {
-                Object.keys(config).forEach(name => {
-                    if (name === 'key') {
-                        key = config[name] + ''
-                    } else if (name === 'ref') {
-                        ref = config[name]
-                    } else {
-                        props[name] = config[name]
-                    }
-                })
-            }
-            if (children.length) {
-                props.children = children.length === 1 ? children[0] : children
-            }
-            return { type, props, key, ref }
-        }
-
-        let workInProgress = null
-        let workInProgressRoot = null
-        function commitRoot() {
+    <div id="app"></div>
+    <script type="text/babel" presets="env,react">
+        /**jsx. **/
+        
+        const App = () => {
 
         }
 
 
-        function createFiber(tag, pendingProps, key) {
-            return {
-                tag,
-                key: key === undefined ? null : key,
-                type: null,
-                stateNode: null,
-
-                pendingProps,
-                memoizedProps: null,
-                memoizedState: null,
-                updateQueue: null,
-                hooks: [],
-
-
-                return: null,
-                child: null,
-                sibling: null,
-                index: 0,
-
-
-                alternate: null,
-                effectTag: null,
-                effects: [],
-                deletions: null
-            }
-        }
-        function createWorkInProgress(current, pendingProps) {
-            let wip = current.alternate
-            if (!wip) {
-                wip = createFiber(current.tag, pendingProps, current.key)
-
-                wip.alternate = current
-                current.alternate = wip
-            } else {
-                wip.pendingProps = pendingProps
-            }
-            Object.assign(wip, current)
-            wip.deletions = null
-            return wip
-        }
-        const HostRoot=0
-        const HostComponent=1
-        const HostText=2
-        const FunctionComponent=3
-        const Fragment=4
-
-        function updateFunctionComponent(unitOfWork) {
-
-        }
-        function updateHostRoot(current, workInProgress) {
-
-        }
-        function updateHostComponent(current, workInProgress) {
-
-        }
-        // 生成fiber结构
-        function beginWork(current, workInProgress, renderLanes) {
-            switch(workInProgress.tag){
-                 case HostRoot:
-                    return updateHostRoot(current, workInProgress)
-
-            }
-        }
-        function completeWork(current, workInProgress, renderLanes) {
-
-        }
-        function completeUnitOfWork(unitOfWork) {
-            let completedWork = unitOfWork;
-            do {
-                const current = completedWork.alternate;
-                const returnFiber = completedWork.return;
-                let next = completeWork(current, completedWork);
-                if (next !== null) {
-                    workInProgress = next;
-                    return;
-                }
-                const siblingFiber = completedWork.sibling;
-                if (siblingFiber !== null) {
-                    workInProgress = siblingFiber;
-                    return;
-                }
-                completedWork = returnFiber;
-                workInProgress = completedWork;
-            } while (completedWork !== null)
-        }
-        function onComplete(root, finishedWork){
-        //    root.pendingCommitExpirationTime = expirationTime;
-            root.finishedWork = finishedWork;
-        }
-        function renderRoot(root){
-            workInProgressRoot=root
-            workInProgress=createWorkInProgress(root.current)
-
-            //workLoop()
-        }
-        function commitRoot(root, finishedWork){
-            
-        }
-        function completeRoot(root, finishedWork){
-             // Commit the root.
-             root.finishedWork = null;
-             commitRoot(root, finishedWork);
-        }
-        function performUnitOfWork(unitOfWork) {
-            const current = unitOfWork.alternate
-            let next = beginWork(current, unitOfWork)
-            unitOfWork.memoizedProps = unitOfWork.pendingProps;
-            if (next === null) {
-                // If this doesn't spawn new work, complete the current work.
-                completeUnitOfWork(unitOfWork);
-            } else {
-                workInProgress = next;
-            }
-        }
-        function performWorkOnRoot(root){
-            let finishedWork = root.finishedWork;
-            if (finishedWork !== null) {
-                // This root is already complete. We can commit it.
-                completeRoot(root, finishedWork, expirationTime);
-            } else {
-                root.finishedWork=null
-                renderRoot(root);
-                finishedWork = root.finishedWork;
-                if (finishedWork !== null) {
-                        // We've completed the root. Commit it.
-                        completeRoot(root, finishedWork);
-                    }
-            }
-        }
-        function workLoop(deadline) {
-            while (workInProgress && deadline.timeRemaining() > 1) {
-                 performUnitOfWork(nextUnitOfWork)
-            }
-            if (!workInProgress && workInProgressRoot) {
-                commitRoot()
-            } else {
-                requestIdleCallback(workLoop)
-            }
-        }
-
-        function scheduleRoot(fiberRoot) {
-            wipRoot = fiberRoot;
-            const root = createWorkInProgress(wipRoot.current, null)
-            nextUnitOfWork = root;
-            requestWorkLoop();
-        }
-
-        function requestWorkLoop() {
-            if (typeof requestIdleCallback !== 'undefined') {
-                requestIdleCallback(workLoop);
-            } else {
-                setTimeout(() => workLoop({ timeRemaining: () => 50 }), 1);
-            }
-        }
-
-        function render(element, container) {
-            const fiberRoot = {
-                container,
-                current: null
-            }
-            const rootFiber = createFiber(HostRoot, null)
-            rootFiber.memoizedState = {
-                element
-            }
-            rootFiber.stateNode = fiberRoot
-            fiberRoot.current = rootFiber
-            scheduleRoot(fiberRoot)
-        }
-        function App() {
-            return <h1>Hello World</h1>
-        }
-        render(<App></App>, document.querySelector('#root'))
     </script>
 </body>
-
 </html>

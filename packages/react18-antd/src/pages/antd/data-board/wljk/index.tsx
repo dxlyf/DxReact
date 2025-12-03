@@ -53,7 +53,7 @@ function FangWuCard(props:any){
         <div className={styles.boxTitle}>房屋工程部</div>
         <div className={styles.boxContent}>
             <div className={styles.boxSubTitle}>
-                <span>20</span>
+                <span><AnimationPlaceholder from={{count:0}} to={{count:Math.floor(10+Math.random()*200)}}>{(props)=>parseInt(props.count)}</AnimationPlaceholder></span>
                 <span>宗</span>
             </div>
             <div className={styles.boxItem}>
