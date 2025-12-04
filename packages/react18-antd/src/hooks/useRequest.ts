@@ -20,6 +20,8 @@ export type UseRequestOptions<Data> = {
     debounceWaitTime?: number
     pagation?: false | Pagation
     transform?: (data: Data, previous: Data | undefined, params: any) => Data
+    onRequestStart?: (params: any) => void
+    onRequestEnd?: (res:any,params: any) => void
     onChange?:(data:Data,flag:Number)=>void
 }
 type ServiceHandle<Data> = (params: any, lastParams?: any) => Data | Promise<Data>
@@ -101,9 +103,9 @@ const debouncePromise = (fn: (...args: any[]) => any, wait: number) => {
 
 
 const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
-    const {request:propRequest,data:propData,defaultData,onChange, dependencies = [], requestParams, pagation = false, ready, debounceWaitTime, manualRequest = false, transform } = options
+    const {request:propRequest,data:propData,onRequestEnd,onRequestStart,defaultData,onChange, dependencies = [], requestParams, pagation = false, ready, debounceWaitTime, manualRequest = false, transform } = options
     const lastParams = useRef<any>({})
-    const [state] = useState({ init:false,mounted: false, unMounted: false })
+    const [state] = useState({ init:false,mounted: false, unMounted: false,fetchId:0})
     const isControlled=propData!==undefined
     const [innerData, setInnerData] = useState<D>(()=>{
         if(isControlled){
@@ -130,22 +132,27 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
     const setPagationInfo=useCallback((playload:Pagation|((p:Pagation)=>Pagation))=>{
         pagationInfoRef.current=typeof playload==='function'?playload(pagationInfoRef.current):{...pagationInfoRef.current,...playload}
     },[])
+    
     const request = useMemoizedFn(async (params: any,flag:number=USER_REQUEST) => {
+        let currentFetchId=++state.fetchId
         let res: any = undefined
+        let newParams:any;
         try {
             setLoading(true)
             setError(null)
-            const newParams = {
+            newParams = {
                 ...params,
                 ...(needPagation ? {
                     current: pagationInfoRef.current.current,
                     pageSize: pagationInfoRef.current.pageSize
                 } : {})
             }
+            onRequestStart?.(newParams)
+
             if(propRequest&&!isControlled){
                  res = await propRequest(newParams, lastParams.current)
-                if (state.unMounted) {
-                    return
+                if (state.unMounted||currentFetchId!==state.fetchId) {
+                    return Promise.reject(new Error('cancelled'))
                 }
                 if (transform) {
                     res = transform(res, data, newParams)
@@ -163,6 +170,7 @@ const useRequest = <D = any>(options: UseRequestOptions<D> = {}) => {
             setError(e)
         } finally {
             setLoading(false)
+            onRequestEnd?.(res,newParams)
         }
         return res
     })

@@ -164,3 +164,6 @@
 [submodule "packages/anime"]
 	path = packages/anime
 	url = git@github.com:juliangarnier/anime.git
+[submodule "packages/snabbdom"]
+	path = packages/snabbdom
+	url = git@github.com:snabbdom/snabbdom.git
