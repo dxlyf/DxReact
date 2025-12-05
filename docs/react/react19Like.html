@@ -188,11 +188,16 @@
             return workInProgress
         }
         function performUnitOfWork(unitOfWork) {
-            const workInProgress = createWorkInProgress(unitOfWork, unitOfWork.pendingProps);
-            let next = beginWork(unitOfWork)
+            const current = unitOfWork.alternate;
+            let next = beginWork(current, unitOfWork, entangledRenderLanes);
         }
-        function beginWork(workInProgress) {
-
+        function beginWork(current,workInProgress) {
+            const tag=workInProgress.tag 
+            switch(tag){
+                case FiberTags.HostRoot: 
+                
+                return workInProgress.child
+            }
         }
         function render(element, container) {
             const rootFiber = createFiber(FiberTags.HostRoot, null)
@@ -206,7 +211,7 @@
             }
             performWorkOnRoot(root)
         }
-   
+      
         function App(){
             return <div>Hello</div>
         }

@@ -5,294 +5,295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        .con{
+            display: flex;
+            gap:10px;
+        }
+        .con>div{
+            width:50px;
+            border: solid 1px black;
+            flex:none;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
+    <button id="btnRandom">随机</button>
+    <div id="log">
 
+    </div>
+   <div class="con">
+    <div id="data"></div>
+    <div id="lisdom"></div>
+    <div id="placedom"></div>
+    <div id="idledom"></div>
+    <div id="vdom"></div>
+   </div>
     <script>
-        function h(type, config = {}, ...children) {
-            const props = {}
-            let key = null
-            for (let [name, value] of Object.entries(config)) {
-                if (name === 'key') {
-                    key = value + ''
-                } else {
-                    props[name] = config[name]
+        
+        class VNode{
+            _parentNode=null
+            innerText=''
+            key=null
+            constructor(tag,key=null){
+                this.tag=tag
+                this.children=[]
+            }
+            insertBefore(vnode, refVnode) {
+              //  const refVnode=anchorVnode
+                let index = refVnode&&refVnode.parentNode===this?refVnode.index():this.children.length
+                if(vnode.parentNode) {
+                   
+                    let selfIndex=vnode.index()
+                    index=vnode.parentNode===this&&selfIndex<index?index-1:index
+                    vnode.parentNode.removeChild(vnode)
+                }
+                this.children.splice(index,0,vnode)     
+                vnode._parentNode=this
+            }
+            appendChild(vnode){
+                this.insertBefore(vnode)
+            }
+            removeChild(vnode){
+                if(vnode._parentNode !== this){
+                    return
+                }
+                const index = vnode.index()
+                this.children.splice(index,1)
+                vnode._parentNode=null
+            }
+            remove(){
+                if(this.parentNode){
+                    this.parentNode.removeChild(this)
                 }
             }
-            children = normalizeChildren(children)
-            props.children = children
-            return {
-                type,
-                key,
-                props
+            index(){
+                if(this.parentNode === null){
+                    return -1
+                }
+                return this.parentNode.children.indexOf(this)
+            }
+            get firstChild() {
+                return this.children[0]
+            }
+            get lastChild(){
+                return this.children[this.children.length - 1]
+            }
+            get parentNode(){
+                return this._parentNode
+            }
+            get previousSibling(){
+                if(this.parentNode){
+                    return this.parentNode.children[this.index() - 1]
+                }
+                return null
+            }
+            get nextSibling(){
+                if(this.parentNode){
+                    return this.parentNode.children[this.index() +1]
+                }
+                return null
+            }
+            renderTo(dom){
+              //  const element=.createElement(this.tag)
+
             }
         }
-        function normalizeChildren(children) {
-            return children.reduce((acc, child) => {
-                if (child === null || child === undefined || child === false) return acc
-                if (typeof child !== 'object') {
+      
+        let data=new Array(100).fill(100).map((v,i)=>i+1)
 
-                    acc.push(h('', { text: child }))
-                    return acc
-                }
-                if (Array.isArray(child)) {
-                    return acc.concat(normalizeChildren(child))
-                } else {
-                    acc.push(child)
-                }
-                return acc
-            }, [])
+        function buildNodes(){
+             data.forEach((v)=>{
+                const node=new VNode('div',v)
+                node.innerText=v
+                vNodes.appendChild(node)
+
+                const el=document.createElement('div')  
+                el.innerText=v
+                placedom.appendChild(el)
+
+                const el2=document.createElement('div')  
+                el2.innerText=v
+                lisdom.appendChild(el2)
+
+                         const el3=document.createElement('div')  
+                el3.innerText=v
+                idledom.appendChild(el3)
+            })
         }
+        const vNodes=new VNode('div')
+       const lisdom=document.getElementById('lisdom')
+          const placedom=document.getElementById('placedom')
+                 
+       const idledom=document.getElementById('idledom')
+       const vdom=document.getElementById('vdom')
+        const dataDom=document.querySelector('#data')
+        function render(){
+            dataDom.innerHTML=data.map(d=>`<div>${d}</div>`).join('')
+            vdom.innerHTML=vNodes.children.map(d=>`<div>${d.innerText}</div>`).join('')
 
-        function updateProps(dom, props, prevProps, options) {
-            for (let [key, value] of Object.entries(prevProps)) {
-                if (!Object.prototype.hasOwnProperty.call(props, key)) {
-                    if (options.removeProp) {
-                        options.removeProp(dom, key, value)
-                    }
-                }
-            }
-            for (let [key, value] of Object.entries(props)) {
-                if (!Object.prototype.hasOwnProperty.call(prevProps, key)) {
-                    if (options.updateProp&&value!==prevProps[key]) {
-                        options.updateProp(dom, key, value, prevProps[key])
-                    }
-                } else {
-                    if (options.addProp) {
-                        options.addProp(dom, key, value)
-                    }
-                }
-            }
         }
+        let moveCountState={
+            lis:0,
+            place:0,
+            idle:0
+        }
+        function uploadPlaceNode(node){
+            const children=Array.from(node.children)
+            const oldIdxMap=new Map()
+            const childrenMap=new Map()
+            for(let i=0;i<children.length;i++){
+                oldIdxMap.set(Number(children[i].innerText),i)
+                childrenMap.set(Number(children[i].innerText),children[i])
+            }
+            let lastPlacedIndex=0
+            let target=data.slice()
+    
+            let moveItems=[]
+            for(let i=0;i<target.length;i++){
+                const newValue=target[i]
+                const oldIndex=oldIdxMap.get(newValue)
+                let needMove=false
+                if(oldIndex>=lastPlacedIndex){
+                    lastPlacedIndex=oldIndex
+                }else{
+                     
+                    // 1 2 3 4 5
+                    // 3 1 2 4 5
+                    // 需要移动
+                   needMove=true;
+                //    let before=null,j=i+1
+                //    while(oldIdxMap.get(target[j])<lastPlacedIndex){
+                //         j++
+                //    }
+                //    before=childrenMap.get(target[j])
+                   let before=childrenMap.get(target[i-1]).nextSibling
 
-        function updateDomProperties(dom, vNode, oldVNode) {
-
-            const updateStyle = {
-                addProp: (dom, key, value) => {
-                     dom.style[styleKey] = styleValue;
-                },
-                updateProp: (dom, key, value, oldValue) => {
-                    dom.style[key] = value;
-                },
-                removeProp: (dom, key, value) => {
-                    dom.style[key] = null;
+                   const elm=childrenMap.get(target[i])
+                   node.insertBefore(elm,before)
+                   moveCountState.place++
                 }
+                moveItems[i]=needMove
             }
             
-            const updateAttrs = {
-                addProp: (dom, key, value) => {
-                     dom.setAttribute(key, value)
+            // for(let i=0;i<target.length;i++){
+            //     if(moveItems[i]){
+            //         const elm=childrenMap.get(target[i])
+            //         let j=i+1;
+            //         let before=null
+            //         while(j<moveItems.length){
+            //             if(!moveItems[j])
+            //             {
+            //               before=childrenMap.get(target[j])
+            //               break
+            //             }
+            //             j++
+            //         }
+            //         node.insertBefore(elm,before)
 
-                },
-                updateProp: (dom, key, value, oldValue) => {
-                      dom.setAttribute(key, value)
-                },
-                removeProp: (dom, key, value) => {
-                    dom.removeAttribute(key, value)
 
-                }
-            }
-            const update = {
-                addProp: (dom, key, value) => {
-                    if (key === 'className') {
-                        dom.classList.add(value)
-                    } else if (key === 'style') {
-                       updateProps(dom, value,{}, updateStyle)
-                    } else if (key === 'attrs') {
-                       updateProps(dom, value,{}, updateAttrs)
-                    } else if (key.startsWith('on')) {
-                        dom.addEventListener(key.slice(2).toLowerCase(), value)
-                    }
-                },
-                removeProp: (dom, key, value) => {
-                    if (key === 'className') {
-                        dom.classList.remove(value)
-                    }  else if (key === 'style') {
-                       updateProps(dom, {},value, updateStyle)
-                    } else if (key === 'attrs') {
-                       updateProps(dom, {},vNode, updateAttrs)
-                    } else if (key.startsWith('on')) {
-                        dom.removeEventListener(key.slice(2).toLowerCase(), value)
-                    }
-                },
-                updateProp: (dom, key, value, oldValue) => {
-                    update.removeProp(dom, key, oldValue)
-                    update.addProp(dom, key, value)
-                }
-            }
-            updateProps(dom, vNode.props, oldVNode ? oldVNode.props : {}, update)
-        }
-        function createDom(vNode, insertQueue) {
-            if (vNode.type === '') {
-                vNode.dom = document.createTextNode(String(vNode.props.text))
-            } else {
-                vNode.dom = document.createElement(vNode.type)
-                const children = Array.isArray(vNode.props.children) ? vNode.props.children : [vNode.props.children]
-                children.forEach(child => {
-                    const childDom = createDom(child)
-                    vNode.dom.appendChild(childDom)
-                })
-                updateDomProperties(vNode.dom, vNode)
-            }
-            return vNode.dom
-        }
-        function isTextVNode(vNode) {
-            return vNode.type === ''
-        }
-        function sameVNode(vNode, oldVNode) {
-            return vNode.type === oldVNode.type && vNode.key === oldVNode.key
-        }
-        function updateChildren(vNode, oldVNode,insertQueue) {
-            const newChildren=vNode.props.children
-            const oldChildren=oldVNode.props.children
-            let newStart=0,newEnd=newChildren.length-1
-            let oldStart=0,oldEnd=oldChildren.length-1
-            let newStartCh,oldStartCh,newEndCh,oldEndCh;
-            let oldIndexKeyMap
 
-            while(newStart<=newEnd&&oldStart<=oldEnd){
-                newStartCh=newChildren[newStart]
-                oldStartCh=oldChildren[oldStart]
-                newEndCh=newChildren[newEnd]
-                oldEndCh=oldChildren[oldEnd]
-                if(newStartCh===null){
-                   newStart++  
-                }else if(oldStartCh===null){
-                   oldStart++  
-                } if(newEndCh===null){
-                   newEnd--  
-                }else if(oldEndCh===null){
-                   oldEnd--
-                }else{
-                    if(sameVNode(newStartCh,oldStartCh)){
-                        patchNode(newStartCh, oldStartCh,insertQueue)
-                        newStart++
-                        oldStart++
-                    }else if(sameVNode(newEndCh,oldEndCh)){
-                        patchNode(newEndCh, oldEndCh,insertQueue)
-                        newEnd--
-                        oldEnd--
-                    }else if(sameVNode(newStartCh,oldEndCh)){
-                        patchNode(newStartCh, oldEndCh,insertQueue)
-                        vNode.dom.insertBefore(newStartCh.dom,oldStartCh.dom)
-                        newStart++
-                        oldEnd--
-                    }else if(sameVNode(newEndCh,oldStartCh)){
-                        patchNode(newEndCh, oldStartCh,insertQueue)
-                        vNode.dom.insertBefore(newEndCh.dom,oldEndCh.dom,)
-                        newEnd--
-                        oldStart++
-                    }else{
-                        if(!oldIndexKeyMap){
-                            oldIndexKeyMap=new Map()
-                            for(let i=oldStart;i<=oldEnd;i++){
-                                const key=oldChildren[i].key
-                                if(key!==undefined&&key!==null){
-                                    oldIndexKeyMap.set(key, i)
-                                }
-                            }
-                        }
-                        if(newStartCh.key){
-                            const oldIndex=oldIndexKeyMap.get(newStartCh.key)
-                            if(oldIndex!==undefined){
-                                patchNode(newStartCh, oldChildren[oldIndex],insertQueue)
-                                oldChildren[oldIndex]=null
-                                vNode.dom.insertBefore(newStartCh.dom,oldStartCh.dom)
-                            }else{
-                                // 新增
-                                createDom(newStartCh, instertQueue)
-                                vNode.dom.insertBefore(newStartCh.dom,oldStartCh.dom)
-                            }
-                        }else{
-                            // 新增
-                            createDom(newStartCh, instertQueue)
-                            vNode.dom.insertBefore(newStartCh.dom,oldStartCh.dom)
-                        }
-                        newStart++
-                    }
+            //     }
+            // }
+        }
+
+         function uploadLisNode(node){
+            const children=Array.from(node.children)
+            const oldIdxMap=new Map()
+            const childrenMap=new Map()
+            let target=data.slice()
+            for(let i=0;i<children.length;i++){
+                oldIdxMap.set(Number(children[i].innerText),i)
+                childrenMap.set(Number(children[i].innerText),children[i])
+            }
+
+            let lis=getSequence(Array.from(childrenMap.keys()).map(d=>target.indexOf(d)))
+            // [1,2,3,4]
+            // [3,1,2,4]
+            // [1,2,0,3]
+            // [1,2,3]
+            for(let i=target.length-1;i>=0;i--){
+                const newValue=target[i]
+                if(!lis.includes(i)){
+                    // 需要移动
+                    const elm=childrenMap.get(target[i])
+                    let before=target[i+1]?childrenMap.get(target[i+1]):null
+                    node.insertBefore(elm,before)
+                    moveCountState.lis++
                 }
                 
             }
-
-            while(newStart<=newEnd){
-                vNode.dom.appendChild(createDom(newChildren[newStart++],insertQueue))
-            }
-            while(oldStart<=oldEnd){
-               if(oldChildren[oldStart]!==null){  
-                    oldVNode.dom.removeChild(oldChildren[oldStart++].dom)
-               }
-            }
+            
+           
         }
-        function patchNode(vNode,oldVNode, insertQueue) {
-            if (sameVNode(vNode, oldVNode)) {
-               
-                if (isTextVNode(vNode) || isTextVNode(oldVNode)) {
-                    createDom(vNode, insertQueue)
-                    oldVNode.dom.parentNode.replaceChild(oldVNode.dom, vNode.dom)
-                } else {
-                    vNode.dom=oldVNode.dom
-                    updateDomProperties(vNode.dom, vNode, oldVNode)
-                    const newChildren=vNode.props.children
-                    const oldChildren=oldVNode.props.children
-                    if(newChildren&&oldChildren){
-                        updateChildren(vNode, oldVNode,insertQueue)
+        
+        function updateNode(node){
+            const children=Array.from(node.children)
+            const childrenMap=new Map()
+            for(let i=0;i<children.length;i++){
+                childrenMap.set(Number(children[i].innerText),children[i])
+            }
 
-                    }else if(newChildren){
-                        for(let i=0;i<newChildren.length;i++){
-                            createDom(newChildren[i], insertQueue)
-                            vNode.dom.appendChild(newChildren[i].dom)
-                        }
-                    }else if(oldChildren){
-                        for(let i=0;i<oldChildren.length;i++){
-                            vNode.dom.parentNode.removeChild(oldChildren[i].dom)
-                        }
-                    }
+            const target=data.slice()
+            for(let i=0;i<target.length;i++){
+                let newValue=target[i]
+                let oldChildren=node.children[i]
+                if(Number(oldChildren.innerText)!==newValue){
+                    moveCountState.idle++
+                    node.insertBefore(childrenMap.get(newValue),oldChildren)
                 }
-            } else {
-                // 替换
-                const dom = createDom(vNode, instertQueue)
-                oldVNode.dom.parentNode.replaceChild(dom, oldVNode.dom)
-            }
 
-        }
-
-
-        function render(vNode, container) {
-            const instertQueue = []
-            if (!container.vNode) {
-                createDom(vNode, instertQueue)
-                container.appendChild(vNode.dom)
-                container.vNode = vNode
-            } else {
-                patchNode(vNode, vNode, container.vNode, instertQueue)
-                container.vNode = vNode
             }
         }
-        const data=['a','b','c']
-        let count=0
-        function App(){
-            return h('div', {}, 
-            [   
-            h('button',{
-                onclick:()=>{
-                    count++
-                    render(App(), document.body)
-
-                }
-            },'add'),
-            h('div',{},[
-                h('div',{},count),
-                data.map(v=>{
-                        return h('div',{key:v}, v)
-                        // return h(v)
-                   })])
-            ])
+        function update(){
+            moveCountState.idle=0
+            moveCountState.lis=0
+            moveCountState.place=0
+            uploadLisNode(lisdom)
+            uploadPlaceNode(placedom)
+            updateNode(idledom)
+           // updateNode(vNodes)
+   
+            document.getElementById('log').innerHTML=`<div>移动次数统计,lis:${moveCountState.lis},place:${moveCountState.place},idle:${moveCountState.idle}</div>`
+            updateNode(vNodes)
+            render()
         }
-        render(App(), document.body)
+        buildNodes()
+        render()
+        document.querySelector('#btnRandom').addEventListener('click',()=>{
+            data.sort(()=>Math.random() - 0.5)
+          // data=[3,1,2,4]
+            update()
+        })
+
         // 最长递增子序列
         function getSequence(arr) {
-
+            const len=arr.length;
+            const dp=new Array(len).fill(1)
+            const pre=new Array(len).fill(-1)
+            let max=-1,maxDp=1
+            // [3,6,2,8]
+            // 
+            for(let i=1;i<len;i++){
+                for(let j=0;j<i;j++){
+                    if(arr[j]<arr[i]&&dp[j]+1>dp[i]){
+                        dp[i]=dp[j]+1
+                        pre[i]=j
+                    }
+                }
+                if(maxDp<=dp[i]){
+                    maxDp=dp[i]
+                    max=i
+                }
+            }
+            let seq=[]
+            while(max!==-1){
+                seq.unshift(arr[max])
+                max=pre[max]
+            }
+            return seq
         }
 
     </script>

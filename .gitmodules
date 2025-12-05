@@ -167,3 +167,6 @@
 [submodule "packages/snabbdom"]
 	path = packages/snabbdom
 	url = git@github.com:snabbdom/snabbdom.git
+[submodule "packages/happy-dom"]
+	path = packages/happy-dom
+	url = git@github.com:capricorn86/happy-dom.git
