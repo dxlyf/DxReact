@@ -202,8 +202,7 @@ const getFileIcon = (fileName: string): React.ReactNode => {
 };
 export const SimpleUpload = (props: SimpleUploadPropss) => {
     const { value: propValue,extensions,size='small', maxCount = Infinity, maxSize = 10, defaultValue: propDefaultValue, onChange, ...restProps } = props
-    const [previewImage,setPreviewImage]=useState<string[]>([])
-     const [previewCurrentIndex,setPreviewCurrentIndex]=useState(0)
+     const [previewCurrentIndex,setPreviewCurrentIndex]=useState(-1)
     // 上传成功的文件
     const [value, setValue] = useControllerValue({
         value: propValue,
@@ -233,7 +232,6 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
             return file
         })
        
-        console.log('fileList', newFileList)
         setValue(newFileList)
 
         // setOtherFileList(newFileList.filter((file) =>  file.status === 'error'))
@@ -256,11 +254,13 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
 
     const handlePreview=useCallback<GetProp<typeof Upload, 'onPreview'>>((file)=>{
         if(isImage(file)){
-            setPreviewImage([file.url||file.thumbUrl])
-            setPreviewCurrentIndex(0)
+          const index=value.findIndex(d=>d.uid===file.uid)
+          if(index!==-1){
+              setPreviewCurrentIndex(index)
+          }
             return
         } 
-    },[])
+    },[value])
     const handleDownLoad=useCallback<GetProp<typeof Upload, 'onDownload'>>((file)=>{
         const a=document.createElement('a')
         a.href=file.url||file.thumbUrl
@@ -322,23 +322,14 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
             </Space>
         </div>
     }
-    const renderPreview=()=>{
-        return previewImage.length&&<Image style={{ display: 'none' }}  preview={{
-                visible:true,
-                scaleStep:1,
-                src: previewImage[0],
-                onVisibleChange: value => {
-                    if(!value){
-                        setPreviewImage([])
-                    }
-                },
-                }} src={previewImage[0]}></Image>
-    }
     const renderPreviewGroup=()=>{
-        return  previewImage.length>0&&<div style={{ display: 'none' }}>
-        <Image.PreviewGroup items={previewImage} preview={{ current:previewCurrentIndex,visible:true, onVisibleChange: vis =>{
+      const items=Array.isArray(value)?value.map(d=>d.url||d.thumbUrl).filter(Boolean):[]
+        return  <div style={{ display: 'none' }}>
+        <Image.PreviewGroup items={items} preview={{ current:previewCurrentIndex,visible:previewCurrentIndex!=-1,onChange:(current)=>{
+            setPreviewCurrentIndex(current)
+        }, onVisibleChange: vis =>{
             if(!vis){
-                setPreviewImage([])
+               setPreviewCurrentIndex(-1)
             }
         }}}>
         </Image.PreviewGroup>
@@ -386,7 +377,7 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
         </div>
     },[])
     return <>
-    <Upload itemRender={itemRender} className={classNames('simple-upload-'+size)} iconRender={iconRender} isImageUrl={isImage} showUploadList={{showPreviewIcon,showDownloadIcon}}  customRequest={CustomeRequest} listType='picture-card' fileList={mergeFileList} onDownload={handleDownLoad}  onPreview={handlePreview} beforeUpload={handleBeforeUpload} onChange={handleChange} {...restProps}>
+    <Upload maxCount={maxCount} itemRender={itemRender} className={classNames('simple-upload-'+size)} iconRender={iconRender} isImageUrl={isImage} showUploadList={{showPreviewIcon,showDownloadIcon}}  customRequest={CustomeRequest} listType='picture-card' fileList={mergeFileList} onDownload={handleDownLoad}  onPreview={handlePreview} beforeUpload={handleBeforeUpload} onChange={handleChange} {...restProps}>
         {renderUploadBtn()}
     </Upload>
     {renderPreviewGroup()}

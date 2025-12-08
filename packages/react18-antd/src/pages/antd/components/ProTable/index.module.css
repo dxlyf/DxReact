@@ -1,0 +1,62 @@
+.checkgroupBreak:global(.ant-checkbox-group){
+        flex-direction: column!important;
+}
+.tableWrapper{
+    background-color: #fff;
+    margin-top: 16px;
+    border-radius: 8px;
+}
+.tableHeaderWrapper{
+   padding: 0 32px;
+   padding-top: 8px;
+}
+.table{
+    :global {
+
+        .ant-table-thead {
+            tr th,
+            .ant-table-cell-scrollbar {
+                background-color: #f0f5ff !important;
+            }
+        }
+
+        .ant-pagination-prev,
+        .ant-pagination-item,
+        .ant-pagination-item a,
+        .ant-pagination-jump-next,
+        .ant-pagination-next {
+            background-color: #f9f9f9;
+            border-radius: 50%;
+        }
+
+        .ant-pagination-item-link:hover,
+        .ant-pagination-item:hover {
+            border-radius: 50%;
+            background-color: #1675fb;
+            color: white;
+
+            a {
+                background-color: transparent;
+                color: white;
+            }
+        }
+
+        .ant-pagination-item-active {
+            border: 0 !important;
+            background-color: #1675fb;
+            color: white;
+
+            a {
+                background-color: transparent;
+                color: white;
+            }
+        }
+    }
+}
+.tableEdit{
+    :global{
+        .ant-table-thead :is(td,th){
+         background-color: #f0f5ff!important;
+        }
+    }
+}

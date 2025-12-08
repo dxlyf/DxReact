@@ -1,7 +1,7 @@
 import { useMemoizedFn } from "ahooks"
 import { useCallback, useRef, useState } from "react"
 
-type UseControllerValueProps<T>={
+export type UseControllerValueProps<T>={
     value?:T
     defaultValue?:T|(()=>T)
     onChange?:(value:T,...args:any[])=>void
