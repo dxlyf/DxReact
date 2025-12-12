@@ -104,24 +104,25 @@ const useTableEdit = (props) => {
                             rowKey,
                             editable:finalEditable,
                             dataIndex: dataIndex,
+                            rowField:(name)=>{
+                                return [...prefixName, rowKey, ...getNamePath(name)]
+                            },
                             name: prefixName.length>0?[...prefixName, rowKey, ...getNamePath(dataIndex)]:getNamePath(dataIndex)
                         }
                         const _fieldProps = typeof fieldProps === 'function' ? fieldProps(editInfo) : fieldProps
                         const {dependencies,shouldUpdate,..._formItemProps} = typeof formItemProps === 'function' ? formItemProps(editInfo) : formItemProps
                         editInfo.fieldProps = _fieldProps
                         editInfo.formItemProps = _formItemProps
-                        let dom;
-                        if (renderFormItem) {
-                            dom= renderFormItem(editInfo)
-                        }else{
-                            dom= defaultRenderFormItem(editInfo)
-                        }
-                       
+                        let dom=defaultRenderFormItem(editInfo);
+                
                         if(shouldUpdate){
-                            return <Form.Item noStyle shouldUpdate={shouldUpdate}>{()=>dom}</Form.Item>
+                            return <Form.Item noStyle shouldUpdate={shouldUpdate}>{(form)=>renderFormItem(editInfo,dom,form)}</Form.Item>
                         }
                         if(dependencies){
-                             return <Form.Item noStyle dependencies={dependencies}>{()=>dom}</Form.Item>
+                             return <Form.Item noStyle dependencies={dependencies}>{(form)=>renderFormItem(editInfo,dom,form)}</Form.Item>
+                        }
+                        if (renderFormItem) {
+                            dom= renderFormItem(editInfo,dom)
                         }
                         return dom
                     }

@@ -102,6 +102,10 @@ const routes: RouteObjectAndMenu[] = [
                         path: 'huizongedit',
                         name: '汇总编辑',
                         Component: React.lazy(() => import('src/pages/proComponents/huizongedit'))
+                    }, {
+                        path: 'protableAntForm',
+                        name: 'ProTable+AntForm表单联动',
+                        Component: React.lazy(() => import('src/pages/proComponents/protableAntForm'))
                     }
                 ]
             }, {

@@ -1,12 +1,12 @@
 import {Tabs,Collapse, Form, Input, Button, Row, Col, Space,Card,Upload} from 'antd'
 import type {GetProp,GetProps,GetRef} from 'antd'
 import { debounce } from 'lodash-es'
-import { useCallback, useEffect, useMemo ,useState} from 'react'
+import { useCallback, useEffect, useMemo ,useState,useImperativeHandle} from 'react'
 import {chunk} from 'src/utils/utils'
 import {ProFormItemField} from '../components/Form/Item'
 import MixUpload, { type CustomUploadFile } from '../components/MixUpload'
  import {request} from 'src/utils/request'
-import { SimpleUpload } from '../components/SimpleUpload'
+import { SimpleUpload ,CustomeRequest} from '../components/SimpleUpload'
 import imageUrl from 'src/assets/images/image.jpg?url'
  function delay(wait:number) {
     return new Promise((resolve)=>{
@@ -15,12 +15,17 @@ import imageUrl from 'src/assets/images/image.jpg?url'
 }
 const BasicForm=({form:propForm})=>{
  const [form]=Form.useForm(propForm)
+ useEffect(()=>{
+
+     console.log(Object.keys(form.getFieldsValue()))
+ },[])
     return <Form layout='vertical' name='basic' form={form} onFinish={(values)=>{
         console.log('basicform',values)
     }}>
         <ProFormItemField valueType='text' label='名称' required name={'name'}></ProFormItemField>
     </Form>
 }
+
 const AttachmentForm=({form:propForm})=>{
     const [form]=Form.useForm(propForm)
     const [fileList, setFileList] = useState<CustomUploadFile[]>([]);
@@ -39,15 +44,25 @@ const AttachmentForm=({form:propForm})=>{
         form.setFieldValue('file_simple',[
             {
                 url:imageUrl,
-                name:'image.png'
+                name:'image.png',
+                status:'error',
+                percent:80
+            },{
+              url:'fd.docx',
+              name:'嚅全哈奔工.docx',
+              status:'done',
+              percent:100
             }
         ])
-  })
+  },[])
     return <Form layout='vertical' name='attach' form={form}>
         <Button htmlType='submit'>提交</Button>
  <div style={{ padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Card title='原生'>
+         <Card title='原生'>
+             <Upload listType='picture-card' customRequest={CustomeRequest}>上传</Upload>
+        </Card>
+        <Card title='SimpleUpload'>
             <Form.Item label='文件上传' name={'file_simple'}>
                   <SimpleUpload extensions={['png','jpg']}></SimpleUpload>
             </Form.Item>

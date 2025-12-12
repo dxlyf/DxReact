@@ -1,7 +1,6 @@
 import React, { useRef,useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { LoadingOutlined, FileUnknownOutlined,UploadOutlined,FileWordOutlined, FilePdfOutlined, FileExcelOutlined, EyeOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import { message, Upload, Button, Tooltip, Image, Space } from 'antd';
-import EllipsisText from '../components/EllipsisText';
 import fileApi from "$UI/wxsys/lib/base/fileApi";
 import UUID from "$UI/wxsys/lib/base/uuid";
 import styles from './upload.module.css'
@@ -32,6 +31,19 @@ const UploadFile = (props) => {
     defaultValue:defaultFileList??[],
     onChange:propOnChange
   })
+  const mergeFileList=useMemo(()=>{
+     return fileList.map(file=>{
+        if((file.status==='done'&&file.response||!file.status&&file.realFileName)&&!file.url) {
+          file.url= page.getServiceUrl(fileApi.getFileUrl({
+            actionUrl: "/storage",
+            operateType: "preview",
+            realFileName: file.realFileName,
+            storeFileName: file.storeFileName
+          }))
+      }
+      return file;
+     })
+  },[fileList])
   const [previewImageindex, setPreviewImageindex] = useState(-1);
 
   const uploadAction = useMemo(()=>{
@@ -41,7 +53,7 @@ const UploadFile = (props) => {
       })
   },[])
 
-  const genStoreFileName = useMemo((file) => {
+  const genStoreFileName = useCallback((file) => {
     let storeFileName = file.storeFileName;
     if (!storeFileName) {
       let realFileName = file.name;
@@ -51,12 +63,7 @@ const UploadFile = (props) => {
         date.getDate(),
         date.getFullYear(),
       ];
-
       storeFileName = `/${year}/${month}/${day}` + "/anoy_" + new UUID() + realFileName;
-      if (file.newFile) {
-        file.newFile.storeFileName = storeFileName;
-        file.newFile.realFileName = realFileName;
-      }
       file.storeFileName = storeFileName;
       file.realFileName = realFileName;
 
@@ -67,33 +74,22 @@ const UploadFile = (props) => {
   },[])
 
   const handleChange = useMemoizedFn((info) => {
- 
-    const newFileList=info.fileList.map(file=>{
-      if(file.status === 'done'&&!file.realFileName) {
-          file.realFileName = file.response?.data?.storeFileName || file.name;
-          file.storeFileName = file.response?.data?.storeFileName;
-      }
-      return file
+    const newFileList=[]
+    info.fileList.forEach(file=>{
+        if(file.status==='error'){
+           message.error(`${file.name} 文件上传失败。`);
+        }else{
+            newFileList.push(file)
+        }
     })
-    setFileList(fileList);
+    setFileList(newFileList);
   })
   const handlePreview = useMemoizedFn((file) => {
-    // Use the URL generated in updateFileList if available
-    const url = file.url ? file.url : currentPageInstance.getServiceUrl(fileApi.getFileUrl({
-      actionUrl: "/storage",
-      operateType: "preview",
-      realFileName: file.realFileName,
-      storeFileName: file.storeFileName
-    }));
-     setPreviewImage(url);
+     const index = mergeFileList.findIndex(d=>d.uid === file.uid)
+     setPreviewImageindex(index);
   })
   const handleDownLoad = useCallback((file) => {
-    const url = file.url ? file.url : currentPageInstance.getServiceUrl(fileApi.getFileUrl({
-      actionUrl: "/storage",
-      operateType: "preview",
-      realFileName: file.realFileName,
-      storeFileName: file.storeFileName
-    }));
+    const url = file.url;
     downloadFile(url,file.name)
     setTimeout(() => {
       URL.revokeObjectURL(url)
@@ -101,9 +97,9 @@ const UploadFile = (props) => {
   }, [])
 
 
-  const beforeUpload = (file) => {
+  const beforeUpload = useMemoizedFn((file) => {
     // 检查文件数量限制
-    if (maxCount && showFileList.length >= maxCount) {
+    if (maxCount && fileList.length >= maxCount) {
       message.error(`最多只能上传 ${maxCount} 个文件`);
       return Upload.LIST_IGNORE
     }
@@ -122,7 +118,7 @@ const UploadFile = (props) => {
         return Upload.LIST_IGNORE
       }
     }
-  }
+  })
 
 
   const iconRender = useCallback((file) => {
@@ -183,18 +179,18 @@ const UploadFile = (props) => {
     </div>
   }, [])
   const renderUploadBtn = () => {
-    return (isUndef(maxCount) || showFileList.length < maxCount) && (
-      <Tooltip title={fileSize || fileType ? <div>
-        {fileSize && <p>{`文件大小限制：${fileSize}MB`}</p>}
-        {fileType && <p>{`文件類型限制：${fileType.join('、')}`}</p>}
-      </div> : undefined}>
-        <div className={styles.uploadBtn}>
+    const uploadBtn=(<div className={styles.uploadBtn}>
           <Space direction='vertical' size={0}>
             <UploadOutlined></UploadOutlined>{props.buttonText || '上傳'}
           </Space>
-        </div>
-      </Tooltip>
-    )
+        </div>)
+    return (mergeFileList.length < maxCount) && (
+      (fileSize||fileType)?<Tooltip title={<div>
+        {fileSize && <p>{`文件大小限制：${fileSize}MB`}</p>}
+        {fileType && <p>{`文件類型限制：${fileType.join('、')}`}</p>}
+      </div>}>
+       {uploadBtn}
+      </Tooltip>:uploadBtn)
   }
   const renderPreviewGroup=()=>{
       const items=Array.isArray(fileList)?fileList.map(d=>d.url||d.thumbUrl).filter(Boolean):[]
@@ -215,7 +211,7 @@ const UploadFile = (props) => {
         action={uploadAction}
         data={genStoreFileName}
         listType='picture-card'
-        fileList={showFileList}
+        fileList={mergeFileList}
         isImageUrl={isImage}
         itemRender={itemRender}
         onChange={handleChange}
@@ -238,4 +234,19 @@ const UploadFile = (props) => {
 
   );
 };
+
+const UploadFileFormItemProps=(props={})=>{
+   const {valueType='js',transformValue,...restProps}=props
+   return {
+    valuePropName: 'fileList',
+    getValueFromEvent:(fileList)=>{
+        let newFileList=transformValue?transformValue(fileList):fileList
+        if(valueType==='json'){
+           return JSON.stringify(newFileList)
+        }
+        return newFileList
+    },
+    ...restProps
+   }
+}
 export default UploadFile;

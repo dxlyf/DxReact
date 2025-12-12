@@ -1,4 +1,4 @@
-import { message, Upload,Image, Tooltip, Row, Col, Space} from 'antd'
+import { message, Upload,Image, Tooltip, Row, Col, Space,Progress} from 'antd'
 import type { UploadProps, UploadFile, GetProp, GetProps } from 'antd'
 import useControllerValue from '../../hooks/useControllerValue'
 import { useCallback, useMemo, useState } from 'react'
@@ -145,12 +145,45 @@ function uploadWithProgressXHR(file, url, onProgress) {
 //     console.error('上传失败:', error);
 //   }
 // });
-export const CustomeRequest: GetProp<typeof Upload, 'customRequest'> = (options) => {
+
+function readBase64(data:Blob|File){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = (err) => reject(err)
+    reader.readAsDataURL(data)
+  })
+}
+export const CustomeRequest: GetProp<typeof Upload, 'customRequest'> =async (options) => {
     const { file, data, filename = 'file', withCredentials, action, headers = {}, method = 'post', onProgress, onError, onSuccess } = options
 
-    options?.onSuccess({
-        url:URL.createObjectURL(file)
+  const random=Math.random()
+  console.log('random',random)
+     if(random>0.5){
+      
+    await (new Promise((resolve)=>{
+      let percent = 0
+      const handle = () => {
+        if (percent > 100) {
+          resolve(null)
+          return
+        }
+        let e = new ProgressEvent('progress')
+        e.percent = percent++
+
+        options.onProgress(e, file)
+        setTimeout(handle, 20)
+      }
+      setTimeout(handle, 20)
+
+    }))
+       options?.onSuccess({
+        url:await readBase64(file)
     },file)
+     }else{
+        console.log('fd')
+        options?.onError?.(new Error('上传失败'))
+     }
     //options.onError?.(new Error('上传失败'))
 
 }
@@ -200,6 +233,66 @@ const getFileIcon = (fileName: string): React.ReactNode => {
       return fileIconMap.default;
   }
 };
+const isImageFileType = (type: string): boolean => type.indexOf('image/') === 0;
+const MEASURE_SIZE = 200;
+export function previewImage(file: File | Blob): Promise<string> {
+  return new Promise<string>((resolve) => {
+    if (!file.type || !isImageFileType(file.type)) {
+      resolve('');
+      return;
+    }
+     
+    const canvas = document.createElement('canvas');
+    canvas.width = MEASURE_SIZE;
+    canvas.height = MEASURE_SIZE;
+    canvas.style.cssText = `position: fixed; left: 0; top: 0; width: ${MEASURE_SIZE}px; height: ${MEASURE_SIZE}px; z-index: 9999; display: none;`;
+    document.body.appendChild<HTMLCanvasElement>(canvas);
+    const ctx = canvas.getContext('2d');
+    const img = document.createElement('img');
+    img.onload = () => {
+      const { width, height } = img;
+
+      let drawWidth = MEASURE_SIZE;
+      let drawHeight = MEASURE_SIZE;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (width > height) {
+        drawHeight = height * (MEASURE_SIZE / width);
+        offsetY = -(drawHeight - drawWidth) / 2;
+      } else {
+        drawWidth = width * (MEASURE_SIZE / height);
+        offsetX = -(drawWidth - drawHeight) / 2;
+      }
+
+      ctx!.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+      const dataURL = canvas.toDataURL();
+      document.body.removeChild(canvas);
+      window.URL.revokeObjectURL(img.src);
+      resolve(dataURL);
+    };
+    img.crossOrigin = 'anonymous';
+    if (file.type.startsWith('image/svg+xml')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result && typeof reader.result === 'string') {
+          img.src = reader.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type.startsWith('image/gif')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          resolve(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      img.src = window.URL.createObjectURL(file);
+    }
+  });
+}
 export const SimpleUpload = (props: SimpleUploadPropss) => {
     const { value: propValue,extensions,size='small', maxCount = Infinity, maxSize = 10, defaultValue: propDefaultValue, onChange, ...restProps } = props
      const [previewCurrentIndex,setPreviewCurrentIndex]=useState(-1)
@@ -218,25 +311,25 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
             message.error(`文件大小不能超过${maxSize}Mb`)
             return Upload.LIST_IGNORE
         }
-        return true
+        return file
     })
     const handleChange = useCallback<GetProp<typeof Upload, 'onChange'>>((e) => {
-        const fileList = e.fileList as SimpleUploadFile[]
-        const newFileList = fileList.map((file, index) => {
-            // 如果文件是图片，并且是刚才上传的文件
-            if (!file.thumbUrl&& file.originFileObj) {
-                if (file.status === 'done') {
-                   file.thumbUrl=file.response.url
-                }
-            }
-            return file
-        })
-       
-        setValue(newFileList)
+        let fileList = e.fileList as SimpleUploadFile[]
+        let newFileList=fileList.map(file=>{
+           const oldItem=value.find(d=>d.uid===file.uid)
 
-        // setOtherFileList(newFileList.filter((file) =>  file.status === 'error'))
-       // setValue(newFileList.filter((file) => file.status !== 'error'))
-    }, [setValue])
+           return Object.assign(oldItem||{},file)
+      
+        })
+        if(e.file.status==='done'){
+          message.success('上传成功')
+        }
+        if(e.file.status==='error'){
+          console.log('e',e.file)
+            message.error('上传失败')
+        }
+        setValue(newFileList)
+    }, [setValue,value])
     const isImage=useCallback((file: SimpleUploadFile) => {
         if(file.type&&file.type.startsWith('image/')){
             return true
@@ -275,23 +368,14 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
             URL.revokeObjectURL(a.href)
         },100)
     }, [])
-    const handlePreviewFile = useCallback<GetProp<typeof Upload, 'previewFile'>>((file) => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                resolve(e.target.result as string)
-            }
-            reader.onerror = (err) => reject(err)
-            reader.readAsDataURL(file)
-        })
-    }, [])
+
 
     const mergeFileList = useMemo(() => {
         // if (otherFileList.length <= 0) {
         //     return value
         // }
        // return [...value, ...otherFileList].sort((a, b) => a.order - b.order)
-       return value
+      return value
     }, [value])
 
     const showPreviewIcon=useCallback((file: SimpleUploadFile) => {
@@ -335,19 +419,28 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
         </Image.PreviewGroup>
       </div>
     }
+    const [hoverId,setHoverId]=useState('')
     const itemRender=useCallback<GetProp<typeof Upload,'itemRender'>>((originNode,file,fileList,actions)=>{
         if(false){
             return originNode
         }
         const isImg=isImage(file)
-         
-        return <div className='simple-upload-file-item'>
-            {isImg?(
+        const done=file.status==='done'||file.status===undefined
+        const actionDisabled=done!==true
+        const uploading=file.status==='uploading'
+        const percent=file.percent=file.percent||0
+
+        const progressDom=(<div className='simple-upload-file-item-progress'>
+          <Progress type='line' size="small" showInfo={false} percent={percent} ></Progress>
+        </div>)
+        const active=hoverId===file.uid
+        const fileDom=isImg?(
                 <div className='simple-upload-file-item-image'>
                     <img title={file.name} src={file.url||file.thumbUrl} />
-                       <div className='simple-upload-file-item-action'>
+                       <div className={classNames('simple-upload-file-item-action',{
+                       })}>
                         <div>
-                            <EyeOutlined  title='预览' onClick={()=>{
+                            <EyeOutlined disabled={actionDisabled}  title='预览' onClick={()=>{
                                 actions.preview()
                             }}></EyeOutlined>
                         </div>
@@ -359,10 +452,11 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
                         </div> 
                 </div>
             ):( <div className='simple-upload-file-item-file'>
-                    <div>{iconRender(file)}</div>
+                      <div>{iconRender(file)}</div>
+                      <div className='simple-upload-file-item-filename' title={file.name}>{file.name}</div>
                        <div className='simple-upload-file-item-action'>
                         <div>
-                            <DownloadOutlined title='下载' onClick={()=>{
+                            <DownloadOutlined disabled={actionDisabled}  title='下载' onClick={()=>{
                                 actions.download()
                             }}></DownloadOutlined>
                         </div>
@@ -372,12 +466,41 @@ export const SimpleUpload = (props: SimpleUploadPropss) => {
                             }}></DeleteOutlined>
                         </div>
                         </div> 
-                </div>)}
-            
+                </div>)
+        let id:any
+        return <div onMouseOver={(e)=>{
+          if(e.target&&e.target.closest('.simple-upload-file-item-filename')){
+            console.log('ffffffff')
+             if(id){
+              clearTimeout(id)
+            }
+            setHoverId('')
+            return
+          }
+            if(active){
+              return
+            }
+             console.log('enter')
+            if(id){
+              clearTimeout(id)
+            }
+            id=setTimeout(()=>{
+              setHoverId(file.uid)
+            },300)
+        }} onMouseLeave={()=>{
+            if(id){
+              clearTimeout(id)
+            }
+            setHoverId('')
+        }} className={classNames('simple-upload-file-item',`simple-upload-file-item-${file.status||'done'}`,{
+              'active':active
+        })}>
+          {fileDom}
+         {uploading?progressDom:null}
         </div>
-    },[])
+    },[hoverId])
     return <>
-    <Upload maxCount={maxCount} itemRender={itemRender} className={classNames('simple-upload-'+size)} iconRender={iconRender} isImageUrl={isImage} showUploadList={{showPreviewIcon,showDownloadIcon}}  customRequest={CustomeRequest} listType='picture-card' fileList={mergeFileList} onDownload={handleDownLoad}  onPreview={handlePreview} beforeUpload={handleBeforeUpload} onChange={handleChange} {...restProps}>
+    <Upload  maxCount={maxCount} itemRender={itemRender} className={classNames('simple-upload-'+size)} iconRender={iconRender} isImageUrl={isImage} showUploadList={{showPreviewIcon,showDownloadIcon}}  customRequest={CustomeRequest} listType='picture-card' fileList={mergeFileList} onDownload={handleDownLoad}  onPreview={handlePreview} beforeUpload={handleBeforeUpload} onChange={handleChange} {...restProps}>
         {renderUploadBtn()}
     </Upload>
     {renderPreviewGroup()}
