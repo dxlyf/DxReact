@@ -170,3 +170,6 @@
 [submodule "packages/happy-dom"]
 	path = packages/happy-dom
 	url = git@github.com:capricorn86/happy-dom.git
+[submodule "packages/vite"]
+	path = packages/vite
+	url = git@github.com:vitejs/vite.git

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import UnoCSS from 'unocss/vite'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-// import vitePluginExpress from './service/vite-express-plugin.mjs'
+ import vitePluginExpress from './service/vite-express-plugin.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export function mockPlugin() {
@@ -47,7 +47,7 @@ export function mockPlugin() {
 }
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [UnoCSS(),react(),mockPlugin()] as PluginOption[],
+  plugins: [UnoCSS(),react(),vitePluginExpress()] as PluginOption[],
   resolve:{
     alias:{
         src: resolve(__dirname, 'src'),
@@ -62,7 +62,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-     // '^/api': 'http://localhost:9857',
+      '^/api': 'http://localhost:9857',
     },
   }
 })

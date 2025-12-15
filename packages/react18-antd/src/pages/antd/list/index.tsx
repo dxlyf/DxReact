@@ -47,8 +47,8 @@ export default ()=>{
         },
         request:async (params)=>{  
              const res=await request.post<{records:any[],total:number}>('/list',params)
-             const records=res.data
-             const total=res.data.length
+             const records=res.data.records
+             const total=res.data.total
              return {data:records,total}
         }
     })
@@ -72,7 +72,8 @@ export default ()=>{
             width:200
         } ,   {
             title:'age',
-            dataIndex:'age'
+            dataIndex:'age',
+            width:100
         },{
             title:'备注',
             dataIndex:'remark',

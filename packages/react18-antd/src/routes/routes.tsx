@@ -211,6 +211,23 @@ const routes: RouteObjectAndMenu[] = [
                         ]
                     }
                 ]
+            },
+            {
+                name:'数据库',
+                path:'database',
+                children:[
+                    {
+                        name:'连接数据库',
+                        path:'connect',
+                        Component: React.lazy(() => import('src/pages/database/connect'))
+                    },
+                      {
+                        name:'查询',
+                        path:'query',
+                        Component: React.lazy(() => import('src/pages/database/query'))
+                    }
+                ]
+
             }
         ]
     }]
