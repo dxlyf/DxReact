@@ -1,4 +1,4 @@
-import { Sequelize } from 'sequelize'
+import { Sequelize,QueryTypes,DataTypes } from 'sequelize'
 import express from 'express'
 
 
@@ -42,14 +42,14 @@ router.post('/connection', async (req, res) => {
     }
 })
 router.post('/query', async (req, res) => {
-    const { sql } = req.body
+    const { sql,type=QueryTypes.SELECT } = req.body
     if(!sequlize){
         res.json({ msg: '请先连接数据库', code: 1 })
         return;
     }
     try {
         let result = await sequlize.query(sql,{
-            type: Sequelize.QueryTypes.SELECT,
+            type: type,
           //  model: Sequelize., // 这里传入一个模型，它将自动地将结果转换为该模型的实例。
            // mapToModel: true, // 是否将结果映射到模型上（默认为true）
         })

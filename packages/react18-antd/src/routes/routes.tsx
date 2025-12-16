@@ -28,6 +28,12 @@ const routes: RouteObjectAndMenu[] = [
                 path:'tools',
                 name:'工具',
                 children:[{
+                    path:'daynamicCode',
+                    name: '代码生成',
+                    Component: React.lazy(() => import('src/pages/tools/dynamicCode'))
+
+                },{
+
                     path:'simplifiedToTraditional',
                     name: '简体转繁体',
                     Component: React.lazy(() => import('src/pages/tools/SimplifiedToTraditional'))
@@ -39,6 +45,14 @@ const routes: RouteObjectAndMenu[] = [
                         name:'flex布局',
                         path:'flex',
                         Component: React.lazy(() => import('src/pages/tools/css/flex'))
+                    }]
+                },{
+                    path:'bignumber',
+                    name: 'bignumber',
+                    children:[{
+                        name:'bignumber',
+                        path:'bignumber',
+                        Component: React.lazy(() => import('src/pages/tools/bignumber/bignumber'))
                     }]
                 }]
             },

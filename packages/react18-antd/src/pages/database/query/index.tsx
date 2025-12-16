@@ -2,7 +2,7 @@
 import {BetaSchemaForm} from '@ant-design/pro-components'
 import { Button, message } from 'antd/lib'
 import { useEffect, useState } from 'react'
-import request from 'src/utils/request'
+import * as dbServices from 'src/services/db'
 import ConnectWrap from '../components/ConnectWrap'
 
 
@@ -10,11 +10,9 @@ export default function Query(){
     const [loading, setLoading] = useState(false)
 
     return <ConnectWrap>
-        <BetaSchemaForm onFinish={async (values: any) => {
+        <BetaSchemaForm initialValues={{type:dbServices.QueryTypes.SELECT}} onFinish={async (values: any) => {
             setLoading(true)
-        request.post('/db/query', {
-            sql: values.sql
-        }).then(() => {
+        dbServices.query(values.sql,values.type).then(() => {
 
         }, (e) => {
             //message.error('连接失败',e.message)
@@ -33,6 +31,11 @@ export default function Query(){
                 title:'sql',
                 dataIndex:'sql',
                 valueType:'textarea'
+            },{
+                title:'类型',
+                dataIndex:'type',
+                valueType:'select',
+                valueEnum:dbServices.QueryTypes
             }
         ]}></BetaSchemaForm>
     </ConnectWrap>

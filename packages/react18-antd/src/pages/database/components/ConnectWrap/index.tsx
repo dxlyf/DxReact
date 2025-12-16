@@ -1,17 +1,28 @@
 
-import { BetaSchemaForm } from '@ant-design/pro-components'
+import { BetaSchemaForm,ProForm } from '@ant-design/pro-components'
 import { Button, message, Spin } from 'antd'
-import React, { useEffect, useState } from 'react'
-import request from 'src/utils/request'
+import React, { useEffect, useMemo, useState } from 'react'
+import * as dbServices from 'src/services/db'
+import type {TableDescribe} from 'src/services/db'
+type ConnectDBAPI = {
+    database:string
+    tables:string[]
+    tableDescribe:(table:string)=>Promise<TableDescribe>
+}
+type ConnectDBProps = {
+    children?: React.ReactNode|((api:ConnectDBAPI)=>React.ReactNode)
+}
 
-
-export default function ConnectDB(props: { children?: React.ReactNode }) {
+export default function ConnectDB(props: ConnectDBProps) {
     const { } = props
+    const [form]=ProForm.useForm()
     const [loading, setLoading] = useState(true)
     const [connectLoading,setConnectLoading]= useState(false)
     const [connection, setConnection] = useState(false)
+    const [tables,setTables]=useState<string[]>([])
+
     useEffect(() => {
-        request.get<boolean>('/db/connectionState').then((res) => {
+        dbServices.isConnection().then((res) => {
             if (res.data) {
                 setConnection(true)
             }
@@ -19,23 +30,39 @@ export default function ConnectDB(props: { children?: React.ReactNode }) {
             setLoading(false)
         })
     }, [])
+    useEffect(()=>{
+        if(connection){
+            dbServices.currentTables().then((res)=>{
+                setTables(res.data)
+            })
+        }
+    },[connection])
+    const api=useMemo<ConnectDBAPI>(()=>{
+        const database=form.getFieldValue('database')
+        return {
+            database:database,
+            tables,
+            tableDescribe:(table:string)=>dbServices.tableDescribe(table).then(d=>d.data)
+        }
+    },[tables])
     if (loading){
          return <Spin>加载中...</Spin>
     }
     
     if (connection) {
         if (props.children) {
-            return props.children
+            return typeof props.children==='function'?props.children(api):props.children
+
         }
         return <div>已连接<Button onClick={() => {
-            request.post('/db/close').then(() => {
+            dbServices.close().then(() => {
                 setConnection(false)
             })
         }}>退出</Button></div>
     }
-    return <BetaSchemaForm onFinish={async (values: any) => {
+    return <BetaSchemaForm form={form} onFinish={async (values: any) => {
         setConnectLoading(true)
-        request.post('/db/connection', {
+        dbServices.connection({
             database: values.database,
             username: values.username,
             password: values.password,

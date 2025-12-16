@@ -8,7 +8,7 @@ import { globSync } from 'node:fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const entryFile = path.resolve(__dirname, './index.mjs')
-
+const watchDir=path.resolve(__dirname,'./service')
 class ChildProcessManager{
   static instance=null
   static getSignal(){
@@ -61,12 +61,12 @@ export default function vitePluginExpress() {
     configureServer(server) {
       ChildProcessManager.getSignal().start()
       server.watcher.add([entryFile])
-      server.watcher.add(path.resolve(__dirname,'./service/db/index.mjs'))
+      server.watcher.add(watchDir)
 
     },
     watchChange(id, change) {
-      //  console.log('id',id,'change',change)
-      if (id.includes('service/index.mjs')) {
+        //console.log('id',id,'change',change,'watchDir',watchDir)
+      if (id.includes('service/index.mjs')||id.includes(watchDir.replace(/\\/g,'/'))) {
        ChildProcessManager.getSignal().restart()
       }
 
