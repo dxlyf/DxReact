@@ -1,5 +1,6 @@
 
 /**
+https://mathworld.wolfram.com/topics/ComputationalGeometry.html
 The texture channels iChannelN may be defined by inserting code of the following form at the top of your shader
 
 #iChannel0 "file://duck.png"
