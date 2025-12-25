@@ -1,7 +1,7 @@
 import {BetaSchemaForm,QueryFilter } from '@ant-design/pro-components'
 import useMemoizedFn  from '../../hooks/useMemoizedFn'
 import {Form,Popover,Space,Button,Input,InputNumber,Row,Col} from 'antd'
-import React,{ useMemo, useState,useRef,useLayoutEffect } from 'react'
+import React,{ useMemo, useState,useRef,useLayoutEffect,useEffect } from 'react'
 import {useCompany} from './hooks/useCompany'
 import styles from './index.module.css';
 import classNames from '../../utils/classNames'
@@ -184,10 +184,16 @@ const MAX_DECIMAL_NUMBER=999999999.99 //999999999999.99
 const MAX_INTEGER_COUNT=9999999 //2147483647
 
 
-
+const FormItemUpdate=(props)=>{
+    const {updateValue,children,onChange}=props
+    useEffect(()=>{
+        onChange?.(updateValue)
+    },[updateValue])
+    return children()
+}
 
  const renderFormItem = (restItem) => {
-  const { shouldUpdate , dependencies,type,render,order, ...restProps } = restItem
+  const { shouldUpdate, dependencies,type,render,order, ...restProps } = restItem
   if (!restProps.config) {
     restProps.config = {}
   }
@@ -205,7 +211,7 @@ const MAX_INTEGER_COUNT=9999999 //2147483647
     type=formItemEnum.DATE_PICKER
     restProps.config.format='YYYY-MM-DD HH:mm:ss'
   }
-  const dom=<GenericFormItem type={type} {...restProps}></GenericFormItem>
+  let dom=<GenericFormItem type={type} {...restProps}></GenericFormItem>
   if (shouldUpdate) {
     return <Form.Item noStyle shouldUpdate={shouldUpdate}>{(form)=>render?render(form,dom):dom}</Form.Item>
   }
@@ -222,17 +228,32 @@ const MAX_INTEGER_COUNT=9999999 //2147483647
     })}
   </Row>
 }
+const renderFormBlock=(options)=>{
+    const {title,right,children}=options
+    return <div className={styles.formItemBlock}>
+        <div className={styles.formItemBlockTitle}>
+            <div>{title}</div>
+            <div>{right}</div>
+        </div>
+        <div className={styles.formItemBlockCon}>
+            {children}
+        </div>
+    </div>
+}
+
 
 export {
     MAX_DECIMAL_NUMBER,
     MAX_INTEGER_COUNT,
     renderFormItem,
     renderFormItems,
+    renderFormBlock,
     ProForm,
     ProFilterForm,
     useCompany,
     useProForm,
     useProFormColumns,
     ProFormItem,
-    ProFormItemInner 
+    ProFormItemInner,
+    FormItemUpdate
 }

@@ -136,7 +136,7 @@ const TableBtnAction = (props) => {
             {moreItems.length > 0 && renderMoreItems(moreItems)}
         </>;
     };
-    return <Space align="start" style={{width:'100%',paddingLeft:8}}>
+    return <Space>
         {renderDom()}
     </Space>;
 };
@@ -240,7 +240,8 @@ TableBtnAction.GSYWlListAction =(record)=>{
     }
 }
 // 审批状态显示按钮
-TableBtnAction.ApprovalStatusAction = (status) => {
+TableBtnAction.ApprovalStatusAction = (record) => {
+    let status=record!==null&&typeof record==='object'?record.approvalStatus:record
     switch (status) {
         case approvalStatusEnum.DRAFT:
             return [OPERATION_ACTIONS.DETAIL,OPERATION_ACTIONS.EDIT,OPERATION_ACTIONS.DELETE,OPERATION_ACTIONS.SUBMIT,OPERATION_ACTIONS.COPY];

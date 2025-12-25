@@ -196,7 +196,7 @@ const useTableEdit = (props) => {
         insertRow: (record, index) => {
             const newData = [...mergeDataSource]
             if (typeof index === 'number') {
-                newData.splice(index, record)
+                newData.splice(index,0, record)
             } else {
                 newData.push(record)
             }
@@ -218,7 +218,7 @@ const useTableEdit = (props) => {
 
 
 const TableEdit = (props) => {
-    const {title,children, disabled, newAddBtnText = '', name, ...restTableProps } = props
+    const {title,editableRef,children, disabled,rowCreator, newAddBtnText = '', name, ...restTableProps } = props
     const [tableProps, editableInstance] = useTableEdit({
         name,
         size: 'small',
@@ -233,12 +233,15 @@ const TableEdit = (props) => {
         editableInstance.setSelectedRows([])
     }
     const handleAdd = () => {
-        editableInstance.insertRow({})
+        let rowData=rowCreator?rowCreator():{}
+        editableInstance.insertRow(rowData)
         editableInstance.setEditRowKeys([editableInstance.dataSource.length])
     }
     const selectedRowKeys = editableInstance.selectedRowKeys
     // const selectedRows=editableInstance.selectedRows
-    const actionDom = (disabled ? null : <Space>
+    useImperativeHandle(editableRef,()=>editableInstance,[editableInstance])
+    
+   const actionDom = (disabled ? null : <Space>
         <Button type="primary" danger size="small" onClick={handleBatchDelete} disabled={!selectedRowKeys.length}>
             刪除{selectedRowKeys.length ? ` ${selectedRowKeys.length} 條數據` : ''}
         </Button>
@@ -253,7 +256,7 @@ const TableEdit = (props) => {
             actionDom
         }) : <>
              <Row justify={'space-between'} style={{marginBottom:8}}>
-                <Col flex='none'>
+                <Col flex='1 0' style={{overflow:'hidden'}}>
                 <span>{title}</span>
                 </Col>
                 <Col flex='none'>{actionDom}</Col>

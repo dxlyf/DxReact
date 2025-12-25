@@ -1,7 +1,7 @@
-import {Tabs,Collapse, Form, Input, Button, Row, Col, Space,Card,Upload} from 'antd'
-import type {GetProp,GetProps,GetRef} from 'antd'
+import {Tabs,Collapse, Form, Input, Button, Row, Col, Space,Card,Upload, InputNumber} from 'antd'
+import type {GetProp,GetProps,GetRef,FormInstance} from 'antd'
 import { debounce } from 'lodash-es'
-import { useCallback, useEffect, useMemo ,useState,useImperativeHandle} from 'react'
+import React, { useCallback, useEffect, useMemo ,useState,useImperativeHandle} from 'react'
 import {chunk} from 'src/utils/utils'
 import {ProFormItemField} from '../components/Form/Item'
 import MixUpload, { type CustomUploadFile } from '../components/MixUpload'
@@ -13,16 +13,61 @@ import imageUrl from 'src/assets/images/image.jpg?url'
         setTimeout(resolve,wait)
     })
 }
+
 const BasicForm=({form:propForm})=>{
  const [form]=Form.useForm(propForm)
  useEffect(()=>{
-
+      form.setFieldValue('sum_a',10)
+        form.setFieldValue('sum_b',10)
      console.log(Object.keys(form.getFieldsValue()))
  },[])
-    return <Form layout='vertical' name='basic' form={form} onFinish={(values)=>{
-        console.log('basicform',values)
+    return <Form onValuesChange={(changedValues,values)=>{
+       console.log('onValuesChange',changedValues)
+       if(Object.hasOwn(changedValues,'sum_a')||Object.hasOwn(changedValues,'sum_b')){
+              const a=values.sum_a
+              const b=values.sum_b
+              const sum=Number.isFinite(a)&&Number.isFinite(b)?a+b:0
+              form.setFieldValue('sum_d',sum)
+       }
+    }} onFieldsChange={(changedFields)=>{
+       console.log('onFieldsChange',changedFields)
+    }} layout='vertical' name='basic' form={form} onFinish={(values)=>{
+        console.log('basicform',values,'allValues',form.getFieldsValue(true))
     }}>
-        <ProFormItemField valueType='text' label='名称' required name={'name'}></ProFormItemField>
+        <Button htmlType='submit'>提交</Button>
+        <ProFormItemField valueType='text' label='名称'  name={'name'}></ProFormItemField>
+      <Row>
+        <Col span={8}>
+          <Form.Item name='sum_a' label='a'>
+        <InputNumber></InputNumber>
+          </Form.Item>
+  
+          </Col>
+          <Col span={8}>
+           <Form.Item name='sum_b' label='b'>
+                    <InputNumber></InputNumber>
+          </Form.Item></Col>
+          <Col span={8}>
+          <Form.Item name='sum_d' label='sum_d'>
+            <InputNumber disabled></InputNumber>
+          </Form.Item>
+          <Form.Item noStyle shouldUpdate={(prevValues,nextValues)=>{
+            return prevValues.sum_a!==nextValues.sum_a||prevValues.sum_b!==nextValues.sum_b
+          }}>
+            {(form)=>{
+            
+              const a=form.getFieldValue('sum_a')
+              const b=form.getFieldValue('sum_b')
+              const sum=Number.isFinite(a)&&Number.isFinite(b)?a+b:0
+              console.log('sum',a,b,sum)
+              return <Form.Item  label='sum' name={'sum_c'}>
+              <FormItemText form={form} name='sum_c' updateValue={sum}>{()=><InputNumber disabled value={sum}></InputNumber>}</FormItemText>
+          </Form.Item>
+            }}
+          </Form.Item>
+          </Col>
+      </Row>
+    
     </Form>
 }
 
@@ -127,6 +172,27 @@ const AttachmentForm=({form:propForm})=>{
   );
     </Form>
 }
+type FormItemTextProps={
+  name:any
+  updateValue?:any
+  form?:FormInstance
+  onChange?:(value:any)=>void;
+  children:(props:FormItemTextProps)=>React.ReactNode;
+}
+
+const FormItemText=(props:FormItemTextProps)=>{
+  const {name,updateValue,form:propForm,onChange}=props
+ 
+  const _form=Form.useFormInstance()
+  const form=propForm||_form
+   useEffect(()=>{
+     //form.setFieldValue(name,updateValue)
+     onChange?.(updateValue)
+   },[updateValue])
+                   console.log('依赖：',updateValue)
+   return props.children(props)
+}
+
 const Demo=()=>{
 
     const [basicform]=Form.useForm()
