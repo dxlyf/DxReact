@@ -12,7 +12,8 @@ type ConnectDBAPI = {
 type ConnectDBProps = {
     children?: React.ReactNode|((api:ConnectDBAPI)=>React.ReactNode)
 }
-
+export const ConnectDBContext=React.createContext<ConnectDBAPI|null>(null)
+export const useDBContext=()=>React.useContext(ConnectDBContext)
 export default function ConnectDB(props: ConnectDBProps) {
     const { } = props
     const [form]=ProForm.useForm()
@@ -51,7 +52,7 @@ export default function ConnectDB(props: ConnectDBProps) {
     
     if (connection) {
         if (props.children) {
-            return typeof props.children==='function'?props.children(api):props.children
+            return <ConnectDBContext.Provider value={api}>{typeof props.children==='function'?props.children(api):props.children}</ConnectDBContext.Provider>
 
         }
         return <div>已连接<Button onClick={() => {

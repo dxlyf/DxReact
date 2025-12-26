@@ -91,7 +91,7 @@ const useTable = (props: UseTableProps) => {
         bordered: true,
         size: 'middle',
         className: classNames(styles.table, className),
-        scroll: { x: 'max-content', y: `calc(100vh - ${scrollY}px)` },
+        scroll: { x: '100%', y: `calc(100vh - ${scrollY}px)` },
         showSorterTooltip:false,
         renderHeaderSlot: () => {
             return (<Row justify={'space-between'} style={{paddingBottom:10}}>
