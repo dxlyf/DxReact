@@ -17,6 +17,7 @@ type UseModalProps = Omit<ModalProps, 'children'> & {
     getModalStageProps?: (istance: ModalInstance) => ModalProps
     showFullScreen?:boolean
     draggable?:boolean
+    hideCancelButton?:boolean
 
 }
 export type ModalInstance = {
@@ -34,7 +35,7 @@ export type ModalInstance = {
 }
 
 const useModal = (props: UseModalProps = {}) => {
-    const { getModalStageProps,draggable=true, noWrap = false,showFullScreen=true, onSubmit, children, okButtonProps, cancelButtonProps, visible: propsVisible = false, ...restModalProps } = props
+    const { getModalStageProps,hideCancelButton=false,draggable=true, noWrap = false,showFullScreen=true, onSubmit, children, okButtonProps, cancelButtonProps, visible: propsVisible = false, ...restModalProps } = props
     const [visible, setVisible] = useState(() => propsVisible)
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(false)
@@ -136,6 +137,12 @@ const useModal = (props: UseModalProps = {}) => {
             ...(cancelButtonProps ? cancelButtonProps : {})
         },
         className:classNames(className,fullScreen?'modal-full-screen':''),
+        footer:(originDom,{OkBtn,CancelBtn})=>{
+            if(hideCancelButton){
+                return <OkBtn></OkBtn>
+            }
+            return originDom
+        },
         ...finalModalProps
     }
     useLayoutEffect(() => {

@@ -1,4 +1,4 @@
-import { message, Upload,Image, Tooltip, Row, Col, Space,Progress} from 'antd'
+import { message, Upload,Image, Tooltip, Row, Col, Space,ConfigProvider,Progress} from 'antd'
 import type { UploadProps, UploadFile, GetProp, GetProps } from 'antd'
 import useControllerValue from '../../hooks/useControllerValue'
 import { useCallback, useMemo, useState } from 'react'
@@ -295,7 +295,9 @@ export function previewImage(file: File | Blob): Promise<string> {
 }
 export const SimpleUpload = (props: SimpleUploadPropss) => {
     const { value: propValue,extensions,size='small', maxCount = Infinity, maxSize = 10, defaultValue: propDefaultValue, onChange, ...restProps } = props
-     const [previewCurrentIndex,setPreviewCurrentIndex]=useState(-1)
+    const {componentDisabled}=ConfigProvider.useConfig()
+    const mergeDisabled=props.disabled??componentDisabled
+    const [previewCurrentIndex,setPreviewCurrentIndex]=useState(-1)
     // 上传成功的文件
     const [value, setValue] = useControllerValue({
         value: propValue,
