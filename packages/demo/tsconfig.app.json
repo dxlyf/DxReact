@@ -14,17 +14,22 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "jsx":"react",
-    "jsxFactory": "createElement",
-
-
+    "jsx":"preserve",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
     /* Linting */
+    "strictNullChecks": false,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "react":["src/react"],
+      "src":["src"]
+    }
   },
   "include": ["src"]
 }

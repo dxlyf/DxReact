@@ -8,8 +8,10 @@ import ProSelect from '../components/Select'
  import {request} from 'src/utils/request'
 import dayjs, { type Dayjs} from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import objectSupport from 'dayjs/plugin/objectSupport'
 import { info } from 'console'
  dayjs.extend(utc)
+ dayjs.extend(objectSupport)
  function delay(wait:number) {
     return new Promise((resolve)=>{
         setTimeout(resolve,wait)
@@ -154,6 +156,18 @@ const Demo=()=>{
             </Form.Item>
         }
     },{
+        label:'季度',
+        name:'quarter',
+
+        valueType:'date',
+        fieldProps:{
+            //format:'YYYY年MM月',
+            picker:'quarter',
+            onChange(value){
+                
+            }
+        } as GetProps<typeof DatePicker>
+    },{
         label:'月份',
         name:'month',
         valueType:'date',
@@ -214,6 +228,7 @@ const Demo=()=>{
        const handleFinish=useCallback<GetProp<typeof Form,'onFinish'>>(values=>{
            console.log('submit',values)
     },[])
+    form.validateFields
     const tabItems=useMemo<GetProp<typeof Tabs,'items'>>(()=>{
 
         return [{
@@ -247,11 +262,11 @@ const Demo=()=>{
         // })
     },[])
     return <>
-
+        {/* {dayjs().year(2025).month(10).format('YYYY-MM')} */}
         <Tabs items={tabItems} defaultActiveKey={tabItems[0].key}  style={{ background: '#fff' }}></Tabs>
         <Button onClick={async ()=>{
             const values=await form.validateFields()
-            console.log('values',values)
+            console.log('values',values,values?.quarter.format('YYYY年MM月DD日'))
         }}>提交</Button>
   
     </>

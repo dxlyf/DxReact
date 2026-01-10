@@ -1,0 +1,41 @@
+// 自定义.scss
+// 选项 B：包含 Bootstrap 的部分内容
+
+
+// 1. 首先包含函数（这样你就可以操作颜色、SVG、计算等）
+
+@import "../bootstrap/scss/functions";
+
+// 2. 在此处包含任何默认变量覆盖
+
+
+// 3. 包括所需 Bootstrap 样式表的其余部分（包括任何单独的颜色模式样式表）
+
+@import "../bootstrap/scss/variables";
+@import "../bootstrap/scss/variables-dark";
+
+// 4. 在此处包含任何默认地图覆盖
+
+
+// 5. 包括所需零件的其余部分
+
+@import "../bootstrap/scss/maps";
+@import "../bootstrap/scss/mixins";
+@import "../bootstrap/scss/root";
+
+// 6. 根据需要包含任何其他可选样式表部分；下面的列表不包括所有可用的样式表
+
+@import "../bootstrap/scss/utilities";
+@import "../bootstrap/scss/reboot";
+@import "../bootstrap/scss/type";
+@import "../bootstrap/scss/images";
+@import "../bootstrap/scss/containers";
+@import "../bootstrap/scss/grid";
+@import "../bootstrap/scss/helpers";
+// ...
+
+// 7. 可以选择最后包含实用程序 API，以根据“_utilities.scss”中的 Sass 映射生成类
+
+@import "../bootstrap/scss/utilities/api";
+
+// 8. 在此处添加额外的自定义代码

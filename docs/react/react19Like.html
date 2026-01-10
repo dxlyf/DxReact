@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script src="./lib/react19/scheduler.production.js"></script>
+    <script src="./lib/babel/babel.min.js"></script>
+    <script type="text/babel" data-presets="env,react">
+
+        const shouldYield = ReactScheduler.unstable_shouldYield
+        const scheduleCallback = ReactScheduler.unstable_scheduleCallback
+        const IdlePriority = ReactScheduler.unstable_IdlePriority
+        const ImmediatePriority = ReactScheduler.unstable_ImmediatePriority
+        const LowPriority = ReactScheduler.unstable_LowPriority
+        const NormalPriority = ReactScheduler.unstable_NormalPriority
+        const UserBlockingPriority = ReactScheduler.unstable_UserBlockingPriority
+        /** @jsx createElement */
+        /** @jsxFrag Fragment */
+
+        function createElement(type, config, ...children) {
+            const props = {}
+            let key = null, ref = null
+            if (config) {
+                Object.keys(config).forEach(name => {
+                    if (name === 'key') {
+                        key = config[name] + ''
+                    } else if (name === 'ref') {
+                        ref = config[name]
+                    } else {
+                        props[name] = config[name]
+                    }
+                })
+            }
+            if (children.length) {
+                props.children = children.length === 1 ? children[0] : children
+            }
+            return { type, props, key, ref }
+        }
+        // fiber tags
+        const FiberTags = {
+            FunctionComponent: 1,
+            HostComponent: 2,
+            HostText: 3,
+            HostRoot: 4,
+            Fragment: 5,
+        }
+        const FiberFlags = {
+            NoFlags: 0,
+            PerformedWork: 1,
+            Placement: 2,
+            Update: 4,
+            ChildDeletion: 8,
+            ContentReset: 16,
+            Snapshot: 32,
+            Passive: 64,
+            Hydrating: 128,
+            HydratingAndUpdate: 256,
+            PassiveEffect: 512,
+        }
+        const Lanes = {
+            NoLanes: 0,
+            NoLane: 0,
+            SyncLane: 2,
+            InputContinuousLane: 4,
+            DefaultLane: 8,
+        }
+        const UpdateTags = {
+            UpdateState: 0,
+            ReplaceState: 1,
+            ForceUpdate: 2,
+            CaptureUpdate: 3,
+        }
+        let workInProgressRoot = null, workInProgress = null;
+
+        function getHighestPriorityLane(lanes) {
+            return lanes & -lanes
+        }
+         function lanesToSchedulerPriority(lanes) {
+            const lane = getHighestPriorityLane(lanes);
+
+            if (lane === Lanes.SyncLane) {
+                return ImmediatePriority;
+            }
+            if (lane === Lanes.InputContinuousLane) {
+                return UserBlockingPriority;
+            }
+            if (lane === Lanes.DefaultLane) {
+                return NormalPriority;
+            }
+            return IdlePriority;
+        }
+        function initializeUpdateQueue(fiber) {
+            const queue = {
+                baseState: fiber.memoizedState,
+                firstBaseUpdate: null,
+                lastBaseUpdate: null,
+                shared: {
+                    pending: null,
+                    lanes: Lanes.NoLanes,
+                    hiddenCallbacks: null,
+                },
+                callbacks: null,
+            };
+            fiber.updateQueue = queue;
+        }
+        function createUpdate(lane) {
+            return {
+                lane,
+                tag: UpdateTags.UpdateState,
+                payload: null,
+                callback: null,
+                next: null,
+            }
+        }
+
+        function createFiber(tag, pendingProps, key, mode) {
+            return {
+                elementType: null,
+                type: null,
+                stateNode: null,
+
+                // Fiber
+                return: null,
+                child: null,
+                sibling: null,
+                index: 0,
+
+                ref: null,
+                refCleanup: null,
+
+                // pendingProps - defined at the bottom as dynamic properties
+                memoizedProps: null,
+                updateQueue: null,
+                memoizedState: null,
+                dependencies: null,
+
+                // Effects
+                flags: FiberFlags.NoFlags,
+                subtreeFlags: FiberFlags.NoFlags,
+                deletions: null,
+
+                lanes: Lanes.NoLanes,
+                childLanes: Lanes.NoLanes,
+
+                alternate: null,
+
+                // dynamic properties at the end for more efficient hermes bytecode
+                tag,
+                key: key === undefined || key === null ? null : key,
+                pendingProps,
+                mode,
+            }
+        }
+        function performWorkOnRoot(root, lanes) {
+            workInProgressRoot = root
+            workInProgress = root.current;
+            const priorityLevel = ImmediatePriority;
+            scheduleCallback(workLoop, priorityLevel)
+        }
+        function workLoop() {
+            while (workInProgress !== null && !shouldYield()) {
+                performUnitOfWork(workInProgress);
+            }
+            if (workInProgress !== null) {
+                scheduleCallback(workLoop, NormalPriority)
+            }
+        }
+        // function workLoop(deadline){
+        //      while (workInProgress !== null&&deadline.timeRemaining()>5) {
+        //         performUnitOfWork(workInProgress);
+        //     }
+        //     if(workInProgress!==null){
+        //          requestIdleCallback(workLoop)
+        //     }
+        // }
+        function createWorkInProgress(current, pendingProps) {
+            let workInProgress = current.alternate;
+            if (!workInProgress) {
+                workInProgress = createFiber()
+            }
+            return workInProgress
+        }
+        function performUnitOfWork(unitOfWork) {
+            const current = unitOfWork.alternate;
+            let next = beginWork(current, unitOfWork, entangledRenderLanes);
+        }
+        function beginWork(current,workInProgress) {
+            const tag=workInProgress.tag 
+            switch(tag){
+                case FiberTags.HostRoot: 
+                
+                return workInProgress.child
+            }
+        }
+        function render(element, container) {
+            const rootFiber = createFiber(FiberTags.HostRoot, null)
+            const root = {
+                current: rootFiber,
+                containerInfo: container
+            }
+            rootFiber.stateNode = root
+            rootFiber.memoizedState = {
+                element
+            }
+            performWorkOnRoot(root)
+        }
+      
+        function App(){
+            return <div>Hello</div>
+        }
+        render(<App/>,document.getElementById('root'))
+    </script>
+</body>
+
+</html>

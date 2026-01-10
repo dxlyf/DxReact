@@ -1,7 +1,11 @@
-import { defineConfig,transformerVariantGroup,presetWind3 } from 'unocss'
+import { defineConfig,transformerVariantGroup,transformerAttributifyJsx,presetWebFonts ,presetWind4 } from 'unocss'
 
 export default defineConfig({
   // ...UnoCSS options
-  presets:[presetWind3()],
-  transformers:[transformerVariantGroup()]
+  presets:[presetWind4({
+    preflights:{
+      reset:true
+    }
+  })],
+  transformers:[transformerVariantGroup(),transformerAttributifyJsx()]
 })

@@ -7,9 +7,9 @@ const createUpdateEffect=(useEffectFn:typeof useLayoutEffect|typeof useEffect)=>
         useEffectFn(()=>{
             if(!isMounted.current){
                 isMounted.current=true
-                return
+            }else{  
+                return effect()
             }
-            return effect()
         },deps)
     }; 
 }

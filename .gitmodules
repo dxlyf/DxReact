@@ -152,3 +152,24 @@
 [submodule "packages/lexical"]
 	path = packages/lexical
 	url = git@github.com:facebook/lexical.git
+[submodule "packages/vtable"]
+	path = packages/vtable
+	url = git@github.com:VisActor/VTable.git
+[submodule "packages/rooks"]
+	path = packages/rooks
+	url = git@github.com:imbhargav5/rooks.git
+[submodule "packages/motion"]
+	path = packages/motion
+	url = git@github.com:motiondivision/motion.git
+[submodule "packages/anime"]
+	path = packages/anime
+	url = git@github.com:juliangarnier/anime.git
+[submodule "packages/snabbdom"]
+	path = packages/snabbdom
+	url = git@github.com:snabbdom/snabbdom.git
+[submodule "packages/happy-dom"]
+	path = packages/happy-dom
+	url = git@github.com:capricorn86/happy-dom.git
+[submodule "packages/vite"]
+	path = packages/vite
+	url = git@github.com:vitejs/vite.git

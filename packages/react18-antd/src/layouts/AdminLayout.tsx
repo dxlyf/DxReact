@@ -23,7 +23,7 @@ export const AdminLayout = () => {
     }, [])
 
 
-    return <ProLayout location={location} title='Demo'
+    return <ProLayout className='adminLayout' location={location}  title='Demo'
         menuDataRender={() => menuData.menuData}
         menuItemRender={(item, defaultDom) => {
             if (!item.path) {

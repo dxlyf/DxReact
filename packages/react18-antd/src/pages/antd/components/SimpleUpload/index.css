@@ -1,0 +1,90 @@
+.simple-upload-small .ant-upload-list.ant-upload-list-picture-card .ant-upload-list-item-container{
+    width:64px!important;
+    height:64px!important;
+}
+.simple-upload-small .ant-upload-list.ant-upload-list-picture-card .ant-upload.ant-upload-select{
+    width:64px!important;
+    height:64px!important;
+}
+.simple-upload-file-item{
+    box-sizing: border-box;
+    width: 64px;
+    height:64px;
+    padding: 6px;
+    border:solid 1px #ddd;
+    background-color: #fff;
+    border-radius: 6px;
+    position: relative;
+}
+.simple-upload-file-item [disabled]{
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.simple-upload-file-item :is(.simple-upload-file-item-image,.simple-upload-file-item-file){
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.simple-upload-file-item-file{
+    flex-direction: column;
+}
+.simple-upload-file-item-filename{
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 50px;
+    white-space: nowrap;
+}
+.simple-upload-file-item .simple-upload-file-item-image img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.simple-upload-file-item.simple-upload-file-item-error{
+    border-color: #ff0000;
+}
+.simple-upload-file-item-progress{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 10px;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    bottom:3px;
+    background-color:#fff;
+
+}
+.simple-upload-file-item-action{
+    position: absolute;
+    display: flex;
+    background-color: rgba(0,0,0,0.5);
+    transition: all 0.3s ease-in-out;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+}   
+.simple-upload-file-item.active:not(.disabled) .simple-upload-file-item-action{
+    opacity: 1;
+    pointer-events:all;
+}
+
+.simple-upload-file-item-action>div{
+    color:#fff;
+    cursor: pointer;
+}
+
+.simple-upload-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}

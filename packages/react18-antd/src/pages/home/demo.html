@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建设中效果示例</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .card p {
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* 建设中效果 */
+        .under-construction {
+            position: relative;
+        }
+        
+        .under-construction::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: 10;
+            border-radius: inherit;
+        }
+        
+        .under-construction::after {
+            content: '建设中';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            background: linear-gradient(45deg, #e74c3c, #e67e22);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            z-index: 11;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        /* 脉冲动画 */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            }
+            50% {
+                box-shadow: 0 5px 25px rgba(231, 76, 60, 0.7);
+            }
+            100% {
+                box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            }
+        }
+        
+        /* 不同样式的建设中效果 */
+        .construction-variant-1::after {
+            content: '即将推出';
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        
+        .construction-variant-2::after {
+            content: '开发中';
+            background: linear-gradient(45deg, #9b59b6, #34495e);
+            transform: translate(-50%, -50%) rotate(5deg);
+            font-size: 0.9rem;
+        }
+        
+        /* 按钮的建设中效果 */
+        .btn.under-construction::after {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            transform: translate(-50%, -50%) rotate(-10deg);
+        }
+        
+        /* 进度条样式 */
+        .progress-construction {
+            position: relative;
+        }
+        
+        .progress-construction::before {
+            background: rgba(255, 255, 255, 0.92);
+        }
+        
+        .progress-construction::after {
+            content: '开发进度 65%';
+            transform: translate(-50%, -50%) rotate(0deg);
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+        }
+        
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 5px;
+            width: 65%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            z-index: 12;
+            border-radius: 0 0 0 16px;
+        }
+        
+        /* 工具提示样式 */
+        .tooltip {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .under-construction:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 卡片1 - 基础建设中效果 -->
+        <div class="card under-construction">
+            <h3>数据分析面板</h3>
+            <p>这个功能将提供详细的数据分析和可视化图表，帮助您更好地理解业务表现。</p>
+            <div class="tooltip">预计下个版本发布</div>
+        </div>
+        
+        <!-- 卡片2 - 变体1 -->
+        <div class="card under-construction construction-variant-1">
+            <h3>高级报告生成</h3>
+            <p>自动生成专业报告，支持多种格式导出，节省您的时间。</p>
+            <div class="tooltip">正在测试中</div>
+        </div>
+        
+        <!-- 卡片3 - 变体2 -->
+        <div class="card under-construction construction-variant-2">
+            <h3>团队协作工具</h3>
+            <p>让团队成员可以更高效地协作，共享资源和实时沟通。</p>
+            <div class="tooltip">开发完成80%</div>
+        </div>
+        
+        <!-- 卡片4 - 进度条样式 -->
+        <div class="card under-construction progress-construction">
+            <h3>AI智能助手</h3>
+            <p>基于人工智能的智能助手，可以回答您的问题并提供个性化建议。</p>
+            <div class="progress-bar"></div>
+            <div class="tooltip">开发中，预计2周后完成</div>
+        </div>
+        
+        <!-- 按钮示例 -->
+        <div class="card">
+            <h3>可用功能</h3>
+            <p>这个功能已经可以使用，点击下方按钮体验。</p>
+            <a href="#" class="btn">立即体验</a>
+            
+            <p style="margin-top: 20px;">以下功能正在建设中：</p>
+            <a href="#" class="btn under-construction">高级设置</a>
+        </div>
+    </div>
+</body>
+</html>

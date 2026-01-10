@@ -57,8 +57,6 @@ export default function Bar(){
       },
       onOption:(data)=>{
           return {
-              tooltip: {},
-              legend: {},
               dataset:{
                 dimensions:['name','一月','二月'],
                 source:data??[]

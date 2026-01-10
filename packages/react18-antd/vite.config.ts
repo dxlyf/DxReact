@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import UnoCSS from 'unocss/vite'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import vitePluginExpress from './service/vite-express-plugin.mjs'
+ import vitePluginExpress from './service/vite-express-plugin.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export function mockPlugin() {
@@ -16,6 +16,17 @@ export function mockPlugin() {
         res.setHeader('Content-Type', 'application/json');
         //console.log('req',req.url)
         // 模拟路由
+        if (req.url === '/list' && req.method === 'POST') {
+          res.end(JSON.stringify({
+            code: 0,
+            message: 'success',
+            data: [
+              { id: 1, name: 'Mock用户1' },
+              { id: 2, name: 'Mock用户2' }
+            ]
+          }));
+          return;
+        }
         if (req.url === '/upload' && req.method === 'POST') {
           res.end(JSON.stringify({
             code: 0,

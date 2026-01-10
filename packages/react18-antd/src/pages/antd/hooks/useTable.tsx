@@ -7,8 +7,9 @@ import type { ColumnsType, FilterValue, SorterResult } from 'antd/es/table/inter
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 type RequestResult<D> = { data: D[], total?: number }
-type UseTableProps<D> = Omit<TableProps,'rowKey'|'onChange'> & {
+type UseTableProps<D> = Omit<TableProps,'rowKey'|'onChange'|'columns'> & {
     rowKey?:string
+    columns: TableColumn[]
     showSerialNumber?: boolean
     manualRequest?: boolean
     requestDeps?: any[]
@@ -16,12 +17,11 @@ type UseTableProps<D> = Omit<TableProps,'rowKey'|'onChange'> & {
     onTableChange?:TableProps['onChange']
     request?: (params: any, sorter: any, filter: any) => (RequestResult<D> | Promise<RequestResult<D>>)
 }
-type TableColumn = Omit<TableColumnType, 'children'> & {
+export type TableColumn = Omit<TableColumnType, 'children'> & {
     children?: TableColumn[]
     order?: number
 }
 type RequiredTableProps = Required<TableProps>
-
 const setPath=(obj:any,path:string[]|string,value:any)=>{
     if(!Array.isArray(path)){
         path=[path]
@@ -48,10 +48,10 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
     const lastParams = useRef<any>({})
     const [filteredInfo, setFilteredInfo] = useState<Record<string, FilterValue | null>>({});
     const [sortedInfo, setSortedInfo] = useState<any>(()=>{
-        const sorter={}
-        columns?.forEach(col=>{
-            if(col.sorter&&!isLocalSort(col.sorter)&&col.sortOrder){
-                sorter[col.dataIndex]=col.sortOrder
+        const sorter:any={}
+        columns?.forEach(col=>{ 
+            if(col.dataIndex&&col.sorter&&!isLocalSort(col.sorter)&&col.sortOrder){
+                sorter[col.dataIndex as string]=col.sortOrder
             }
         })
         return sorter
@@ -68,18 +68,18 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
     const mergeColumns = useMemo<TableColumn[]>(() => {
         return [showSerialNumber && {
             title: '序號',
-            render(t, record, index) {
+            render(value,record,index) {
                 return (index + 1) + ((paginationInfo.current! - 1) * paginationInfo.pageSize!)
             }
-        }].concat(columns).map(c=>{
+        } as TableColumn].concat(columns).map<TableColumn>(c=>{
             if(c.sorter&&!isLocalSort(c.sorter)){
                 return {
                     ...c,
-                    sortOrder:sortedInfo[c.dataIndex]
+                    sortOrder:sortedInfo[c.dataIndex as string]
                 }
             }
             return c
-        }) as TableColumn[]
+        }).filter(Boolean) as TableColumn[]
     }, [columns, showSerialNumber,sortedInfo])
     const request = useMemoizedFn(async (params: any = {}, refresh: boolean = true) => {
         if(!propRequest){
@@ -114,10 +114,10 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
         if(!Array.isArray(sorter)){
             sorter=[sorter]
         }
-        const newSortedInfo={}
+        const newSortedInfo:any={}
         sorter.forEach((c)=>{
-            if(c.column?.sorter&&!isLocalSort(c.column?.sorter)){
-                newSortedInfo[c.field]=c.order
+            if(c.field&&c.column?.sorter&&!isLocalSort(c.column?.sorter)){
+                newSortedInfo[c.field as string]=c.order
             }
         })
         setSortedInfo(newSortedInfo)
@@ -140,7 +140,7 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
                 setSelectedRows(selectedRows)
             },
             ...propRowSelection
-        }:undefined,
+        }:propRowSelection,
         pagination: (pagination ? {
             ...paginationInfo,
             ...pagination
@@ -158,7 +158,7 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
         }
         mountRef.current = true
     }, [])
-    const result=[tableProps, {
+    return [tableProps, {
         data,
         setData,
         loading,
@@ -166,8 +166,7 @@ const useTable = <D = any>(props: UseTableProps<D>) => {
         selectedRowKeys,
         selectedRows,
         request
-    }]
-    return result as typeof result
+    }] as const
 }
 export {
     useTable

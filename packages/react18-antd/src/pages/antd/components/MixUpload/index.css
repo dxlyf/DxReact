@@ -1,0 +1,114 @@
+.custom-upload-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding:8px;
+
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.custom-upload-item>:is(.image-item,.file-item) {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.custom-upload-item .image-item {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+ box-sizing: border-box;
+}
+.custom-upload-item  .image-action{
+    position: absolute;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, .5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    transition: all 0.3s;
+   /* 使用 inset 替代 top/right/bottom/left */
+    inset: 0; /* 相当于 top:0; right:0; bottom:0; left:0; */
+    color: #fff;
+}
+.custom-upload-item  .image-action>div{
+    cursor: pointer;
+}
+.custom-upload-item:hover .image-action{
+    opacity: 1;
+}
+.custom-upload-item .upload-image {
+  width: 100%;
+  height: 100%;
+  object-fit:none;
+  
+}
+
+.custom-upload-item .file-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-sizing: border-box;
+
+}
+
+.custom-upload-item .file-item:hover {
+  border-color: #1890ff;
+  background: #f0f8ff;
+}
+
+.custom-upload-item .file-icon {
+  margin-bottom: 8px;
+}
+
+.custom-upload-item .file-name {
+  font-size: 12px;
+  text-align: center;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100px;
+}
+
+.upload-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.default-upload-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.default-upload-button:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .custom-upload-item .file-name {
+    max-width: 80px;
+    font-size: 11px;
+  }
+}

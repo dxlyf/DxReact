@@ -1,7 +1,228 @@
 // ======================
 // Type Check Utilities
 // ======================
+export async function objectToCryptoHash(obj, algorithm = 'SHA-256') {
+  // 1. 对象序列化
+  const str = JSON.stringify(obj);
+  
+  // 2. 编码为字节
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  
+  // 3. 计算哈希
+  const hashBuffer = await crypto.subtle.digest(algorithm, data);
+  
+  // 4. 转换为十六进制
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex;
+}
 
+// 简单但可能不是最优
+export function objectToHash(obj:any) {
+  const str = JSON.stringify(obj);
+  let hash = 0;
+  
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 转换为32位整数
+  }
+  
+  return hash.toString(36); // 转换为36进制字符串
+}
+
+
+// 最标准、碰撞率极低的方案
+async function generateObjectHash(obj:any) {
+  // 1. 将对象转换为规范化的 JSON 字符串（按键排序）
+  const canonicalString = JSON.stringify(obj, Object.keys(obj).sort());
+  
+  // 2. 使用 Web Crypto API 生成哈希
+  const encoder = new TextEncoder();
+  const data = encoder.encode(canonicalString);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // 3. 转换为十六进制字符串
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 同步版本（使用 SHA-1 作为备选）
+function generateObjectHashSync(obj:any) {
+  const str = JSON.stringify(obj, Object.keys(obj).sort());
+  return sha1Sync(str);
+}
+
+function sha1Sync(message:string) {
+  function rotateLeft(n:number, b:number) {
+    return (n << b) | (n >>> (32 - b));
+  }
+  
+  const H = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0];
+  const messageLen = message.length;
+  const totalLen = messageLen * 8;
+  
+  // 添加填充位
+  let padded = message + '\x80';
+  while ((padded.length * 8) % 512 !== 448) {
+    padded += '\x00';
+  }
+  
+  // 添加长度
+  padded += String.fromCharCode((totalLen >>> 24) & 0xFF);
+  padded += String.fromCharCode((totalLen >>> 16) & 0xFF);
+  padded += String.fromCharCode((totalLen >>> 8) & 0xFF);
+  padded += String.fromCharCode(totalLen & 0xFF);
+  
+  // 处理每个 512 位块
+  for (let i = 0; i < padded.length; i += 64) {
+    const chunk = padded.substr(i, 64);
+    const words = [];
+    
+    for (let j = 0; j < 16; j++) {
+      words[j] = (
+        (chunk.charCodeAt(j * 4) & 0xFF) << 24 |
+        (chunk.charCodeAt(j * 4 + 1) & 0xFF) << 16 |
+        (chunk.charCodeAt(j * 4 + 2) & 0xFF) << 8 |
+        (chunk.charCodeAt(j * 4 + 3) & 0xFF)
+      );
+    }
+    
+    for (let j = 16; j < 80; j++) {
+      words[j] = rotateLeft(
+        words[j - 3] ^ words[j - 8] ^ words[j - 14] ^ words[j - 16],
+        1
+      );
+    }
+    
+    let [a, b, c, d, e] = H;
+    
+    for (let j = 0; j < 80; j++) {
+      let f, k;
+      
+      if (j < 20) {
+        f = (b & c) | ((~b) & d);
+        k = 0x5A827999;
+      } else if (j < 40) {
+        f = b ^ c ^ d;
+        k = 0x6ED9EBA1;
+      } else if (j < 60) {
+        f = (b & c) | (b & d) | (c & d);
+        k = 0x8F1BBCDC;
+      } else {
+        f = b ^ c ^ d;
+        k = 0xCA62C1D6;
+      }
+      
+      const temp = (rotateLeft(a, 5) + f + e + k + words[j]) >>> 0;
+      e = d;
+      d = c;
+      c = rotateLeft(b, 30);
+      b = a;
+      a = temp;
+    }
+    
+    H[0] = (H[0] + a) >>> 0;
+    H[1] = (H[1] + b) >>> 0;
+    H[2] = (H[2] + c) >>> 0;
+    H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0;
+  }
+  
+  // 转换为十六进制
+  return H.map(h => h.toString(16).padStart(8, '0')).join('');
+}
+
+// 简单的MurmurHash3实现
+function murmurHash3(key:string, seed = 0) {
+  let h1 = seed;
+  const c1 = 0xcc9e2d51;
+  const c2 = 0x1b873593;
+  const remainder = key.length & 3;
+  const bytes = key.length - remainder;
+  
+  for (let i = 0; i < bytes; i += 4) {
+    let k1 = 
+      (key.charCodeAt(i) & 0xff) |
+      ((key.charCodeAt(i + 1) & 0xff) << 8) |
+      ((key.charCodeAt(i + 2) & 0xff) << 16) |
+      ((key.charCodeAt(i + 3) & 0xff) << 24);
+    
+    k1 = Math.imul(k1, c1);
+    k1 = (k1 << 15) | (k1 >>> 17);
+    k1 = Math.imul(k1, c2);
+    
+    h1 ^= k1;
+    h1 = (h1 << 13) | (h1 >>> 19);
+    h1 = Math.imul(h1, 5) + 0xe6546b64;
+  }
+  
+  if (remainder > 0) {
+    let k1 = 0;
+    
+    if (remainder === 3) k1 ^= (key.charCodeAt(bytes + 2) & 0xff) << 16;
+    if (remainder >= 2) k1 ^= (key.charCodeAt(bytes + 1) & 0xff) << 8;
+    if (remainder >= 1) k1 ^= (key.charCodeAt(bytes) & 0xff);
+    
+    k1 = Math.imul(k1, c1);
+    k1 = (k1 << 15) | (k1 >>> 17);
+    k1 = Math.imul(k1, c2);
+    h1 ^= k1;
+  }
+  
+  h1 ^= key.length;
+  h1 ^= h1 >>> 16;
+  h1 = Math.imul(h1, 0x85ebca6b);
+  h1 ^= h1 >>> 13;
+  h1 = Math.imul(h1, 0xc2b2ae35);
+  h1 ^= h1 >>> 16;
+  
+  return (h1 >>> 0).toString(36);
+}
+
+function objectToMurmurHash(obj:any) {
+  const str = JSON.stringify(obj);
+  return murmurHash3(str);
+}
+
+// 如果不一定需要哈希，需要确定性标识符
+function objectToBase64(obj:any) {
+  // 先对对象进行规范化（排序键）
+  function normalize(obj:any):any {
+    if (Array.isArray(obj)) {
+      return obj.map(normalize);
+    } else if (obj && typeof obj === 'object') {
+      return Object.keys(obj)
+        .sort()
+        .reduce((acc, key) => {
+          acc[key] = normalize(obj[key]);
+          return acc;
+        }, {});
+    }
+    return obj;
+  }
+  
+  const normalized = normalize(obj);
+  const str = JSON.stringify(normalized);
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+function djb2Hash(str:string) {
+  let hash = 5381; // 初始值
+  
+  for (let i = 0; i < str.length; i++) {
+    // 核心计算：混合当前字符到哈希中
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  
+  // 转换为32位无符号整数
+  hash = hash >>> 0;
+  
+  // 转换为更短的字符串表示
+  return hash.toString(36); // 36进制：0-9a-z
+}
 export const isArray = Array.isArray;
 
 export function isObject(value: any): value is Record<string, any> {
@@ -15,7 +236,13 @@ export function isFunction(value: any): value is (...args: any[]) => any {
 export function isNumber(value: any): value is number {
   return typeof value === 'number' && !isNaN(value);
 }
-
+export function delay(time:number){
+    return new Promise((resolve)=>{
+        setTimeout(()=>{
+            resolve('')
+        },time)
+    })
+}
 // ======================
 // Deep Clone & Equality
 // ======================

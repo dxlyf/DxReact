@@ -1,6 +1,6 @@
-import {Select} from 'antd'
+import {Select,Spin} from 'antd'
 import type {SelectProps,GetProp} from 'antd'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo,useRef } from 'react'
 import useRequest,{type UseRequestOptions} from 'src/hooks/useRequest'
 import useControllerValue from './useControllerValue'
 export type UseSelectProps=SelectProps&{
@@ -21,10 +21,14 @@ const useSelect=(props:UseSelectProps)=>{
     })
  
     const {onChange:onRequestChange,...restRequestOptions}=requestOptions
+     const fetchRef = useRef(0);
     const {data:options,loading,setLoading,setData,read}=useRequest<GetProp<typeof Select,'options'>>({
         defaultData:[],
         data:props.options,
         debounceWaitTime:500,
+        onRequestStart:()=>{
+            setData([])
+        },
         onChange:(data,flag)=>{
 
             if(flag===useRequest.FLAGS.DEP_REQUEST&&(!data||!data.some(d=>d.value==value))){
@@ -37,6 +41,7 @@ const useSelect=(props:UseSelectProps)=>{
         ...restRequestOptions
     })
     const handleSearch=useCallback((value:string)=>{
+        
           read({keyword:value})
     },[])
     const isMatchValue=useMemo(()=>{
@@ -55,6 +60,7 @@ const useSelect=(props:UseSelectProps)=>{
         options,
         showSearch:true,
         onChange:setValue,
+        notFoundContent:loading ? <Spin size="small" /> : 'No results found',
         ...(serverFilter?{
             onSearch:handleSearch,
             filterOption:false

@@ -1,0 +1,247 @@
+@use 'sass:math';
+$desginHeight:1080; // 设计稿高度（px）
+$desginWidth:1920; // 设计稿宽度（px）
+
+$minWidth:980px;
+$breakpoint:1080px;
+@function vw($px,$min-px:null) {
+  $vw-value:math.div($px,$desginWidth) * 100vw;
+ // $vw-value:$px*$minWidth/$desginWidth;
+  // @if $min-px {
+  //   @return max($vw-value);
+  // }
+  @return $vw-value;
+  //@return #{$px}px;
+}
+@function vh($px) {
+  @return ($px / $desginHeight) * 100vh;
+}
+
+@function responsive-vw($px)
+ {
+  $vw-value:vw($px);
+  @return clamp(#{$px}px, #{$vw-value}, vw($px * 2));;
+}
+
+@function responsive-vh($px, $min-px: null) {
+  $vh-value: vh($px);
+  
+  @if $min-px {
+    @return clamp(#{$min-px}, #{$vh-value}, vh($px * 2));
+  } @else {
+    @return $vh-value;
+  }
+}
+@mixin responsive-size($property, $px-value, $min-value: null) {
+  #{$property}: vw($px-value);
+  
+  @if $min-value {
+    @media (max-width: #{$breakpoint}) {
+      #{$property}: #{$min-value}#{'px'};
+    }
+  }
+}
+@mixin image-set-bg($file-1x, $file-2x, $type: 'png') {
+  background-image: url('#{$file-1x}.#{$type}'); // 回退方案
+  background-image: image-set(
+    url('#{$file-1x}.#{$type}') 1x,
+    url('#{$file-2x}.#{$type}') 2x
+  );
+}
+$white:#fff;
+$bg:#F1F5F8;
+$titleFontColor:#333333;
+.page{
+  width: 100vw;
+  height: 100vh;
+  background-color: $bg;
+  transform-origin: top  left;
+
+}
+.wrap *{
+  box-sizing: border-box;
+}
+.cursor{
+  cursor: pointer;
+}
+.wrap{
+
+  padding-top: 16px;
+  box-sizing: border-box;
+  width: vw(1648);
+}
+@mixin bg{
+  background-color: $white;
+}
+@mixin shadow{
+  box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.05);
+}
+@mixin card{
+   @include shadow;
+   @include bg;
+   border-radius: 10px;
+}
+
+
+.head{
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0px 3px 10px 0px rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 1);
+  border-radius: 10px;
+  .headContent{
+      display: flex;
+      flex-direction: column;
+      padding: 10px 20px;
+  }
+}
+.toolbar{
+  display: flex;
+  align-items: center;
+}
+.subTitle{
+  width: vw(72);
+  height: vw(18);
+  overflow-wrap: break-word;
+  color: rgba(51, 51, 51, 1);
+  font-size: vw(18,12px);
+  font-family: PingFangSC-Semibold;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  line-height: vw(18);
+  margin-top: 6px;
+}
+.subText{
+  height: vw(14);
+  overflow-wrap: break-word;
+  color: rgba(102, 102, 102, 1);
+  font-size: vw(14,12px);
+  font-family: PingFangSC-Regular;
+  font-weight: normal;
+  text-align: left;
+  white-space: nowrap;
+  margin: 8px 0 0 14px;
+}
+.boxWrap{
+
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: -4px;
+  >.box{
+    // margin-right: vw(20);
+     margin-top: 20px;
+    &:last-of-type{
+      margin-right: 0;
+    }
+  }
+}
+.box{
+    width:vw(305);
+    height:vw(160);
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    background: #FFFFFF;
+    box-shadow: 0px 4px 12px 0px rgba(218,230,255,0.65);
+   
+    .boxTitle{
+       flex: 0 0 auto;
+       align-items: center;
+       height: vw(48);
+       background-color: #EAF4FC;
+       font-size: vw(18,12px);
+       font-weight: 600;
+       color:$titleFontColor;
+       display: flex;
+       justify-content: center;
+    }
+    .boxContent{
+        flex:1 1 auto;
+        background-image:url('src/assets/images/carBg.png');
+        background-size: 100% 100%;
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        padding: 0 20px 10px;
+        justify-content: space-between;
+         .boxSubTitle{
+          display: flex;
+          justify-content: center;
+          align-items: end;
+          >span:first-of-type{
+            font-size: vw(24,12px);
+            font-weight: bold;
+            color:$titleFontColor;
+            text-align: center;
+          }
+          >span:last-of-type{
+            font-size: vw(14);
+            font-weight: normal;
+          }
+      }
+      .boxItem{
+        display: flex;
+        align-items: center;
+        justify-content:space-between;
+        .boxControl{
+            display: flex;
+            align-items: center;
+            >span{
+                font-size: vw(16,12px);
+                color:#333;
+                margin: 0 6px;
+                font-weight: bold;
+            }
+            >label{
+                 font-size: vw(14,12px);
+                color: rgba(51, 51, 51, 1);
+            }
+        }
+    }
+    }
+    
+}
+
+.updateTime{
+  font-size: vw(12);
+  font-weight: 400;
+  color:#666666;
+  text-align: right;
+  margin-top: 14px;
+}
+
+.mainContentBox{
+  background: #FFFFFF;
+  box-shadow: 0px 3px 10px 0px rgba(0,0,0,0.05);
+  border-radius: 10px;
+  margin-top:20px;
+  padding: 20px;
+}
+
+.btnTab{
+  :global{
+    .ant-radio-button-wrapper{
+       background-color:#F5FBFF;
+    }
+    .ant-radio-button-wrapper-checked{
+        background-color: #1677ff;
+    }
+  }
+}
+
+// 工程公司列表
+.updateTime2{
+  font-size: vw(12);
+  font-weight: 400;
+  color:#666666;
+  text-align: left;
+  margin-top: 14px;
+}
+.dividingLine{
+  height: 1px;
+  width: 100%;
+  background-color: #D6D9E3;
+  margin:20px 0;
+}

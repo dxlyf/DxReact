@@ -86,7 +86,7 @@ const defaultFormFieldMap = {
     date: {
         message: '请选择${label}',
         render(props: GetProps<typeof DatePicker>) {
-            return <DatePicker format={'YYYY-MM-DD'} {...props}></DatePicker>
+            return <DatePicker  {...props}></DatePicker>
         }
     },
     dateRange: {

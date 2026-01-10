@@ -17,7 +17,8 @@ type UseSchemaFormProps={
     actionRef?:React.RefObject<ActionType>
     defaultFilterParams?:any
     delayInitTime?:number
-    columns?:ProColumns[]
+    columns?:ProColumns[],
+    expandable?:boolean
 }&Omit<BetaSchemaFormProps,'columns'>
 export type {
     ProColumns as SearchFormColumn
@@ -56,7 +57,7 @@ export type {
     return [instance]
  }
  const useSchemaForm=(props:UseSchemaFormProps)=>{
-    const {delayInitTime=50,actionRef,onFinish,onReset,formRef:propFormRef,onInit,useProFormInstanceOptions,delayInitRequest=100,request:propRequest,manualRequest=false,form:propForm,defaultFilterParams={},...restProps}=props
+    const {expandable=true,delayInitTime=50,actionRef,onFinish,onReset,formRef:propFormRef,onInit,useProFormInstanceOptions,delayInitRequest=100,request:propRequest,manualRequest=false,form:propForm,defaultFilterParams={},...restProps}=props
     const __formRef=useRef<ProFormInstance>(null)
     const formRef=((propFormRef as any)??__formRef) as React.MutableRefObject<ProFormInstance>
     const [form]=useProFormInstance(propForm,useProFormInstanceOptions)
@@ -102,50 +103,57 @@ export type {
         }
     },[effectInit])
     const searchFormProps:SchemaFormProps={
-        // submitter:{
-        //     render(props,dom){
-        //         return dom.reverse()
-        //     },
-        //     searchConfig:{
-        //         submitText:'查询'
+        //  formRender:(dom)=>{
+        //     if(expandable){
+        //         return dom
         //     }
+        //     return <Space>
+        //         {dom}
+        //         <Button type='primary' onClick={()=>{
+        //         form?.submit()
+        //     }}>查询</Button>
+        //        <Button  onClick={()=>{
+        //         formRef.current.resetFields()
+        //         handleReset(formRef.current.getFieldFormatValue())
+        //     }}>重置</Button>
+        //     </Space>
         // },
-       // layout:'inline',
-     //   split:6,
-      //  span:6,
-        // rowProps:{
-        //     justify:'end'
-        // },
-        submitter:false,
-        className:'ah-search-form',
-        formRender:(dom)=>{
-            let isModal=false,isHeaderRight=true
-            return  <div className={classNames(!isModal && styles['base-box'])}>
-                <div className={classNames(styles.header)}>
-                    <div className={classNames(styles['header-children'], isHeaderRight && styles['header-right'])}>
-                      <Space >
-            {dom}
-            <Button type='primary' onClick={()=>{
-                formRef?.current.submit()
-            }}>查询</Button>
-               <Button  onClick={()=>{
-                formRef?.current.resetFields()
-                const values=formRef?.current.getFieldFormatValue?.()
-                handleReset(values)
-            }}>重置</Button>
-    </Space>
-                    </div>
-                </div>
-        </div>
-             
-        },
+        ...(expandable?{
+            submitter:{
+                render(props,dom){
+                    return dom.reverse()
+                },
+                searchConfig:{
+                    submitText:'查询'
+                }
+            },
+            style:{
+                width:'100%',
+
+            },
+            submitterColSpanProps:{
+               flex:'none',
+                className:styles.proFormSearchExpandBtn
+            },
+            defaultColsNumber:3,
+            span:4,         
+            layoutType:'QueryFilter',
+            layout:'inline',
+            className:classNames('ah-search-form',styles.proFormSearchExpand),
+        }:{
+            layoutType:'Form',
+            submitter:false,
+            wrapperCol:{flex:200},
+            className:classNames('ah-search-form',styles.proFormSearch),
+        }),
+        labelWidth:0,
         onFinish:handleFinish,
         onReset:handleReset,
         onInit:handleInit,
-      //  request:handleInitRequest,
+        //columns,
         ...restProps,
         form,
-        formRef:formRef,
+        formRef
     }
 
     return {
@@ -157,7 +165,7 @@ export type {
 }
  const SchemaForm=(props:SchemaFormProps)=>{
     const {formRender,className,...restProps}=props
-    const dom=<BetaSchemaForm className={classNames(className)} {...restProps}></BetaSchemaForm>
+    const dom=<BetaSchemaForm  className={classNames(className)} {...restProps}></BetaSchemaForm>
     return formRender?formRender(dom):dom
      
 }

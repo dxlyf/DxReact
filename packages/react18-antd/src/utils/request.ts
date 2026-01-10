@@ -1,6 +1,6 @@
 import axios,{AxiosError} from 'axios'
 import type { AxiosResponse, AxiosInterceptorManager, AxiosRequestConfig } from 'axios'
-import { message as Toast} from 'antd'
+import { message, message as Toast} from 'antd'
 import mitt from 'mitt'
 import app from './App'
 
@@ -172,7 +172,7 @@ instance.interceptors.response.use((response) => {
         // 如果是业务错误，处理业务相关错误
         if (error.isBusinessError&&!skipBusinessErrorHandler) {
             const code=response.data[retStatusField as keyof ResponseData<any>]
-            const message=response.data[retMsgField as keyof ResponseData<any>]
+            const msg=response.data[retMsgField as keyof ResponseData<any>]
            // const data=response.data[retDataField as keyof ResponseData<any>]
             if(code===ResponseBusinessStatusCode.Unauthorized){
                 // 如果没有权限需要重新登录
@@ -181,9 +181,9 @@ instance.interceptors.response.use((response) => {
                 })
                 return Promise.reject(error)
             }
-            message({
-                icon: 'fail',
-                content:message,
+            Toast.error({
+               // icon: 'fail',
+                content:msg,
             })
         } else if(!error.isBusinessError&&!skipHttpErrorHandler){
 

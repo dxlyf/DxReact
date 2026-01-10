@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .con{
+            display: flex;
+            gap:10px;
+        }
+        .con>div{
+            width:50px;
+            border: solid 1px black;
+            flex:none;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="btnRandom">随机</button>
+    <div id="log">
+
+    </div>
+   <div class="con">
+    <div id="data"></div>
+    <div id="lisdom"></div>
+    <div id="placedom"></div>
+    <div id="idledom"></div>
+    <div id="vdom"></div>
+   </div>
+    <script>
+        
+        class VNode{
+            _parentNode=null
+            innerText=''
+            key=null
+            constructor(tag,key=null){
+                this.tag=tag
+                this.children=[]
+            }
+            insertBefore(vnode, refVnode) {
+              //  const refVnode=anchorVnode
+                let index = refVnode&&refVnode.parentNode===this?refVnode.index():this.children.length
+                if(vnode.parentNode) {
+                   
+                    let selfIndex=vnode.index()
+                    index=vnode.parentNode===this&&selfIndex<index?index-1:index
+                    vnode.parentNode.removeChild(vnode)
+                }
+                this.children.splice(index,0,vnode)     
+                vnode._parentNode=this
+            }
+            appendChild(vnode){
+                this.insertBefore(vnode)
+            }
+            removeChild(vnode){
+                if(vnode._parentNode !== this){
+                    return
+                }
+                const index = vnode.index()
+                this.children.splice(index,1)
+                vnode._parentNode=null
+            }
+            remove(){
+                if(this.parentNode){
+                    this.parentNode.removeChild(this)
+                }
+            }
+            index(){
+                if(this.parentNode === null){
+                    return -1
+                }
+                return this.parentNode.children.indexOf(this)
+            }
+            get firstChild() {
+                return this.children[0]
+            }
+            get lastChild(){
+                return this.children[this.children.length - 1]
+            }
+            get parentNode(){
+                return this._parentNode
+            }
+            get previousSibling(){
+                if(this.parentNode){
+                    return this.parentNode.children[this.index() - 1]
+                }
+                return null
+            }
+            get nextSibling(){
+                if(this.parentNode){
+                    return this.parentNode.children[this.index() +1]
+                }
+                return null
+            }
+            renderTo(dom){
+              //  const element=.createElement(this.tag)
+
+            }
+        }
+      
+        let data=new Array(10).fill(100).map((v,i)=>i+1)
+
+        function buildNodes(){
+             data.forEach((v)=>{
+                const node=new VNode('div',v)
+                node.innerText=v
+                vNodes.appendChild(node)
+
+                const el=document.createElement('div')  
+                el.innerText=v
+                placedom.appendChild(el)
+
+                const el2=document.createElement('div')  
+                el2.innerText=v
+                lisdom.appendChild(el2)
+
+                         const el3=document.createElement('div')  
+                el3.innerText=v
+                idledom.appendChild(el3)
+            })
+        }
+        const vNodes=new VNode('div')
+       const lisdom=document.getElementById('lisdom')
+          const placedom=document.getElementById('placedom')
+                 
+       const idledom=document.getElementById('idledom')
+       const vdom=document.getElementById('vdom')
+        const dataDom=document.querySelector('#data')
+        function render(){
+            dataDom.innerHTML=data.map(d=>`<div>${d}</div>`).join('')
+            vdom.innerHTML=vNodes.children.map(d=>`<div>${d.innerText}</div>`).join('')
+
+        }
+        let moveCountState={
+            lis:0,
+            place:0,
+            idle:0
+        }
+        function uploadPlaceNode(node){
+            const children=Array.from(node.children)
+            const oldIdxMap=new Map()
+            const childrenMap=new Map()
+            for(let i=0;i<children.length;i++){
+                oldIdxMap.set(Number(children[i].innerText),i)
+                childrenMap.set(Number(children[i].innerText),children[i])
+            }
+            let lastPlacedIndex=0
+            let target=data.slice()
+    
+            let moveItems=[]
+            for(let i=0;i<target.length;i++){
+                const newValue=target[i]
+                const oldIndex=oldIdxMap.get(newValue)
+                let needMove=false
+                if(oldIndex>=lastPlacedIndex){
+                    lastPlacedIndex=oldIndex
+                }else{
+                     
+                    // 1 2 3 4 5
+                    // 3 1 2 4 5
+                    // 需要移动
+                   needMove=true;
+                //    let before=null,j=i+1
+                //    while(oldIdxMap.get(target[j])<lastPlacedIndex){
+                //         j++
+                //    }
+                //    before=childrenMap.get(target[j])
+                   let before=childrenMap.get(target[i-1]).nextSibling
+
+                   const elm=childrenMap.get(target[i])
+                   node.insertBefore(elm,before)
+                   moveCountState.place++
+                }
+                moveItems[i]=needMove
+            }
+            
+            // for(let i=0;i<target.length;i++){
+            //     if(moveItems[i]){
+            //         const elm=childrenMap.get(target[i])
+            //         let j=i+1;
+            //         let before=null
+            //         while(j<moveItems.length){
+            //             if(!moveItems[j])
+            //             {
+            //               before=childrenMap.get(target[j])
+            //               break
+            //             }
+            //             j++
+            //         }
+            //         node.insertBefore(elm,before)
+
+
+
+            //     }
+            // }
+        }
+
+         function uploadLisNode(node){
+            const children=Array.from(node.children)
+            const oldIdxMap=new Map()
+            const childrenMap=new Map()
+            let target=data.slice()
+            for(let i=0;i<children.length;i++){
+                oldIdxMap.set(Number(children[i].innerText),i)
+                childrenMap.set(Number(children[i].innerText),children[i])
+            }
+
+            let lis=getSequence(Array.from(childrenMap.keys()).map(d=>target.indexOf(d)))
+            // [1,2,3,4]
+            // [3,1,2,4]
+            // [1,2,0,3]
+            // [1,2,3]
+            for(let i=target.length-1;i>=0;i--){
+                const newValue=target[i]
+                if(!lis.includes(i)){
+                    // 需要移动
+                    const elm=childrenMap.get(target[i])
+                    let before=target[i+1]?childrenMap.get(target[i+1]):null
+                    node.insertBefore(elm,before)
+                    moveCountState.lis++
+                }
+                
+            }
+            
+           
+        }
+        
+        function updateNode(node){
+            const children=Array.from(node.children)
+            const childrenMap=new Map()
+            for(let i=0;i<children.length;i++){
+                childrenMap.set(Number(children[i].innerText),children[i])
+            }
+
+            const target=data.slice()
+            for(let i=0;i<target.length;i++){
+                let newValue=target[i]
+                let oldChildren=node.children[i]
+                if(Number(oldChildren.innerText)!==newValue){
+                    moveCountState.idle++
+                    node.insertBefore(childrenMap.get(newValue),oldChildren)
+                }
+
+            }
+        }
+        function update(){
+            moveCountState.idle=0
+            moveCountState.lis=0
+            moveCountState.place=0
+            uploadLisNode(lisdom)
+            uploadPlaceNode(placedom)
+            updateNode(idledom)
+           // updateNode(vNodes)
+   
+            document.getElementById('log').innerHTML=`<div>移动次数统计,lis:${moveCountState.lis},place:${moveCountState.place},idle:${moveCountState.idle}</div>`
+            updateNode(vNodes)
+            render()
+        }
+        buildNodes()
+        render()
+        document.querySelector('#btnRandom').addEventListener('click',()=>{
+            data.sort(()=>Math.random() - 0.5)
+          // data=[3,1,2,4]
+            update()
+        })
+
+        // 最长递增子序列
+        function getSequence(arr) {
+            const len=arr.length;
+            const dp=new Array(len).fill(1)
+            const pre=new Array(len).fill(-1)
+            let max=-1,maxDp=1
+            // [3,6,2,8]
+            // 
+            for(let i=1;i<len;i++){
+                for(let j=0;j<i;j++){
+                    if(arr[j]<arr[i]&&dp[j]+1>dp[i]){
+                        dp[i]=dp[j]+1
+                        pre[i]=j
+                    }
+                }
+                if(maxDp<=dp[i]){
+                    maxDp=dp[i]
+                    max=i
+                }
+            }
+            let seq=[]
+            while(max!==-1){
+                seq.unshift(arr[max])
+                max=pre[max]
+            }
+            return seq
+        }
+
+    </script>
+</body>
+
+</html>

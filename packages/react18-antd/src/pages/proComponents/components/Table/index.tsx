@@ -4,6 +4,7 @@ import type { FormInstance, TablePaginationConfig } from 'antd'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { Row, Col, Button, Space } from 'antd'
 import { useMemoizedFn } from 'ahooks'
+import {ReloadOutlined} from '@ant-design/icons'
 import classNames from 'classnames'
 import { useColumnSetting } from './components/ColumnSetting'
 import styles from './index.module.css'
@@ -90,7 +91,7 @@ const useTable = (props: UseTableProps) => {
         bordered: true,
         size: 'middle',
         className: classNames(styles.table, className),
-        scroll: { x: 'max-content', y: `calc(100vh - ${scrollY}px)` },
+        scroll: { x: '100%', y: `calc(100vh - ${scrollY}px)` },
         showSorterTooltip:false,
         renderHeaderSlot: () => {
             return (<Row justify={'space-between'} style={{paddingBottom:10}}>
@@ -144,7 +145,7 @@ const Table = <T, U extends ParamsType, ValueType = 'text'>(props: TableProps<T,
     const { renderHeaderSlot, renderFooterSlot, ...restProps } = props
     return <>
         {renderHeaderSlot?renderHeaderSlot(null):null}
-        <EditableProTable recordCreatorProps={false}  {...(restProps as any)}></EditableProTable>
+        <EditableProTable  recordCreatorProps={false}  {...(restProps as any)}></EditableProTable>
        {renderFooterSlot?renderFooterSlot(null):null}
     </>
 }

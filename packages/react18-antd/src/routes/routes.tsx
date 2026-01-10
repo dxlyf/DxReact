@@ -28,10 +28,32 @@ const routes: RouteObjectAndMenu[] = [
                 path:'tools',
                 name:'工具',
                 children:[{
+                    path:'daynamicCode',
+                    name: '代码生成',
+                    Component: React.lazy(() => import('src/pages/tools/dynamicCode'))
+
+                },{
+
                     path:'simplifiedToTraditional',
                     name: '简体转繁体',
                     Component: React.lazy(() => import('src/pages/tools/SimplifiedToTraditional'))
 
+                },{
+                    path:'css',
+                    name: 'css',
+                    children:[{
+                        name:'flex布局',
+                        path:'flex',
+                        Component: React.lazy(() => import('src/pages/tools/css/flex'))
+                    }]
+                },{
+                    path:'bignumber',
+                    name: 'bignumber',
+                    children:[{
+                        name:'bignumber',
+                        path:'bignumber',
+                        Component: React.lazy(() => import('src/pages/tools/bignumber/bignumber'))
+                    }]
                 }]
             },
              {
@@ -45,6 +67,11 @@ const routes: RouteObjectAndMenu[] = [
                             name:'柱状图',
                             path:'bar',
                             Component: React.lazy(() => import('src/pages/chart/echart/bar'))
+                        },
+                         {
+                            name:'折线图',
+                            path:'line',
+                            Component: React.lazy(() => import('src/pages/chart/echart/line'))
                         }
                     ]
 
@@ -89,6 +116,10 @@ const routes: RouteObjectAndMenu[] = [
                         path: 'huizongedit',
                         name: '汇总编辑',
                         Component: React.lazy(() => import('src/pages/proComponents/huizongedit'))
+                    }, {
+                        path: 'protableAntForm',
+                        name: 'ProTable+AntForm表单联动',
+                        Component: React.lazy(() => import('src/pages/proComponents/protableAntForm'))
                     }
                 ]
             }, {
@@ -99,6 +130,10 @@ const routes: RouteObjectAndMenu[] = [
                         path: 'list',
                         name: '常用列表页',
                         Component: React.lazy(() => import('src/pages/antd/list'))
+                    },{
+                        path: 'mullist',
+                        name: '多列大数据列表',
+                        Component: React.lazy(() => import('src/pages/antd/mullist'))
                     },
                       {
                         path: 'roleList',
@@ -151,8 +186,62 @@ const routes: RouteObjectAndMenu[] = [
 
                         ]
 
+                    },
+                     {
+                        path: 'dataBoard',
+                        name: '数据看板',
+                        children:[
+                            {
+                                path:'wljk',
+                                name:'违例检控',
+                                Component: React.lazy(() => import('src/pages/antd/data-board/wljk'))
+                            },
+                             {
+                                path:'wljkDetail',
+                                name:'违例检控详情',
+                                Component: React.lazy(() => import('src/pages/antd/data-board/wljk/Detail'))
+                            },
+                             {
+                                path:'wljkUi',
+                                name:'违例检控ui',
+                                Component: React.lazy(() => import('src/pages/antd/data-board/wljk/ui'))
+                            }
+                        ]
+                    },
+                ]
+            },{
+                path:'graphic',
+                name:'Graphics',
+                children:[
+                    {
+                        name:'canvas',
+                        path:'canvas',
+                        children:[
+                            {
+                                name:'ShuoHan',
+                                path:'shuoHan',
+                                Component: React.lazy(() => import('src/pages/graphic/canvas/shuoHan'))
+                            }
+                        ]
                     }
                 ]
+            },
+            {
+                name:'数据库',
+                path:'database',
+                children:[
+                    {
+                        name:'连接数据库',
+                        path:'connect',
+                        Component: React.lazy(() => import('src/pages/database/connect'))
+                    },
+                      {
+                        name:'查询',
+                        path:'query',
+                        Component: React.lazy(() => import('src/pages/database/query'))
+                    }
+                ]
+
             }
         ]
     }]

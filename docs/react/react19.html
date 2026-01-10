@@ -14,14 +14,20 @@
     <script src="./lib/react19/react.production.js"></script>
     <script src="./lib/react19/react-dom.production.js"></script>
     <script src="./lib/react19/react-dom-client.production.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="./lib/babel/babel.min.js"></script>
     <script type="text/babel" data-presets="env,react">
 
         /** @jsx React.createElement */
         /** @jsxFrag React.Fragment */
         
+        const {useState}=React
         function App() {
-            return <h1>Hello World</h1>
+            const [count,setCount]=useState(0)
+            return <h1>Hello World
+                {count}<button onClick={()=>{
+                    setCount(count+1)
+                }}>add</button>
+                </h1>
         }
         const root=ReactDOM.Client.createRoot(document.querySelector('#root'))
         root.render(<App></App>)
