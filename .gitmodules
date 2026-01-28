@@ -173,3 +173,9 @@
 [submodule "packages/vite"]
 	path = packages/vite
 	url = git@github.com:vitejs/vite.git
+[submodule "packages/tdesign-vue-next-starter"]
+	path = packages/tdesign-vue-next-starter
+	url = git@github.com:Tencent/tdesign-vue-next-starter.git
+[submodule "packages/vue-router"]
+	path = packages/vue-router
+	url = git@github.com:vuejs/router.git
