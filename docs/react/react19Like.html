@@ -82,7 +82,7 @@
         function getHighestPriorityLane(lanes) {
             return lanes & -lanes
         }
-         function lanesToSchedulerPriority(lanes) {
+        function lanesToSchedulerPriority(lanes) {
             const lane = getHighestPriorityLane(lanes);
 
             if (lane === Lanes.SyncLane) {
@@ -97,18 +97,13 @@
             return IdlePriority;
         }
         function initializeUpdateQueue(fiber) {
-            const queue = {
+            fiber.updateQueue = {
                 baseState: fiber.memoizedState,
                 firstBaseUpdate: null,
                 lastBaseUpdate: null,
-                shared: {
-                    pending: null,
-                    lanes: Lanes.NoLanes,
-                    hiddenCallbacks: null,
-                },
-                callbacks: null,
+                shared: { pending: null, lanes: 0, hiddenCallbacks: null },
+                callbacks: null
             };
-            fiber.updateQueue = queue;
         }
         function createUpdate(lane) {
             return {
@@ -153,7 +148,7 @@
 
                 // dynamic properties at the end for more efficient hermes bytecode
                 tag,
-                key: key === undefined || key === null ? null : key,
+                key: key,
                 pendingProps,
                 mode,
             }
@@ -191,31 +186,49 @@
             const current = unitOfWork.alternate;
             let next = beginWork(current, unitOfWork, entangledRenderLanes);
         }
-        function beginWork(current,workInProgress) {
-            const tag=workInProgress.tag 
-            switch(tag){
-                case FiberTags.HostRoot: 
-                
-                return workInProgress.child
+        function beginWork(current, workInProgress) {
+            const tag = workInProgress.tag
+            switch (tag) {
+                case FiberTags.HostRoot:
+
+                    return workInProgress.child
             }
         }
-        function render(element, container) {
-            const rootFiber = createFiber(FiberTags.HostRoot, null)
-            const root = {
-                current: rootFiber,
-                containerInfo: container
-            }
-            rootFiber.stateNode = root
-            rootFiber.memoizedState = {
-                element
-            }
-            performWorkOnRoot(root)
+        function updateContainer(root, element) {
+            const fiber = root.current
+            const children = fiber.memoizedState.element
+            reconcileChildren(fiber, children)
+
         }
-      
-        function App(){
+        function createContainer(containerInfo) {
+            const fiber = createFiber(FiberTags.HostRoot, null, null, 0)
+            fiber.stateNode = {
+                containerInfo
+            }
+            initializeUpdateQueue(fiber)
+            return {
+                current: fiber,
+                containerInfo
+            }
+        }
+        class ReactDOMRoot {
+            constructor(root) {
+                this._internalRoot = root
+            }
+            render(element) {
+                updateContainer(this._internalRoot, element)
+            }
+        }
+        function createRoot(container) {
+            let root = createContainer(container)
+            return new ReactDOMRoot(root)
+        }
+        const root = createRoot(document.getElementById('root'))
+
+        function App() {
             return <div>Hello</div>
         }
-        render(<App/>,document.getElementById('root'))
+        root.render(<App />)
     </script>
 </body>
 
