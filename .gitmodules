@@ -179,3 +179,12 @@
 [submodule "packages/vue-router"]
 	path = packages/vue-router
 	url = git@github.com:vuejs/router.git
+[submodule "packages/arco-design-vue"]
+	path = packages/arco-design-vue
+	url = git@github.com:arco-design/arco-design-vue.git
+[submodule "packages/ant-design-vue"]
+	path = packages/ant-design-vue
+	url = git@github.com:vueComponent/ant-design-vue.git
+[submodule "packages/tdesign-vue-next"]
+	path = packages/tdesign-vue-next
+	url = git@github.com:Tencent/tdesign-vue-next.git
