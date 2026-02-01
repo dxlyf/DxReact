@@ -5,7 +5,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      component: () => import('../layouts/MainLayout.vue'),
+      component: () => import('../layouts/AdminLayout.vue'),
       children: [
         {
           path: '',
@@ -58,6 +58,40 @@ const router = createRouter({
           component: () => import('../views/Settings.vue'),
           meta: {
             title: '设置'
+          }
+        },
+        {
+          path: 'example/components',
+          meta: {
+            title: '组件示例'
+          },
+          children: [
+            {
+              path: 'comps',
+              // name:'JsonEditor',
+              component: () => import('../views/example/comps.vue'),
+              meta: {
+                title: 'json编辑'
+              }
+            },
+            {
+              path: 'list',
+              // name:'JsonEditor',
+              component: () => import('../views/example/list.vue'),
+              meta: {
+                title: '列表'
+              }
+            }
+          ]
+        },
+        {
+          // 404
+          path: '/:pathMatch(.*)*',
+          // sensitive:false,
+          // strict:false,
+          component: () => import('../views/404.vue'),
+          meta: {
+            title: '404'
           }
         }
       ]

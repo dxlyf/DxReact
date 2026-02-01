@@ -188,3 +188,12 @@
 [submodule "packages/tdesign-vue-next"]
 	path = packages/tdesign-vue-next
 	url = git@github.com:Tencent/tdesign-vue-next.git
+[submodule "packages/semi-design"]
+	path = packages/semi-design
+	url = git@github.com:DouyinFE/semi-design.git
+[submodule "packages/naive-ui"]
+	path = packages/naive-ui
+	url = git@github.com:tusen-ai/naive-ui.git
+[submodule "packages/element-plus"]
+	path = packages/element-plus
+	url = git@github.com:element-plus/element-plus.git

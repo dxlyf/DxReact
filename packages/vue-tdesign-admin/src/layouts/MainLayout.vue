@@ -1,12 +1,12 @@
 <template>
-  <div class="flex bg-gray-50">
+  <div class="flex flex-1 bg-gray-50">
     <!-- 侧边栏 -->
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div class="p-4 border-b border-gray-200">
+    <aside class="w-64 box-border bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+      <div class="p-4 box-border h-14 border-b border-gray-200">
         <h1 class="text-xl font-bold text-blue-600">后台管理系统</h1>
       </div>
       <div class="flex-1 overflow-y-auto">
-        <SideNavMenu :menuItems="menuItems" />
+        <SideNavMenu :menuItems="menuData" class="!w-full"/>
       </div>
       <div class="p-4 border-t border-gray-200">
         <div class="flex items-center">
@@ -21,9 +21,9 @@
       </div>
     </aside>
     <!-- 主内容区 -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col">
       <!-- 顶部导航栏 -->
-      <header class="h-16 z-20 fixed w-full top-0 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+      <header class="h-14 z-20 sticky w-full top-0 bg-white border-b border-gray-200 flex items-center justify-between px-6">
         <div class="flex items-center">
           <button class="text-gray-500 mr-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -49,10 +49,8 @@
           </button>
         </div>
       </header>
-       <header class="h-16 z-10 w-full bg-transparent border-b border-gray-200 flex items-center justify-between px-6">
-       </header>
       <!-- 标签页 -->
-      <div class="bg-white border-b border-gray-200 px-4">
+      <div class="bg-white border-b sticky top-14 border-gray-200 px-4">
         <t-tabs
           :value="tabsStore.activeTab"
           @change="handleTabChange"
@@ -83,18 +81,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted, watch,computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useTabsStore } from '../stores/tabs'
-import SideNavMenu from '../components/SideNavMenu.vue'
-import { menuItems } from '../config/menu'
+import SideNavMenu from '../components/SideNavMenu/index.vue'
+import { useMenu } from 'src/stores/menu'
 
 const userStore = useUserStore()
 const tabsStore = useTabsStore()
 const route = useRoute()
 const router = useRouter()
-
+const menuStore = useMenu()
+const menuData=computed(()=>menuStore.menuData)
 const handleTabChange = (value: string) => {
   tabsStore.setActiveTab(value)
   router.push(value)

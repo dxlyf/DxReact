@@ -18,5 +18,10 @@ body {
 
 #app {
   width: 100%;
-  min-height: 100vh;
+}
+
+.t-table .t-table__header th {
+    background-color: #fafafa;
+    color:rgba(0,0,0,0.88);
+    font-weight: 600;
 }
