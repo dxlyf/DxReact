@@ -197,3 +197,6 @@
 [submodule "packages/element-plus"]
 	path = packages/element-plus
 	url = git@github.com:element-plus/element-plus.git
+[submodule "packages/vueuse"]
+	path = packages/vueuse
+	url = git@github.com:vueuse/vueuse.git
