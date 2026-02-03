@@ -1,36 +1,18 @@
 <template>
-    <div class="flex bg-white rounded-md shadow p-4">
-        <t-form class="w-full" @submit="handleSearch" :data="searchParams" @reset="handleReset">
-            <t-row :gutter="[8, 8]">
-                <t-col :span="4">
-                    <t-form-item name="name" label="名称">
-                        <t-input v-model="searchParams.name"></t-input>
-                    </t-form-item>
-                </t-col>
-                <t-col :span="4">
-                    <t-space>
-                        <t-button type="submit" theme="primary">查询</t-button>
-                        <t-button type="reset">重置</t-button>
-                    </t-space>
-                </t-col>
-            </t-row>
-        </t-form>
-    </div>
-    <div class="mt-4 p-4 bg-white">
-        <t-table class="w-full" v-bind="tableProps">
+       <pro-table class="w-full" v-bind="tableProps">
             <template #actions="{ row }">
-                <table-action :items="actions" @click="handleClick"></table-action>
+                <table-action  @itemClick="handleClick($event,row)"></table-action>
             </template>
-        </t-table>
-    </div>
+        </pro-table>
 </template>
 
 <script setup lang="ts">
-import { useRequest } from 'src/hooks/useRequest'
+import { useSearchForm } from 'src/hooks/useSearchForm';
 import { useTable } from 'src/hooks/useTable';
 import { request } from 'src/utils/request';
 import { Button, Space, type PrimaryTableCol } from 'tdesign-vue-next'
 import { computed, reactive, ref } from 'vue';
+import ProTable from 'src/components/pro-table/index.vue'
 import TableAction from 'src/components/table-action/index.vue'
 const searchParams = reactive({
     name: undefined,
@@ -43,8 +25,18 @@ const delay = (t: number) => {
         }, t)
     })
 }
+const [searchFormProps] = useSearchForm({
+    columns: [
+        {
+            name:'name',
+            label:'名称',
+            type:'text'
+        },
+    ],
+})
+console.log('searchFormProps',searchFormProps)
 const [tableProps, tableInstance] = useTable({
-
+    
     service: async (params) => {
         await delay(1000)
         const res = await request<{ records: any[], total: number }>({
@@ -55,14 +47,8 @@ const [tableProps, tableInstance] = useTable({
         return res.data
     },
     tableProps: {
+        searchForm:searchFormProps,
         columns: [
-            {
-                title: '序号',
-                width: 80,
-                cell: (h, { row, rowIndex }) => {
-                    return (rowIndex + 1) + ''
-                }
-            },
             {
                 title: 'ID',
                 colKey: 'id',
@@ -108,7 +94,7 @@ const handleSearch = () => {
 const handleReset = () => {
     tableInstance.refresh()
 }
-const handleClick=(item:TableActionItem)=>{
-    console.log(item)
+const handleClick=(item,row)=>{
+    console.log('item',item,row)
 }
 </script>

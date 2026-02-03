@@ -76,7 +76,7 @@ export const useMenu=(props:UseMenuProps={})=>{
         const keys: string[] = []
         const paths=route.path.split('/')
         for(let i=1;i<paths.length-1;i++){
-            keys.push('/'+paths.slice(1,i+1))
+            keys.push('/'+paths.slice(1,i+1).join('/'))
         }
         return keys
     }
@@ -97,7 +97,7 @@ export const useMenu=(props:UseMenuProps={})=>{
         return {
             collapsed:state.collapsed,
             value:state.activeKey,
-            expandedKeys:state.expandedKeys,
+            expanded:state.expandedKeys,
             onChange:onChange,
             onExpand:onExpand,
             ...propMenuProps,

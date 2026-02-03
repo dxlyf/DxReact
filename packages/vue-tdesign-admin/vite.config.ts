@@ -8,8 +8,19 @@ import { viteMockServe } from 'vite-plugin-mock';
 export default defineConfig({
   resolve:{
     alias:{
-      'src': '/src'
+      'src': '/src',
+      '@': '/src'
     }
+  },
+  css:{
+    // preprocessorOptions:{
+    //   less:{
+    //     //  javascriptEnabled: true,
+    //     //  modifyVars: {
+    //     //   '@table-head-text-color': '#ff0000',
+    //     // },
+    //   }
+    // }
   },
   plugins: [vue(), vueJsx(),viteMockServe({
         mockPath: 'mock',
