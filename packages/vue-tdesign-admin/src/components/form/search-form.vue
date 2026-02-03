@@ -1,14 +1,19 @@
 <template>
-    <t-form v-bind="normalizeFormProps" @submit="handleSubmit" @reset="handleReset" >
-        <t-row v-if="colInfo.columns.length>0">
-            <t-col v-for="col in colInfo.columns" :key="col.key" v-show="!colloapsed||col.hidden" :span="col.span" >
-                <form-field v-bind="col.props" v-model="props.data[col.key]" />
+    <t-form class="w-full"  v-bind="normalizeFormProps" @submit="handleSubmit" @reset="handleReset" >
+        <t-row :gutter="[12,12]" key="ff" v-if="colInfo.columns.length>0">
+            <t-col v-for="col in colInfo.columns" :key="col.key" v-show="!col.hidden||!colloapsed" :span="col.span" >
+                <form-field  v-bind="col.props" v-model="props.data[col.props.name]" />
             </t-col>
-            <t-col :span="4">
-                <t-space>
+            <t-col :span="4" key="search-form-btns">
+                <t-space :size="4" align="end">
                     <t-button type="submit" theme="primary">查询</t-button>
                     <t-button type="reset" theme="default">重置</t-button>
-                    <t-link @click="handleToggleColloapse">{{ colloapsed?'展开':'收起' }}</t-link>
+                    <t-link size="small" hover="underline"  theme="primary" v-if="colInfo.visibleExpanded" @click="handleToggleColloapse">
+                        {{ colloapsed?'展开':'收起' }}
+                        <template #suffixIcon>
+                            <t-icon :name="colloapsed?'chevron-down':'chevron-up'" />
+                        </template>
+                    </t-link>
                 </t-space>
             </t-col>
         </t-row>
@@ -20,10 +25,11 @@
 <script  setup lang="ts">
 import { toRefs,computed,ref } from 'vue'
 import type {SearchFormProps, RowColType} from './search-form.ts'
+import FormField from './form-field.vue'
 
 const emit=defineEmits<{
-    submit:[data:any]
-    reset:[data:any]
+    submit:[e:any,data:any]
+    reset:[e:any,data:any]
 }>()
 const props=withDefaults(defineProps<SearchFormProps>(),{
     alwaysExpand:false,
@@ -31,8 +37,9 @@ const props=withDefaults(defineProps<SearchFormProps>(),{
     maxColumnSpan:12,
     maxShowRows:1,
     columns:()=>[],
+    preventSubmitDefault:true
 })
-console.log('props',props.columns)
+
 const slots=defineSlots()
 const colloapsed=ref(true)
 
@@ -42,6 +49,7 @@ const normalizeColumns=computed(()=>{
             key:item.key??item.name??`col-${i}`,
             order:(props.columns.length-i)*10,
             span:props.defaultColumnSpan,
+            hideLabel:true,
             ...item,
         }
     }).filter((item)=>!item.hidden)
@@ -69,17 +77,18 @@ const colInfo=computed(()=>{
 })
 
 const handleSubmit=(e:any)=>{
-    emit('submit',props.data)
+    emit('submit',e,props.data)
 }
 const handleReset=(e:any)=>{
-    emit('reset',props.data)
+    emit('reset',e,props.data)
 }
 const handleToggleColloapse=()=>{
     colloapsed.value=!colloapsed.value
 }
 const normalizeFormProps=computed(()=>{
-    const {alwaysExpand,defaultColumnSpan,maxColumnSpan,maxShowRows,columns,...restProps}=props
+    const {alwaysExpand,defaultColumnSpan,maxColumnSpan,maxShowRows,columns,onSubmit,onReset,...restProps}=props
     return restProps
 })
+
 
 </script>

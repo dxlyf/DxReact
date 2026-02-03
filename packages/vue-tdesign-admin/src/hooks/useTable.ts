@@ -1,7 +1,8 @@
 
-import { ref, toRef, shallowReadonly, isReactive, type ShallowReactive, type MaybeRef, computed, shallowReactive, watchEffect, onBeforeMount, shallowRef } from "vue";
+import { ref, toRef, shallowReadonly, isReactive, type ShallowReactive, type MaybeRef, computed, shallowReactive, watchEffect, onBeforeMount, shallowRef, unref } from "vue";
 import type { ProTableProps } from '@/components/pro-table/index.ts'
 import {useRequest } from './useRequest'
+import type { SearchFormProps } from "src/components/form/search-form";
 
 /**
  * 表格数据结果类型
@@ -18,8 +19,10 @@ export type TableDataResult<T> = {
  */
 export type UseTableProps<T> = {
     manualRequest?: boolean // 是否手动触发请求，默认自动触发
+    tableActionRef?:{current:any}
     service: (params: any) => Promise<TableDataResult<T>> // 数据请求服务函数
-    tableProps?: ShallowReactive<Omit<ProTableProps,'rowKey'>> | Omit<ProTableProps,'rowKey'> // 表格属性配置
+    searchForm?:MaybeRef<Partial<SearchFormProps>>
+    tableProps?: ShallowReactive<Partial<Omit<ProTableProps,'searchForm'>>> | Partial<Omit<ProTableProps,'searchForm'>> // 表格属性配置
     pageSizeField?: string // 分页大小字段名，默认 'pageSize'
     pageCurrentField?: string // 当前页码字段名，默认 'current'
     visibleRowSelection?: MaybeRef<boolean> // 是否显示行选择器
@@ -34,7 +37,7 @@ export type UseTableProps<T> = {
  */
 export const useTable = <T>(props: UseTableProps<T>) => {
     // 解构参数并设置默认值
-    const {manualRequest=false,service, tableProps: propTableProps, pageSizeField = 'pageSize', pageCurrentField = 'current'} = props
+    const {manualRequest=true,tableActionRef,service, tableProps: propTableProps, pageSizeField = 'pageSize', pageCurrentField = 'current'} = props
     
     // 转换为响应式引用
     const visibleSerialNumber = toRef(props,'visibleSerialNumber',true)
@@ -155,7 +158,9 @@ export const useTable = <T>(props: UseTableProps<T>) => {
             newColumns.unshift({
                 title: '序号',
                 width: 80,
+                colKey:'__serialNumber',
                 align: 'center',
+                fixed:'left',
                 cell:(h:any,{rowIndex})=>{
                     // 计算序号：(当前页-1)*每页大小+行索引+1
                     return (((paginationInfo.current-1)*paginationInfo.pageSize)+rowIndex+1)+''
@@ -169,6 +174,7 @@ export const useTable = <T>(props: UseTableProps<T>) => {
                 colKey: 'row-select',
                 type: propTableProps.rowSelectionType??'multiple', // 默认多选
                 width: 46,
+                fixed:'left',
             })
         }
         
@@ -188,6 +194,7 @@ export const useTable = <T>(props: UseTableProps<T>) => {
             onChange: onTableChange, // 表格变化回调
             ...propTableProps, // 合并用户配置的表格属性
             columns:tableColumns.value, // 使用计算后的列配置
+            searchForm:unref(props.searchForm),
             // 添加行选择配置
             ...(visibleRowSelection.value?({ 
                 rowSelectionType:'multiple', // 默认多选
@@ -212,7 +219,12 @@ export const useTable = <T>(props: UseTableProps<T>) => {
             request()
         }
     })
-    
+    if(tableActionRef){
+        tableActionRef.current={
+            request,
+            refresh,
+        }
+    }
     // 返回表格属性和操作方法
     return [tableProps, { selectedRowKeys,request, refresh }] as const
 }

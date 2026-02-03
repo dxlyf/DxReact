@@ -1,9 +1,21 @@
 <template>
-       <pro-table class="w-full" v-bind="tableProps">
+       <div class="p-4 bg-white">
+        <pro-table class="w-full" v-bind="tableProps">
             <template #actions="{ row }">
                 <table-action  @itemClick="handleClick($event,row)"></table-action>
             </template>
+            <template #leftOperation>
+               <t-space>
+                    <t-button  theme="primary">新增</t-button>
+               </t-space>
+            </template>
+             <template #rightOperation>
+               <t-space>
+                    <t-button  theme="default">导出</t-button>
+               </t-space>
+            </template>
         </pro-table>
+       </div>
 </template>
 
 <script setup lang="ts">
@@ -25,18 +37,31 @@ const delay = (t: number) => {
         }, t)
     })
 }
-const [searchFormProps] = useSearchForm({
-    columns: [
-        {
-            name:'name',
-            label:'名称',
-            type:'text'
-        },
-    ],
+const [searchFormProps,{tableActionRef}] = useSearchForm({
+
+    formProps:{
+        columns: [
+            {
+                name:'name',
+                label:'名称',
+                type:'text'
+            },
+             {
+                name:'name2',
+                label:'名称',
+                type:'text'
+            },
+             {
+                name:'name3',
+                label:'名称',
+                type:'text'
+            },
+        ]
+    }
 })
 console.log('searchFormProps',searchFormProps)
 const [tableProps, tableInstance] = useTable({
-    
+    tableActionRef,
     service: async (params) => {
         await delay(1000)
         const res = await request<{ records: any[], total: number }>({
@@ -46,8 +71,9 @@ const [tableProps, tableInstance] = useTable({
         })
         return res.data
     },
+    searchForm:searchFormProps,
     tableProps: {
-        searchForm:searchFormProps,
+
         columns: [
             {
                 title: 'ID',
@@ -60,7 +86,7 @@ const [tableProps, tableInstance] = useTable({
             },
             {
                 title: '操作',
-                width: 120,
+                width: 140,
                 colKey: 'actions',
                 // cell:(h,{row})=>{
                 //     return h(Space,{},[

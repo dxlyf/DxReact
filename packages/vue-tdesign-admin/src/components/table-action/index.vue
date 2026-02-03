@@ -1,11 +1,11 @@
 <template>
     <t-space :size="4">
-        <t-link size="small" v-for="item in actions.normalItems" :key="item.key" hover="color" :theme="item.theme"
+        <t-link size="small" v-for="item in actions.normalItems" :key="item.key" hover="underline" :theme="item.theme"
             @click="handleClick(item)">{{ item.label }}</t-link>
         <t-dropdown v-if="actions.moreItems.length"  @click="handleMoreClick" :options="actions.moreItems" trigger="click" position="bl">
-            <t-link theme="primary" size="small">
+            <t-link hover="underline" theme="primary" size="small">
                 更多
-                <template #suffix> <t-icon name="chevron-down" size="12" /></template>
+                <template #suffixIcon> <t-icon name="chevron-down" size="12" /></template>
             </t-link>
         </t-dropdown>
     </t-space>
