@@ -1,87 +1,69 @@
-import { ref,shallowRef,shallowReactive,reactive,computed, onMounted, watch} from 'vue'
-
-type ServiceHandle<T>=(params:any)=>Promise<T>
-export type UseRequestOptions<T>={
-    manual?:boolean
-    service:ServiceHandle<T>
-    transform?:(data:T)=>T
-    params?:any
-    defaultValue?:T
-    pagination?:{
-        defaultPageSize?:number
-        defaultCurrent?:number
-        pageSizeField?:string
-        currentField?:string
+import { onMounted, ref, shallowReactive,onBeforeMount, toRef, watch, type Ref } from "vue";
+export type UseRequestProps<T> = {
+  manualRequest?: boolean;
+  defaultValue?: T;
+  defaultParams?: any;
+  params?: Ref<any>;
+  service: (params: any) => Promise<T>;
+  onSuccess?: (data: T, params: any) => void;
+  onError?: (err: any) => void;
+  onComplete?: (data: T, params: any) => void;
+  transform?: (data: T) => T;
+};
+export const useRequest = <T>(props: UseRequestProps<T>) => {
+  const {
+    manualRequest = false,
+    params,
+    defaultParams = {},
+    service,
+    onSuccess,
+    onError,
+    transform,
+    onComplete,
+    defaultValue = undefined
+  } = props;
+  const state = shallowReactive({
+    loading: false,
+    data: defaultValue as T,
+    error: null,
+    lastParams: {},
+  });
+  // 内部请求
+  const request = async (params: any = {}) => {
+    state.loading = true;
+    try {
+      const res = await service(params);
+      const data = transform?.(res) ?? res;
+      state.data = data;
+      state.error = null;
+      state.lastParams = params;
+      onSuccess?.(data, params);
+    } catch (err) {
+      state.data = null;
+      state.error = err;
+      onError?.(err);
+    } finally {
+      state.loading = false;
+      onComplete?.(state.data,   state.lastParams );
     }
-}
-const useRequest=<T>(options:UseRequestOptions<T>)=>{
-    const {service,transform,params,manual=false,defaultValue,pagination}=options
-    const {pageSizeField='pageSize',currentField='current',defaultPageSize=20,defaultCurrent=1}=pagination||{}
-    const state=shallowReactive({
-        loading:false,
-        data:defaultValue,
-        current:defaultCurrent,
-        pageSize:defaultPageSize,
-        error:null
-    })
-    let lastParams=shallowRef({})
- 
-    const request=async (params:any={})=>{
-        if(state.loading){
-            return state.data
-        }
-        state.loading=true
-        try{
-            const newParams={
-                ...params
-            }
-            if(pagination){
-                state.current=newParams[currentField]||defaultCurrent
-                state.pageSize=newParams[pageSizeField]||defaultPageSize
-            }
-            const res=await service(params)
-            lastParams.value={...params}
-            state.data=transform?transform(res):res
-        }catch(err){
-            state.error=err
-        }finally{
-            state.loading=false
-        }
-        return state.data
+    return state;
+  };
+  const refresh = (params: any = {}) => {
+    return request({
+      ...state.lastParams,
+      ...params,
+    });
+  };
+  if (params) {
+    watch(params, (value) => {
+      request(value);
+    });
+  }
+  // 暴露请求方法
+  onBeforeMount(() => {
+    if (!manualRequest) {
+      request(defaultParams);
     }
-    const query=async (params:any={})=>{
-        return request(params)
-    }
-    const refresh=async (params:any={})=>{
-        return request({
-            ...params,
-            ...(pagination?({
-                [currentField]:1,
-                [pageSizeField]:state.pageSize,
-            }):{})
-        })
-    }
-    const onTableChange=(data:any,context:any)=>{
-        const {pagination}=data||{}
-        query({
-            ...lastParams.value,
-            ...(pagination?({
-                [currentField]:pagination.current,
-                [pageSizeField]:pagination.pageSize,
-            }):{})
-        })
-    }
-    onMounted(()=>{
-        if(!manual){
-            refresh(params)
-        }
-    })
-    return [state,{
-        request,
-        query,
-        refresh,
-        onTableChange,
-        lastParams
-    }] as const
-}
-export default useRequest
+  });
+  return [state, { request, refresh }] as const;
+};

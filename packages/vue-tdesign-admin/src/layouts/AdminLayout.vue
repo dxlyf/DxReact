@@ -1,17 +1,18 @@
 <template>
     <t-layout class="bg-gray-200">
         <t-aside class="!w-fit !sticky top-0 h-screen">
-            <side-nav-menu  :collapsed="asideCallapse" :menuItems="menuData">
+            <t-menu  v-bind="menuProps">
                 <template #logo>
                     <div class="text-2xl font-bold text-blue-600">后台管理</div>
                 </template>
-            </side-nav-menu>  
+                <side-submenu :items="menuState.menuData"></side-submenu>
+            </t-menu>  
         </t-aside>
     <t-layout>
-        <t-header class="sticky top-0">
+        <t-header class="sticky top-0 z-[1000]">
             <t-head-menu>
                 <template #logo>
-                   <t-button theme="default" variant="text" @click="asideCallapse=!asideCallapse">
+                   <t-button theme="default" variant="text" @click="menuState.collapsed=!menuState.collapsed">
                     <t-icon name="view-list"></t-icon>
                    </t-button>
                 </template>
@@ -51,18 +52,14 @@
 
 <script setup lang="ts">
 import { onMounted, watch,computed,ref,h } from 'vue'
-import {storeToRefs} from 'pinia'
-import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '../stores/user'
-import { useTabsStore } from '../stores/tabs'
-import SideNavMenu from '../components/SideNavMenu/index.vue'
-import { useMenu } from 'src/stores/menu'
+import { useMenu,type MenuDataItem } from 'src/hooks/useMenu'
 import { type DropdownOption } from 'tdesign-vue-next';
 import { useI18n } from 'vue-i18n'
 const {locale}=useI18n()
 
 import { DiscountIcon,LocationIcon,ChineseCabbageIcon } from 'tdesign-icons-vue-next';
-const {menuData}=storeToRefs(useMenu())
+import SideSubmenu from './components/SideSubmenu.vue'
+const [menuProps,menuState]=useMenu()
 const asideCallapse=ref(false)
 const handleChangeLocale=(e:DropdownOption)=>{
     locale.value=e.value as any

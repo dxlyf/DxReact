@@ -21,13 +21,13 @@ class ProAxiosError<T = unknown, D = ResponseData> extends AxiosError{
 export interface RequestConfig<D = any> extends AxiosRequestConfig<D> {
     skipBusinessErrorHandler?: boolean // 是否跳过全局的业务错误，自行处理
 }
-const DEFAULT_CONFIG:RequestConfig={
+const defaultConfig:RequestConfig={
     baseURL: '/api',
     timeout: 10000,
     responseType:'json',
     skipBusinessErrorHandler:false
 }
-const instance = axios.create(DEFAULT_CONFIG)
+const instance = axios.create(defaultConfig)
 
 instance.interceptors.request.use(
     (config) => {
