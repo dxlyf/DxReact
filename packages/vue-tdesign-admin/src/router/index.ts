@@ -75,11 +75,24 @@ const router = createRouter({
               }
             },
             {
-              path: 'list',
+               path: 'list',
+               redirect: '/example/components/list/en'
+            },
+            {
+              path: 'list/:lang',
               // name:'JsonEditor',
               component: () => import('../views/example/list.vue'),
               meta: {
-                title: '列表'
+                title: '列表',
+                menuKey:'example_components_list'
+              }
+            },
+            {
+              path: 'edit/:lang/(:id)?',
+              // name:'JsonEditor',
+              component: () => import('../views/example/edit.vue'),
+              meta: {
+                title: '编辑'
               }
             }
           ]

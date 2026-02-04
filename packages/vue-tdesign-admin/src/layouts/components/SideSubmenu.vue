@@ -1,12 +1,12 @@
 <template>
     <template v-for="item in props.items" :key="item.path">
-        <t-menu-item v-if="!Array.isArray(item.children)" :value="item.path"  :to="item.path" :title="item.title">
+        <t-menu-item v-if="!Array.isArray(item.children)" :value="item.menuKey"  :to="item.path" :title="item.title">
             <template #icon>
                 <t-icon :name="item.icon" />
             </template>
             {{ item.title }}
         </t-menu-item>
-        <t-submenu v-else :value="item.path"  :title="item.title" >
+        <t-submenu v-else :value="item.menuKey"  :title="item.title" >
                <template #icon>
                 <t-icon :name="item.icon" />
             </template>
