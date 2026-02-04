@@ -7,7 +7,7 @@
     </t-form-item>
 </template>
 <script setup lang="ts">
-import {type FormFieldProps,FormFeildComponents, FormFieldTypes, getPlaceeholder} from './form-field.ts'
+import {type FormFieldProps,FormFeildComponents, FormFieldTypes, getPlaceholder} from './form-field.ts'
 import {computed} from 'vue'
 const props=withDefaults(defineProps<FormFieldProps>(),{
     type:'text',
@@ -26,7 +26,7 @@ const finalFormItemProps=computed(()=>{
 const finalFieldProps=computed<any>(()=>{
     const newProps=typeof props.fieldProps==='function'?props.fieldProps():props.fieldProps
     return {
-        placeholder:newProps.placeholder?newProps.placeholder:getPlaceeholder(props.type,props.label),
+        placeholder:newProps.placeholder?newProps.placeholder:getPlaceholder(props.type,props.label),
         ...newProps,
     }
 })

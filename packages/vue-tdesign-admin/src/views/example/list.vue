@@ -1,5 +1,16 @@
 <template>
-       <div class="p-4 bg-white">
+       <div>
+        <div>
+             <dropdown-lang ></dropdown-lang>
+        </div>
+        <div class="mb-4">
+            <t-breadcrumb>
+            <t-breadcrumb-item>首页</t-breadcrumb-item>
+            <t-breadcrumb-item>示例</t-breadcrumb-item>
+            <t-breadcrumb-item>列表</t-breadcrumb-item>
+        </t-breadcrumb>
+        </div>
+        <div class="p-4 bg-white">
         <pro-table class="w-full" v-bind="tableProps">
             <template #actions="{ row }">
                 <table-action  @itemClick="handleClick($event,row)"></table-action>
@@ -16,9 +27,10 @@
             </template>
         </pro-table>
        </div>
+       </div>
 </template>
-
 <script setup lang="ts">
+import DropdownLang from 'src/components/page-lang/dropdown-lang.vue'
 import { useSearchForm } from 'src/hooks/useSearchForm';
 import { useTable } from 'src/hooks/useTable';
 import { request } from 'src/utils/request';
@@ -26,6 +38,8 @@ import { Button, Space, type PrimaryTableCol } from 'tdesign-vue-next'
 import { computed, reactive, ref } from 'vue';
 import ProTable from 'src/components/pro-table/index.vue'
 import TableAction from 'src/components/table-action/index.vue'
+import { useRouter } from 'vue-router'
+const router=useRouter()
 const searchParams = reactive({
     name: undefined,
 })
@@ -59,7 +73,7 @@ const [searchFormProps,{tableActionRef}] = useSearchForm({
         ]
     }
 })
-console.log('searchFormProps',searchFormProps)
+
 const [tableProps, tableInstance] = useTable({
     tableActionRef,
     service: async (params) => {
@@ -121,6 +135,8 @@ const handleReset = () => {
     tableInstance.refresh()
 }
 const handleClick=(item,row)=>{
-    console.log('item',item,row)
+     router.push({
+        path:`/example/components/edit/zh/${row.id}`,
+     })
 }
 </script>

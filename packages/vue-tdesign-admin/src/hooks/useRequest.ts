@@ -1,4 +1,4 @@
-import { onMounted, ref, shallowReactive,onBeforeMount, toRef, watch, type Ref } from "vue";
+import { shallowReactive,onBeforeMount, watch, type Ref, type MaybeRef, toValue, computed } from "vue";
 export type UseRequestProps<T> = {
   manualRequest?: boolean;
   defaultValue?: T;
@@ -10,21 +10,14 @@ export type UseRequestProps<T> = {
   onComplete?: (data: T, params: any) => void;
   transform?: (data: T) => T;
 };
-export const useRequest = <T>(props: UseRequestProps<T>) => {
-  const {
-    manualRequest = false,
-    params,
-    defaultParams = {},
-    service,
-    onSuccess,
-    onError,
-    transform,
-    onComplete,
-    defaultValue = undefined
-  } = props;
+export const useRequest = <T>(props: MaybeRef<UseRequestProps<T>>) => {
+  const propsRef=computed(()=>Object.assign({
+      manualRequest:false,
+      defaultParams: {},
+  },toValue(props)))
   const state = shallowReactive({
     loading: false,
-    data: defaultValue as T,
+    data: propsRef.value.defaultValue as T,
     error: null,
     lastParams: {},
   });
@@ -32,19 +25,19 @@ export const useRequest = <T>(props: UseRequestProps<T>) => {
   const request = async (params: any = {}) => {
     state.loading = true;
     try {
-      const res = await service(params);
-      const data = transform?.(res) ?? res;
+      const res = await propsRef.value.service(params);
+      const data = propsRef.value.transform?.(res) ?? res;
       state.data = data;
       state.error = null;
       state.lastParams = params;
-      onSuccess?.(data, params);
+      propsRef.value.onSuccess?.(data, params);
     } catch (err) {
       state.data = null;
       state.error = err;
-      onError?.(err);
+      propsRef.value.onError?.(err);
     } finally {
       state.loading = false;
-      onComplete?.(state.data,   state.lastParams );
+      propsRef.value.onComplete?.(state.data,   state.lastParams );
     }
     return state;
   };
@@ -54,15 +47,15 @@ export const useRequest = <T>(props: UseRequestProps<T>) => {
       ...params,
     });
   };
-  if (params) {
-    watch(params, (value) => {
+  if (propsRef.value.params) {
+    watch(()=>propsRef.value.params, (value) => {
       request(value);
     });
   }
   // 暴露请求方法
   onBeforeMount(() => {
-    if (!manualRequest) {
-      request(defaultParams);
+    if (!propsRef.value.manualRequest) {
+      request(propsRef.value.defaultParams);
     }
   });
   return [state, { request, refresh }] as const;

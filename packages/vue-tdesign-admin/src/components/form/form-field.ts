@@ -23,7 +23,7 @@ export const FormFeildComponents={
     [FormFieldTypes.TimeRangePicker]:TimeRangePicker,
     [FormFieldTypes.Cascader]:Cascader,
 }
-export const getPlaceeholder=(type:FieldValueType,label:string)=>{
+export const getPlaceholder=(type:FieldValueType,label:string)=>{
     let prefix=''
     switch(type){
         case FormFieldTypes.Text:

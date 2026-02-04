@@ -1,5 +1,5 @@
 
-import { ref, toRef, shallowReadonly, isReactive, type ShallowReactive, type MaybeRef, computed, shallowReactive, watchEffect, onBeforeMount, shallowRef, unref } from "vue";
+import { toRef,toValue, type MaybeRefOrGetter, computed, shallowReactive, onBeforeMount, shallowRef } from "vue";
 import type { ProTableProps } from '@/components/pro-table/index.ts'
 import {useRequest } from './useRequest'
 import type { SearchFormProps } from "src/components/form/search-form";
@@ -21,12 +21,12 @@ export type UseTableProps<T> = {
     manualRequest?: boolean // 是否手动触发请求，默认自动触发
     tableActionRef?:{current:any}
     service: (params: any) => Promise<TableDataResult<T>> // 数据请求服务函数
-    searchForm?:MaybeRef<Partial<SearchFormProps>>
-    tableProps?: ShallowReactive<Partial<Omit<ProTableProps,'searchForm'>>> | Partial<Omit<ProTableProps,'searchForm'>> // 表格属性配置
+    searchForm?:Partial<SearchFormProps>
+    tableProps?:  Partial<Omit<ProTableProps,'searchForm'>> // 表格属性配置
     pageSizeField?: string // 分页大小字段名，默认 'pageSize'
     pageCurrentField?: string // 当前页码字段名，默认 'current'
-    visibleRowSelection?: MaybeRef<boolean> // 是否显示行选择器
-    visibleSerialNumber?: MaybeRef<boolean> // 是否显示序号列
+    visibleRowSelection?: boolean // 是否显示行选择器
+    visibleSerialNumber?: boolean // 是否显示序号列
 }
 
 /**
@@ -35,21 +35,25 @@ export type UseTableProps<T> = {
  * @param props 配置参数
  * @returns [表格属性, {选中行键值, 请求方法, 刷新方法}]
  */
-export const useTable = <T>(props: UseTableProps<T>) => {
-    // 解构参数并设置默认值
-    const {manualRequest=true,tableActionRef,service, tableProps: propTableProps, pageSizeField = 'pageSize', pageCurrentField = 'current'} = props
-    
-    // 转换为响应式引用
-    const visibleSerialNumber = toRef(props,'visibleSerialNumber',true)
-    const visibleRowSelection = toRef(props,'visibleRowSelection',true)
+export const useTable = <T>(props: MaybeRefOrGetter<UseTableProps<T>>) => {
+
+    const propsRef=computed(()=>Object.assign({
+        manualRequest:true,
+        pageSizeField:'pageSize',
+        pageCurrentField:'current',
+        tableActionRef:{current:null},
+        defaultParams: {},
+    },toValue(props))) 
+
+    const propTableProps=toRef(()=>propsRef.value.tableProps)
 
     // 计算是否需要分页
-    const needPagination = computed(() => propTableProps.pagination ? true : false)
+    const needPagination = computed(() => propTableProps.value.pagination ? true : false)
     
     // 分页信息
     const paginationInfo = shallowReactive({
-        current: propTableProps.pagination?.defaultCurrent ?? 1, // 当前页码，默认1
-        pageSize: propTableProps.pagination?.defaultPageSize ?? 10, // 每页大小，默认10
+        current: propTableProps.value.pagination?.defaultCurrent ?? 1, // 当前页码，默认1
+        pageSize: propTableProps.value.pagination?.defaultPageSize ?? 10, // 每页大小，默认10
     })
     
     // 选中行的键值数组
@@ -71,8 +75,8 @@ export const useTable = <T>(props: UseTableProps<T>) => {
                 ...restParams,
                 // 根据是否需要分页添加分页参数
                 ...(needPagination.value ? {
-                    [pageSizeField]: pageSize,
-                    [pageCurrentField]: current,
+                    [propsRef.value.pageSizeField]: pageSize,
+                    [propsRef.value.pageCurrentField]: current,
                 } : {}),
             }
             
@@ -83,7 +87,7 @@ export const useTable = <T>(props: UseTableProps<T>) => {
             }
             
             // 调用服务函数获取数据
-            const res = await service(newParams)
+            const res = await propsRef.value.service(newParams)
             return res
         }
     })
@@ -147,14 +151,14 @@ export const useTable = <T>(props: UseTableProps<T>) => {
      */
     const tableColumns=computed(()=>{
         // 复制原始列配置
-        const newColumns=propTableProps.columns?.map((item)=>{
+        const newColumns=propTableProps.value.columns?.map((item)=>{
             return {
                 ...item
             }
         })
         
         // 添加序号列
-        if(visibleSerialNumber.value){
+        if(propsRef.value.visibleSerialNumber){
             newColumns.unshift({
                 title: '序号',
                 width: 80,
@@ -169,10 +173,10 @@ export const useTable = <T>(props: UseTableProps<T>) => {
         }
         
         // 添加行选择列
-        if(visibleRowSelection.value){
+        if(propsRef.value.visibleRowSelection){
             newColumns.unshift({
                 colKey: 'row-select',
-                type: propTableProps.rowSelectionType??'multiple', // 默认多选
+                type: propTableProps.value.rowSelectionType??'multiple', // 默认多选
                 width: 46,
                 fixed:'left',
             })
@@ -192,11 +196,11 @@ export const useTable = <T>(props: UseTableProps<T>) => {
             empty: '暂无数据', // 空数据提示
             loading: reqState.loading, // 加载状态
             onChange: onTableChange, // 表格变化回调
-            ...propTableProps, // 合并用户配置的表格属性
+            ...propTableProps.value, // 合并用户配置的表格属性
             columns:tableColumns.value, // 使用计算后的列配置
-            searchForm:unref(props.searchForm),
+            searchForm:propsRef.value.searchForm,
             // 添加行选择配置
-            ...(visibleRowSelection.value?({ 
+            ...(propsRef.value.visibleRowSelection?({ 
                 rowSelectionType:'multiple', // 默认多选
                 selectedRowKeys:selectedRowKeys.value, // 选中行键值
                 onSelectChange:onSelectChange, // 选择变化回调
@@ -204,7 +208,7 @@ export const useTable = <T>(props: UseTableProps<T>) => {
             // 添加分页配置
             ...(needPagination.value ? {
                 pagination: {
-                    ...propTableProps.pagination, // 合并用户配置的分页属性
+                    ...propTableProps.value.pagination, // 合并用户配置的分页属性
                     current: paginationInfo.current, // 当前页码
                     pageSize: paginationInfo.pageSize, // 每页大小
                     total: reqState.data.total, // 总记录数
@@ -215,12 +219,12 @@ export const useTable = <T>(props: UseTableProps<T>) => {
     
     // 组件挂载前自动请求数据
     onBeforeMount(()=>{
-        if(!manualRequest){ // 非手动请求模式下自动请求
+        if(!propsRef.value.manualRequest){ // 非手动请求模式下自动请求
             request()
         }
     })
-    if(tableActionRef){
-        tableActionRef.current={
+    if(propsRef.value.tableActionRef){
+        propsRef.value.tableActionRef.current={
             request,
             refresh,
         }

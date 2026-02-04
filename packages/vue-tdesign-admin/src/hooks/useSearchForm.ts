@@ -1,43 +1,44 @@
 
-import { computed, onBeforeMount, reactive, toRaw, unref, type MaybeRef, type ShallowReactive } from 'vue'
+import { computed, onBeforeMount, shallowReactive, toRef, toValue, type MaybeRefOrGetter } from 'vue'
 import type { SearchFormProps } from '@/components/form/search-form.ts'
 
 export type UseSearchFormProps={
   manual?:boolean,
-  formProps?:MaybeRef<Partial<SearchFormProps>>
+  formProps?:Partial<SearchFormProps>
 }
 
-export const useSearchForm = (props:UseSearchFormProps) => {
-  const formProps=unref(props.formProps||{})
+export const useSearchForm = (props:MaybeRefOrGetter<UseSearchFormProps>) => {
+  const propsRef=computed(()=>toValue(props))
+  const formProps=toRef(()=>propsRef.value.formProps||{})
   const tableActionRef:any={current:{
     request:()=>{},
     refresh:()=>{},
   }}
   const onSubmit=(e:any)=>{
-    formProps.onSubmit?.(e)
+    formProps.value.onSubmit?.(e)
     tableActionRef.current.request({...formData})
   }
   const onReset=(e:any)=>{
-    formProps.onReset?.(e)
+    formProps.value.onReset?.(e)
     tableActionRef.current.request({...formData})
   }
-  const formData=reactive(formProps.columns.reduce((prev,cur)=>{
+  const formData=shallowReactive(formProps.value.columns.reduce((prev,cur)=>{
       if(cur.name&&!Object.hasOwn(prev,cur.name)){
          prev[cur.name]=undefined
       }
       return prev
-    },formProps.data||{}))
+    },formProps.value.data||{}))
 
   const searchFormProps=computed(()=>{
     return {
-        ...unref(props.formProps),
+        ...formProps.value,
         data:formData,
         onSubmit:onSubmit,
         onReset:onReset,
     }
   })
   onBeforeMount(()=>{
-    if(!props.manual){
+    if(!propsRef.value.manual){
       tableActionRef.current.request({...formData})
     }
   })

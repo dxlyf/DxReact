@@ -1,17 +1,17 @@
 <template>
     <template v-for="item in props.items" :key="item.path">
-        <t-menu-item v-if="!Array.isArray(item.children)" :value="item.menuKey"  :to="item.path" :title="item.title">
+        <t-menu-item v-if="!Array.isArray(item.children)" :value="item.menuKey"  :to="item.path" >
             <template #icon>
                 <t-icon :name="item.icon" />
             </template>
-            {{ item.title }}
+            {{ item.menuName }}
         </t-menu-item>
-        <t-submenu v-else :value="item.menuKey"  :title="item.title" >
+        <t-submenu v-else :value="item.menuKey"  >
                <template #icon>
                 <t-icon :name="item.icon" />
             </template>
                 <template #title>
-                {{ item.title }}
+                {{ item.menuName }}
             </template>
             <template #content v-if="Array.isArray(item.children)&&item.children.length>0" >
                 <side-submenu :items="item.children" />

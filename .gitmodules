@@ -200,3 +200,6 @@
 [submodule "packages/vueuse"]
 	path = packages/vueuse
 	url = git@github.com:vueuse/vueuse.git
+[submodule "packages/vue-hooks-plus"]
+	path = packages/vue-hooks-plus
+	url = git@github.com:InhiblabCore/vue-hooks-plus.git
