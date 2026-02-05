@@ -1,3 +1,4 @@
+import path from 'path'
 import { createRouter, createWebHistory,type RouteRecordRaw } from 'vue-router'
 
 export type MenuDataItem = {
@@ -125,6 +126,14 @@ const defaultRoutes:RouteRecordRaw[]=[
               component: () => import('../views/example/edit.vue'),
               meta: {
                 title: '编辑'
+              }
+            },{
+               path:'basicedit',
+               component: () => import('../views/example/basicedit.vue'),
+               meta: {
+                title: '基础编辑',
+                menuName:'基础编辑',
+                icon:'table'
               }
             }
           ]
