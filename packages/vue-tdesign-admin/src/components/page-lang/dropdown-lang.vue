@@ -1,15 +1,22 @@
 <template>
-    <t-dropdown  :options="langList" @click="handleChange" trigger='click' placement='bottom-right'>
-        <t-space :size="4">
-             <span>当前配置语言：</span>
-            <t-link theme="primary" >{{ currentLang.content }}<t-icon name="chevron-down" /></t-link>
-        </t-space>
-    </t-dropdown>
+        <div class="flex text-xs align-middle">
+             <span class="opacity-70">当前配置语言：</span>
+            <t-dropdown v-if="type==='link'" :options="langList" @click="handleChange" trigger='click' placement='bottom-right'>
+                    <t-link theme="default" class="!text-xs" >{{ currentLang.content }}<t-icon name="chevron-down" /></t-link>
+                </t-dropdown>
+                <span v-else>{{ currentLang.content }}</span>
+            </div>
+
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LANG_LIST } from './config'
-import type {DropdownProps} from 'tdesign-vue-next'
+type Props={
+    type:'default'|'link' //variant
+}
+const props=withDefaults(defineProps<Props>(),{
+    type:'default',
+})
 const langList=computed(()=>{
     return LANG_LIST.map(d=>({
         content:d.label,

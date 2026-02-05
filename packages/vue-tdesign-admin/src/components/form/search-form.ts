@@ -22,3 +22,6 @@ export type SearchFormProps={
     maxShowRows?:number,
     columns?:SearchFormColumnType[]
 }&FormProps
+export type {
+    FormProps
+}

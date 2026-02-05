@@ -11,6 +11,9 @@
         </t-breadcrumb>
         </div>
         <div class="p-4 bg-white">
+        <div class="my-2 p-2 gap-2 flex bg-gray-100">
+            <div class="align-middle px-4 py-1 bg-gray-200 rounded-md cursor-pointer hover:bg-gray-300" v-for="item in LANG_LIST" :key="item.value">{{item.label}}</div>
+        </div>
         <pro-table class="w-full" v-bind="tableProps">
             <template #actions="{ row }">
                 <table-action  @itemClick="handleClick($event,row)"></table-action>
@@ -39,6 +42,7 @@ import { computed, reactive, ref } from 'vue';
 import ProTable from 'src/components/pro-table/index.vue'
 import TableAction from 'src/components/table-action/index.vue'
 import { useRouter } from 'vue-router'
+import { LANG_LIST } from 'src/components/page-lang/config';
 const router=useRouter()
 const searchParams = reactive({
     name: undefined,
@@ -85,7 +89,7 @@ const [tableProps, tableInstance] = useTable({
         })
         return res.data
     },
-    searchForm:searchFormProps,
+    searchForm:searchFormProps.value,
     tableProps: {
 
         columns: [

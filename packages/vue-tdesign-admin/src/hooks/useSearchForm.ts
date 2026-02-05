@@ -1,6 +1,7 @@
 
 import { computed, onBeforeMount, shallowReactive, toRef, toValue, type MaybeRefOrGetter } from 'vue'
 import type { SearchFormProps } from '@/components/form/search-form.ts'
+import type { F } from 'vue-router/dist/router-CWoNjPRp.mjs'
 
 export type UseSearchFormProps={
   manual?:boolean,
@@ -14,20 +15,15 @@ export const useSearchForm = (props:MaybeRefOrGetter<UseSearchFormProps>) => {
     request:()=>{},
     refresh:()=>{},
   }}
-  const onSubmit=(e:any)=>{
+  const onSubmit:SearchFormProps['onSubmit']=(e:any)=>{
     formProps.value.onSubmit?.(e)
     tableActionRef.current.request({...formData})
   }
-  const onReset=(e:any)=>{
+  const onReset:SearchFormProps['onReset']=(e:any)=>{
     formProps.value.onReset?.(e)
     tableActionRef.current.request({...formData})
   }
-  const formData=shallowReactive(formProps.value.columns.reduce((prev,cur)=>{
-      if(cur.name&&!Object.hasOwn(prev,cur.name)){
-         prev[cur.name]=undefined
-      }
-      return prev
-    },formProps.value.data||{}))
+  const formData=shallowReactive({...formProps.value.data||{}})
 
   const searchFormProps=computed(()=>{
     return {
@@ -42,5 +38,5 @@ export const useSearchForm = (props:MaybeRefOrGetter<UseSearchFormProps>) => {
       tableActionRef.current.request({...formData})
     }
   })
-  return [searchFormProps,{tableActionRef}] as const
+  return [searchFormProps,{tableActionRef,formData}] as const
 }

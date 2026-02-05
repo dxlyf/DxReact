@@ -14,6 +14,7 @@ export const useDialog=(props:MaybeRefOrGetter<UseDialogProps>)=>{
         state.data=data
     }
     const close=()=>{
+        state.data=null
         state.visible=false
     }
     const handleCancel=()=>{

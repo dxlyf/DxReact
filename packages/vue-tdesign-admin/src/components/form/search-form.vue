@@ -1,5 +1,5 @@
 <template>
-    <t-form class="w-full"  v-bind="normalizeFormProps" @submit="handleSubmit" @reset="handleReset" >
+    <t-form class="w-full"  v-bind="normalizeFormProps" >
         <t-row :gutter="[12,12]" key="ff" v-if="colInfo.columns.length>0">
             <t-col v-for="col in colInfo.columns" :key="col.key" v-show="!col.hidden||!colloapsed" :span="col.span" >
                 <form-field  v-bind="col.props" v-model="props.data[col.props.name]" />
@@ -24,21 +24,22 @@
 </template>
 <script  setup lang="ts">
 import { toRefs,computed,ref } from 'vue'
-import type {SearchFormProps, RowColType} from './search-form.ts'
+import type {SearchFormProps, RowColType,FormProps} from './search-form.ts'
 import FormField from './form-field.vue'
 
-const emit=defineEmits<{
-    submit:[e:any,data:any]
-    reset:[e:any,data:any]
-}>()
+
 const props=withDefaults(defineProps<SearchFormProps>(),{
     alwaysExpand:false,
     defaultColumnSpan:4,
     maxColumnSpan:12,
     maxShowRows:1,
     columns:()=>[],
-    preventSubmitDefault:true
+    preventSubmitDefault:true,
+    resetType:'initial',
+    labelWidth:0,
+    
 })
+console.log(props)
 
 const slots=defineSlots()
 const colloapsed=ref(true)
@@ -76,18 +77,13 @@ const colInfo=computed(()=>{
     }
 })
 
-const handleSubmit=(e:any)=>{
-    emit('submit',e,props.data)
-}
-const handleReset=(e:any)=>{
-    emit('reset',e,props.data)
-}
+
 const handleToggleColloapse=()=>{
     colloapsed.value=!colloapsed.value
 }
 const normalizeFormProps=computed(()=>{
-    const {alwaysExpand,defaultColumnSpan,maxColumnSpan,maxShowRows,columns,onSubmit,onReset,...restProps}=props
-    return restProps
+    const {alwaysExpand,defaultColumnSpan,maxColumnSpan,maxShowRows,columns,...restProps}=props
+    return restProps  as FormProps
 })
 
 
