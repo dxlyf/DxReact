@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, shallowRef } from 'vue'
+import { ref, onMounted, shallowRef, inject } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const params = route.params
 const formData=shallowRef({name:''})
 console.log('route',route)
+console.log('lang',inject('lang'))
 </script>
 <style lang="less">
 .edit-form-card{
