@@ -1,4 +1,7 @@
 <template>
+    <div class="bg-gray-100 flex flex-row flex-wrap p-4 gap-1">
+        <div v-for="lang in langs" @click="curLang=lang" :class="[lang==curLang?'bg-sky-600 text-white hover:bg-sky-700':'hover:bg-gray-300']" class="bg-gray-200  h-6 w-20 text-center cursor-pointer rounded-md">{{lang }}</div>
+    </div>
     <div>
         <t-breadcrumb>
             <t-breadcrumb-item>首页</t-breadcrumb-item>
@@ -8,26 +11,21 @@
     </div>
     <t-card title="编辑" bordered>
         <t-form layout='vertical' label-align='top' :data="formData" :rules="rules">
-        <t-row :gutter="[10,10]">
-            <t-col :span="12">
                 <t-form-item  label="标签文案" name="labelText">
                     <label-text title="标签文案" v-model="formData.labelText">
                         标签文案
                     </label-text>
                 </t-form-item>
-            </t-col>
-               <t-col :span="12">
                 <t-form-item label="国家" name="country">
                     <t-button theme="default" @click="dialogCountry.open()">选择</t-button>
                 </t-form-item>
-            </t-col>
-              <t-col :span="12" class="mt-4">
-                <t-space>
+        
+                <t-form-item>
+                    <t-space>
                     <t-button theme="primary" type="submit">保存</t-button>
-                    <t-button theme="default">取消</t-button>
+                    <t-button theme="default" @click="handleBack">返回</t-button>
                 </t-space>
-            </t-col>
-        </t-row>
+                </t-form-item>
     </t-form>
 </t-card>
 <t-dialog v-bind="dialogProps">
@@ -35,15 +33,17 @@
 </template>
 <script setup lang="ts">
 import type { FormRules,BreadcrumbItemProps} from 'tdesign-vue-next'
-import { onMounted, reactive, ref, shallowReactive ,Teleport} from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted, reactive, ref, shallowReactive ,Teleport, watch} from 'vue'
+import { useRoute,useRouter,onBeforeRouteUpdate } from 'vue-router'
 import { useDialog } from '@/hooks/useDialog'
 import LabelText from '@/components/label-text/index.vue'
+
 const title=ref('选择国家')
 const [dialogProps,dialogCountry]=useDialog(()=>({
     header:title.value,
 }))
 
+const router = useRouter()
 const route = useRoute()
 const params = route.params
 const formData=shallowReactive({labelText:[]})
@@ -52,5 +52,28 @@ const rules:FormRules={
     labelText:[{message:'请填写文案',required:true,}],
     country:[{message:'请选择国家',required:true}]
 }
-console.log('params',params)
+const langs=['zh','en']
+const curLang=ref(langs[0])
+watch(curLang,(newVal,oldVal)=>{
+    router.replace({
+        path:route.path,
+        query:{
+            lang:newVal,
+        }
+     })
+})
+
+watch(()=>route.query.lang,(newVal,oldVal)=>{
+    console.log('newVal',newVal)
+})
+const handleBack=()=>{
+
+}
+
+onBeforeRouteUpdate((to,from)=>{
+    console.log('beforeRouteUpdate',to)
+})
+onMounted(()=>{
+    console.log('onMounted',route.query.lang)
+})
 </script>

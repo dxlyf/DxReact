@@ -5,8 +5,9 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const params = route.params
 const formData=shallowRef({name:''})
-console.log('route',route)
-console.log('lang',inject('lang'))
+const rules={
+    
+}
 </script>
 <style lang="less">
 .edit-form-card{
