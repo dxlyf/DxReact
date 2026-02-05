@@ -36,7 +36,7 @@
                 </template>
             </t-head-menu>
         </t-header>
-        <t-content class="p-4">
+        <t-content class="px-5 py-4">
              <router-view v-slot="{Component}">
                  <keep-alive >
                     <component :is="Component" :key="$route.path"/>

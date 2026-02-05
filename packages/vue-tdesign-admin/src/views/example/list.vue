@@ -17,7 +17,7 @@
             </template>
             <template #leftOperation>
                <t-space>
-                    <t-button  theme="primary">新增</t-button>
+                    <t-button  theme="primary" @click="handleNavNew">新增</t-button>
                </t-space>
             </template>
              <template #rightOperation>
@@ -85,9 +85,9 @@ const [tableProps, tableInstance] = useTable({
         })
         return res.data
     },
-    searchForm:searchFormProps,
+    searchForm:searchFormProps.value,
     tableProps: {
-
+        //title:'标签列表',
         columns: [
             {
                 title: 'ID',
@@ -138,5 +138,13 @@ const handleClick=(item,row)=>{
      router.push({
         path:`/example/components/edit/zh/${row.id}`,
      })
+}
+const handleNavNew=()=>{
+    router.push({
+        path:'/example/components/basicedit',
+        query:{
+            eid:43
+        }
+    })
 }
 </script>

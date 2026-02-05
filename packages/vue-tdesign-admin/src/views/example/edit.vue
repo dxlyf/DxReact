@@ -32,7 +32,7 @@
 </t-dialog>
 </template>
 <script setup lang="ts">
-import type { FormRules } from 'tdesign-vue-next'
+import type { FormRules,BreadcrumbItemProps} from 'tdesign-vue-next'
 import { onMounted, reactive, ref, shallowReactive ,Teleport} from 'vue'
 import { useRoute } from 'vue-router'
 import { useDialog } from '@/hooks/useDialog'
