@@ -1,6 +1,7 @@
 import type {FormItemProps} from 'tdesign-vue-next'
 import {Input,InputNumber,Select,DatePicker,TimePicker,DateRangePicker,TimeRangePicker,Cascader} from  'tdesign-vue-next'
-import type { Component} from 'vue'
+import type { Component,ExtractPropTypes} from 'vue'
+
 export type GetVueComp<T> = T extends Component<infer P> ? P : never
 export type GetProps<T>=GetVueComp<T> extends {$props: infer P} ? P : never
 export const FormFieldTypes={

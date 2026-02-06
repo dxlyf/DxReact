@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import type { DropdownOption } from 'tdesign-vue-next'
-import { computed, toRef, type Component } from 'vue'
+import { computed, toRef, type Component,type PropType } from 'vue'
 export type TableActionItem = {
     label: string
     key: string
@@ -54,20 +54,20 @@ export const defaultTableActions: TableActionItem[] = [
     }
 ]
 
-
 export default {
     emits:['itemClick'],
     props: {
         maxShowCount: {
-            type: Number,
+            type: Number as PropType<number>,
             default: 3
         },
         items: {
-            type: Array,
-            default: () => defaultTableActions as TableActionItem[]
+            type: Array as PropType<TableActionItem[]>,
+            default: () => defaultTableActions
         }
     },
-    setup(props:TableActionProps,{emit}) {
+    setup(props,{emit}) {
+        
         const finalItems = computed<TableActionItem[]>(() => {
             const newItems = props.items.map((item, i) => ({ theme: 'primary', order: i, ...item }))
             newItems.sort((a, b) => a.order - b.order)

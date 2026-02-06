@@ -1,73 +1,59 @@
 <template>
     <t-button theme="default" @click="handleOpen"><slot></slot></t-button>
 
-      <t-dialog attach="body" :destroy-on-close="true" :header="title" :visible="visible" @confirm="handleConfirm" @close="handleClose">
-        <t-form   :data="formData" @submit="handleSubmit"  ref="formRef">
-            <t-form-item  :rules="[{required:true,message:'请输入'+item.label}]" class="w-full" v-for="item in LANG_LIST" :key="item.value" :label="item.label" :name="item.value">
-                <t-input  v-model="formData[item.value]" />
+      <t-dialog attach="body" :footer="!disabled" :destroy-on-close="true" :header="title" :visible="visible" @confirm="handleConfirm" @close="handleClose">
+       <div class="flex justify-end mb-4">
+        <t-button type='button' @click="handleAutoFill">用英文一键填充</t-button>
+       </div>
+        <t-form :disabled="disabled"  :data="formData" @submit="handleSubmit"  ref="formRef">
+            <t-form-item  v-for="item in langList" :key="item.value" :label="item.label" :name="`text_${item.suffix}`">
+                <t-input  v-model="formData[`text_${item.suffix}`]" />
             </t-form-item>
-          
         </t-form>
     </t-dialog>
 </template>
 <script setup lang="ts">
-import {  ref, shallowReactive, shallowRef, watchEffect} from 'vue'
-import { MessagePlugin, type FormInstanceFunctions } from 'tdesign-vue-next'
-import { LANG_LIST } from '../page-lang/config'
+import { ref, shallowRef} from 'vue'
+import { type TdFormProps,type FormInstanceFunctions } from 'tdesign-vue-next'
+import { useLang } from '@/hooks/useLang'
 type Props={
     title:string
+    disabled?:boolean
 }
-type ModelData={
-    lang:string
-    value:string
-}
+
 const props=withDefaults(defineProps<Props>(),{
+    disabled:false,
     title:'',
 })
-
 const formRef=shallowRef<FormInstanceFunctions>()
 const visible=ref(false)
-const model=defineModel<ModelData[]>({default:[]})
-const formData=shallowRef<any>({})
-defineOptions({
-    name:'LabelText',
-})
+const model=defineModel<Record<string,string>>({default:()=>({})})
+const formData=ref<any>({})
+const [langList]=useLang()
 
 const handleOpen=()=>{
     visible.value=true
-    formData.value=model.value.reduce((prev,cur)=>{
-        prev[cur.lang]=cur.value
-        return prev
-    },shallowReactive({}) as any)
+    formData.value={...model.value}
 }
 const handleConfirm=()=>{
     formRef.value.submit()
 }
 const handleClose=()=>{
     visible.value=false
-    formRef.value.reset()
 }
-
-const handleSubmit=(e)=>{
-   console.log('submit',e)
-   if(e.firstError){
-    MessagePlugin.error(e.firstError)
-    return
-   }
-   model.value=LANG_LIST.map(d=>{
-    return {
-        lang:d.value,
-        value:formData.value[d.value]
-    }
-   })
+const handleSubmit:TdFormProps['onSubmit']=(e)=>{
+   model.value={...formData.value}
    visible.value=false
 }
-watchEffect(()=>{
-    console.log('model',model.value)
+// 一键填充
+const handleAutoFill=()=>{
+    langList.value.forEach((item,i)=>{
+        if(i>0){
+            formData.value['text_'+item.suffix]=formData.value['text_'+langList.value[0].suffix]
+        }
+    })
+}
+defineOptions({
+    name:'LabelText',
 })
-
-watchEffect(()=>{
-    console.log('formData',formData.value)
-})
-
 </script>

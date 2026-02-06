@@ -2,19 +2,24 @@
     <div class="bg-gray-100 flex flex-row flex-wrap p-4 gap-1">
         <div v-for="lang in langs" @click="curLang=lang" :class="[lang==curLang?'bg-sky-600 text-white hover:bg-sky-700':'hover:bg-gray-300']" class="bg-gray-200  h-6 w-20 text-center cursor-pointer rounded-md">{{lang }}</div>
     </div>
-    <div>
+    <div class="mb-3">
         <t-breadcrumb>
             <t-breadcrumb-item>首页</t-breadcrumb-item>
             <t-breadcrumb-item>示例</t-breadcrumb-item>
             <t-breadcrumb-item>编辑</t-breadcrumb-item>
         </t-breadcrumb>
     </div>
-    <t-card title="编辑" bordered>
-        <t-form layout='vertical' label-align='top' :data="formData" :rules="rules">
+    <t-card title="编辑" header-bordered :bordered="false">
+        <t-form layout='vertical' label-align='top' :data="formData" @submit="handleSubmit" :rules="rules">
                 <t-form-item  label="标签文案" name="labelText">
                     <label-text title="标签文案" v-model="formData.labelText">
-                        标签文案
+                        编辑
                     </label-text>
+                </t-form-item>
+                <t-form-item  label="标签板块" name="labelSection">
+                    <label-section title="标签板块" v-model="formData.labelSection">
+                        编辑
+                    </label-section>
                 </t-form-item>
                 <t-form-item label="国家" name="country">
                     <t-button theme="default" @click="dialogCountry.open()">选择</t-button>
@@ -32,11 +37,12 @@
 </t-dialog>
 </template>
 <script setup lang="ts">
-import type { FormRules,BreadcrumbItemProps} from 'tdesign-vue-next'
+import { type FormRules,type BreadcrumbItemProps, MessagePlugin} from 'tdesign-vue-next'
 import { onMounted, reactive, ref, shallowReactive ,Teleport, watch} from 'vue'
 import { useRoute,useRouter,onBeforeRouteUpdate } from 'vue-router'
 import { useDialog } from '@/hooks/useDialog'
 import LabelText from '@/components/label-text/index.vue'
+import LabelSection from '@/components/label-section/index.vue'
 
 const title=ref('选择国家')
 const [dialogProps,dialogCountry]=useDialog(()=>({
@@ -46,11 +52,11 @@ const [dialogProps,dialogCountry]=useDialog(()=>({
 const router = useRouter()
 const route = useRoute()
 const params = route.params
-const formData=shallowReactive({labelText:[]})
+const formData=shallowReactive<any>({})
 
 const rules:FormRules={
     labelText:[{message:'请填写文案',required:true,}],
-    country:[{message:'请选择国家',required:true}]
+  //  country:[{message:'请选择国家',required:true}]
 }
 const langs=['zh','en']
 const curLang=ref(langs[0])
@@ -76,4 +82,12 @@ onBeforeRouteUpdate((to,from)=>{
 onMounted(()=>{
     console.log('onMounted',route.query.lang)
 })
+const handleSubmit=(e)=>{
+    if(e.validateResult!==true){
+        MessagePlugin.error(e.firstError)
+        return
+    }
+    console.log('submit',e,{...formData})
+    
+}
 </script>
