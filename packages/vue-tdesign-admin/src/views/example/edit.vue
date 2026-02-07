@@ -9,12 +9,19 @@
             <t-breadcrumb-item>编辑</t-breadcrumb-item>
         </t-breadcrumb>
     </div>
-    <t-card title="编辑" header-bordered :bordered="false">
-        <t-form layout='vertical' label-align='top' :data="formData" @submit="handleSubmit" :rules="rules">
-                <t-form-item  label="标签文案" name="labelText">
-                    <label-text title="标签文案" v-model="formData.labelText">
-                        编辑
+    
+    <t-card :loading="loading" :loading-props="{attach:'body',fullscreen:true,text:'提交中...',showOverlay:false}" title="编辑" header-bordered :bordered="false">
+        <t-form class="w-md" layout='vertical' label-align='top' :data="formData" @submit="handleSubmit" :rules="rules">
+                    <t-form-item  label="id" name="name">
+                   <t-input></t-input>
+                </t-form-item>  
+            <t-form-item  label="标签文案" name="text">
+                    <label-text v-slot="textProps" :disabled="disbaledText" title="标签文案" v-model="formData.text">
+                        <t-button v-bind="textProps">编辑</t-button>
                     </label-text>
+                </t-form-item>
+                <t-form-item  label="主题" name="theme">
+                   <t-select v-model="formData.theme"></t-select>
                 </t-form-item>
                 <t-form-item  label="标签板块" name="labelSection">
                     <label-section title="标签板块" v-model="formData.labelSection">
@@ -38,26 +45,33 @@
 </template>
 <script setup lang="ts">
 import { type FormRules,type BreadcrumbItemProps, MessagePlugin} from 'tdesign-vue-next'
-import { onMounted, reactive, ref, shallowReactive ,Teleport, watch} from 'vue'
+import { onMounted, reactive, ref, shallowReactive ,shallowRef,Teleport, watch} from 'vue'
 import { useRoute,useRouter,onBeforeRouteUpdate } from 'vue-router'
 import { useDialog } from '@/hooks/useDialog'
 import LabelText from '@/components/label-text/index.vue'
 import LabelSection from '@/components/label-section/index.vue'
+import { delay } from 'src/utils'
 
 const title=ref('选择国家')
 const [dialogProps,dialogCountry]=useDialog(()=>({
     header:title.value,
 }))
-
+const disbaledText=shallowRef(false)
 const router = useRouter()
 const route = useRoute()
 const params = route.params
-const formData=shallowReactive<any>({})
+const loading=shallowRef(false)
+const formData=shallowReactive<any>({
+    theme:'primary',
+})
 
 const rules:FormRules={
-    labelText:[{message:'请填写文案',required:true,}],
+    text:[{message:'请填写文案',required:true,}],
   //  country:[{message:'请选择国家',required:true}]
 }
+setTimeout(()=>{
+    disbaledText.value=true
+},2000)
 const langs=['zh','en']
 const curLang=ref(langs[0])
 watch(curLang,(newVal,oldVal)=>{
@@ -82,12 +96,17 @@ onBeforeRouteUpdate((to,from)=>{
 onMounted(()=>{
     console.log('onMounted',route.query.lang)
 })
-const handleSubmit=(e)=>{
+
+const handleSubmit=async (e)=>{
+   
+    console.log('submit',{...formData})
     if(e.validateResult!==true){
         MessagePlugin.error(e.firstError)
         return
     }
-    console.log('submit',e,{...formData})
-    
+    console.log('submit完成')
+    loading.value=true
+    await delay(100000)
+    loading.value=false
 }
 </script>
