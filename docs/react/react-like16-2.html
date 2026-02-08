@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "./lib/react16/like/react/React.js",
+                "react-dom": "https://unpkg.com/react-dom@16.13.1/umd/react-dom.development.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module" data-presets="env,react">
+
+        /** @jsx createElement */
+        /** @jsxFrag Fragment */
+
+        const HostComponent = 1
+        const FunctionComponent = 2
+        const Fragment = 3
+        const HostRoot = 4
+        const HostText = 5
+
+        const NoWork = 0
+        const Update = 1
+        const Placement = 2
+        const Deletion = 4
+
+        function createElement(type, config, ...children) {
+            let key = null
+            let props = {}
+            if (config) {
+                for (let propName in config) {
+                    if (propName == 'key') {
+                        key = config[propName]
+                    } else {
+                        props[propName] = config[propName]
+                    }
+                }
+            }
+            if (children.length === 1) {
+                props.children = children[0]
+            } else if (children.length > 1) {
+                props.children = children
+            }
+            return {
+                type,
+                props,
+                key
+            }
+        }
+        function createFiber(tag, peddingProps, key) {
+            return {
+                tag,
+                key,
+                type: null,
+                stateNode: null,
+
+
+                ref: null,
+
+                return: null,
+                sibling: null,
+                child: null,
+                index: 0,
+
+                peddingProps: peddingProps,
+                memoizedProps: null,
+                memoizedState: null,
+                updateQueue: null,
+
+                effectTag: NoWork,
+                nextEffect: null,
+                firstEffect: null,
+                lastEffect: null,
+
+                alternate: null,
+            }
+        }
+
+        function performUnitOfWork(workInProgress) {
+
+        }
+        function workLoop() {
+
+        }
+        function renderRoot(root) {
+            isWorking = true
+            if (root !== nextRoot) {
+                nextRoot = root
+                nextUnitOfWork = createWorkInProgress(
+                    nextRoot.current,
+                    null,
+                    nextRenderExpirationTime,
+                );
+            }
+
+            isWorking = false
+        }
+        function completeRoot(root, finishedWork) {
+
+        }
+        function performWorkOnRoot(root) {
+
+            isRendering = true
+            let finishedWork = root.finishedWork;
+            if (finishedWork !== null) {
+                // This root is already complete. We can commit it.
+                completeRoot(root, finishedWork);
+            } else {
+                root.finishedWork = null;
+                renderRoot(root, isYieldy);
+                finishedWork = root.finishedWork;
+                if (finishedWork !== null) {
+                    // We've completed the root. Commit it.
+                    completeRoot(root, finishedWork);
+                }
+            }
+
+            isRendering = false
+        }
+        function scheduleUpdateOnFiber(fiber) {
+            fiber.alternate = fiber
+        }
+
+        const UpdateState = 0;
+        const ReplaceState = 1;
+        const ForceUpdate = 2;
+        const CaptureUpdate = 3;
+        function createUpdate() {
+            return {
+                tag: UpdateState,
+                payload: null,
+                callback: null,
+
+                next: null,
+                nextEffect: null,
+            }
+        }
+        function createUpdateQueue(baseState) {
+            const queue = {
+                baseState,
+                firstUpdate: null,
+                lastUpdate: null,
+                firstCapturedUpdate: null,
+                lastCapturedUpdate: null,
+                firstEffect: null,
+                lastEffect: null,
+                firstCapturedEffect: null,
+                lastCapturedEffect: null,
+            };
+            return queue;
+        }
+
+        function cloneUpdateQueue(currentQueue) {
+            const queue = {
+                baseState: currentQueue.baseState,
+                firstUpdate: currentQueue.firstUpdate,
+                lastUpdate: currentQueue.lastUpdate,
+
+                // TODO: With resuming, if we bail out and resuse the child tree, we should
+                // keep these effects.
+                firstCapturedUpdate: null,
+                lastCapturedUpdate: null,
+
+                firstEffect: null,
+                lastEffect: null,
+
+                firstCapturedEffect: null,
+                lastCapturedEffect: null,
+            };
+            return queue;
+        }
+        function appendUpdateToQueue(
+            queue,
+            update,
+        ) {
+            // Append the update to the end of the list.
+            if (queue.lastUpdate === null) {
+                // Queue is empty
+                queue.firstUpdate = queue.lastUpdate = update;
+            } else {
+                queue.lastUpdate.next = update;
+                queue.lastUpdate = update;
+            }
+        }
+        function enqueueUpdate(fiber, update) {
+            const alternate = fiber.alternate
+            if (alternate === null) {
+                queue1 = fiber.updateQueue;
+                queue2 = null;
+                if (queue1 === null) {
+                    queue1 = fiber.updateQueue = createUpdateQueue(fiber.memoizedState);
+                }
+            } else {
+                // There are two owners.
+                queue1 = fiber.updateQueue;
+                queue2 = alternate.updateQueue;
+                if (queue1 === null) {
+                    if (queue2 === null) {
+                        // Neither fiber has an update queue. Create new ones.
+                        queue1 = fiber.updateQueue = createUpdateQueue(fiber.memoizedState);
+                        queue2 = alternate.updateQueue = createUpdateQueue(
+                            alternate.memoizedState,
+                        );
+                    } else {
+                        // Only one fiber has an update queue. Clone to create a new one.
+                        queue1 = fiber.updateQueue = cloneUpdateQueue(queue2);
+                    }
+                } else {
+                    if (queue2 === null) {
+                        // Only one fiber has an update queue. Clone to create a new one.
+                        queue2 = alternate.updateQueue = cloneUpdateQueue(queue1);
+                    } else {
+                        // Both owners have an update queue.
+                    }
+                }
+            }
+            if (queue2 === null || queue1 === queue2) {
+                // There's only a single queue.
+                appendUpdateToQueue(queue1, update);
+            } else {
+                // There are two queues. We need to append the update to both queues,
+                // while accounting for the persistent structure of the list — we don't
+                // want the same update to be added multiple times.
+                if (queue1.lastUpdate === null || queue2.lastUpdate === null) {
+                    // One of the queues is not empty. We must add the update to both queues.
+                    appendUpdateToQueue(queue1, update);
+                    appendUpdateToQueue(queue2, update);
+                } else {
+                    // Both queues are non-empty. The last update is the same in both lists,
+                    // because of structural sharing. So, only append to one of the lists.
+                    appendUpdateToQueue(queue1, update);
+                    // But we still need to update the `lastUpdate` pointer of queue2.
+                    queue2.lastUpdate = update;
+                }
+            }
+        }
+        function createFiberRoot(container) {
+            const hostRoot = createFiber(HostRoot, null, null)
+            const fiberRoot = {
+                containerInfo: container,
+                current: hostRoot,
+                finishedWork: null,
+                nextScheduledRoot: null
+            }
+            hostRoot.stateNode = fiberRoot
+            return fiberRoot
+        }
+        function scheduleWorkToRoot(current) {
+            let node = fiber.return;
+            let root = null;
+            if (node === null && fiber.tag === HostRoot) {
+                root = fiber.stateNode;
+            } else {
+                while (node !== null) {
+                    alternate = node.alternate;
+                    if (node.return === null && node.tag === HostRoot) {
+                        root = node.stateNode;
+                        break;
+                    }
+                    node = node.return;
+                }
+            }
+            return root
+        }
+        let isWorking = null
+        let nextUnitOfWork = null
+        let nextRoot = null
+        let nextEffect = null
+        let isCommitting = false
+
+        let firstScheduledRoot = null;
+        let lastScheduledRoot = null;
+        let isRendering = false
+        let nextFlushedRoot = null;
+
+        function addRootToSchedule(root) {
+            // Add the root to the schedule.
+            // Check if this root is already part of the schedule.
+            if (root.nextScheduledRoot === null) {
+                // This root is not already scheduled. Add it.
+                if (lastScheduledRoot === null) {
+                    firstScheduledRoot = lastScheduledRoot = root;
+                    root.nextScheduledRoot = root;
+                } else {
+                    lastScheduledRoot.nextScheduledRoot = root;
+                    lastScheduledRoot = root;
+                    lastScheduledRoot.nextScheduledRoot = firstScheduledRoot;
+                }
+            }
+        }
+
+        function requestWork(root) {
+            addRootToSchedule(root);
+            performWorkOnRoot(lastScheduledRoot);
+        }
+        function scheduleWork(fiber) {
+            const root = scheduleWorkToRoot(fiber)
+            if (
+                // If we're in the render phase, we don't need to schedule this root
+                // for an update, because we'll do it before we exit...
+                !isWorking ||
+                isCommitting ||
+                // ...unless this is a different root than the one we're rendering.
+                nextRoot !== root
+            ) {
+                requestWork(root);
+            }
+        }
+        function scheduleRootUpdate(fiber, element) {
+            const update = createUpdate()
+            update.payload = { element }
+
+            enqueueUpdate(current, update);
+            scheduleWork(current);
+        }
+        function render(element, container) {
+            const hostRoot = createFiber(HostRoot, null, element)
+            const fiberRoot = {
+                containerInfo: container,
+                current: hostRoot,
+                finishedWork: null,
+                nextScheduledRoot: null
+            }
+            hostRoot.stateNode = fiberRoot
+            scheduleRootUpdate(hostRoot, element)
+
+        }
+
+        function App() {
+            return <h1>Hello World</h1>
+        }
+        render(<App></App>, document.querySelector('#root'))
+    </script>
+</body>
+
+</html>

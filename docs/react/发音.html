@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语单词音标生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+        }
+
+        #wordInput {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.2em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #wordInput:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .phonetic-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+        }
+
+        .phonetic-card.british {
+            border-left-color: #e74c3c;
+        }
+
+        .phonetic-card.american {
+            border-left-color: #3498db;
+        }
+
+        .phonetic-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .flag {
+            font-size: 1.5em;
+        }
+
+        .phonetic-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .phonetic-content {
+            font-size: 2em;
+            color: #2c3e50;
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 1px;
+        }
+
+        .syllable-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 1px solid #ffeaa7;
+        }
+
+        .syllable-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .syllable-content {
+            color: #856404;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        .rules-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #d1ecf1;
+            border-radius: 10px;
+            border: 1px solid #bee5eb;
+        }
+
+        .rules-title {
+            font-weight: bold;
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+
+        .rules-content {
+            color: #0c5460;
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .example-words {
+            margin-top: 20px;
+        }
+
+        .example-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .example-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-item {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .example-item:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .legend-symbol {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2em;
+            color: #667eea;
+            min-width: 30px;
+        }
+
+        .stress-mark {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .secondary-stress {
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 英语单词音标生成器</h1>
+        <p class="subtitle">基于英语发音规则自动生成英式 & 美式音标</p>
+
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input type="text" id="wordInput" placeholder="输入英语单词 (如: pronunciation)" maxlength="50" autocomplete="off">
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="result-section" id="resultSection">
+            <div class="phonetic-card british">
+                <div class="phonetic-header">
+                    <span class="flag">🇬🇧</span>
+                    <span class="phonetic-title">英式音标 (RP)</span>
+                </div>
+                <div class="phonetic-content" id="britishPhonetic"></div>
+            </div>
+
+            <div class="phonetic-card american">
+                <div class="phonetic-header">
+                    <span class="flag">🇺🇸</span>
+                    <span class="phonetic-title">美式音标 (GA)</span>
+                </div>
+                <div class="phonetic-content" id="americanPhonetic"></div>
+            </div>
+
+            <div class="syllable-section">
+                <div class="syllable-title">📊 音节划分</div>
+                <div class="syllable-content" id="syllableInfo"></div>
+            </div>
+
+            <div class="rules-section">
+                <div class="rules-title">📝 应用的发音规则</div>
+                <div class="rules-content" id="rulesInfo"></div>
+            </div>
+        </div>
+
+        <div class="example-words">
+            <div class="example-title">💡 点击尝试以下示例单词：</div>
+            <div class="example-list">
+                <span class="example-item" onclick="setWord('pronunciation')">pronunciation</span>
+                <span class="example-item" onclick="setWord('beautiful')">beautiful</span>
+                <span class="example-item" onclick="setWord('schedule')">schedule</span>
+                <span class="example-item" onclick="setWord('tomato')">tomato</span>
+                <span class="example-item" onclick="setWord('advertisement')">advertisement</span>
+                <span class="example-item" onclick="setWord('laboratory')">laboratory</span>
+                <span class="example-item" onclick="setWord('vitamin')">vitamin</span>
+                <span class="example-item" onclick="setWord('leisure')">leisure</span>
+                <span class="example-item" onclick="setWord('either')">either</span>
+                <span class="example-item" onclick="setWord('neither')">neither</span>
+                <span class="example-item" onclick="setWord('privacy')">privacy</span>
+                <span class="example-item" onclick="setWord('progress')">progress</span>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">📚 音标符号说明</div>
+            <div class="legend-grid">
+                <div class="legend-item"><span class="legend-symbol">ˈ</span> 主重音</div>
+                <div class="legend-item"><span class="legend-symbol">ˌ</span> 次重音</div>
+                <div class="legend-item"><span class="legend-symbol">iː</span> 长音 ee</div>
+                <div class="legend-item"><span class="legend-symbol">ɪ</span> 短音 i</div>
+                <div class="legend-item"><span class="legend-symbol">eɪ</span> 双元音 ay</div>
+                <div class="legend-item"><span class="legend-symbol">aɪ</span> 双元音 eye</div>
+                <div class="legend-item"><span class="legend-symbol">əʊ</span> 英式 oh</div>
+                <div class="legend-item"><span class="legend-symbol">oʊ</span> 美式 oh</div>
+                <div class="legend-item"><span class="legend-symbol">ɑː</span> 英式 ah</div>
+                <div class="legend-item"><span class="legend-symbol">æ</span> 短音 a</div>
+                <div class="legend-item"><span class="legend-symbol">ʃ</span> sh 音</div>
+                <div class="legend-item"><span class="legend-symbol">θ</span> th 清音</div>
+                <div class="legend-item"><span class="legend-symbol">ð</span> th 浊音</div>
+                <div class="legend-item"><span class="legend-symbol">ŋ</span> ng 音</div>
+                <div class="legend-item"><span class="legend-symbol">ʒ</span> zh 音</div>
+                <div class="legend-item"><span class="legend-symbol">tʃ</span> ch 音</div>
+                <div class="legend-item"><span class="legend-symbol">dʒ</span> j 音</div>
+                <div class="legend-item"><span class="legend-symbol">r</span> 卷舌音</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 英语音标规则引擎 - 完全基于规则计算，不使用单词映射
+        
+        // 音标符号定义
+        const PHONETIC = {
+            // 英式音标
+            BR: {
+                vowels: {
+                    'iː': 'iː', 'ɪ': 'ɪ', 'e': 'e', 'æ': 'æ',
+                    'ɑː': 'ɑː', 'ɒ': 'ɒ', 'ɔː': 'ɔː', 'ʊ': 'ʊ',
+                    'uː': 'uː', 'ʌ': 'ʌ', 'ɜː': 'ɜː', 'ə': 'ə',
+                    'eɪ': 'eɪ', 'aɪ': 'aɪ', 'ɔɪ': 'ɔɪ',
+                    'aʊ': 'aʊ', 'əʊ': 'əʊ', 'ɪə': 'ɪə',
+                    'eə': 'eə', 'ʊə': 'ʊə'
+                },
+                consonants: {
+                    'p': 'p', 'b': 'b', 't': 't', 'd': 'd',
+                    'k': 'k', 'g': 'g', 'f': 'f', 'v': 'v',
+                    'θ': 'θ', 'ð': 'ð', 's': 's', 'z': 'z',
+                    'ʃ': 'ʃ', 'ʒ': 'ʒ', 'tʃ': 'tʃ', 'dʒ': 'dʒ',
+                    'm': 'm', 'n': 'n', 'ŋ': 'ŋ', 'h': 'h',
+                    'l': 'l', 'r': 'r', 'w': 'w', 'j': 'j'
+                }
+            },
+            // 美式音标
+            AM: {
+                vowels: {
+                    'iː': 'i', 'ɪ': 'ɪ', 'e': 'ɛ', 'æ': 'æ',
+                    'ɑː': 'ɑ', 'ɒ': 'ɑ', 'ɔː': 'ɔ', 'ʊ': 'ʊ',
+                    'uː': 'u', 'ʌ': 'ʌ', 'ɜː': 'ɝ', 'ə': 'ə',
+                    'eɪ': 'e', 'aɪ': 'aɪ', 'ɔɪ': 'ɔɪ',
+                    'aʊ': 'aʊ', 'əʊ': 'o', 'ɪə': 'ɪr',
+                    'eə': 'ɛr', 'ʊə': 'ʊr'
+                },
+                consonants: {
+                    'p': 'p', 'b': 'b', 't': 't', 'd': 'd',
+                    'k': 'k', 'g': 'g', 'f': 'f', 'v': 'v',
+                    'θ': 'θ', 'ð': 'ð', 's': 's', 'z': 'z',
+                    'ʃ': 'ʃ', 'ʒ': 'ʒ', 'tʃ': 'tʃ', 'dʒ': 'dʒ',
+                    'm': 'm', 'n': 'n', 'ŋ': 'ŋ', 'h': 'h',
+                    'l': 'l', 'r': 'ɹ', 'w': 'w', 'j': 'j'
+                }
+            }
+        };
+
+        // 发音规则定义 - 按优先级排序
+        const PRONUNCIATION_RULES = [
+            // ===== 特殊字母组合 (最长匹配优先) =====
+            // th 组合
+            { pattern: /^th(?=e[rmn]|is|at|e[ys]|o[us]|r[ou]|ough)/, br: 'ð', am: 'ð', type: 'consonant', desc: 'th在代词/介词中发/ð/' },
+            { pattern: /^th/, br: 'θ', am: 'θ', type: 'consonant', desc: 'th发/θ/' },
+            
+            // wh 组合
+            { pattern: /^wh/, br: 'w', am: 'w', type: 'consonant', desc: 'wh发/w/' },
+            
+            // wr 组合
+            { pattern: /^wr/, br: 'r', am: 'r', type: 'consonant', desc: 'wr发/r/' },
+            
+            // kn 组合
+            { pattern: /^kn/, br: 'n', am: 'n', type: 'consonant', desc: 'kn发/n/' },
+            
+            // ph 组合
+            { pattern: /^ph/, br: 'f', am: 'f', type: 'consonant', desc: 'ph发/f/' },
+            
+            // gh 组合
+            { pattern: /gh$/, br: '', am: '', type: 'silent', desc: 'gh在词尾不发音' },
+            { pattern: /igh/, br: 'aɪ', am: 'aɪ', type: 'vowel', desc: 'igh发/aɪ/' },
+            { pattern: /eigh/, br: 'eɪ', am: 'e', type: 'vowel', desc: 'eigh发/eɪ/' },
+            
+            // qu 组合
+            { pattern: /^qu/, br: 'kw', am: 'kw', type: 'consonant', desc: 'qu发/kw/' },
+            
+            // ng/nk 组合
+            { pattern: /nge/, br: 'ndʒ', am: 'ndʒ', type: 'consonant', desc: 'nge发/ndʒ/' },
+            { pattern: /ng$/, br: 'ŋ', am: 'ŋ', type: 'consonant', desc: 'ng在词尾发/ŋ/' },
+            { pattern: /nk/, br: 'ŋk', am: 'ŋk', type: 'consonant', desc: 'nk发/ŋk/' },
+            
+            // ch/tch 组合
+            { pattern: /tch/, br: 'tʃ', am: 'tʃ', type: 'consonant', desc: 'tch发/tʃ/' },
+            { pattern: /^ch/, br: 'tʃ', am: 'tʃ', type: 'consonant', desc: 'ch发/tʃ/' },
+            { pattern: /ch$/, br: 'tʃ', am: 'tʃ', type: 'consonant', desc: 'ch在词尾发/tʃ/' },
+            
+            // sh 组合
+            { pattern: /sh/, br: 'ʃ', am: 'ʃ', type: 'consonant', desc: 'sh发/ʃ/' },
+            
+            // tion/sion 组合
+            { pattern: /tion/, br: 'ʃn', am: 'ʃn', type: 'consonant', desc: 'tion发/ʃn/' },
+            { pattern: /sion/, br: 'ʒn', am: 'ʒn', type: 'consonant', desc: 'sion发/ʒn/' },
+            
+            // sure 组合
+            { pattern: /sure/, br: 'ʃə', am: 'ʃər', type: 'consonant', desc: 'sure发/ʃə/' },
+            
+            // ===== 元音组合 =====
+            // ee/ea
+            { pattern: /^ee/, br: 'iː', am: 'i', type: 'vowel', desc: 'ee发/iː/' },
+            { pattern: /^ea(?=r)/, br: 'ɪə', am: 'ɪr', type: 'vowel', desc: 'ear发/ɪə/' },
+            { pattern: /^ea/, br: 'iː', am: 'i', type: 'vowel', desc: 'ea发/iː/' },
+            
+            // oo
+            { pattern: /^oo(?=r)/, br: 'ɔː', am: 'ɔr', type: 'vowel', desc: 'oor发/ɔː/' },
+            { pattern: /^oo/, br: 'uː', am: 'u', type: 'vowel', desc: 'oo发/uː/' },
+            
+            // ou/ow
+            { pattern: /^ou/, br: 'aʊ', am: 'aʊ', type: 'vowel', desc: 'ou发/aʊ/' },
+            { pattern: /^ow$/, br: 'əʊ', am: 'o', type: 'vowel', desc: 'ow在词尾发/əʊ/' },
+            { pattern: /^ow/, br: 'aʊ', am: 'aʊ', type: 'vowel', desc: 'ow发/aʊ/' },
+            
+            // oi/oy
+            { pattern: /^oi/, br: 'ɔɪ', am: 'ɔɪ', type: 'vowel', desc: 'oi发/ɔɪ/' },
+            { pattern: /^oy/, br: 'ɔɪ', am: 'ɔɪ', type: 'vowel', desc: 'oy发/ɔɪ/' },
+            
+            // ai/ay
+            { pattern: /^ai/, br: 'eɪ', am: 'e', type: 'vowel', desc: 'ai发/eɪ/' },
+            { pattern: /^ay/, br: 'eɪ', am: 'e', type: 'vowel', desc: 'ay发/eɪ/' },
+            
+            // au/aw
+            { pattern: /^au/, br: 'ɔː', am: 'ɔː', type: 'vowel', desc: 'au发/ɔː/' },
+            { pattern: /^aw/, br: 'ɔː', am: 'ɔː', type: 'vowel', desc: 'aw发/ɔː/' },
+            
+            // ar
+            { pattern: /^are$/, br: 'eə', am: 'er', type: 'vowel', desc: 'are发/eə/' },
+            { pattern: /^ar/, br: 'ɑː', am: 'ɑːr', type: 'vowel', desc: 'ar发/ɑː/' },
+            
+            // er/ir/ur
+            { pattern: /^er/, br: 'ɜː', am: 'ɝ', type: 'vowel', desc: 'er发/ɜː/' },
+            { pattern: /^ir/, br: 'ɜː', am: 'ɝ', type: 'vowel', desc: 'ir发/ɜː/' },
+            { pattern: /^ur/, br: 'ɜː', am: 'ɝ', type: 'vowel', desc: 'ur发/ɜː/' },
+            
+            // or/ore
+            { pattern: /^ore/, br: 'ɔː', am: 'ɔːr', type: 'vowel', desc: 'ore发/ɔː/' },
+            { pattern: /^or/, br: 'ɔː', am: 'ɔːr', type: 'vowel', desc: 'or发/ɔː/' },
+            
+            // oa
+            { pattern: /^oa/, br: 'əʊ', am: 'o', type: 'vowel', desc: 'oa发/əʊ/' },
+            
+            // ue/ui
+            { pattern: /^ue/, br: 'uː', am: 'u', type: 'vowel', desc: 'ue发/uː/' },
+            { pattern: /^ui/, br: 'uː', am: 'u', type: 'vowel', desc: 'ui发/uː/' },
+            
+            // ===== 单个元音字母 =====
+            // a
+            { pattern: /^a$/, br: 'ə', am: 'ə', type: 'vowel', desc: 'a在词尾非重读发/ə/' },
+            { pattern: /^a(?=e)/, br: 'eɪ', am: 'e', type: 'vowel', desc: 'a_e发/eɪ/' },
+            { pattern: /^a/, br: 'æ', am: 'æ', type: 'vowel', desc: 'a发/æ/' },
+            
+            // e
+            { pattern: /^e$/, br: '', am: '', type: 'silent', desc: 'e在词尾不发音' },
+            { pattern: /^e(?=[iy])/, br: 'iː', am: 'i', type: 'vowel', desc: 'e在i,y前发/iː/' },
+            { pattern: /^e/, br: 'e', am: 'ɛ', type: 'vowel', desc: 'e发/e/' },
+            
+            // i
+            { pattern: /^i$/, br: 'aɪ', am: 'aɪ', type: 'vowel', desc: 'i在词尾发/aɪ/' },
+            { pattern: /^i(?=e|gh)/, br: 'aɪ', am: 'aɪ', type: 'vowel', desc: 'i_e/igh发/aɪ/' },
+            { pattern: /^i(?=nd|ld|gh)/, br: 'aɪ', am: 'aɪ', type: 'vowel', desc: 'ind/ild/igh发/aɪ/' },
+            { pattern: /^i/, br: 'ɪ', am: 'ɪ', type: 'vowel', desc: 'i发/ɪ/' },
+            
+            // o
+            { pattern: /^o$/, br: 'əʊ', am: 'o', type: 'vowel', desc: 'o在词尾发/əʊ/' },
+            { pattern: /^o(?=ld|lt|ll|lk)/, br: 'əʊ', am: 'o', type: 'vowel', desc: 'old等发/əʊ/' },
+            { pattern: /^o/, br: 'ɒ', am: 'ɑ', type: 'vowel', desc: 'o发/ɒ/' },
+            
+            // u
+            { pattern: /^u(?=r)/, br: 'ɜː', am: 'ɝ', type: 'vowel', desc: 'ur发/ɜː/' },
+            { pattern: /^u/, br: 'ʌ', am: 'ʌ', type: 'vowel', desc: 'u发/ʌ/' },
+            
+            // y
+            { pattern: /^y$/, br: 'i', am: 'i', type: 'vowel', desc: 'y在词尾发/i/' },
+            { pattern: /^y(?=[aeiou])/, br: 'j', am: 'j', type: 'consonant', desc: 'y在元音前发/j/' },
+            { pattern: /^y/, br: 'ɪ', am: 'ɪ', type: 'vowel', desc: 'y发/ɪ/' },
+            
+            // ===== 单个辅音字母 =====
+            { pattern: /^b/, br: 'b', am: 'b', type: 'consonant', desc: 'b发/b/' },
+            { pattern: /^c(?=[iey])/, br: 's', am: 's', type: 'consonant', desc: 'c在i,e,y前发/s/' },
+            { pattern: /^c/, br: 'k', am: 'k', type: 'consonant', desc: 'c发/k/' },
+            { pattern: /^d/, br: 'd', am: 'd', type: 'consonant', desc: 'd发/d/' },
+            { pattern: /^f/, br: 'f', am: 'f', type: 'consonant', desc: 'f发/f/' },
+            { pattern: /^g(?=[iey])/, br: 'dʒ', am: 'dʒ', type: 'consonant', desc: 'g在i,e,y前发/dʒ/' },
+            { pattern: /^g/, br: 'g', am: 'g', type: 'consonant', desc: 'g发/g/' },
+            { pattern: /^h/, br: 'h', am: 'h', type: 'consonant', desc: 'h发/h/' },
+            { pattern: /^j/, br: 'dʒ', am: 'dʒ', type: 'consonant', desc: 'j发/dʒ/' },
+            { pattern: /^k/, br: 'k', am: 'k', type: 'consonant', desc: 'k发/k/' },
+            { pattern: /^l/, br: 'l', am: 'l', type: 'consonant', desc: 'l发/l/' },
+            { pattern: /^m/, br: 'm', am: 'm', type: 'consonant', desc: 'm发/m/' },
+            { pattern: /^n/, br: 'n', am: 'n', type: 'consonant', desc: 'n发/n/' },
+            { pattern: /^p/, br: 'p', am: 'p', type: 'consonant', desc: 'p发/p/' },
+            { pattern: /^r/, br: 'r', am: 'ɹ', type: 'consonant', desc: 'r发/r/' },
+            { pattern: /^s$/, br: 's', am: 's', type: 'consonant', desc: 's在词尾发/s/' },
+            { pattern: /^s/, br: 's', am: 's', type: 'consonant', desc: 's发/s/' },
+            { pattern: /^t/, br: 't', am: 't', type: 'consonant', desc: 't发/t/' },
+            { pattern: /^v/, br: 'v', am: 'v', type: 'consonant', desc: 'v发/v/' },
+            { pattern: /^w/, br: 'w', am: 'w', type: 'consonant', desc: 'w发/w/' },
+            { pattern: /^x/, br: 'ks', am: 'ks', type: 'consonant', desc: 'x发/ks/' },
+            { pattern: /^z/, br: 'z', am: 'z', type: 'consonant', desc: 'z发/z/' }
+        ];
+
+        // 音节划分函数
+        function splitIntoSyllables(word) {
+            word = word.toLowerCase();
+            const vowels = 'aeiouy';
+            const syllables = [];
+            let current = '';
+            let vowelCount = 0;
+            
+            for (let i = 0; i < word.length; i++) {
+                const char = word[i];
+                const isVowel = vowels.includes(char);
+                
+                if (isVowel) {
+                    vowelCount++;
+                }
+                
+                current += char;
+                
+                // 检查是否需要分割音节
+                if (vowelCount > 0 && i < word.length - 1) {
+                    const nextChar = word[i + 1];
+                    const nextIsVowel = vowels.includes(nextChar);
+                    
+                    // 当前是元音，下一个是辅音
+                    if (isVowel && !nextIsVowel) {
+                        // 检查后面是否有元音
+                        let hasNextVowel = false;
+                        for (let j = i + 2; j < word.length; j++) {
+                            if (vowels.includes(word[j])) {
+                                hasNextVowel = true;
+                                break;
+                            }
+                        }
+                        
+                        if (hasNextVowel) {
+                            // 检查辅音组合
+                            if (i + 2 < word.length) {
+                                const cc = nextChar + word[i + 2];
+                                // 这些辅音组合不分割
+                                const blendConsonants = ['bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sc', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'tr', 'tw', 'dr', 'qu', 'th', 'sh', 'ch', 'ph', 'gh', 'ng', 'nk'];
+                                
+                                if (!blendConsonants.includes(cc) && !vowels.includes(word[i + 2])) {
+                                    // 两个辅音，分割在它们之间
+                                    syllables.push(current);
+                                    current = '';
+                                    vowelCount = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (current) {
+                syllables.push(current);
+            }
+            
+            return syllables.length > 0 ? syllables : [word];
+        }
+
+        // 确定重音位置
+        function findStressPosition(syllables) {
+            const count = syllables.length;
+            
+            if (count === 1) return 0;
+            if (count === 2) return 0; // 双音节词通常第一音节重读
+            
+            // 检查后缀
+            const last = syllables[count - 1].toLowerCase();
+            const secondLast = syllables[count - 2].toLowerCase();
+            
+            // 这些后缀重读在倒数第二音节
+            const penultimateStress = ['tion', 'sion', 'ic', 'ity', 'ify', 'ize', 'ise', 'ee', 'eer', 'ese', 'ique'];
+            for (const suffix of penultimateStress) {
+                if (last.includes(suffix) || secondLast.includes(suffix)) {
+                    return count - 2;
+                }
+            }
+            
+            // 默认倒数第三音节重读
+            return Math.max(0, count - 3);
+        }
+
+        // 应用发音规则到音节
+        function applyRules(syllable, isStressed) {
+            let remaining = syllable.toLowerCase();
+            let brResult = '';
+            let amResult = '';
+            const appliedRules = [];
+            
+            while (remaining.length > 0) {
+                let matched = false;
+                
+                for (const rule of PRONUNCIATION_RULES) {
+                    const match = remaining.match(rule.pattern);
+                    if (match) {
+                        const matchedText = match[0];
+                        
+                        // 应用重音规则：非重读音节的元音弱化为/ə/
+                        if (!isStressed && rule.type === 'vowel') {
+                            // 检查是否是弱读位置
+                            if (brResult.length > 0 || remaining.length > matchedText.length) {
+                                // 非首音节或词尾，元音弱读
+                                if (['æ', 'e', 'ɪ', 'ɒ', 'ʌ'].includes(rule.br)) {
+                                    brResult += 'ə';
+                                    amResult += 'ə';
+                                    appliedRules.push('非重读音节弱化为/ə/');
+                                } else {
+                                    brResult += rule.br;
+                                    amResult += rule.am;
+                                    appliedRules.push(rule.desc);
+                                }
+                            } else {
+                                brResult += rule.br;
+                                amResult += rule.am;
+                                appliedRules.push(rule.desc);
+                            }
+                        } else {
+                            brResult += rule.br;
+                            amResult += rule.am;
+                            appliedRules.push(rule.desc);
+                        }
+                        
+                        remaining = remaining.slice(matchedText.length);
+                        matched = true;
+                        break;
+                    }
+                }
+                
+                if (!matched) {
+                    // 没有匹配到规则，跳过这个字符
+                    remaining = remaining.slice(1);
+                }
+            }
+            
+            return { br: brResult, am: amResult, rules: appliedRules };
+        }
+
+        // 生成音标主函数
+        function generatePhoneticTranscription(word) {
+            word = word.toLowerCase().trim();
+            
+            if (!word || !/^[a-z]+$/.test(word)) {
+                return null;
+            }
+            
+            // 音节划分
+            const syllables = splitIntoSyllables(word);
+            const stressIndex = findStressPosition(syllables);
+            
+            let brTranscription = '';
+            let amTranscription = '';
+            const allRules = [];
+            
+            for (let i = 0; i < syllables.length; i++) {
+                const isStressed = (i === stressIndex);
+                const result = applyRules(syllables[i], isStressed);
+                
+                // 添加重音符号
+                if (isStressed) {
+                    brTranscription += 'ˈ';
+                    amTranscription += 'ˈ';
+                } else if (i === 0 && stressIndex > 1) {
+                    // 首音节有次重音
+                    brTranscription += 'ˌ';
+                    amTranscription += 'ˌ';
+                }
+                
+                brTranscription += result.br;
+                amTranscription += result.am;
+                allRules.push(...result.rules);
+                
+                // 音节之间添加分隔符
+                if (i < syllables.length - 1) {
+                    brTranscription += '.';
+                    amTranscription += '.';
+                }
+            }
+            
+            return {
+                br: '/' + brTranscription + '/',
+                am: '/' + amTranscription + '/',
+                syllables: syllables,
+                rules: [...new Set(allRules)]
+            };
+        }
+
+        // UI 函数
+        function generatePhonetic() {
+            const wordInput = document.getElementById('wordInput');
+            const word = wordInput.value.trim().toLowerCase();
+            const errorMessage = document.getElementById('errorMessage');
+            const resultSection = document.getElementById('resultSection');
+
+            if (!word) {
+                resultSection.classList.remove('show');
+                errorMessage.classList.remove('show');
+                return;
+            }
+
+            if (!/^[a-z]+$/.test(word)) {
+                resultSection.classList.remove('show');
+                return;
+            }
+
+            errorMessage.classList.remove('show');
+
+            const result = generatePhoneticTranscription(word);
+
+            if (!result) {
+                resultSection.classList.remove('show');
+                return;
+            }
+
+            document.getElementById('britishPhonetic').textContent = result.br;
+            document.getElementById('americanPhonetic').textContent = result.am;
+
+            // 显示音节信息
+            const syllableInfo = document.getElementById('syllableInfo');
+            syllableInfo.innerHTML = `
+                <strong>音节划分:</strong> ${result.syllables.join(' - ')}<br>
+                <strong>音节数:</strong> ${result.syllables.length} 个音节
+            `;
+
+            // 显示应用的规则
+            const rulesInfo = document.getElementById('rulesInfo');
+            if (result.rules && result.rules.length > 0) {
+                rulesInfo.innerHTML = result.rules.map((rule, index) => 
+                    `${index + 1}. ${rule}`
+                ).join('<br>');
+            } else {
+                rulesInfo.innerHTML = '使用标准发音规则';
+            }
+
+            resultSection.classList.add('show');
+        }
+
+        function setWord(word) {
+            document.getElementById('wordInput').value = word;
+            generatePhonetic();
+        }
+
+        // 输入时自动触发
+        const wordInput = document.getElementById('wordInput');
+        wordInput.addEventListener('input', function(e) {
+            generatePhonetic();
+        });
+
+        // 页面加载时聚焦输入框
+        window.addEventListener('load', function() {
+            wordInput.focus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "./lib/react16/like/react/React.js",
+                "react-dom": "https://unpkg.com/react-dom@16.13.1/umd/react-dom.development.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module" data-presets="env,react">
+
+        /** @jsx createElement */
+        /** @jsxFrag Fragment */
+
+        const NoEffect = 0
+        const Placement = 1
+        const Update = 2
+        const Deletion = 4
+
+        const HostComponent = 1
+        const HostText = 2
+        const HostRoot = 3
+        const FunctionComponent = 4
+        const Fragment = 5
+
+        function createElement(type, config, ...children) {
+            const props = {}
+            let key = null, ref = null
+            if (config) {
+                for (const [prop, value] of Object.entries(config)) {
+                    if (prop === 'key') {
+                        key = value + ''
+                    } else if (prop === 'ref') {
+                        ref = value
+                    } else {
+                        props[prop] = value
+                    }
+                }
+            }
+            if (children.length > 0) {
+                props.children = children.length === 1 ? children : children
+            }
+            return {
+                type,
+                props,
+                ref,
+                key
+            }
+        }
+
+
+        let finishedWork = null
+        let nextRoot = null
+        let nextUnitOfWork = null
+        function createFiber(tag, pendingProps, key) {
+            return {
+                tag,
+                pendingProps,
+                key,
+                ref: null,
+                child: null,
+                sibling: null,
+                return: null,
+                stateNode: null,
+
+                memoizedProps: null,
+                memoizedState: null,
+
+                effectTag: NoEffect,
+                firstEffect: null,
+                lastEffect: null,
+                nextEffect: null,
+                alternate: null,
+            }
+        }
+        function createWorkInProgress(fiber, pendingProps) {
+            const workInProgress = fiber.alternate
+            if (workInProgress === null) {
+                workInProgress = createFiber(fiber.tag, fiber.pendingProps, fiber.key)
+                fiber.alternate = workInProgress
+            }
+            Object.assign(workInProgress, fiber, {
+                alternate: fiber,
+                pendingProps: pendingProps,
+                effectTag: NoEffect,
+                firstEffect: null,
+                lastEffect: null,
+                nextEffect: null,
+            })
+            return workInProgress
+        }
+
+
+        function createFiberFromElement(element) {
+            const { type, props, key } = element
+            let tag = FunctionComponent
+            if (typeof type === 'string') {
+                tag = HostComponent
+            }
+            const fiber = createFiber(tag, props, key)
+            return fiber
+        }
+        function createFiberFromFragment(
+            elements,
+            key
+        ) {
+            const fiber = createFiber(Fragment, elements, key);;
+            return fiber;
+        }
+        function createFiberFromText(content) {
+            const fiber = createFiber(HostText, content, null);
+            return fiber;
+        }
+        function ChildReconciler(shouldTrackSideEffects) {
+            function createChild(
+                returnFiber,
+                newChild,
+            ) {
+                if (typeof newChild === 'string' || typeof newChild === 'number') {
+                    // Text nodes don't have keys. If the previous node is implicitly keyed
+                    // we can continue to replace it without aborting even if it is not a text
+                    // node.
+                    const created = createFiberFromText(
+                        '' + newChild,
+                        returnFiber.mode,
+                        expirationTime,
+                    );
+                    created.return = returnFiber;
+                    return created;
+                }
+
+                if (typeof newChild === 'object' && newChild !== null) {
+                    switch (newChild.$$typeof) {
+                        case REACT_ELEMENT_TYPE: {
+                            const created = createFiberFromElement(
+                                newChild
+                            );
+                            created.ref = coerceRef(returnFiber, null, newChild);
+                            created.return = returnFiber;
+                            return created;
+                        }
+                    }
+
+                    if (Array.isArray(newChild)) {
+                        const created = createFiberFromFragment(
+                            newChild
+                        );
+                        created.return = returnFiber;
+                        return created;
+                    }
+                }
+
+
+
+                return null;
+            }
+
+            function placeChild(
+                newFiber,
+                lastPlacedIndex,
+                newIndex,
+            ) {
+                newFiber.index = newIndex;
+                if (!shouldTrackSideEffects) {
+                    // Noop.
+                    return lastPlacedIndex;
+                }
+                const current = newFiber.alternate;
+                if (current !== null) {
+                    const oldIndex = current.index;
+                    if (oldIndex < lastPlacedIndex) {
+                        // This is a move.
+                        newFiber.effectTag = Placement;
+                        return lastPlacedIndex;
+                    } else {
+                        // This item can stay in place.
+                        return oldIndex;
+                    }
+                } else {
+                    // This is an insertion.
+                    newFiber.effectTag = Placement;
+                    return lastPlacedIndex;
+                }
+            }
+
+            function placeSingleChild(newFiber) {
+                if (shouldTrackSideEffects && newFiber.alternate === null) {
+                    newFiber.effectTag = Placement;
+                }
+                return newFiber
+            }
+
+            function useFiber(
+                fiber,
+                pendingProps,
+                expirationTime,
+            ) {
+                // We currently set sibling to null and index to 0 here because it is easy
+                // to forget to do before returning it. E.g. for the single child case.
+                const clone = createWorkInProgress(fiber, pendingProps);
+                clone.index = 0;
+                clone.sibling = null;
+                return clone;
+            }
+            function deleteChild(returnFiber, childToDelete) {
+                if (!shouldTrackSideEffects) {
+                    // Noop.
+                    return;
+                }
+                const last = returnFiber.lastEffect;
+                if (last !== null) {
+                    last.nextEffect = childToDelete;
+                    returnFiber.lastEffect = childToDelete;
+                } else {
+                    returnFiber.firstEffect = returnFiber.lastEffect = childToDelete;
+                }
+                childToDelete.nextEffect = null;
+                childToDelete.effectTag = Deletion;
+            }
+
+            function deleteRemainingChildren(
+                returnFiber,
+                currentFirstChild,
+            ) {
+                if (!shouldTrackSideEffects) {
+                    // Noop.
+                    return null;
+                }
+
+                // TODO: For the shouldClone case, this could be micro-optimized a bit by
+                // assuming that after the first child we've already added everything.
+                let childToDelete = currentFirstChild;
+                while (childToDelete !== null) {
+                    deleteChild(returnFiber, childToDelete);
+                    childToDelete = childToDelete.sibling;
+                }
+                return null;
+            }
+            function reconcileSingleElement(returnFiber, currentFirstChild, element) {
+                let child = currentFirstChild
+                while (child !== null) {
+                    if (child.key === element.key) {
+                        if (child.type === element.type) {
+                            deleteRemainingChildren(returnFiber, child.sibling)
+                            const existing = useFiber(child, element.props)
+                            existing.return = returnFiber
+                            existing.effectTag = Update
+                            return existing
+                        } else {
+                            deleteRemainingChildren(returnFiber, child)
+                        }
+                    } else {
+                        deleteChild(returnFiber, child.sibling)
+                    }
+                    child = child.sibling
+                }
+                const created = createFiberFromElement(
+                    element
+                );
+                // created.ref = coerceRef(returnFiber, currentFirstChild, element);
+                created.return = returnFiber;
+                return created;
+            }
+            function reconcileSingleTextNode(
+                returnFiber,
+                currentFirstChild,
+                textContent,
+            ) {
+                // There's no need to check for keys on text nodes since we don't have a
+                // way to define them.
+                if (currentFirstChild !== null && currentFirstChild.tag === HostText) {
+                    // We already have an existing node so let's just update it and delete
+                    // the rest.
+                    deleteRemainingChildren(returnFiber, currentFirstChild.sibling);
+                    const existing = useFiber(currentFirstChild, textContent);
+                    existing.return = returnFiber;
+                    return existing;
+                }
+                // The existing first child is not a text node so we need to create one
+                // and delete the existing ones.
+                deleteRemainingChildren(returnFiber, currentFirstChild);
+                const created = createFiberFromText(textContent);
+                created.return = returnFiber;
+                return created;
+            }
+            
+  function updateSlot(
+    returnFiber: Fiber,
+    oldFiber: Fiber | null,
+    newChild: any,
+    expirationTime: ExpirationTime,
+  ): Fiber | null {
+    // Update the fiber if the keys match, otherwise return null.
+
+    const key = oldFiber !== null ? oldFiber.key : null;
+
+    if (typeof newChild === 'string' || typeof newChild === 'number') {
+      // Text nodes don't have keys. If the previous node is implicitly keyed
+      // we can continue to replace it without aborting even if it is not a text
+      // node.
+      if (key !== null) {
+        return null;
+      }
+      return updateTextNode(
+        returnFiber,
+        oldFiber,
+        '' + newChild,
+        expirationTime,
+      );
+    }
+
+    if (typeof newChild === 'object' && newChild !== null) {
+      switch (newChild.$$typeof) {
+        case REACT_ELEMENT_TYPE: {
+          if (newChild.key === key) {
+            if (newChild.type === REACT_FRAGMENT_TYPE) {
+              return updateFragment(
+                returnFiber,
+                oldFiber,
+                newChild.props.children,
+                expirationTime,
+                key,
+              );
+            }
+            return updateElement(
+              returnFiber,
+              oldFiber,
+              newChild,
+              expirationTime,
+            );
+          } else {
+            return null;
+          }
+        }
+        case REACT_PORTAL_TYPE: {
+          if (newChild.key === key) {
+            return updatePortal(
+              returnFiber,
+              oldFiber,
+              newChild,
+              expirationTime,
+            );
+          } else {
+            return null;
+          }
+        }
+      }
+
+      if (Array.isArray(newChild)) {
+        if (key !== null) {
+          return null;
+        }
+
+        return updateFragment(
+          returnFiber,
+          oldFiber,
+          newChild,
+          null,
+        );
+      }
+    }
+
+
+    return null;
+  }
+
+            function reconcileChildrenArray(
+                returnFiber,
+                currentFirstChild,
+                newChildren,
+                expirationTime,
+            ) {
+
+                let resultingFirstChild = null;
+                let previousNewFiber = null;
+
+                let oldFiber = currentFirstChild;
+                let lastPlacedIndex = 0;
+                let newIdx = 0;
+                let nextOldFiber = null;
+                for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
+                    if (oldFiber.index > newIdx) {
+                        nextOldFiber = oldFiber;
+                        oldFiber = null;
+                    } else {
+                        nextOldFiber = oldFiber.sibling;
+                    }
+                    const newFiber = updateSlot(
+                        returnFiber,
+                        oldFiber,
+                        newChildren[newIdx],
+                        expirationTime,
+                    );
+                    if (newFiber === null) {
+                        // TODO: This breaks on empty slots like null children. That's
+                        // unfortunate because it triggers the slow path all the time. We need
+                        // a better way to communicate whether this was a miss or null,
+                        // boolean, undefined, etc.
+                        if (oldFiber === null) {
+                            oldFiber = nextOldFiber;
+                        }
+                        break;
+                    }
+                    if (shouldTrackSideEffects) {
+                        if (oldFiber && newFiber.alternate === null) {
+                            // We matched the slot, but we didn't reuse the existing fiber, so we
+                            // need to delete the existing child.
+                            deleteChild(returnFiber, oldFiber);
+                        }
+                    }
+                    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+                    if (previousNewFiber === null) {
+                        // TODO: Move out of the loop. This only happens for the first run.
+                        resultingFirstChild = newFiber;
+                    } else {
+                        // TODO: Defer siblings if we're not at the right index for this slot.
+                        // I.e. if we had null values before, then we want to defer this
+                        // for each null value. However, we also don't want to call updateSlot
+                        // with the previous one.
+                        previousNewFiber.sibling = newFiber;
+                    }
+                    previousNewFiber = newFiber;
+                    oldFiber = nextOldFiber;
+                }
+
+                if (newIdx === newChildren.length) {
+                    // We've reached the end of the new children. We can delete the rest.
+                    deleteRemainingChildren(returnFiber, oldFiber);
+                    return resultingFirstChild;
+                }
+
+                if (oldFiber === null) {
+                    // If we don't have any more existing children we can choose a fast path
+                    // since the rest will all be insertions.
+                    for (; newIdx < newChildren.length; newIdx++) {
+                        const newFiber = createChild(
+                            returnFiber,
+                            newChildren[newIdx],
+                            expirationTime,
+                        );
+                        if (!newFiber) {
+                            continue;
+                        }
+                        lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+                        if (previousNewFiber === null) {
+                            // TODO: Move out of the loop. This only happens for the first run.
+                            resultingFirstChild = newFiber;
+                        } else {
+                            previousNewFiber.sibling = newFiber;
+                        }
+                        previousNewFiber = newFiber;
+                    }
+                    return resultingFirstChild;
+                }
+
+                // Add all children to a key map for quick lookups.
+                const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
+
+                // Keep scanning and use the map to restore deleted items as moves.
+                for (; newIdx < newChildren.length; newIdx++) {
+                    const newFiber = updateFromMap(
+                        existingChildren,
+                        returnFiber,
+                        newIdx,
+                        newChildren[newIdx],
+                        expirationTime,
+                    );
+                    if (newFiber) {
+                        if (shouldTrackSideEffects) {
+                            if (newFiber.alternate !== null) {
+                                // The new fiber is a work in progress, but if there exists a
+                                // current, that means that we reused the fiber. We need to delete
+                                // it from the child list so that we don't add it to the deletion
+                                // list.
+                                existingChildren.delete(
+                                    newFiber.key === null ? newIdx : newFiber.key,
+                                );
+                            }
+                        }
+                        lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+                        if (previousNewFiber === null) {
+                            resultingFirstChild = newFiber;
+                        } else {
+                            previousNewFiber.sibling = newFiber;
+                        }
+                        previousNewFiber = newFiber;
+                    }
+                }
+
+                if (shouldTrackSideEffects) {
+                    // Any existing children that weren't consumed above were deleted. We need
+                    // to add them to the deletion list.
+                    existingChildren.forEach(child => deleteChild(returnFiber, child));
+                }
+
+                return resultingFirstChild;
+            }
+            function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
+                const isObject = typeof newChild === 'object' && newChild !== null;
+                if (Array.isArray(newChild)) {
+                    reconcileChildrenArray(returnFiber, currentFirstChild, newChild)
+                } else if (typeof newChild === 'string' || typeof newChild === 'number') {
+                    return placeSingleChild(
+                        reconcileSingleTextNode(
+                            returnFiber,
+                            currentFirstChild,
+                            '' + newChild,
+                        ),
+                    );
+                } else {
+                    return placeSingleChild(
+                        reconcileSingleElement(
+                            returnFiber,
+                            currentFirstChild,
+                            newChild,
+                        ),
+                    );
+                }
+            }
+        }
+        const reconcileChildFibers = ChildReconciler(true);
+        const mountChildFibers = ChildReconciler(false);
+        function reconcileChildren(current, workInProgress, nextChildren) {
+            if (current === null) {
+                workInProgress.child = mountChildFibers(workInProgress, null, nextChildren)
+            } else {
+                workInProgress.child = reconcileChildFibers(workInProgress, current.child, nextChildren)
+            }
+        }
+
+        function beginWork(current, workInProgress) {
+            let nextChildren = null
+            switch (workInProgress.tag) {
+                case HostRoot:
+                    nextChildren = workInProgress.pendingProps.element
+                    reconcileChildren(current, workInProgress, nextChildren)
+                    return workInProgress.child
+                case HostComponent:
+                    nextChildren = workInProgress.pendingProps.children
+                    reconcileChildren(current, workInProgress, nextChildren)
+                    return workInProgress.child
+                case HostText:
+                    // nextChildren = workInProgress.pendingProps
+                    return null
+                case FunctionComponent:
+                    nextChildren = workInProgress.type()
+                    reconcileChildren(current, workInProgress, nextChildren)
+                    return workInProgress.child
+            }
+            return null
+        }
+        function performUnitOfWork(workInProgress) {
+            const current = workInProgress.alternate
+            let next = beginWork(current, workInProgress)
+            workInProgress.memoizedProps = workInProgress.pendingProps
+            if (next !== null) {
+                return next
+            } else {
+
+
+                let returnFiber = workInProgress.return
+                let nextSibling = workInProgress.sibling
+                if (nextSibling !== null) {
+                    return nextSibling
+                } else if (returnFiber !== null) {
+                    return returnFiber
+                }
+            }
+            return null
+        }
+        function workLoop(deadline) {
+            while (nextUnitOfWork && deadline.timeRemaining() > 0) {
+                nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
+            }
+            if (finishedWork === null && nextUnitOfWork === null) {
+                finishedWork = nextRoot.current
+            } else {
+                requestIdleCallback(workLoop)
+            }
+        }
+        function performWorkOnRoot(root) {
+
+            const workInProgress = createWorkInProgress(root.current, root.current.pendingProps)
+            nextRoot = root
+            nextUnitOfWork = workInProgress
+            requestIdleCallback(workLoop)
+        }
+        function render(element, container) {
+            const fiberRoot = {
+                current: null,
+                containerInfo: container,
+                finishedWork: null,
+                nextScheduledRoot: null
+            }
+            const hostRootFiber = createFiber(HostRoot, {}, null)
+            hostRootFiber.stateNode = fiberRoot
+            hostRootFiber.pendingProps = { element }
+            fiberRoot.current = hostRootFiber
+            performWorkOnRoot(fiberRoot)
+        }
+
+        function App() {
+            return <h1>Hello World</h1>
+        }
+        render(<App></App>, document.querySelector('#root'))
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语音标与拼读教学</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title .icon {
+            font-size: 1.3em;
+        }
+
+        /* 26个字母样式 */
+        .alphabet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .letter-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .letter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .letter-card:active {
+            transform: scale(0.95);
+        }
+
+        .letter-card.playing {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .letter-char {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .letter-card.playing .letter-char {
+            color: white;
+        }
+
+        .letter-phonetic {
+            font-size: 1.1em;
+            color: #666;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .letter-card.playing .letter-phonetic {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .letter-example {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .letter-card.playing .letter-example {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* 音标分类样式 */
+        .phonetic-category {
+            margin-bottom: 25px;
+        }
+
+        .category-title {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .phonetic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .phonetic-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .phonetic-card:hover {
+            background: #e9ecef;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .phonetic-card.playing {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .phonetic-symbol {
+            font-size: 1.8em;
+            font-family: 'Times New Roman', serif;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .phonetic-card.playing .phonetic-symbol {
+            color: white;
+        }
+
+        .phonetic-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .phonetic-card.playing .phonetic-desc {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .phonetic-example {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        /* 组合音样式 */
+        .combo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .combo-card {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .combo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+            border-color: #ffc107;
+        }
+
+        .combo-card.playing {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+
+        .combo-letters {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+
+        .combo-card.playing .combo-letters {
+            color: white;
+        }
+
+        .combo-phonetic {
+            font-size: 1.4em;
+            font-family: 'Times New Roman', serif;
+            color: #333;
+        }
+
+        .combo-card.playing .combo-phonetic {
+            color: white;
+        }
+
+        /* 控制按钮 */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 发音提示 */
+        .speaking-tip {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .speaking-tip h4 {
+            color: #1976D2;
+            margin-bottom: 8px;
+        }
+
+        .speaking-tip p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .alphabet-grid {
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+                gap: 10px;
+            }
+            
+            .letter-card {
+                padding: 15px;
+            }
+            
+            .letter-char {
+                font-size: 2em;
+            }
+            
+            .phonetic-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+
+        /* 提示信息 */
+        .info-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #ffeaa7 0%, #ffeaa7 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 40%;
+            background-position: 0 88%;
+            padding: 0 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 英语音标与拼读教学</h1>
+            <p>点击字母或音标即可听到发音，开启你的英语发音学习之旅</p>
+        </header>
+
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="speakText('Hello, let us learn English phonetics together!')">
+                🔊 播放欢迎语
+            </button>
+            <button class="btn btn-secondary" onclick="stopSpeaking()">
+                ⏹️ 停止播放
+            </button>
+        </div>
+
+        <!-- 26个字母 -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">🔤</span>
+                26个英文字母
+                <span class="info-badge">点击发音</span>
+            </h2>
+            <div class="alphabet-grid" id="alphabetGrid"></div>
+            <div class="speaking-tip">
+                <h4>💡 发音提示</h4>
+                <p>每个字母都有字母名（letter name）和字母音（letter sound）。字母名是我们朗读字母时的发音，字母音是字母在单词中的发音。学习英语拼读时，重点掌握<strong class="highlight">字母音</strong>。</p>
+            </div>
+        </section>
+
+        <!-- 音标分类 -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">🎵</span>
+                国际音标 (IPA)
+                <span class="info-badge">点击发音</span>
+            </h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('vowels')">单元音</button>
+                <button class="tab" onclick="switchTab('diphthongs')">双元音</button>
+                <button class="tab" onclick="switchTab('consonants')">辅音</button>
+                <button class="tab" onclick="switchTab('combos')">组合音</button>
+            </div>
+
+            <!-- 单元音 -->
+            <div id="vowels" class="tab-content active">
+                <div class="phonetic-category">
+                    <h3 class="category-title">前元音 (Front Vowels) - 舌位靠前</h3>
+                    <div class="phonetic-grid" id="frontVowels"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">中元音 (Central Vowels) - 舌位居中</h3>
+                    <div class="phonetic-grid" id="centralVowels"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">后元音 (Back Vowels) - 舌位靠后</h3>
+                    <div class="phonetic-grid" id="backVowels"></div>
+                </div>
+            </div>
+
+            <!-- 双元音 -->
+            <div id="diphthongs" class="tab-content">
+                <div class="phonetic-category">
+                    <h3 class="category-title">合口双元音 (Closing Diphthongs)</h3>
+                    <div class="phonetic-grid" id="closingDiphthongs"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">集中双元音 (Centering Diphthongs)</h3>
+                    <div class="phonetic-grid" id="centeringDiphthongs"></div>
+                </div>
+            </div>
+
+            <!-- 辅音 -->
+            <div id="consonants" class="tab-content">
+                <div class="phonetic-category">
+                    <h3 class="category-title">爆破音 (Plosives)</h3>
+                    <div class="phonetic-grid" id="plosives"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">摩擦音 (Fricatives)</h3>
+                    <div class="phonetic-grid" id="fricatives"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">破擦音 (Affricates)</h3>
+                    <div class="phonetic-grid" id="affricates"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">鼻音 (Nasals)</h3>
+                    <div class="phonetic-grid" id="nasals"></div>
+                </div>
+                <div class="phonetic-category">
+                    <h3 class="category-title">近音/流音 (Approximants)</h3>
+                    <div class="phonetic-grid" id="approximants"></div>
+                </div>
+            </div>
+
+            <!-- 组合音 -->
+            <div id="combos" class="tab-content">
+                <div class="phonetic-category">
+                    <h3 class="category-title">常见字母组合</h3>
+                    <div class="combo-grid" id="letterCombos"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 发音技巧 -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">💡</span>
+                发音技巧与规则
+            </h2>
+            <div id="tipsContent"></div>
+        </section>
+    </div>
+
+    <script>
+        // 26个字母数据
+        const alphabetData = [
+            { letter: 'Aa', name: '/eɪ/', sound: '/æ/', example: 'apple, ant', word: 'apple' },
+            { letter: 'Bb', name: '/biː/', sound: '/b/', example: 'book, ball', word: 'book' },
+            { letter: 'Cc', name: '/siː/', sound: '/k/', example: 'cat, car', word: 'cat' },
+            { letter: 'Dd', name: '/diː/', sound: '/d/', example: 'dog, door', word: 'dog' },
+            { letter: 'Ee', name: '/iː/', sound: '/e/', example: 'egg, elephant', word: 'egg' },
+            { letter: 'Ff', name: '/ef/', sound: '/f/', example: 'fish, fan', word: 'fish' },
+            { letter: 'Gg', name: '/dʒiː/', sound: '/ɡ/', example: 'goat, girl', word: 'goat' },
+            { letter: 'Hh', name: '/eɪtʃ/', sound: '/h/', example: 'hat, house', word: 'hat' },
+            { letter: 'Ii', name: '/aɪ/', sound: '/ɪ/', example: 'igloo, ink', word: 'igloo' },
+            { letter: 'Jj', name: '/dʒeɪ/', sound: '/dʒ/', example: 'juice, jump', word: 'juice' },
+            { letter: 'Kk', name: '/keɪ/', sound: '/k/', example: 'kite, king', word: 'kite' },
+            { letter: 'Ll', name: '/el/', sound: '/l/', example: 'lion, lamp', word: 'lion' },
+            { letter: 'Mm', name: '/em/', sound: '/m/', example: 'monkey, moon', word: 'monkey' },
+            { letter: 'Nn', name: '/en/', sound: '/n/', example: 'nose, nest', word: 'nose' },
+            { letter: 'Oo', name: '/əʊ/', sound: '/ɒ/', example: 'orange, octopus', word: 'orange' },
+            { letter: 'Pp', name: '/piː/', sound: '/p/', example: 'pig, pen', word: 'pig' },
+            { letter: 'Qq', name: '/kjuː/', sound: '/kw/', example: 'queen, quiet', word: 'queen' },
+            { letter: 'Rr', name: '/ɑːr/', sound: '/r/', example: 'rabbit, rose', word: 'rabbit' },
+            { letter: 'Ss', name: '/es/', sound: '/s/', example: 'sun, snake', word: 'sun' },
+            { letter: 'Tt', name: '/tiː/', sound: '/t/', example: 'tiger, table', word: 'tiger' },
+            { letter: 'Uu', name: '/juː/', sound: '/ʌ/', example: 'umbrella, up', word: 'umbrella' },
+            { letter: 'Vv', name: '/viː/', sound: '/v/', example: 'violin, van', word: 'violin' },
+            { letter: 'Ww', name: '/ˈdʌbljuː/', sound: '/w/', example: 'wolf, window', word: 'wolf' },
+            { letter: 'Xx', name: '/eks/', sound: '/ks/', example: 'x-ray, box', word: 'x-ray' },
+            { letter: 'Yy', name: '/waɪ/', sound: '/j/', example: 'yellow, yo-yo', word: 'yellow' },
+            { letter: 'Zz', name: '/zed/ /ziː/', sound: '/z/', example: 'zebra, zoo', word: 'zebra' }
+        ];
+
+        // 单元音数据
+        const vowelsData = {
+            front: [
+                { symbol: 'iː', desc: '长音 ee', example: 'see, tree', word: 'see' },
+                { symbol: 'ɪ', desc: '短音 i', example: 'sit, fish', word: 'sit' },
+                { symbol: 'e', desc: '音 e', example: 'bed, pen', word: 'bed' },
+                { symbol: 'æ', desc: '音 a', example: 'cat, apple', word: 'cat' }
+            ],
+            central: [
+                { symbol: 'ɜː', desc: '长音 er', example: 'bird, nurse', word: 'bird' },
+                { symbol: 'ə', desc: '短音 er', example: 'about, sofa', word: 'about' },
+                { symbol: 'ʌ', desc: '音 u', example: 'cup, sun', word: 'cup' }
+            ],
+            back: [
+                { symbol: 'uː', desc: '长音 oo', example: 'food, moon', word: 'food' },
+                { symbol: 'ʊ', desc: '短音 u', example: 'book, good', word: 'book' },
+                { symbol: 'ɔː', desc: '长音 or', example: 'door, more', word: 'door' },
+                { symbol: 'ɒ', desc: '短音 o', example: 'hot, dog', word: 'hot' },
+                { symbol: 'ɑː', desc: '长音 ar', example: 'car, far', word: 'car' }
+            ]
+        };
+
+        // 双元音数据
+        const diphthongsData = {
+            closing: [
+                { symbol: 'eɪ', desc: '音 ay', example: 'day, make', word: 'day' },
+                { symbol: 'aɪ', desc: '音 eye', example: 'my, time', word: 'my' },
+                { symbol: 'ɔɪ', desc: '音 oy', example: 'boy, toy', word: 'boy' },
+                { symbol: 'aʊ', desc: '音 ow', example: 'now, house', word: 'now' },
+                { symbol: 'əʊ', desc: '英式 oh', example: 'go, home', word: 'go' },
+                { symbol: 'oʊ', desc: '美式 oh', example: 'go, show', word: 'go' }
+            ],
+            centering: [
+                { symbol: 'ɪə', desc: '音 ear', example: 'ear, here', word: 'ear' },
+                { symbol: 'eə', desc: '音 air', example: 'hair, care', word: 'hair' },
+                { symbol: 'ʊə', desc: '音 oor', example: 'tour, pure', word: 'tour' }
+            ]
+        };
+
+        // 辅音数据
+        const consonantsData = {
+            plosives: [
+                { symbol: 'p', desc: '清音 p', example: 'pen, apple', word: 'pen' },
+                { symbol: 'b', desc: '浊音 b', example: 'book, baby', word: 'book' },
+                { symbol: 't', desc: '清音 t', example: 'time, table', word: 'time' },
+                { symbol: 'd', desc: '浊音 d', example: 'dog, door', word: 'dog' },
+                { symbol: 'k', desc: '清音 k', example: 'cat, kite', word: 'cat' },
+                { symbol: 'g', desc: '浊音 g', example: 'go, girl', word: 'go' }
+            ],
+            fricatives: [
+                { symbol: 'f', desc: '清音 f', example: 'fish, fan', word: 'fish' },
+                { symbol: 'v', desc: '浊音 v', example: 'violin, van', word: 'violin' },
+                { symbol: 'θ', desc: '清音 th', example: 'think, thank', word: 'think' },
+                { symbol: 'ð', desc: '浊音 th', example: 'this, that', word: 'this' },
+                { symbol: 's', desc: '清音 s', example: 'sun, snake', word: 'sun' },
+                { symbol: 'z', desc: '浊音 z', example: 'zebra, zoo', word: 'zebra' },
+                { symbol: 'ʃ', desc: '清音 sh', example: 'she, fish', word: 'she' },
+                { symbol: 'ʒ', desc: '浊音 zh', example: 'measure, vision', word: 'measure' },
+                { symbol: 'h', desc: '清音 h', example: 'hat, house', word: 'hat' }
+            ],
+            affricates: [
+                { symbol: 'tʃ', desc: '清音 ch', example: 'china, chair', word: 'china' },
+                { symbol: 'dʒ', desc: '浊音 j', example: 'juice, jump', word: 'juice' }
+            ],
+            nasals: [
+                { symbol: 'm', desc: '鼻音 m', example: 'moon, monkey', word: 'moon' },
+                { symbol: 'n', desc: '鼻音 n', example: 'nose, nest', word: 'nose' },
+                { symbol: 'ŋ', desc: '鼻音 ng', example: 'sing, song', word: 'sing' }
+            ],
+            approximants: [
+                { symbol: 'l', desc: '流音 l', example: 'lion, lamp', word: 'lion' },
+                { symbol: 'r', desc: '流音 r', example: 'rabbit, red', word: 'rabbit' },
+                { symbol: 'j', desc: '近音 y', example: 'yes, yellow', word: 'yes' },
+                { symbol: 'w', desc: '近音 w', example: 'wolf, window', word: 'wolf' }
+            ]
+        };
+
+        // 字母组合数据
+        const combosData = [
+            { letters: 'sh', phonetic: 'ʃ', example: 'she, fish', word: 'she' },
+            { letters: 'ch', phonetic: 'tʃ', example: 'china, chair', word: 'china' },
+            { letters: 'th', phonetic: 'θ/ð', example: 'think/this', word: 'think' },
+            { letters: 'ph', phonetic: 'f', example: 'phone, photo', word: 'phone' },
+            { letters: 'wh', phonetic: 'w', example: 'what, when', word: 'what' },
+            { letters: 'ck', phonetic: 'k', example: 'back, duck', word: 'back' },
+            { letters: 'ng', phonetic: 'ŋ', example: 'sing, long', word: 'sing' },
+            { letters: 'nk', phonetic: 'ŋk', example: 'think, bank', word: 'think' },
+            { letters: 'tch', phonetic: 'tʃ', example: 'catch, watch', word: 'catch' },
+            { letters: 'dge', phonetic: 'dʒ', example: 'bridge, judge', word: 'bridge' },
+            { letters: 'kn', phonetic: 'n', example: 'know, knee', word: 'know' },
+            { letters: 'wr', phonetic: 'r', example: 'write, wrong', word: 'write' },
+            { letters: 'qu', phonetic: 'kw', example: 'queen, quiet', word: 'queen' },
+            { letters: 'tion', phonetic: 'ʃn', example: 'nation, station', word: 'nation' },
+            { letters: 'sion', phonetic: 'ʒn', example: 'television', word: 'television' },
+            { letters: 'ture', phonetic: 'tʃə', example: 'picture, nature', word: 'picture' },
+            { letters: 'sure', phonetic: 'ʃə', example: 'sure, sugar', word: 'sure' },
+            { letters: 'ai', phonetic: 'eɪ', example: 'rain, train', word: 'rain' },
+            { letters: 'ay', phonetic: 'eɪ', example: 'day, play', word: 'day' },
+            { letters: 'ee', phonetic: 'iː', example: 'see, tree', word: 'see' },
+            { letters: 'ea', phonetic: 'iː/e', example: 'sea, head', word: 'sea' },
+            { letters: 'oa', phonetic: 'əʊ', example: 'boat, coat', word: 'boat' },
+            { letters: 'ow', phonetic: 'aʊ/əʊ', example: 'cow/show', word: 'cow' },
+            { letters: 'ou', phonetic: 'aʊ', example: 'house, mouse', word: 'house' },
+            { letters: 'oo', phonetic: 'uː/ʊ', example: 'food/book', word: 'food' },
+            { letters: 'oi', phonetic: 'ɔɪ', example: 'boy, toy', word: 'boy' },
+            { letters: 'oy', phonetic: 'ɔɪ', example: 'boy, toy', word: 'boy' },
+            { letters: 'ar', phonetic: 'ɑː', example: 'car, far', word: 'car' },
+            { letters: 'er', phonetic: 'ɜː/ə', example: 'her, teacher', word: 'her' },
+            { letters: 'ir', phonetic: 'ɜː', example: 'bird, girl', word: 'bird' },
+            { letters: 'or', phonetic: 'ɔː', example: 'for, door', word: 'for' },
+            { letters: 'ur', phonetic: 'ɜː', example: 'nurse, turn', word: 'nurse' },
+            { letters: 'igh', phonetic: 'aɪ', example: 'night, light', word: 'night' },
+            { letters: 'eigh', phonetic: 'eɪ', example: 'eight, weight', word: 'eight' }
+        ];
+
+        // 发音技巧数据
+        const tipsData = [
+            {
+                title: '元音发音要诀',
+                content: '元音发音时气流不受阻碍，声音响亮。长元音要拖长，短元音要短促有力。双元音要平滑过渡，从第一个音滑向第二个音。'
+            },
+            {
+                title: '辅音清浊配对',
+                content: '英语中有8对清浊辅音：/p/-/b/、/t/-/d/、/k/-/g/、/f/-/v/、/θ/-/ð/、/s/-/z/、/ʃ/-/ʒ/、/tʃ/-/dʒ/。清辅音声带不振动，浊辅音声带振动。'
+            },
+            {
+                title: '重音规则',
+                content: '双音节名词通常在第一个音节重读（\'table)，双音节动词通常在第二个音节重读(be\'gin)。多音节词要注意主次重音的交替。'
+            },
+            {
+                title: '连读技巧',
+                content: '当前一个单词以辅音结尾，后一个单词以元音开头时，要连读。如：pick up /pɪ kʌp/，come in /kʌ mɪn/。'
+            },
+            {
+                title: '失去爆破',
+                content: '当两个爆破音相邻时，前一个爆破音只做口型不发音。如：good bye /gʊ(d) baɪ/，stop talking /stɒ(p) tɔːkɪŋ/。'
+            },
+            {
+                title: '语调规律',
+                content: '陈述句和特殊疑问句用降调，一般疑问句用升调。选择疑问句前升后降，列举事物时除最后一项外都用升调。'
+            }
+        ];
+
+        // 初始化页面
+        function init() {
+            renderAlphabet();
+            renderVowels();
+            renderDiphthongs();
+            renderConsonants();
+            renderCombos();
+            renderTips();
+        }
+
+        // 渲染26个字母
+        function renderAlphabet() {
+            const grid = document.getElementById('alphabetGrid');
+            grid.innerHTML = alphabetData.map(item => `
+                <div class="letter-card" onclick="playLetter('${item.letter}', '${item.word}', this)">
+                    <span class="letter-char">${item.letter}</span>
+                    <span class="letter-phonetic">${item.name}</span>
+                    <span class="letter-example">${item.example}</span>
+                </div>
+            `).join('');
+        }
+
+        // 渲染单元音
+        function renderVowels() {
+            document.getElementById('frontVowels').innerHTML = vowelsData.front.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('centralVowels').innerHTML = vowelsData.central.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('backVowels').innerHTML = vowelsData.back.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+        }
+
+        // 渲染双元音
+        function renderDiphthongs() {
+            document.getElementById('closingDiphthongs').innerHTML = diphthongsData.closing.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('centeringDiphthongs').innerHTML = diphthongsData.centering.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+        }
+
+        // 渲染辅音
+        function renderConsonants() {
+            document.getElementById('plosives').innerHTML = consonantsData.plosives.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('fricatives').innerHTML = consonantsData.fricatives.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('affricates').innerHTML = consonantsData.affricates.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('nasals').innerHTML = consonantsData.nasals.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('approximants').innerHTML = consonantsData.approximants.map(item => `
+                <div class="phonetic-card" onclick="speakText('${item.word}', this)">
+                    <span class="phonetic-symbol">${item.symbol}</span>
+                    <span class="phonetic-desc">${item.desc}</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+        }
+
+        // 渲染组合音
+        function renderCombos() {
+            document.getElementById('letterCombos').innerHTML = combosData.map(item => `
+                <div class="combo-card" onclick="speakText('${item.word}', this)">
+                    <span class="combo-letters">${item.letters}</span>
+                    <span class="combo-phonetic">/${item.phonetic}/</span>
+                    <span class="phonetic-example">${item.example}</span>
+                </div>
+            `).join('');
+        }
+
+        // 渲染发音技巧
+        function renderTips() {
+            document.getElementById('tipsContent').innerHTML = tipsData.map((tip, index) => `
+                <div class="speaking-tip" style="margin-bottom: 15px;">
+                    <h4>${index + 1}. ${tip.title}</h4>
+                    <p>${tip.content}</p>
+                </div>
+            `).join('');
+        }
+
+        // 播放字母发音
+        function playLetter(letter, word, element) {
+            // 添加播放动画
+            element.classList.add('playing');
+            setTimeout(() => element.classList.remove('playing'), 500);
+
+            // 播放字母名
+            const letterName = letter.charAt(0).toLowerCase();
+            const utterance1 = new SpeechSynthesisUtterance(letterName);
+            utterance1.lang = 'en-US';
+            utterance1.rate = 0.8;
+            
+            // 播放示例单词
+            const utterance2 = new SpeechSynthesisUtterance(word);
+            utterance2.lang = 'en-US';
+            utterance2.rate = 0.8;
+            
+            speechSynthesis.speak(utterance1);
+            setTimeout(() => speechSynthesis.speak(utterance2), 600);
+        }
+
+        // 语音合成函数
+        function speakText(text, element) {
+            if (element) {
+                element.classList.add('playing');
+                setTimeout(() => element.classList.remove('playing'), 500);
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            utterance.pitch = 1;
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        // 停止播放
+        function stopSpeaking() {
+            speechSynthesis.cancel();
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有active类
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 添加active类到当前标签
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

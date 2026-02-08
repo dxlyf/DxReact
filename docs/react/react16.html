@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "./lib/react16/like/react/React.js",
+                "react-dom": "https://unpkg.com/react-dom@16.13.1/umd/react-dom.development.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <script src="./lib/react16/react.development.js"></script>
+    <script src="./lib/react16/react-dom.development.js"></script>
+    <script type="text/babel" data-type="module" data-presets="env,react">
+
+        /** @jsx React.createElement */
+        /** @jsxFrag React.Fragment */
+        const {useState,useEffect,useLayoutEffect}=React
+        function List(){
+            const [list,setList]=useState(()=>{
+                console.log('useState')
+                return [
+                    {
+                        value:1,
+                        key:1,
+                    },{
+                        value:2,
+                        key:2,
+                    },
+                    {
+                        value:3,
+                        key:3,
+                    },
+                ]
+            })
+
+            useLayoutEffect(()=>{
+          
+                console.log('useLayoutEffect')
+            },[list])
+            useEffect(()=>{
+               // setList([1,2,3,4,5])
+                console.log('useEffect')
+            },[list])
+            const handleClick=()=>{
+                setList([{
+                    value:3,
+                    key:3,
+                },
+                {
+                    value:2,
+                    key:2,
+                }])
+            }
+            console.log('render-list')
+           
+            return (<>
+                
+                <div><button onClick={handleClick}>update</button></div>    
+                <ul>
+                    {
+                        list.map((item,index)=>(
+                            <li key={item.key}>{item.value}</li>
+                        ))
+                    }
+                </ul></>
+            )
+        }
+        function App() {
+            return (
+                <div>
+                    <List></List>
+                </div>
+            )
+        }
+        ReactDOM.render(<App></App>, document.querySelector('#root'))
+    </script>
+</body>
+
+</html>
