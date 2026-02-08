@@ -85,7 +85,7 @@ export const useLang=()=>{
                 globalLang=langList
                 allLang.value=langList
             })
-        }else if(globalLang.length<=0){
+        }else if(allLang.value.length<=0){
             promise.promise.then((langList)=>{
                 allLang.value=langList
             })
