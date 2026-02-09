@@ -8,7 +8,8 @@
                 <side-submenu :items="menuState.menuData"></side-submenu>
             </t-menu>  
         </t-aside>
-    <t-layout>
+        <!--min-w-0防止flex扩展-->
+    <t-layout class="min-w-0">
         <t-header class="sticky top-0 z-[1000]">
             <t-head-menu>
                 <template #logo>

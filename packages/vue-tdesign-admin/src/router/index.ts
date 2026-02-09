@@ -46,6 +46,25 @@ const defaultRoutes:RouteRecordRaw[]=[
           }
         },
         {
+          path: 'user',
+          name: 'UserList',
+          component: () => import('../views/user/index.vue'),
+          meta: {
+            title: '用户列表',
+            menuName:'用户列表',
+            icon:'user'
+          }
+        },
+        {
+          path: 'user/edit/:id?',
+          name: 'UserEdit',
+          component: () => import('../views/user/edit.vue'),
+          meta: {
+            title: '用户编辑',
+            hideMenu: true
+          }
+        },
+        {
           path: 'system',
           name: 'System',
           meta: {

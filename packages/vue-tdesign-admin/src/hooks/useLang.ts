@@ -65,7 +65,7 @@ const withResolvers=<T>()=>{
 let promise:ReturnType<typeof withResolvers<LangItem[]>>|null=null
 export const useLang=()=>{
 
-    const _allLang=shallowRef<LangItem[]>(globalLang?globalLang.slice():[])
+    const _allLang=shallowRef<LangItem[]>([])
     const allLang=computed<LangItem[]>({
         get:()=>{
             return _allLang.value.map(d=>({...d,suffix:d.value.toLowerCase().replace(/-/g,'_')}))
@@ -85,9 +85,9 @@ export const useLang=()=>{
                 globalLang=langList
                 allLang.value=langList
             })
-        }else if(allLang.value.length<=0){
+        }else if(_allLang.value.length<=0){
             promise.promise.then((langList)=>{
-                allLang.value=langList
+                _allLang.value=langList
             })
         }
     })

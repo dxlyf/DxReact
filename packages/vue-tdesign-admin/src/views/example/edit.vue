@@ -13,10 +13,10 @@
     <t-card :loading="loading" :loading-props="{attach:'body',fullscreen:true,text:'提交中...',showOverlay:false}" title="编辑" header-bordered :bordered="false">
         <t-form class="w-md" layout='vertical' label-align='top' :data="formData" @submit="handleSubmit" :rules="rules">
                     <t-form-item  label="id" name="name">
-                   <t-input></t-input>
+                   <t-input v-model="formData.id"></t-input>
                 </t-form-item>  
             <t-form-item  label="标签文案" name="text">
-                    <label-text v-slot="textProps" :disabled="disbaledText" title="标签文案" v-model="formData.text">
+                    <label-text v-slot="textProps"  title="标签文案" v-model="formData.text">
                         <t-button v-bind="textProps">编辑</t-button>
                     </label-text>
                 </t-form-item>
@@ -106,8 +106,8 @@ const handleSubmit=async (e)=>{
         return
     }
     console.log('submit完成')
-    loading.value=true
-    await delay(100000)
-    loading.value=false
+    // loading.value=true
+    // await delay(100000)
+    // loading.value=false
 }
 </script>

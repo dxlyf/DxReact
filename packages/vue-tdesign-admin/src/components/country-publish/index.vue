@@ -1,55 +1,32 @@
 <template>
   <div class="country-publish">
-    <div class="header-actions">
-      <t-button theme="primary" @click="fillFromEnglish">一键填充（英文）</t-button>
+    <div class="flex justify-end">
+      <t-button theme="primary" @click="handleAutoFill" size="small">一键填充（英文）</t-button>
     </div>
-    
-    <t-form :data="formData" :rules="rules" ref="formRef">
-      <div class="grid-container" :class="{ 'no-border': !bordered }">
-        <div class="grid-header">
-          <div class="grid-cell">语言</div>
-          <div class="grid-cell">状态</div>
-          <div class="grid-cell">起始时间</div>
-          <div class="grid-cell">结束时间</div>
+    <t-form :data="model" ref="formRef" :label-width="0">
+      <div class="flex flex-col">
+        <div class="grid grid-cols-[100px_100px_200px_200px] text-md font-medium gap-4">
+          <div class="text-left">语言</div>
+          <div class="text-left">状态</div>
+          <div class="text-left">起始时间</div>
+          <div class="text-left">结束时间</div>
         </div>
-        
-        <div 
-          v-for="lang in formData.languages" 
-          :key="lang.code" 
-          class="grid-row"
-        >
-          <div class="grid-cell">{{ lang.name }}</div>
-          
-          <div class="grid-cell">
-            <t-form-item :name="`languages.${lang.code}.status`">
-              <t-select v-model="lang.status" placeholder="请选择状态">
+        <div class="grid grid-cols-[100px_100px_200px_200px] mt-4 gap-4" v-for="(lang, index) in langList" :key="lang.value">
+          <div>{{ lang.label }}</div>
+          <div> <t-form-item :name="`${lang.suffix}.status`">
+              <t-select v-model="model[lang.suffix].status" placeholder="请选择状态">
                 <t-option value="draft" label="Draft" />
                 <t-option value="publish" label="Publish" />
               </t-select>
-            </t-form-item>
-          </div>
-          
-          <div class="grid-cell">
-            <t-form-item :name="`languages.${lang.code}.startTime`">
-              <t-date-picker
-                v-model="lang.startTime"
-                placeholder="请选择起始时间"
-                enable-time-picker
-                format="YYYY-MM-DD HH:mm:ss"
-              />
-            </t-form-item>
-          </div>
-          
-          <div class="grid-cell">
-            <t-form-item :name="`languages.${lang.code}.endTime`">
-              <t-date-picker
-                v-model="lang.endTime"
-                placeholder="请选择结束时间"
-                enable-time-picker
-                format="YYYY-MM-DD HH:mm:ss"
-              />
-            </t-form-item>
-          </div>
+            </t-form-item></div>
+          <div> <t-form-item :name="`${lang.suffix}.startTime`">
+              <t-date-picker v-model="model[lang.suffix].startTime" placeholder="请选择起始时间" enable-time-picker
+                format="YYYY-MM-DD HH:mm:ss" />
+            </t-form-item></div>
+          <div> <t-form-item :name="`${lang.suffix}.endTime`">
+              <t-date-picker v-model="model[lang.suffix].endTime" placeholder="请选择结束时间" enable-time-picker
+                format="YYYY-MM-DD HH:mm:ss" />
+            </t-form-item></div>
         </div>
       </div>
     </t-form>
@@ -57,9 +34,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, toRaw, watch, shallowReactive } from 'vue'
 import type { FormInstanceFunctions } from 'tdesign-vue-next'
+import { useLang } from '@/hooks/useLang'
 
+const [langList] = useLang()
 export interface LanguageItem {
   code: string
   name: string
@@ -68,181 +47,68 @@ export interface LanguageItem {
   endTime: string
 }
 
-export interface CountryPublishData {
-  languages: LanguageItem[]
-}
-
 interface Props {
-  modelValue?: CountryPublishData
+  // modelValue?: LanguageItem[]
   bordered?: boolean
 }
 
-interface Emits {
-  (e: 'update:modelValue', value: CountryPublishData): void
-}
+// interface Emits {
+//   (e: 'update:modelValue', value: LanguageItem[]): void
+// }
+const model = defineModel<Record<string, LanguageItem>>({ default: () => ({}) })
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: () => ({
-    languages: []
-  }),
-  bordered: true
+  // modelValue: () => [],
+  bordered: false
 })
 
-const emit = defineEmits<Emits>()
+//const emit = defineEmits<Emits>()
 
 const formRef = ref<FormInstanceFunctions>()
 
-const defaultLanguages: LanguageItem[] = [
-  { code: 'en', name: 'English', status: '', startTime: '', endTime: '' },
-  { code: 'zh', name: '中文', status: '', startTime: '', endTime: '' },
-  { code: 'ja', name: '日本語', status: '', startTime: '', endTime: '' },
-  { code: 'ko', name: '한국어', status: '', startTime: '', endTime: '' },
-  { code: 'fr', name: 'Français', status: '', startTime: '', endTime: '' },
-  { code: 'de', name: 'Deutsch', status: '', startTime: '', endTime: '' },
-  { code: 'es', name: 'Español', status: '', startTime: '', endTime: '' },
-  { code: 'pt', name: 'Português', status: '', startTime: '', endTime: '' }
-]
 
-const formData = reactive<CountryPublishData>({
-  languages: props.modelValue?.languages?.length ? props.modelValue.languages : [...defaultLanguages]
-})
 
-const rules = computed(() => {
-  const languageRules: Record<string, any> = {}
-  
-  formData.languages.forEach(lang => {
-    languageRules[`languages.${lang.code}.status`] = [
-      { required: true, message: '请选择状态', type: 'error', trigger: 'change' }
-    ]
-    languageRules[`languages.${lang.code}.startTime`] = [
-      { required: true, message: '请选择起始时间', type: 'error', trigger: 'change' }
-    ]
-    languageRules[`languages.${lang.code}.endTime`] = [
-      { required: true, message: '请选择结束时间', type: 'error', trigger: 'change' }
-    ]
-  })
-  
-  return languageRules
-})
+// [
+//   { code: 'en', name: 'English', status: '', startTime: '', endTime: '' },
+//   { code: 'zh', name: '中文', status: '', startTime: '', endTime: '' },
+//   { code: 'ja', name: '日本語', status: '', startTime: '', endTime: '' },
+//   { code: 'ko', name: '한국어', status: '', startTime: '', endTime: '' },
+//   { code: 'fr', name: 'Français', status: '', startTime: '', endTime: '' },
+//   { code: 'de', name: 'Deutsch', status: '', startTime: '', endTime: '' },
+//   { code: 'es', name: 'Español', status: '', startTime: '', endTime: '' },
+//   { code: 'pt', name: 'Português', status: '', startTime: '', endTime: '' }
+// ]
 
-const fillFromEnglish = () => {
-  const englishItem = formData.languages.find(item => item.code === 'en')
-  
-  if (!englishItem) {
-    return
-  }
-  
-  if (!englishItem.status && !englishItem.startTime && !englishItem.endTime) {
-    return
-  }
-  
-  formData.languages.forEach(item => {
-    if (item.code !== 'en') {
-      item.status = englishItem.status
-      item.startTime = englishItem.startTime
-      item.endTime = englishItem.endTime
+//const formData = reactive<Record<string, LanguageItem>>({})
+const data:Record<string, LanguageItem>=reactive({})
+watch(langList, () => {
+ // const data:Record<string, LanguageItem>={}
+  langList.value.forEach(item => {
+    data[item.suffix] = {
+       code:item.value,
+       name:item.label,
+       status:'draft',
+       startTime:undefined,
+       endTime:undefined,
+       ...(model.value[item.suffix]||{})
     }
   })
-  
-  emit('update:modelValue', { ...formData })
-}
-
-const validate = async () => {
-  try {
-    const result = await formRef.value?.validate()
-    return result === true
-  } catch (error) {
-    return false
+  model.value=data
+}, {
+  flush: 'pre',
+  //immediate:true,
+})
+const handleAutoFill=()=>{
+  const english=model.value['en_us']
+  if(english){
+     langList.value.forEach(item=>{
+        if(item.suffix!=='en_us'){
+          model.value[item.suffix].status=english.status
+           model.value[item.suffix].startTime=english.startTime
+            model.value[item.suffix].endTime=english.endTime
+        }
+   })
   }
 }
 
-const reset = () => {
-  formData.languages = [...defaultLanguages]
-  formRef.value?.reset()
-}
-
-defineExpose({
-  validate,
-  reset
-})
 </script>
-
-<style scoped>
-.country-publish {
-  display: flex;
-  flex-direction: column;
-}
-
-.country-publish .header-actions {
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.country-publish .grid-container {
-  border: 1px solid var(--td-component-border);
-  border-radius: var(--td-radius-default);
-  overflow: hidden;
-}
-
-.country-publish .grid-container.no-border {
-  border: none;
-}
-
-.country-publish .grid-header {
-  display: grid;
-  grid-template-columns: 150px 200px 1fr 1fr;
-  background-color: var(--td-bg-color-container);
-  border-bottom: 1px solid var(--td-component-border);
-}
-
-.country-publish .grid-header .grid-cell {
-  padding: 12px 16px;
-  font-weight: 600;
-  color: var(--td-text-color-primary);
-  border-right: 1px solid var(--td-component-border);
-}
-
-.country-publish .grid-header .grid-cell:last-child {
-  border-right: none;
-}
-
-.country-publish .grid-container.no-border .grid-header .grid-cell {
-  border-right: none;
-}
-
-.country-publish .grid-row {
-  display: grid;
-  grid-template-columns: 150px 200px 1fr 1fr;
-  border-bottom: 1px solid var(--td-component-border);
-}
-
-.country-publish .grid-row:last-child {
-  border-bottom: none;
-}
-
-.country-publish .grid-row .grid-cell {
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  border-right: 1px solid var(--td-component-border);
-  background-color: var(--td-bg-color-container-hover);
-}
-
-.country-publish .grid-row .grid-cell:last-child {
-  border-right: none;
-}
-
-.country-publish .grid-container.no-border .grid-row .grid-cell {
-  border-right: none;
-}
-
-.country-publish .grid-container.no-border .grid-row {
-  border-bottom: none;
-}
-
-.country-publish :deep(.t-form-item) {
-  width: 100%;
-  margin-bottom: 0;
-}
-</style>

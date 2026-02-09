@@ -10,7 +10,7 @@
                 <div v-for="item in langList" :key="item.value">
                     <div class="flex justify-between align-middle">
                         <span>{{ item.label }}</span>
-                        <t-button class="!size-5" shape="circle" theme="primary" @click="handleAddSection(item.suffix)">
+                        <t-button class="!size-5" shape="circle" theme="primary" @click="handleAddSection(item)">
                             <template #icon> <t-icon size="22" name="plus"></t-icon></template>
                         </t-button>
 
@@ -69,13 +69,14 @@
 <script setup lang="ts">
 import { ref, shallowRef, watch } from 'vue'
 import { type TdFormProps, type FormInstanceFunctions, type TdSelectProps, MessagePlugin } from 'tdesign-vue-next'
-import { useLang } from '@/hooks/useLang'
+import { useLang ,type LangItem} from '@/hooks/useLang'
 
 type Props = {
     title: string
     disabled?: boolean
 }
 type SelectionItem = {
+    locale: string
     color: string
     type: string
     slug: string[]
@@ -161,12 +162,13 @@ const handleSubmit: TdFormProps['onSubmit'] = (e) => {
 // watch(()=>formData.value,(v)=>{
 //     console.log('formData change',v)
 // },{deep:true})
-const handleAddSection = (suffix: string) => {
-    if (!formData.value[`section_${suffix}`]) {
-        formData.value[`section_${suffix}`] = []
+const handleAddSection = (item:LangItem) => {
+    if (!formData.value[`section_${item.suffix}`]) {
+        formData.value[`section_${item.suffix}`] = []
     }
 
-    formData.value[`section_${suffix}`].push({
+    formData.value[`section_${item.suffix}`].push({
+        locale: item.value,
         slug:[],
         type: 'text',
         color: 'red'
