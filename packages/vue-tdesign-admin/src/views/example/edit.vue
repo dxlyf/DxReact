@@ -20,13 +20,13 @@
                         <t-button v-bind="textProps">编辑</t-button>
                     </label-text>
                 </t-form-item>
-                <t-form-item  label="主题" name="theme">
-                   <t-select v-model="formData.theme"></t-select>
-                </t-form-item>
                 <t-form-item  label="标签板块" name="labelSection">
                     <label-section title="标签板块" v-model="formData.labelSection">
                         编辑
                     </label-section>
+                </t-form-item>
+                <t-form-item label="" name="countryPublish">
+                    <country-publish v-model="formData.country"></country-publish>
                 </t-form-item>
                 <t-form-item label="国家" name="country">
                     <t-button theme="default" @click="dialogCountry.open()">选择</t-button>
@@ -50,6 +50,7 @@ import { useRoute,useRouter,onBeforeRouteUpdate } from 'vue-router'
 import { useDialog } from '@/hooks/useDialog'
 import LabelText from '@/components/label-text/index.vue'
 import LabelSection from '@/components/label-section/index.vue'
+import CountryPublish from '@/components/country-publish/index.vue'
 import { delay } from 'src/utils'
 
 const title=ref('选择国家')
