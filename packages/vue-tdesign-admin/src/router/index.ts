@@ -114,6 +114,15 @@ const defaultRoutes:RouteRecordRaw[]=[
           },
           children: [
             {
+              path:'jsoneditor',
+              component:()=>import('../views/example/jsoneditor.vue'),
+              meta:{
+                title: 'json-editor',
+                menuName:'json-editor',
+                icon:'table'
+              }
+            },
+            {
               path: 'comps',
               // name:'JsonEditor',
               component: () => import('../views/example/comps.vue'),
