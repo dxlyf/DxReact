@@ -3,33 +3,31 @@
     <div class="flex justify-end">
       <t-button theme="primary" @click="handleAutoFill" size="small">一键填充（英文）</t-button>
     </div>
-    <t-form :data="model" ref="formRef" :label-width="0">
-      <div class="flex flex-col">
+      <div class="flex flex-col nth-[n+1]:mt-6">
         <div class="grid grid-cols-[100px_100px_200px_200px] text-md font-medium gap-4">
-          <div class="text-left">语言</div>
-          <div class="text-left">状态</div>
-          <div class="text-left">起始时间</div>
-          <div class="text-left">结束时间</div>
+          <div class="">语言</div>
+          <div class="before:content-['*'] before:text-red-500">状态</div>
+          <div  class="before:content-['*'] before:text-red-500">起始时间</div>
+          <div  class="before:content-['*'] before:text-red-500">结束时间</div>
         </div>
-        <div class="grid grid-cols-[100px_100px_200px_200px] mt-4 gap-4" v-for="(lang, index) in langList" :key="lang.value">
-          <div>{{ lang.label }}</div>
-          <div> <t-form-item :name="`${lang.suffix}.status`">
+        <div class="grid grid-cols-[100px_100px_200px_200px]  gap-4" v-for="(lang, index) in langList" :key="lang.value">
+          <div class="flex items-center">{{ lang.label }}</div>
+          <div> <t-form-item :label-width="0" :name="`${lang.suffix}.status`">
               <t-select v-model="model[lang.suffix].status" placeholder="请选择状态">
                 <t-option value="draft" label="Draft" />
                 <t-option value="publish" label="Publish" />
               </t-select>
             </t-form-item></div>
-          <div> <t-form-item :name="`${lang.suffix}.startTime`">
+          <div> <t-form-item :label-width="0" :rules="[{required:true,message:'请输入'}]" :name="`${lang.suffix}.startTime`">
               <t-date-picker v-model="model[lang.suffix].startTime" placeholder="请选择起始时间" enable-time-picker
                 format="YYYY-MM-DD HH:mm:ss" />
             </t-form-item></div>
-          <div> <t-form-item :name="`${lang.suffix}.endTime`">
+          <div> <t-form-item :label-width="0" :name="`${lang.suffix}.endTime`">
               <t-date-picker v-model="model[lang.suffix].endTime" placeholder="请选择结束时间" enable-time-picker
                 format="YYYY-MM-DD HH:mm:ss" />
             </t-form-item></div>
         </div>
       </div>
-    </t-form>
   </div>
 </template>
 
