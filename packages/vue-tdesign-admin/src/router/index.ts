@@ -121,6 +121,14 @@ const defaultRoutes:RouteRecordRaw[]=[
                 menuName:'json-editor',
                 icon:'table'
               }
+            },{
+              path:'jsoneditor2',
+              component:()=>import('../views/example/jsoneditor2.vue'),
+              meta:{
+                title: 'json-editor2',
+                menuName:'json-editor2',
+                icon:'table'
+              }
             },
             {
               path: 'comps',
