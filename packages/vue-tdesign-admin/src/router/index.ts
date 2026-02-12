@@ -105,8 +105,60 @@ const defaultRoutes:RouteRecordRaw[]=[
             icon:'setting'
           }
         },
+        
         {
-          path: 'example/components',
+          path:'example',
+          meta:{
+            menuName:'示例',
+            icon:'table'
+          },
+          children:[
+          {
+             path:'tdesign',
+             children:[
+              {
+                 path:'basicform',
+                 component: () => import('../views/example/tdesign/basicform.vue'),
+                 meta: {
+                    title: '基本表单',
+                    menuName:'基本表单',
+                    icon:'table'
+                  }
+              }
+             ],
+             meta: {
+                title: '列表',
+                menuName:'tdesign',
+                icon:'table'
+              }
+          },{
+            path:'editor',
+            children:[{
+               path: 'tiptap',
+                meta: {
+                  title: 'tiptap',
+                  menuName:'tiptap-editor',
+                  icon:'table'
+                },
+                component: () => import('@/views/example/editor/tiptap.vue'),
+            },{
+               path: 'quill',
+                meta: {
+                  title: 'quill',
+                  menuName:'quill-editor',
+                  icon:'table'
+                },
+                component: () => import('@/views/example/editor/quill.vue'),
+            }],
+            meta: {
+              title: 'editor',
+              menuName:'editor',
+              icon:'table'
+            }
+
+          },  
+          {
+          path: 'components',
           meta: {
             title: '组件示例',
             menuName:'组件示例',
@@ -173,6 +225,7 @@ const defaultRoutes:RouteRecordRaw[]=[
               }
             }
           ]
+        }]
         },
         {
           // 404

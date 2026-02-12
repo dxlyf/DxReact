@@ -4,12 +4,12 @@
     <t-dialog attach="body" :footer="!disabled" :destroy-on-close="true" :header="title" :visible="visible"
         @confirm="handleConfirm" @close="handleClose">
         <div class="flex justify-end mb-4">
-            <t-button type='button' @click="handleAutoFill">用英文一键填充</t-button>
+            <t-button type='button' size="small" @click="handleAutoFill">用英文一键填充</t-button>
         </div>
         <t-form :required-mark="false" :disabled="disabled" :data="formData" @submit="handleSubmit" ref="formRef">
             <t-form-item :rules="[{ required: true, message: `请输入${item.label}标签文案` }]" v-for="item in langList"
                 :key="item.value" :label="item.label" :name="`text_${item.suffix}`">
-                <t-input placeholder="请输入标签文案" v-model="formData[`text_${item.suffix}`]" />
+                <t-input :maxlength="255" placeholder="请输入标签文案" v-model="formData[`text_${item.suffix}`]" />
             </t-form-item>
         </t-form>
     </t-dialog>

@@ -9,11 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/starter-kit": "^3.19.0",
+    "@tiptap/vue-3": "^3.19.0",
     "@vueuse/core": "^14.2.0",
     "axios": "^1.13.4",
+    "dayjs": "^1.11.19",
     "lodash-es": "^4.17.23",
     "mitt": "^3.0.1",
     "pinia": "^3.0.4",
+    "quill": "^2.0.3",
     "tailwindcss": "^4.1.18",
     "tdesign-icons-vue-next": "^0.4.2",
     "tdesign-vue-next": "^1.18.0",

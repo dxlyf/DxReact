@@ -21,15 +21,15 @@
                     </label-text>
                 </t-form-item>
                 <t-form-item  label="标签板块" name="labelSection">
-                    <label-section title="标签板块" v-model="formData.labelSection">
-                        编辑
+                    <label-section title="标签板块" v-slot="sectionProps" v-model="formData.labelSection">
+                                     <t-button v-bind="sectionProps">编辑</t-button>
                     </label-section>
                 </t-form-item>
                 <t-form-item label="" name="countryPublish">
-                    <country-publish v-model="formData.country"></country-publish>
+                    <country-publish prefix="countryPublish" v-model="formData.countryPublish"></country-publish>
                 </t-form-item>
                 <t-form-item label="国家" name="country">
-                    <t-button theme="default" @click="dialogCountry.open()">选择</t-button>
+                     <country-select v-model="formData.country"></country-select>
                 </t-form-item>
         
                 <t-form-item>
@@ -51,6 +51,7 @@ import { useDialog } from '@/hooks/useDialog'
 import LabelText from '@/components/label-text/index.vue'
 import LabelSection from '@/components/label-section/index.vue'
 import CountryPublish from '@/components/country-publish/index.vue'
+import CountrySelect from '@/components/country-select/index.vue'
 import { delay } from 'src/utils'
 
 const title=ref('选择国家')
@@ -88,7 +89,7 @@ watch(()=>route.query.lang,(newVal,oldVal)=>{
     console.log('newVal',newVal)
 })
 const handleBack=()=>{
-
+    router.replace('/example/components/list')
 }
 
 onBeforeRouteUpdate((to,from)=>{

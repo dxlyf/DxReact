@@ -1,7 +1,5 @@
 <template>
-    <t-button theme="default" @click="handleOpen">
-        <slot></slot>
-    </t-button>
+    <slot :onClick="handleOpen"></slot>
 
     <t-dialog attach="body" width="600" :footer="!disabled" :destroy-on-close="true" :header="title" :visible="visible"
         @confirm="handleConfirm" @close="handleClose">
@@ -22,34 +20,35 @@
                             <div>
                                 <t-form-item :rules="[{ required: true, message: '请选择颜色' }]" :label-width="0"
                                     :name="`section_${item.suffix}[${index}].color`">
-                                    <t-select clearablefilterable :options="colorOptions" v-model="sectionItem.color"></t-select>
+                                    <t-select creatable clearable filterable @create="createColorOptions"
+                                        :options="colorOptions" v-model="sectionItem.color">
+                                    </t-select>
                                 </t-form-item>
                             </div>
                             <div>
-                                <t-form-item :rules="[{ required: true, message: '请选择类型' },{
-                                    validator:(val,ctx)=>{
-                                        
-                                        const items=localeSectionItems(item.suffix)
-                                        if(items.some((item,i)=>i!==index&&item.type===val)){
+                                <t-form-item :rules="[{ required: true, message: '请选择类型' }, {
+                                    validator: (val, ctx) => {
+
+                                        const items = localeSectionItems(item.suffix)
+                                        if (items.some((item, i) => i !== index && item.type === val)) {
                                             return {
-                                                message:`${item.label}有重复板块项`,
-                                                result:false,
-                                                type:'error'
+                                                message: `${item.label}有重复板块项`,
+                                                result: false,
+                                                type: 'error'
                                             }
                                         }
                                         return true
                                     }
-                                }]" :label-width="0"
-                                    :name="`section_${item.suffix}[${index}].type`">
-                                    <t-select clearable filterable :options="typeOptions" @change="sectionItem.slug = []"
-                                        v-model="sectionItem.type"></t-select>
+                                }]" :label-width="0" :name="`section_${item.suffix}[${index}].type`">
+                                    <t-select clearable filterable :options="typeOptions"
+                                        @change="sectionItem.slug = []" v-model="sectionItem.type"></t-select>
                                 </t-form-item>
                             </div>
                             <div>
                                 <t-form-item :rules="[{ required: true, message: '请选择Slug' }]" :label-width="0"
                                     :name="`section_${item.suffix}[${index}].slug`">
-                                    <t-select clearable :min-collapsed-num="3" filterable multiple :options="getSlugOptions(sectionItem.type)"
-                                        v-model="sectionItem.slug">
+                                    <t-select clearable :min-collapsed-num="3" filterable multiple
+                                        :options="getSlugOptions(sectionItem.type)" v-model="sectionItem.slug">
                                     </t-select>
                                 </t-form-item>
                             </div>
@@ -67,13 +66,14 @@
     </t-dialog>
 </template>
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
+import { reactive, ref, shallowRef, watch } from 'vue'
 import { type TdFormProps, type FormInstanceFunctions, type TdSelectProps, MessagePlugin } from 'tdesign-vue-next'
-import { useLang ,type LangItem} from '@/hooks/useLang'
+import { useLang, type LangItem } from '@/hooks/useLang'
 
 type Props = {
     title: string
     disabled?: boolean
+    modelValue?: Record<string, SelectionItem[]>
 }
 type SelectionItem = {
     locale: string
@@ -91,13 +91,13 @@ const model = defineModel<Record<string, SelectionItem[]>>({ default: () => ({})
 const formData = ref<Record<string, SelectionItem[]>>({})
 const [langList] = useLang()
 
-const colorOptions = [{
+const colorOptions = reactive([{
     label: '红色',
     value: 'red',
 }, {
     label: '绿色',
     value: 'green',
-}]
+}])
 const typeOptions = [{
     label: '文本',
     value: 'text',
@@ -105,6 +105,16 @@ const typeOptions = [{
     label: '图片',
     value: 'image',
 }]
+const createColorOptions = (val: any) => {
+    const index = colorOptions.findIndex(v => v.value == val)
+    if (index === -1) {
+        colorOptions.push({
+            label: val,
+            value: val,
+        });
+    }
+
+}
 const getSlugOptions = (type: string) => {
     if (type === 'text') {
         return [{
@@ -126,7 +136,7 @@ const getSlugOptions = (type: string) => {
             label: 'Slug6',
             value: 'slug6',
         }]
-    }else if(type === 'image'){
+    } else if (type === 'image') {
         return [{
             label: '图片Slug',
             value: 'image_slug',
@@ -152,7 +162,7 @@ const handleClose = () => {
 const handleSubmit: TdFormProps['onSubmit'] = (e) => {
     if (e.validateResult !== true) {
         MessagePlugin.error((e.firstError))
-        console.log('eee',e)
+        console.log('eee', e)
         return
     }
     model.value = { ...formData.value }
@@ -162,14 +172,14 @@ const handleSubmit: TdFormProps['onSubmit'] = (e) => {
 // watch(()=>formData.value,(v)=>{
 //     console.log('formData change',v)
 // },{deep:true})
-const handleAddSection = (item:LangItem) => {
+const handleAddSection = (item: LangItem) => {
     if (!formData.value[`section_${item.suffix}`]) {
         formData.value[`section_${item.suffix}`] = []
     }
 
     formData.value[`section_${item.suffix}`].push({
         locale: item.value,
-        slug:[],
+        slug: [],
         type: 'text',
         color: 'red'
     })
@@ -179,5 +189,6 @@ const handleRemoveSection = (suffix: string, index: number) => {
 }
 defineOptions({
     name: 'LabelSection',
+    inheritAttrs: false
 })
 </script>
