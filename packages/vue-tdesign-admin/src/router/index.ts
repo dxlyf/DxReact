@@ -105,7 +105,25 @@ const defaultRoutes:RouteRecordRaw[]=[
             icon:'setting'
           }
         },
-        
+        {
+          path:'form',
+          meta: {
+            title: '表单示例',
+            menuName:'表单示例',
+            icon:'setting'
+          },
+          children:[
+            {
+              path:'basic',
+              component: () => import('@/views/form/basic.vue'),
+              meta: {
+                title: '基础表单',
+                menuName:'基础表单',
+                icon:'table'
+              }
+            }
+          ]
+        },
         {
           path:'example',
           meta:{
@@ -113,6 +131,7 @@ const defaultRoutes:RouteRecordRaw[]=[
             icon:'table'
           },
           children:[
+            
           {
              path:'tdesign',
              children:[

@@ -22,4 +22,5 @@ const schema:FieldSchema[]=[{
 </script>
 <template>
     <json-editor :schema="schema"></json-editor>
+    
 </template>
