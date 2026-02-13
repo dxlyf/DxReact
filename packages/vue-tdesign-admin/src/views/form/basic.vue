@@ -25,14 +25,21 @@
                 </t-form>
             </t-tab-panel>
             <t-tab-panel :value="2" label="富文本">
-            
+              <t-form :data="formData2" @submit="handleSubmit2">
+                <t-form-item name="name" :rules="[{required:true,message:'请输入'}]">
+                    <t-input v-model="formData2.name" />
+                </t-form-item>
+                <t-form-item >
+                        <t-button type="submit">提交</t-button>
+                </t-form-item>
+              </t-form>
             </t-tab-panel>
         </t-tabs>
     </div>
 </template>
 
 <script lang="ts">
-import { type PropType,type Component, type MaybeRefOrGetter,vModelText,h,vModelDynamic, withDirectives, ref, reactive, shallowReactive, shallowRef, computed, onMounted, onUnmounted, defineComponent, type VNode, toRaw } from 'vue'
+import { type PropType,type Component, type MaybeRefOrGetter,vModelText,h,vModelDynamic, withDirectives, ref, reactive, shallowReactive, shallowRef, computed, onMounted, onUnmounted, defineComponent, type VNode, toRaw, toRef, proxyRefs } from 'vue'
 import type { TdFormItemProps, TdInputProps,TdDateRangePickerProps,TdTimeRangePickerProps, TdColProps, TdFormProps, TdSelectProps, TdRadioGroupProps, TdCheckboxGroupProps, TdDatePickerProps, TdTimePickerProps, TdUploadProps, TdTreeSelectProps } from 'tdesign-vue-next'
 import { format } from 'path'
 
@@ -388,11 +395,17 @@ export default defineComponent({
         const handleSubmit:TdFormProps['onSubmit']=(e)=>{
             console.log('fromData',toRaw(fromData))
         }
+        const handleSubmit2:TdFormProps['onSubmit']=(e)=>{
+            console.log('formData2',toRaw(formData2))
+        }
+        const formData2=proxyRefs(reactive({}))
         return {
             activeTab,
             fields,
             fromData,
-            handleSubmit
+            handleSubmit,
+            handleSubmit2,
+            formData2
         }
     }
 })
