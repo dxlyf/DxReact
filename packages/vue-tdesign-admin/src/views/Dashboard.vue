@@ -105,6 +105,8 @@
 
 <script setup lang="ts">
 // Dashboard.vue
+import {useUserStore} from '@/stores/user'
+const userStore = useUserStore()
 </script>
 
 <style scoped>

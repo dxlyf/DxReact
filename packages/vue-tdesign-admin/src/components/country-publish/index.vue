@@ -94,9 +94,9 @@ const disableDate = (type: string, start: any, end: any, date: Dayjs) => {
 // ]
 
 //const formData = reactive<Record<string, LanguageItem>>({})
-const data: Record<string, LanguageItem> = reactive({})
+
 watch(langList, () => {
-  // const data:Record<string, LanguageItem>={}
+const data: Record<string, LanguageItem> = reactive({})
   langList.value.forEach(item => {
     data[item.suffix] = {
       code: item.value,

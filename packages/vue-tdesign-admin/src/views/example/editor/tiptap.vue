@@ -1,7 +1,7 @@
 <template>
-  <div class="editor-wrapper">
+  <div class="flex flex-col h-full">
     <!-- 工具栏 -->
-    <div class="toolbar" v-if="editor">
+    <div class="flex-none" v-if="editor">
       <button
         @click="editor.chain().focus().toggleBold().run()"
         :class="{ 'is-active': editor.isActive('bold') }"
@@ -57,7 +57,7 @@
     </div>
 
     <!-- 编辑器 -->
-    <editor-content :editor="editor" class="editor-content" />
+    <editor-content :editor="editor" class="flex-1" />
   </div>
 </template>
 
@@ -88,37 +88,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.editor-wrapper {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  overflow: hidden;
-}
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ccc;
-}
-
-.toolbar button {
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  background: #fff;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-.toolbar button.is-active {
-  background: #007bff;
-  color: #fff;
-  border-color: #007bff;
-}
-
-.editor-content {
-  padding: 12px;
-  min-height: 150px;
-}
 </style>

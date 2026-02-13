@@ -24,6 +24,9 @@
 
                 </t-form>
             </t-tab-panel>
+            <t-tab-panel :value="2" label="富文本">
+            
+            </t-tab-panel>
         </t-tabs>
     </div>
 </template>

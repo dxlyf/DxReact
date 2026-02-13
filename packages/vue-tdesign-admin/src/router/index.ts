@@ -17,6 +17,7 @@ declare module 'vue-router' {
   }
 }
 const defaultRoutes:RouteRecordRaw[]=[
+
     {
       path: '/',
       component: () => import('../layouts/AdminLayout.vue'),
@@ -25,6 +26,16 @@ const defaultRoutes:RouteRecordRaw[]=[
           path: '',
           redirect: '/dashboard'
         },
+          {
+        path:'mock',
+        name:'Mock',
+        component: () => import('@/views/mock.vue'),
+        meta: {
+          title: '模拟数据',
+          menuName:'模拟数据',
+          icon:'dashboard'
+        }
+      },
         {
           path: 'dashboard',
           name: 'Dashboard',

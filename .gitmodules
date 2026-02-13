@@ -203,3 +203,6 @@
 [submodule "packages/vue-hooks-plus"]
 	path = packages/vue-hooks-plus
 	url = git@github.com:InhiblabCore/vue-hooks-plus.git
+[submodule "packages/pinia"]
+	path = packages/pinia
+	url = git@github.com:vuejs/pinia.git
