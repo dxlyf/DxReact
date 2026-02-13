@@ -154,6 +154,14 @@ const defaultRoutes:RouteRecordRaw[]=[
                     menuName:'基本表单',
                     icon:'table'
                   }
+              },{
+                 path:'list',
+                 component: () => import('../views/example/tdesign/list.vue'),
+                 meta: {
+                    title: '列表',
+                    menuName:'查询列表',
+                    icon:'table'
+                  }
               }
              ],
              meta: {
