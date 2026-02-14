@@ -67,7 +67,7 @@ const fields=[
 <template>
 <ListLayout title="列表" :breadcrumb-items="breadcrumbItems" >
     <template #form>
-        <FSearchForm  :fields="fields"></FSearchForm>
+        <FSearchForm  :columns="fields"></FSearchForm>
     </template>
 </ListLayout>
 
