@@ -155,6 +155,14 @@ const defaultRoutes:RouteRecordRaw[]=[
                     icon:'table'
                   }
               },{
+                 path:'add',
+                 component: () => import('../views/example/tdesign/add.vue'),
+                 meta: {
+                    title: '新增页',
+                    menuName:'新增页',
+                    icon:'table'
+                  }
+              },{
                  path:'list',
                  component: () => import('../views/example/tdesign/list.vue'),
                  meta: {

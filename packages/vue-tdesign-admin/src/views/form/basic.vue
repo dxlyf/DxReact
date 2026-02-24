@@ -42,7 +42,8 @@
 import { type PropType,type Component, type MaybeRefOrGetter,vModelText,h,vModelDynamic, withDirectives, ref, reactive, shallowReactive, shallowRef, computed, onMounted, onUnmounted, defineComponent, type VNode, toRaw, toRef, proxyRefs } from 'vue'
 import type { TdFormItemProps, TdInputProps,TdDateRangePickerProps,TdTimeRangePickerProps, TdColProps, TdFormProps, TdSelectProps, TdRadioGroupProps, TdCheckboxGroupProps, TdDatePickerProps, TdTimePickerProps, TdUploadProps, TdTreeSelectProps } from 'tdesign-vue-next'
 import { format } from 'path'
-
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 const componentMap = {
     text: 't-input',
     number: 't-input-number',
@@ -85,12 +86,41 @@ type RealFieldColumn = Omit<FieldColumn, 'formItemProps' | 'fieldProps'> & {
     component: string
     colProps?: TdColProps
 }
-
+const disableDate=(startDate:Date,endDate:Date,date:Date,type:'start'|'end')=>{
+    if(type==='start'){
+        return dayjs(date).isBefore(dayjs(),'date')||(endDate&&dayjs(date).isAfter(dayjs(endDate),'date'))
+    }
+    return dayjs(date).isBefore(dayjs(),'date')||(startDate&&dayjs(date).isBefore(dayjs(startDate),'date'))
+}
+const disableTime=(startTime:Date,endTime:Date,time:Date,type:'start'|'end')=>{
+    console.log(startTime,endTime,time,type)
+    if(type==='start'){
+      //  dayjs().
+        return {
+                hour:[1,2,3],
+                minute:[],
+                second:[],
+                millisecond:[]
+        }
+    }
+    return {}
+    //return startTime?dayjs(time).isBefore(dayjs(startTime),'minute'):false
+}
 export default defineComponent({
     props: {
         fields: {
             type: Array as PropType<FieldColumn[]>,
-            default: () => [
+            default: () => []
+        }
+    },
+    directives:{
+       // 'modelVal':vModelDynamic  
+    },
+    setup(props, { emit }) {
+        const activeTab = shallowRef(1)
+        const fromData=reactive<any>({checkbox:[],timeRange:[],singleImage:[],customSingleImage:[],dateRange:[],datetimeRange:[]})
+        
+            const defaultFields=[
                 {
                     label: '文本',
                     name: 'text',
@@ -221,6 +251,38 @@ export default defineComponent({
                     fieldProps: {
                         placeholder: '请选择时间范围',
                     } as TdTimeRangePickerProps,
+                },{
+                    label: '开始日期时间',
+                    name: 'startDatetime',
+                    type: 'date',
+                    span: 6,
+                    formItemProps: {
+                        rules:[{ required: true, message: '请选择日期' }]
+                    },
+                    fieldProps: {
+                        placeholder: '请选择开始日期时间',
+                        format:'YYYY-MM-DD HH:mm:ss',
+                        enableTimePicker:true,
+                        timePickerProps:{
+                            disableTime:(time:any) => disableTime(fromData.startDatetime,fromData.endDateTime,time,'start'),
+                        },
+                        disableDate:(date:any) => disableDate(fromData.startDatetime,fromData.endDateTime,date,'start'),
+                    } as TdDatePickerProps,
+                },{
+                    label: '结束日期时间',
+                    name: 'endDateTime',
+                    type: 'date',
+                    span: 6,
+                    formItemProps: {
+                        rules:[{ required: true, message: '请选择日期' }]
+                    },
+                    fieldProps: {
+                        placeholder: '请选择结束日期时间',
+                         format:'YYYY-MM-DD HH:mm:ss',
+                        enableTimePicker:true,
+                        disableTime:(time:any) => disableTime(fromData.startDatetime,fromData.endDateTime,time,'start'),
+                        disableDate:(date:any) =>  disableDate(fromData.startDatetime,fromData.endDateTime,date,'end'),
+                    } as TdDatePickerProps,
                 },
                  {
                     label: '日期时间范围',
@@ -356,17 +418,8 @@ export default defineComponent({
                     } as TdTreeSelectProps,
                 }
             ] as FieldColumn[]
-        }
-    },
-    directives:{
-       // 'modelVal':vModelDynamic  
-    },
-    setup(props, { emit }) {
-        const activeTab = shallowRef(1)
-        const fromData=reactive<any>({checkbox:[],timeRange:[],singleImage:[],customSingleImage:[],dateRange:[],datetimeRange:[]})
-
         const fields = computed<RealFieldColumn[]>(() => {
-            return props.fields.map((f, index) => {
+            return defaultFields.map((f, index) => {
                 const formItemProps = f.formItemProps
                 const fieldProps = f.fieldProps
                 return {
