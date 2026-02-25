@@ -32,8 +32,10 @@ const i18n = createI18n({
     'zh-CN': zhCN,
   }
 })
+
 export const setLocale = (locale: SupportLocale) => {
   i18n.global.locale.value = locale
+  
   localStorage.setItem(LOCALE_KEY, locale)
 }
 export const getLocale = () => {

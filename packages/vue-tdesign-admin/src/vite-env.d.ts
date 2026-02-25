@@ -5,3 +5,8 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+declare interface Window {
+  dx:{
+    log:(...args: any[]) => void
+  }
+}
