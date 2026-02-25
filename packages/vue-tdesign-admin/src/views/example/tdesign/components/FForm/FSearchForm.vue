@@ -1,5 +1,5 @@
 <script  lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, type PropType, defineComponent } from 'vue'
 import type { FormInstanceFunctions, TdFormItemProps, TdSelectProps } from 'tdesign-vue-next'
 import type { TdInputProps,TdInputNumberProps } from 'tdesign-vue-next'
 
@@ -22,12 +22,26 @@ export type FieldType<T extends keyof FieldComponentPropsMap = keyof FieldCompon
   formItemProps?:ValueOrGetter<TdFormItemProps>
   fieldProps?:ValueOrGetter<FieldComponentPropsMap[T]>
 }
-export type InternalFieldType=Omit<FieldType,'formItemProps'|'fieldProps'>&{
-  
+export type InternalFieldType<T extends keyof FieldComponentPropsMap = keyof FieldComponentPropsMap>=Omit<FieldType<T>,'formItemProps'|'fieldProps'>&{
+  fieldProps:FieldComponentPropsMap[T]
+  formItemProps:TdFormItemProps
+
 }
 
 
-
+export default defineComponent({
+  props:{
+    columns:{
+      type:Array as PropType<InternalFieldType[]>,
+      default:()=>[]
+    }
+  },
+  setup(props){
+     return {
+        columns:props.columns
+     }
+  }
+})
 </script>
 
 <template>
