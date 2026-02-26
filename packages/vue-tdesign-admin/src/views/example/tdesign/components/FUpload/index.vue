@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { fileToBase64 } from 'src/utils';
 import { Message, MessagePlugin, type TdUploadProps,type UploadFile } from 'tdesign-vue-next';
-import { shallowRef } from 'vue';
+import { shallowRef, watch } from 'vue';
 
 export type FUploadProps={
   // modelValue?:UploadFile[]
@@ -27,13 +28,15 @@ const formatResponse:TdUploadProps['formatResponse']=(res,ctx)=>{
     }
 }
 const handleSuccess:TdUploadProps['onSuccess']=(ctx)=>{
-    files.value=[...ctx.fileList]
+   files.value=[...ctx.fileList]
+   console.log('handleSuccess',ctx)
 }
 const handleFail:TdUploadProps['onFail']=(ctx)=>{
     console.log('handleFail',ctx)
     MessagePlugin.error(ctx.response?.message||'上传失败')
 }
 const handleProgress:TdUploadProps['onProgress']=(ctx)=>{
+  files.value=[...ctx.currentFiles]
     console.log('handleProgress',ctx)
 }
 const formatFile:TdUploadProps['format']=(file)=>{
@@ -47,11 +50,30 @@ const handlePreview=(file:UploadFile)=>{
 const handleDelete=(file:UploadFile)=>{
   files.value=[]
 }
+const handleChange:TdUploadProps['onChange']=(value,file)=>{
+   // files.value=[...value]
+    console.log('handleChange',value)
+}
+const handleSelectChange:TdUploadProps['onSelectChange']=(value,{currentSelectedFiles})=>{
+   // console.log('handleSelectChange',value,file)
+   
+    const promises=currentSelectedFiles.map((item) => {
+        return fileToBase64(item.raw).then((base64) => {
+            item.thumbnail = base64
+        })
+    })
+    Promise.all(promises).then(() => {
+        files.value=[...currentSelectedFiles]
+    })
+}
+// watch(()=>files.value,(newVal,oldVal)=>{
+//     console.log('files.value',newVal)
+// })
 </script>
 
 <template>
 <div class="upload-wrapper">
-    <t-upload v-if="files.length<=0" :allow-upload-duplicate-file="true" class="upload" :sizeLimit="{size:size,unit:unit }" :format="formatFile" @progress="handleProgress" @success="handleSuccess" @fail="handleFail" :formatResponse="formatResponse" theme='custom' draggable action="/api/upload">
+    <t-upload showUploadProgress @select-change="handleSelectChange" v-if="files.length<=0" @change="handleChange"  :allow-upload-duplicate-file="true" class="upload" :sizeLimit="{size:size,unit:unit }" :format="formatFile" @progress="handleProgress" @success="handleSuccess" @fail="handleFail" :formatResponse="formatResponse" theme='custom' draggable action="/api/upload">
          <template #trigger="{dragActive}">
           <div class="flex flex-col w-full h-full items-center justify-center">
               <t-icon name="upload" size="48" class=" text-blue-500"></t-icon>
@@ -62,12 +84,12 @@ const handleDelete=(file:UploadFile)=>{
          </template>
     </t-upload>
     <div v-else class="w-full h-full relative">
-      <t-image :src="files[0].url" class="w-full h-full" overlay-trigger="hover">
+      <t-image :src="files[0].url||files[0].thumbnail" class="w-full h-full" overlay-trigger="hover">
         <template #overlayContent>
           <div class="flex flex-col w-full h-full bg-[rgba(0,0,0,0.5)]" v-if="files[0].status!='progress'">
               <div class="flex flex-1 items-center justify-center text-white gap-6">
-                 <t-icon @click="handlePreview" class="cursor-pointer" name="browse" size="24"></t-icon>
-                  <t-icon @click="handleDelete"  class="cursor-pointer" name="delete" size="24"></t-icon>
+                 <t-icon @click="handlePreview" class="cursor-pointer" name="browse" size="20"></t-icon>
+                  <t-icon @click="handleDelete"  class="cursor-pointer" name="delete" size="20"></t-icon>
               </div>
           </div>
         </template>

@@ -101,11 +101,14 @@ function upload(req:IncomingMessage,res:ServerResponse){
       }));
     });
 }
+const delay=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms))
+
 export default [
   {
     url: '/api/upload',
     method: 'post',
-    rawResponse: (req,res) => {
+    rawResponse: async (req,res) => {
+      await delay(3000)
       upload(req,res)
       // res.end(JSON.stringify({
       //     code: 0,

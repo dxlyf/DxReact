@@ -1,4 +1,5 @@
 export default {
+    create:'创建 {label}',
     add:'添加',
     delete:'删除',
     confirm:'确认',
