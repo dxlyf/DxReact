@@ -206,3 +206,9 @@
 [submodule "packages/pinia"]
 	path = packages/pinia
 	url = git@github.com:vuejs/pinia.git
+[submodule "packages/vue-i18n"]
+	path = packages/vue-i18n
+	url = git@github.com:intlify/vue-i18n.git
+[submodule "packages/i18next"]
+	path = packages/i18next
+	url = git@github.com:i18next/i18next.git
