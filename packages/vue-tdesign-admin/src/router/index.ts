@@ -163,6 +163,14 @@ const defaultRoutes:RouteRecordRaw[]=[
                     icon:'table'
                   }
               },{
+                 path:'edittabs',
+                 component: () => import('../views/example/tdesign/edittabs.vue'),
+                 meta: {
+                    title: '新增页',
+                    menuName:'edit-tabs',
+                    icon:'table'
+                  }
+              },{
                  path:'list',
                  component: () => import('../views/example/tdesign/list.vue'),
                  meta: {
@@ -314,7 +322,10 @@ const router = createRouter({
   history: createWebHistory(),
   routes: routes
 })
-
+router.beforeEach((to, from, next) => {
+  console.log('全局路由守卫')
+  next()
+})
 const transformMenuDataFromRoutes = (routes: RouteRecordRaw[],parent?:MenuDataItem) => {
   let menuData: MenuDataItem[] = []
     

@@ -30,7 +30,9 @@ const props=withDefaults(defineProps<Props>(),{
 })
 
 const imageUrl=defineModel<string>()
-
+const fileName=computed(()=>{
+  return typeof imageUrl.value==='string'?imageUrl.value.split(/\\|\//).pop()||'':''
+})
 const state=shallowReactive({
   thumbnailUrl:'',
   showPreview:false,
@@ -130,6 +132,9 @@ const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
    })
 }
 const handleDelete=()=>{
+  if(props.disabled){
+    return
+  }
   imageUrl.value=''
   state.thumbnailUrl=''
 }
@@ -167,12 +172,13 @@ const handleDelete=()=>{
         </div>
          <t-image class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
          <t-image-viewer @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
-         <div v-if="imageUrl!==''" class="absolute inset-0 z-1 bg-[rgba(0,0,0,0.5)]  opacity-0 flex group-hover:opacity-100 duration-300 transition-all items-center justify-center">
+         <div v-if="imageUrl!==''" class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">
               <t-icon name="browse" size="20" class="cursor-pointer" @click="state.showPreview=true"></t-icon>     
-              <t-icon name="delete" size="20"  :class="[disabled?'text-gray-400 cursor-not-allowed':'cursor-pointer']" :disabled="disabled" @click="disabled?null:handleDelete"></t-icon>
-              
+              <t-icon name="delete" size="20"  :class="[disabled?'text-gray-400 cursor-not-allowed':'cursor-pointer']" :disabled="disabled" @click="handleDelete"></t-icon>
+      
             </div>
+            <div class="text-white mt-4">{{ fileName }}</div>
          </div>
       </div>
       <div class="text-gray-500 text-xs mt-1" v-if="tips!==''">

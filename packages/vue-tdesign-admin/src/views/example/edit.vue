@@ -11,7 +11,7 @@
     </div>
     
     <t-card :loading="loading" :loading-props="{attach:'body',fullscreen:true,text:'提交中...',showOverlay:false}" title="编辑" header-bordered :bordered="false">
-        <t-form class="w-md" layout='vertical' label-align='top' :data="formData" @submit="handleSubmit" :rules="rules">
+        <t-form class="w-max" layout='vertical' label-align='top' :data="formData" @submit="handleSubmit" :rules="rules">
                     <t-form-item  label="id" name="name">
                    <t-input v-model="formData.id"></t-input>
                 </t-form-item>  

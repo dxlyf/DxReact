@@ -1,10 +1,11 @@
 <script setup lang="ts">
   import FLanguage from '../FLanguage/index.vue'
-  import {Breadcrumb,type BreadcrumbProps} from 'tdesign-vue-next'
+  import {Breadcrumb,type BreadcrumbProps, type TdCardProps} from 'tdesign-vue-next'
   type Props={
-     langType?:'button'|'text',
-     title?:string,
+    langType?:'button'|'text',
+    title?:string,
     breadcrumbOptions?:BreadcrumbProps['options']
+    cardProps?:TdCardProps
   }
   const props=withDefaults(defineProps<Props>(), {
     langType:'text',
@@ -19,9 +20,14 @@
       </t-breadcrumb>
    </div>
     <div class="flex-auto">
-        <t-card :bordered="false" :title="title" header-bordered class="edit-body">
+        <slot name="content">
+          <t-card v-bind="cardProps||{}" :bordered="false" :title="title" header-bordered class="edit-body">
           <slot></slot>
+          <template #actions>
+            <slot name="actions"></slot>
+          </template>
         </t-card>
+        </slot>
     </div>
 </div>
 

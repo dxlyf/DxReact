@@ -16,7 +16,7 @@ watch(()=>currentLocale.value,(newVal)=>{
 
 <template>
     <div v-if="type=='button'" class="p-4 bg-white rounded-md gap-4 flex flex-wrap">
-        <div @click="activeKey=item.value" :class="[activeKey==item.value?'bg-blue-500 text-white rounded-md':'']" v-for="item in langList" :key="item.value">
+        <div @click="activeKey=item.value" :class="[activeKey==item.value?'bg-blue-500 text-white':'hover:bg-blue-500 hover:text-white']" class="cursor-pointer rounded-md px-4 py-1 flex items-center justify-center" v-for="item in langList" :key="item.value">
             {{ item.label }}
         </div>
     </div>
