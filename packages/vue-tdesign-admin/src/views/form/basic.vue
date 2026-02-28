@@ -263,6 +263,7 @@ export default defineComponent({
                         placeholder: '请选择开始日期时间',
                         format:'YYYY-MM-DD HH:mm:ss',
                         enableTimePicker:true,
+                        clearable:true,
                         timePickerProps:{
                             disableTime:(time:any) => disableTime(fromData.startDatetime,fromData.endDateTime,time,'start'),
                         },
@@ -277,6 +278,7 @@ export default defineComponent({
                         rules:[{ required: true, message: '请选择日期' }]
                     },
                     fieldProps: {
+                         clearable:true,
                         placeholder: '请选择结束日期时间',
                          format:'YYYY-MM-DD HH:mm:ss',
                         enableTimePicker:true,

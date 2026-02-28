@@ -13,13 +13,13 @@
   })
 </script>
 <template>
-<div class="wrapper flex-col">
+<div class="wrapper flex-col h-full flex">
     <FLanguage :type="langType" />
    <div class="mb-4">
      <t-breadcrumb :options="breadcrumbOptions">
       </t-breadcrumb>
    </div>
-    <div class="flex-auto">
+    <div class="flex-auto flex flex-col">
         <slot name="content">
           <t-card v-bind="cardProps||{}" :bordered="false" :title="title" header-bordered class="edit-body">
           <slot></slot>
