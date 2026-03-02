@@ -121,6 +121,15 @@ export default [
     },
   },
   {
+  url: '/api/uploaderror',
+    method: 'post',
+    rawResponse: async (req,res) => {
+      await delay(3000)
+      res.writeHead(500,'upload error');
+      res.end('upload error')
+    },
+  },
+  {
     url: '/api/list',
     method: 'post',
     response: ({ body }) => {

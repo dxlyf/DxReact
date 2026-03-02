@@ -12,7 +12,7 @@ type Props={
   },
   resize?:any[]
   tips?:string
-  accept?:string
+ // accept?:string
   extension?:string[]
 }
 const props=withDefaults(defineProps<Props>(),{
@@ -23,7 +23,7 @@ const props=withDefaults(defineProps<Props>(),{
   }), // mb
   disabled:false,
   resize:()=>[],
-  accept:'.jpg,.png,.gif,.svg',
+//  accept:'.jpg,.png,.gif,.svg',
   extension:()=>['png','jpg'],
   tips:'上传图片格式：PNG，尺寸：200*200(三倍图)，大小：≤2MB'
 
@@ -48,8 +48,9 @@ const showImage=computed(()=>{
 })
 // res.url 图片地址；res.uploadTime 文件上传时间；res.error 上传失败的原因
 const formatResponse:UploadProps['formatResponse']= (res) => {
+  console.log('formatResponse',res)
   // 响应结果添加上传时间字段，用于 UI 显示
-  if(res.code!==0){
+  if(res?.code!==0){
     return {
       status:'fail',
       error:res?.message||'上传失败',
@@ -61,7 +62,9 @@ const formatResponse:UploadProps['formatResponse']= (res) => {
     status:'success',
   }
 }
-
+const accept=computed(()=>{
+  return props.extension.map(v=>'.'+v).join(',')
+})
 const handleSuccess:UploadProps['onSuccess']=(ctx)=>{
   imageUrl.value=ctx.response.url
   state.showProgress=false
@@ -71,6 +74,8 @@ const handleSuccess:UploadProps['onSuccess']=(ctx)=>{
 const handleFail:UploadProps['onFail']=(ctx)=>{
   console.log('handleFail',ctx)
   imageUrl.value=''
+  state.thumbnailUrl=''
+  state.error=ctx?.response?.error||'上传失败'
   state.showProgress=false
   state.progress=0
 }

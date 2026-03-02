@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import EditLayout from './components/Layouts/EditLayout.vue'
 import BasicInfo from './components/Product/BasicInfo/index.vue'
+import ShoppingGuides from './components/Product/ShoppingGuides/index.vue'
 import { useRoute ,onBeforeRouteLeave} from 'vue-router';
 import { nextTick } from 'process';
 import { MessagePlugin } from 'tdesign-vue-next';
@@ -22,7 +23,8 @@ const tabs=[
         label:'FAQ'
     },{
         value:'shopping_guides',
-        label:'ShoppingGuides'
+        label:'ShoppingGuides',
+        component:ShoppingGuides
     }
 ]
 const activeTab=ref(localStorage.getItem('app_active_tab')||tabs[0].value)
