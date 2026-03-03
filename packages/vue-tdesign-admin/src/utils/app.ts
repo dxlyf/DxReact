@@ -230,3 +230,47 @@
 
 
 // export default new App()
+
+function injectionXMLRequestParams(){
+    const open=XMLHttpRequest.prototype.open
+    const injectUrl=(url:string)=>{
+        url=url+(url.includes('?')?"&":'?')+new URLSearchParams(App.getInstance().queryParams).toString()
+        console.log('injectUrl(url)',url)
+        return url
+    }
+    XMLHttpRequest.prototype.open=function(method:string,url:string,async?:boolean,user?:string,pass?:string){
+
+        open.call(this,method,injectUrl(url),async,user,pass)
+    }
+    const originFetch=window.fetch
+    window.fetch=function(input:RequestInfo|URL,init?:RequestInit){
+        if(typeof input==='string'){
+            input=injectUrl(input)
+        }
+        if(input instanceof Request){
+            input=new Request(injectUrl(input.url),input)
+        }
+        return originFetch.call(this,input,init)
+    }
+}
+declare global{
+    interface Window{
+        myApp:App
+    }
+}
+class App{
+    static instance:App|null=null
+    static getInstance(){
+        if(!this.instance){
+             this.instance=new App()
+        }
+        return this.instance
+    }
+    constructor(){
+        injectionXMLRequestParams()
+    }
+    get queryParams(){
+        return {app:'sys'}
+    }
+}
+export default App.getInstance()

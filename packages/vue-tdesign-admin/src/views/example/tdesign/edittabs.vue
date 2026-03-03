@@ -3,10 +3,11 @@ import { ref } from 'vue';
 import EditLayout from './components/Layouts/EditLayout.vue'
 import BasicInfo from './components/Product/BasicInfo/index.vue'
 import ShoppingGuides from './components/Product/ShoppingGuides/index.vue'
-import { useRoute ,onBeforeRouteLeave} from 'vue-router';
+import { useRoute,useRouter ,onBeforeRouteLeave} from 'vue-router';
 import { nextTick } from 'process';
 import { MessagePlugin } from 'tdesign-vue-next';
 const route=useRoute()
+const router=useRouter()
 const productId=route.query.id
 const tabs=[
     {
@@ -27,10 +28,19 @@ const tabs=[
         component:ShoppingGuides
     }
 ]
-const activeTab=ref(localStorage.getItem('app_active_tab')||tabs[0].value)
+// const currentPageTab=computed(()=>{
+//     return route.query.tab as string || tabs[0].value
+// })
+const activeTab=ref(route.query.tab as string || tabs[0].value)
 const handleTabChange=(value:string)=>{
     activeTab.value=value
-    localStorage.setItem('app_active_tab',value)
+   // localStorage.setItem('app_active_tab',value)
+   router.replace({
+        query:{
+            ...route.query,
+            tab:value
+        }
+   })
 }
 defineOptions({
     beforeRouteEnter:((to, from, next) => {
@@ -51,7 +61,7 @@ defineOptions({
                     <t-button theme="primary">返回</t-button>
         </template>
         <t-tabs :value="activeTab" @change="handleTabChange" class="tabs" theme="normal" default-value="basic" >
-                    <t-tab-panel v-for="tab in tabs" :key="tab.value" :value="tab.value" :label="tab.label">
+                    <t-tab-panel :destroy-on-hide="true" v-for="tab in tabs" :key="tab.value" :value="tab.value" :label="tab.label">
                     <component :is="tab.component" />
                     </t-tab-panel>
         </t-tabs>

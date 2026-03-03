@@ -8,6 +8,7 @@ import 'tdesign-vue-next/es/style/index.css'
 import i18n from './i18n'
 import './style.css'
 import './styles/index.less'
+import './utils/app'
 const app = createApp(App)
 app.use(i18n)
 app.use(router)

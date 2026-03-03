@@ -1,5 +1,10 @@
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
+declare global{
+    interface Window{
+        gtag: (...args: any[]) => void;
+    }
+}
 
 
 type UploadOptions = {

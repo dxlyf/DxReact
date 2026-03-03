@@ -82,11 +82,21 @@ const [tableProps, tableInstance] = useTable({
     tableActionRef,
     service: async (params) => {
         await delay(1000)
-        const res = await request<{ records: any[], total: number }>({
-            url: `/list`,
-            method: 'post',
-            data: params
-        })
+        // const res = await request<{ records: any[], total: number }>({
+        //     url: `/list`,
+        //     method: 'post',
+        //     data: params,
+        //     params:{
+        //         age:43
+        //     }
+        // })
+        // const res=await fetch(new Request(`/api/list`),{
+        //     method:'post',
+        //     body:JSON.stringify(params),
+        //     headers:{
+        //         'Content-Type':'application/json'
+        //     }
+        // }).then((res)=>res.json())
         return res.data
     },
     searchForm:searchFormProps.value,

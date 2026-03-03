@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {CollapsePanel} from 'tdesign-vue-next'
+import {CollapsePanel, type TdSelectInputProps, type TdTagInputProps} from 'tdesign-vue-next'
 import { reactive,ref,shallowReactive,shallowRef,computed,onBeforeMount, toRaw } from 'vue';
 import FUploadCover from '../../FUpload/FUploadCover2.vue'
 import CountrySelect from '@/components/country-select/index.vue'
@@ -11,7 +11,8 @@ const formData=reactive({
     isVirtual:0,
     hideInSearch:1,
     searchSynonym:[],
-    searchSynonym2:[]
+    searchSynonym2:[],
+    searchSynonym3:[]
 })
 const rules={
     slug:[
@@ -91,6 +92,51 @@ const enterSearchSynonym=(value,{inputValue})=>{
     // }else{
     //     formData.searchSynonym=[...value]
     // }
+}
+const inputValue=ref([])
+const SearchSelectInputProps=computed<TdTagInputProps>(()=>{
+    return {
+    value:inputValue.value,
+    disabled:formData.searchSynonym3.includes(inputValue.value),
+    onChange:(v)=>{
+        console.log('fffffffffffff',v)
+       inputValue.value=v
+    }
+
+    } as TdTagInputProps
+})
+const handleSelectSearchSynonym3=(value,ctx)=>{
+    const item=value[value.length-1]
+     const list=value.filter((v)=>v===item)
+     if(list.length>1){
+         formData.searchSynonym3=value.filter((v)=>v!==item)
+     }else{
+        formData.searchSynonym3=[...value]
+     }
+}
+const searchSynonym3Options=computed(()=>{
+    return formData.searchSynonym3.map((item)=>{
+        return {
+            label:item,
+            value:item
+        }
+    })
+})
+const handleAddSearchSynonym3=(value)=>{
+    const index=formData.searchSynonym3.findIndex((item)=>item===value)
+    //console.log('create',index)
+    if(index===-1){
+        formData.searchSynonym3=[...formData.searchSynonym3,value]
+    }
+
+}
+const handleEnterSearchSynonym3=({inputValue})=>{
+  const index=formData.searchSynonym3.findIndex((item)=>item===inputValue)
+    //console.log('create',index)
+    if(index===-1){
+        formData.searchSynonym3=[...formData.searchSynonym3,inputValue]
+        return true
+    }
 }
 
 </script>
@@ -186,13 +232,18 @@ const enterSearchSynonym=(value,{inputValue})=>{
                     </t-form-item>
 
                          <t-form-item label="Search synonym" name="searchSynonym" >
-                       <t-tag-input @change="handleChangeSearchSynonym" @enter="enterSearchSynonym" :value="formData.searchSynonym"></t-tag-input>
+                       <t-tag-input :drag-sort="true" @change="handleChangeSearchSynonym" @enter="enterSearchSynonym" :value="formData.searchSynonym"></t-tag-input>
 
                         <div class="ml-4">是否隐藏在搜索结果中</div>
                     </t-form-item>
                              <t-form-item label="Search synonym" name="searchSynonym2" >
                        
                           <t-select  @change="handleSelectSearchSynonym" creatable :multiple="true" :min-collapsed-num="3"  :options="searchSynonymOptions" @create="handleAddSearchSynonym" :clearable="true"  :filterable="true" :value="formData.searchSynonym2" ></t-select>
+                        <div class="ml-4">是否隐藏在搜索结果中</div> 
+                    </t-form-item>
+                                   <t-form-item label="Search synonym" name="searchSynonym3" >
+                       
+                          <t-select  @change="handleSelectSearchSynonym3" @enter="handleEnterSearchSynonym3"  creatable :multiple="true" :min-collapsed-num="3"  :options="searchSynonym3Options" @create="handleAddSearchSynonym3" :clearable="true"  :filterable="true" :value="formData.searchSynonym3" ></t-select>
                         <div class="ml-4">是否隐藏在搜索结果中</div> 
                     </t-form-item>
             </t-collapse-panel>
