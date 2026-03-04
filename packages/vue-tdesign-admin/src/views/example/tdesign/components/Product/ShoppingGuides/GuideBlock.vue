@@ -1,18 +1,96 @@
 <script setup lang="ts">
 import UploadCover from '@/views/example/tdesign/components/FUpload/FUploadCover2.vue'
+import { computed,ref,customRef, toRaw, type PropType, shallowRef} from 'vue'
+type SecondaryButtonItem={
+    title:string
+    link:string
+    linkType:string
+}
 type FormData = {
     title: string
     cover: string
-    highlight: string
+    highlight: string[]
+    slogan:string
+    primaryButtonTitle:string
+    primaryLinkTitle:string
+    primaryLinkType:string
+    gaLabel:string
+    secondaryButton:SecondaryButtonItem[]
 }
-const formData = defineModel<FormData>({ default: {} })
+type Props={
+    prefix?:string
+    modelValue:FormData
+}
+const props=withDefaults(defineProps<Props>(),{
+    prefix:'guideList'
+})
+const formData = defineModel<FormData>({ default: ()=>({
+    title:'',
+    cover:'',
+    slogan:'',
+    highlight:[],
+    primaryButtonTitle:'',
+    primaryLinkTitle:'',
+    primaryLinkType:'',
+    gaLabel:'',
+    secondaryButton:[]
+}) })
 
+const LinkTypeOptions=shallowRef([{ label: '相对链接', value: 'relative-path' }, { label: '绝对链接', value: 'absolute-path' },{ label: '商城相对链接', value: 'store-link' }])
+
+
+// const highlight=customRef((track,trigger)=>{
+//         return {
+//             get(){
+//                 console.log('get',toRaw(formData.value))
+//                 track()
+//                 return Array.isArray(formData.value.highlight)?formData.value.highlight:[]
+//             },
+//             set(val){
+//                 formData.value.highlight=val
+//                 trigger()
+//             }
+//         }
+// })
+// const highlight=computed({
+//     get(){
+//         console.log('get')
+//         return Array.isArray(formData.value.highlight)?formData.value.highlight:[]
+//     },
+//     set(val){
+//         formData.value.highlight=[...val]
+//     }
+// })
+const emit=defineEmits()
+const highlightJson=computed(()=>{
+    try{
+        return JSON.stringify(formData.value.highlight)
+    }catch(e){
+        return ''
+    }
+})
+const handleAddHiglight=()=>{
+    formData.value.highlight.push('')
+    if(formData.value.highlight.length<3){
+        handleAddHiglight()
+    }
+}
+const visibleDelHighlight=computed(()=>{
+    return formData.value.highlight.length>3
+})
+const handleAddSecondaryItem=()=>{
+    formData.value.secondaryButton.push({
+        title:'',
+        link:'',
+        linkType:'relative-path'
+    })
+}
 </script>
 <template>
-    <t-form-item label="Title" name="guide_title">
+    <t-form-item label="Title" :name="`${prefix}.title`">
         <UploadCover v-model="formData.title"></UploadCover>
     </t-form-item>
-    <t-form-item label="Cover" name="guide_cover">
+    <t-form-item label="Cover" :name="`${prefix}.cover`">
         <UploadCover v-model="formData.cover"></UploadCover>
     </t-form-item>
     <t-form-item label="Highlight">
@@ -20,16 +98,90 @@ const formData = defineModel<FormData>({ default: {} })
             <div class="grid grid-cols-[1fr_200px] gap-x-2 w-full">
                 <div>
                     <t-form-item :label-width="0">
-                        <t-input v-model="formData.highlight">
+                        <t-input readonly :value="highlightJson">
                         </t-input>
                     </t-form-item>
                 </div>
-                <div><t-button theme="primary">Add Highlight</t-button></div>
+                <div><t-button theme="primary" @click="handleAddHiglight">Add Highlight</t-button></div>
             </div>
-            <div class="grid grid-cols-[1fr_200px] gap-2 mt-2">
-                <div><t-input>
-                    </t-input></div>
+            <div><t-icon name="info-circle-filled" class="text-yellow-700 mr-1"></t-icon>当前字段内容复英语</div>
+            <div class="text-gray-500 text-sm mt-1">Please input AT LEAST 3 highlights</div>
+
+            <div class="grid grid-cols-[1fr_200px] mt-2 gap-2" >
+               <template v-for="(item,index) in formData.highlight" :key="index">
+                <div><t-input v-model="formData.highlight[index]"></t-input></div>
+                <div >
+                    <t-button v-if="visibleDelHighlight" theme="danger" @click="formData.highlight.splice(index,1)">Delete This Highlight</t-button>
+                </div>
+               </template>
             </div>
         </div>
+    </t-form-item>
+    <t-form-item label="slogan" :name="`${prefix}.slogan`">
+        <t-input v-model="formData.slogan"></t-input>
+    </t-form-item>
+    <t-form-item label="Primary button fast access">
+        <t-radio-group value="0">
+            <t-radio-button v-for="(item,i) in ['buy_now','where_to_buy','contacft_us','reserve_now']" :key="item" :value="item">
+                {{item}}
+            </t-radio-button>
+        </t-radio-group>
+    </t-form-item>
+    <div class="grid grid-cols-2 gap-x-2">
+        <div>
+            <t-form-item label="Primary Button Title" :name="`${prefix}.primaryButtonTitle`">
+                <t-input v-model="formData.primaryButtonTitle"></t-input>
+            </t-form-item>
+        </div>
+        <div>
+            <t-form-item label="Primary Link title" :name="`${prefix}.primaryLinkTitle`">
+                <t-input v-model="formData.primaryLinkTitle"></t-input>
+            </t-form-item>
+        </div>
+         <div>
+            <t-form-item label="Primary Link Type" :name="`${prefix}.primaryLinkType`">
+                <t-select v-model="formData.primaryLinkType" :options="LinkTypeOptions"></t-select>
+            </t-form-item>
+        </div>
+        <div>
+            <t-form-item label="GA Label" :name="`${prefix}.gaLabel`">
+                <t-input v-model="formData.gaLabel"></t-input>
+            </t-form-item>
+        </div>
+    </div>
+     <t-form-item label="Secondary button">
+        <div class="grid grid-cols-[1fr_200px] gap-2 w-full">
+                <div>
+                    <t-textarea disabled style="height:60px"></t-textarea>
+                    <div><t-icon name="info-circle-filled" class="text-yellow-700 mr-1"></t-icon>当前字段内容复英语</div>
+                </div>
+                <div>
+                    <t-button @click="handleAddSecondaryItem">Add Secondary Button</t-button>
+                </div>
+                <template v-for="(item,index) in formData.secondaryButton" :key="index">
+                    <div>
+                    <div class="grid grid-cols-3 gap-x-2">
+                      <div>
+                        <t-form-item :name="`${prefix}.secondaryButton[${index}].title`">
+                            <t-input v-model="formData.secondaryButton[index].title" placeholder="Secondary Button Title"></t-input>
+                        </t-form-item>
+                      </div>
+                      <div>
+                        <t-form-item :name="`${prefix}.secondaryButton[${index}].link`">
+                            <t-input v-model="formData.secondaryButton[index].link" placeholder="Secondary Button Link"></t-input>
+                        </t-form-item>
+                      </div>
+                      <div>
+                        <t-form-item :name="`${prefix}.secondaryButton[${index}].linkType`">
+                            <t-select v-model="formData.secondaryButton[index].linkType" placeholder="Select an Option" :options="LinkTypeOptions"></t-select>
+                        </t-form-item>
+                      </div>
+                    </div>
+                    </div>
+                    <div>
+                        <t-button theme="danger" @click="formData.secondaryButton.splice(index,1)">Delete</t-button>
+                    </div>
+                </template>
+            </div>
     </t-form-item>
 </template>

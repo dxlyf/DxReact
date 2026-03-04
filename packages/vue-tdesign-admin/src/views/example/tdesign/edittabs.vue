@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import EditLayout from './components/Layouts/EditLayout.vue'
 import BasicInfo from './components/Product/BasicInfo/index.vue'
 import ShoppingGuides from './components/Product/ShoppingGuides/index.vue'
+import SubNav from './components/Product/SubNav/index.vue'
+import Video from './components/Product/Video/index.vue'
 import { useRoute,useRouter ,onBeforeRouteLeave} from 'vue-router';
 import { nextTick } from 'process';
 import { MessagePlugin } from 'tdesign-vue-next';
@@ -26,6 +28,16 @@ const tabs=[
         value:'shopping_guides',
         label:'ShoppingGuides',
         component:ShoppingGuides
+    },
+    {
+        value:'sub_nav',
+        label:'SubNav',
+        component:SubNav
+    },
+    {
+        value:'video',
+        label:'Video',
+        component:Video
     }
 ]
 // const currentPageTab=computed(()=>{

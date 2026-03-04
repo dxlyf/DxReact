@@ -128,6 +128,18 @@ export default [
       res.writeHead(500,'upload error');
       res.end('upload error')
     },
+  },  {
+  url: '/api/upload2',
+    method: 'post',
+    response: async (req,res) => {
+         return {
+        code: 0,
+        msg:'success',
+        data: {
+          
+        },
+      }
+    },
   },
   {
     url: '/api/list',

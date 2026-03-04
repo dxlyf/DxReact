@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, toRaw,ref,shallowRef } from 'vue'
+import { reactive, toRaw,ref,shallowRef, shallowReactive } from 'vue'
 import GuideBlock from './GuideBlock.vue'
 import RecommendedBlock from './RecommendedBlock.vue'
 
@@ -7,8 +7,9 @@ const formData = reactive({
     showShoppingGuide: 0,
     backgroundColor: '#ffffff',
     themeColor: 'white',
+    guideList:[]
 })
-const guideList = shallowRef([])
+
 const rules = {
 
 }
@@ -16,8 +17,26 @@ const handleSubmit = (e) => {
     console.log('submit', toRaw(formData))
 }
 const handleAddGuideBlock=()=>{
-    guideList.value=[...guideList.value,1]
-    console.log('fffff')
+    formData.guideList.push({
+        title:'',
+        cover:'',
+        slogan:'',
+        highlight:[],
+        primaryButtonTitle:'',
+        primaryLinkTitle:'',
+        primaryLinkType:'',
+        gaLabel:'',
+        secondaryButton:[]
+    })
+    //   formData.guideList=[...formData.guideList,{
+    //     title:'',
+    //     cover:'',
+    //     highlight:[]
+    // }]
+}
+const handleRemove=(index:number)=>{
+    formData.guideList.splice(index,1)
+   //formData.guideList=formData.guideList.filter((v,i)=>i!==index)
 }
 </script>
 
@@ -38,25 +57,31 @@ const handleAddGuideBlock=()=>{
                 </t-radio-group>
             </t-form-item>
         </div>
-        <t-collapse class="content" default-expand-all expand-icon-placement="right" borderless>
+        <t-collapse class="content" default-expand-all expand-icon-placement="right" borderless :expand-on-row-click="false">
             <t-collapse-panel value="0">
                 <template #header>
                     <div class="header">Guide</div>
                 </template>
                 <template #headerRightContent>
-                    <t-button @click="handleAddGuideBlock" theme="primary" variant="base" size="small" type="submit">Add Guide</t-button>
+                    <t-button @click="handleAddGuideBlock" theme="primary" variant="base" size="small" >Add Guide</t-button>
                 </template>
-                <div v-for="(guide,index) in guideList" :key="index"  class="guide-block" >
-                    <GuideBlock></GuideBlock>
+                <div v-for="(guide,index) in formData.guideList" :key="index"  class="guide-block" >
+                    <GuideBlock v-model="formData.guideList[index]"></GuideBlock>
+                    <div class="flex justify-between mt-4">
+                        <div></div>
+                        <div>
+                            <t-button theme="danger" @click="handleRemove(index)">Remove Guide</t-button>
+                        </div>
+                    </div>
                 </div>
             </t-collapse-panel>
         </t-collapse>
 
-        <t-form-item>
-           <t-space class="ml-4 mt-4">
+        <div class="p-4">
+             <t-space>
              <t-button theme="primary" type="submit">提交</t-button>
            </t-space>
-        </t-form-item>
+        </div>
 
 
     </t-form>
