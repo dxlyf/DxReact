@@ -96,8 +96,8 @@ const jsonNav=computed(()=>{
         return ''
     }
 })
-const linkTypeOptions=[{ label: 'relative-path', value: 'relative-path' }, { label: 'absolute-path', value: 'absolute-path' },{ label: 'store-link', value: 'store-link' }] as const
-const navTypeOptions=[{ label: 'normal', value: 'normal' }, { label: 'anchor', value: 'anchor' }] as const
+const linkTypeOptions=[{ label: 'relative-path', value: 'relative-path' }, { label: 'absolute-path', value: 'absolute-path' },{ label: 'store-link', value: 'store-link' }] 
+const navTypeOptions=[{ label: 'normal', value: 'normal' }, { label: 'anchor', value: 'anchor' }]
 
 
 const uuid=()=>{
@@ -191,8 +191,8 @@ const handleSubmit = (e:any) => {
                             <t-button>New Nav</t-button>
                         </t-space>
                         <div class="mt-4">
-                            <t-radio-group theme="button">
-                                <t-radio-button @click="()=>handleFillNav(item)" v-for="item in fastAccessOptions" :key="item.value" :value="item.value">{{item.label}}</t-radio-button>
+                            <t-radio-group theme="button" value="">
+                                <t-radio-button @click="()=>handleFillNav(item)" v-for="(item,index) in fastAccessOptions" :key="item.value" :value="index">{{item.label}}</t-radio-button>
                             </t-radio-group>
                         </div>
                     </div>
@@ -206,12 +206,16 @@ const handleSubmit = (e:any) => {
                 <template #headerRightContent>
                    <t-space>
                     <t-button theme="primary" @click="handleAddNav"  size="small">Add nav</t-button>
-                    <t-button theme="danger"  size="small" @click="handleDelLastNav" >Delete Last nav</t-button>
-                    <t-button theme="primary"  size="small" @click="handleDelAll" >Delete All</t-button>
+                      <t-popconfirm content="确定要删除？" @confirm="handleDelLastNav">
+                        <t-button theme="danger"  size="small"  >Delete Last nav</t-button>
+                        </t-popconfirm> 
+                     <t-popconfirm content="确定要全部删除？" @confirm="handleDelAll">
+                    <t-button theme="primary"  size="small"  >Delete All</t-button>
+                    </t-popconfirm>
                    </t-space>
                 </template>
                 <div >
-                  <t-table class="nav-table"  drag-sort="row-handler" @drag-sort="onDragSort" row-key="id" :data="formData.nav" :columns="navColumns">
+                  <t-table class="nav-table"  drag-sort="row-handler" @drag-sort="onDragSort" row-key="index" :data="formData.nav" :columns="navColumns">
                     <template #cell_drag="{row}" >
                         <t-icon name="move"></t-icon>
                     </template>
@@ -239,7 +243,9 @@ const handleSubmit = (e:any) => {
                     </template>
                     <template #cell_operation="{row,rowIndex}">
                         <t-space>
-                            <t-button theme="danger" size="small" @click="handleDelNav(rowIndex)">Delete</t-button>
+                            <t-popconfirm content="确定要删除？" @confirm="handleDelNav(rowIndex)">
+                            <t-button theme="danger" size="small" >Delete</t-button>
+                                </t-popconfirm>
                         </t-space>
                     </template>
                   </t-table>

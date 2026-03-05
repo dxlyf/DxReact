@@ -1,10 +1,22 @@
 
 <script lang="ts" setup>
 import { computed, ref,shallowReactive} from 'vue';
-import type { UploadProps } from 'tdesign-vue-next';
-
+import { Message, MessagePlugin, type UploadProps } from 'tdesign-vue-next';
+type CheckImageOptions={
+  width?:number
+  height?:number
+  size?:number
+  type?:string
+  controller?:string
+}
+type ImageInfo={
+  width:number
+  height:number
+  type:string
+}
 type Props={
   disabled?:boolean,
+  loadCheckImageConfig?:CheckImageOptions
   limit?:{
     width?:number,
     height?:number,
@@ -14,7 +26,10 @@ type Props={
   tips?:string
  // accept?:string
   extension?:string[]
+  subtitle?:string
+  skipLoadCheck?:boolean
 }
+
 const props=withDefaults(defineProps<Props>(),{
   limit:()=>({
    // width:200,
@@ -24,9 +39,9 @@ const props=withDefaults(defineProps<Props>(),{
   disabled:false,
   resize:()=>[],
 //  accept:'.jpg,.png,.gif,.svg',
-  extension:()=>['png','jpg'],
-  tips:'上传图片格式：PNG，尺寸：200*200(三倍图)，大小：≤2MB'
-
+  extension:()=>['png','jpg','jpeg','gif','svg'],
+  //tips:',
+  skipLoadCheck:false
 })
 
 const imageUrl=defineModel<string>()
@@ -38,7 +53,8 @@ const state=shallowReactive({
   showPreview:false,
   showProgress:false,
   progress:0,
-  error:''
+  error:'',
+  loadCheckImageError:''
 })
 const isUndef=(val:any)=>{
   return val===undefined||val===null||val===''
@@ -107,6 +123,29 @@ const loadImage=(url:string)=>{
     }
   })
 }
+
+
+const checkImage=(options:CheckImageOptions,imageInfo:ImageInfo)=>{
+  let msg=''
+  if(typeof options.type==='string'&&options.type!==imageInfo.type){
+    msg+='/格式'
+  }
+  if(Number.isFinite(options.width)&&options.width!==0&&(options.width!==imageInfo.width||options.height!==imageInfo.height)){
+    msg+='/尺寸'
+  }
+  if(msg.length>0){
+    msg=`图片${msg.slice(1)}不符合规范，请重新上传`
+  }
+  return msg;
+}
+const checkImageDom=(img:HTMLImageElement,options:CheckImageOptions)=>{
+  const imageInfo={
+    width:img.naturalWidth,
+    height:img.naturalHeight,
+    type:img.src.split('.').pop()?.toLowerCase()||''
+  }
+  return checkImage(options,imageInfo)
+}
 const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
 
    return new Promise(async (resolve,reject)=>{
@@ -114,24 +153,27 @@ const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
       const fileName=file.name,type=file.type,ext=fileName.split('.').pop()?.toLowerCase()
       let msg=''
       if(!props.extension?.some(d=>ext===d.toLowerCase())){
-        msg+=`/格式`
+         msg+=`/格式`
       }
       if(fileSize>props.limit.size){
-        msg+=`/大小`
+        msg+=`/文件大小应小于${props.limit.size}MB`
+      //  MessagePlugin.error(`文件大小应小于${props.limit.size}MB`)
+       // resolve(false)
+       // return 
       }
       const img=await loadImage(await fileToBase64(file.raw) as string) as HTMLImageElement
-      const width=props.limit.width
-      const height=props.limit.height
-      if(Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
-        msg+=`/尺寸`
-      }
+      // const width=props.limit.width
+      // const height=props.limit.height
+      // if(Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
+      //   msg+=`/尺寸`
+      // }
+      file.thumbnailUrl=img.src
+      state.thumbnailUrl=img.src
       if(msg!==''){
         state.error=`图片${msg.slice(1)}不符合规范，请重新上传`
         resolve(false)
         return
       }
-      file.thumbnailUrl=img.src
-      state.thumbnailUrl=img.src
       state.showProgress=true
       resolve(true)
    })
@@ -142,6 +184,19 @@ const handleDelete=()=>{
   }
   imageUrl.value=''
   state.thumbnailUrl=''
+  state.error=''
+  state.loadCheckImageError=''
+}
+const handleCheckImage=({e}:any)=>{
+  const img=e.target as HTMLImageElement
+  if(props.skipLoadCheck||state.error.length>0){
+    return
+  }
+  let msg=checkImageDom(img,props.loadCheckImageConfig)
+  if(msg.length>0){
+    state.error=msg
+    return
+  }
 }
 </script>
 
@@ -167,7 +222,7 @@ const handleDelete=()=>{
         <div class="upload-drop border-dashed hover:border-blue-500 flex-1 flex flex-col items-center justify-center">
             <t-icon name="upload" size="40" class="text-blue-500"></t-icon>
             <p class="text-lg"><slot name="title">{{ dragActive?'释放文件上传':'点击或将文件拖拽到这里上传' }}</slot></p>
-            <p class="text-sm"><slot name="subtitle">支持扩展名：{{ extension.map(d=>d.toUpperCase()).join('、') }}</slot></p>
+            <p class="text-sm"><slot name="subtitle">{{ subtitle}}</slot></p>
         </div>
       </template>
       </t-upload>
@@ -175,7 +230,7 @@ const handleDelete=()=>{
         <div class="absolute top-0 w-full z-10" v-if="state.showProgress">
           <t-progress class="w-full [&_.t-progress\_\_bar]:!rounded-none [&_.t-progress\_\_info]:!hidden" color="#00ff00" :percentage="state.progress" :label="false"></t-progress>
         </div>
-         <t-image class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
+         <t-image @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
          <t-image-viewer @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
          <div v-if="imageUrl!==''" class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">
@@ -186,11 +241,14 @@ const handleDelete=()=>{
             <div class="text-white mt-4">{{ fileName }}</div>
          </div>
       </div>
-      <div class="text-gray-500 text-xs mt-1" v-if="tips!==''">
-        {{ tips }}
+      <div class="text-gray-500 text-xs mt-1" v-if="tips!==''||$slots.tips">
+        <slot name="tips">{{tips}}</slot>
       </div>
       <div class="text-red-500 text-xs mt-1" v-if="state.error!==''">
         {{ state.error }}
+      </div>
+        <div class="text-red-500 text-xs mt-1" v-if="state.loadCheckImageError!==''">
+        {{ state.loadCheckImageError }}
       </div>
     </div>
 </template>

@@ -212,3 +212,6 @@
 [submodule "packages/i18next"]
 	path = packages/i18next
 	url = git@github.com:i18next/i18next.git
+[submodule "packages/tdesign-react"]
+	path = packages/tdesign-react
+	url = https://github.com/Tencent/tdesign-react.git

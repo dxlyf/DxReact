@@ -24,6 +24,7 @@ type Props={
 const props=withDefaults(defineProps<Props>(),{
     prefix:'guideList'
 })
+
 const formData = defineModel<FormData>({ default: ()=>({
     title:'',
     cover:'',
@@ -87,10 +88,10 @@ const handleAddSecondaryItem=()=>{
 }
 </script>
 <template>
-    <t-form-item label="Title" :name="`${prefix}.title`">
+    <t-form-item :rules="[{required:true,message:'请上传title'}]" label="Title" :name="`${prefix}.title`">
         <UploadCover v-model="formData.title"></UploadCover>
     </t-form-item>
-    <t-form-item label="Cover" :name="`${prefix}.cover`">
+    <t-form-item :rules="[{required:true,message:'请上传cover'}]" label="Cover" :name="`${prefix}.cover`">
         <UploadCover v-model="formData.cover"></UploadCover>
     </t-form-item>
     <t-form-item label="Highlight">
@@ -129,24 +130,28 @@ const handleAddSecondaryItem=()=>{
     </t-form-item>
     <div class="grid grid-cols-2 gap-x-2">
         <div>
-            <t-form-item label="Primary Button Title" :name="`${prefix}.primaryButtonTitle`">
-                <t-input v-model="formData.primaryButtonTitle"></t-input>
+            <t-form-item :rules="[{required:true,message:'请输入title'}]" label="Primary Button Title" :name="`${prefix}.primaryButtonTitle`">
+                <t-input v-model="formData.primaryButtonTitle" placeholder="Primary Button title"></t-input>
             </t-form-item>
+               <div></div>
         </div>
         <div>
-            <t-form-item label="Primary Link title" :name="`${prefix}.primaryLinkTitle`">
-                <t-input v-model="formData.primaryLinkTitle"></t-input>
+            <t-form-item :rules="[{required:true,message:'请输入link'}]" label="Primary Link title" :name="`${prefix}.primaryLinkTitle`">
+                <t-input v-model="formData.primaryLinkTitle" placeholder="Primary Button link"></t-input>
             </t-form-item>
+               <div></div>
         </div>
          <div>
-            <t-form-item label="Primary Link Type" :name="`${prefix}.primaryLinkType`">
-                <t-select v-model="formData.primaryLinkType" :options="LinkTypeOptions"></t-select>
+            <t-form-item :rules="[{required:true,message:'请选择link type'}]" label="Primary Link Type" :name="`${prefix}.primaryLinkType`">
+                <t-select placeholder="请选择link type" v-model="formData.primaryLinkType" :options="LinkTypeOptions"></t-select>
             </t-form-item>
+            <div></div>
         </div>
         <div>
-            <t-form-item label="GA Label" :name="`${prefix}.gaLabel`">
-                <t-input v-model="formData.gaLabel"></t-input>
+            <t-form-item :rules="[{required:true,message:'请输入ga label'}]" label="GA Label" :name="`${prefix}.gaLabel`">
+                <t-input placeholder="GA Label" v-model="formData.gaLabel"></t-input>
             </t-form-item>
+               <div></div>
         </div>
     </div>
      <t-form-item label="Secondary button">

@@ -7,7 +7,8 @@ const formData = reactive({
     showShoppingGuide: 0,
     backgroundColor: '#ffffff',
     themeColor: 'white',
-    guideList:[]
+    guideList:[],
+    recommendedContent:[]
 })
 
 const rules = {
@@ -34,9 +35,23 @@ const handleAddGuideBlock=()=>{
     //     highlight:[]
     // }]
 }
-const handleRemove=(index:number)=>{
+const handleRemoveGuide=(index:number)=>{
     formData.guideList.splice(index,1)
    //formData.guideList=formData.guideList.filter((v,i)=>i!==index)
+}
+const handleAddRecommended=()=>{
+    formData.recommendedContent.push({
+        icon: '',
+        countries:[],
+        title:'',
+        actionName:'',
+        link:'',
+        gaLabel:'',
+        description:''
+    })
+}
+const handleRemoveRecommended=(index:number)=>{
+    formData.recommendedContent.splice(index,1)
 }
 </script>
 
@@ -65,12 +80,30 @@ const handleRemove=(index:number)=>{
                 <template #headerRightContent>
                     <t-button @click="handleAddGuideBlock" theme="primary" variant="base" size="small" >Add Guide</t-button>
                 </template>
-                <div v-for="(guide,index) in formData.guideList" :key="index"  class="guide-block" >
-                    <GuideBlock v-model="formData.guideList[index]"></GuideBlock>
+                <div v-for="(guide,index) in formData.guideList" :key="index"  class="block" >
+                    <GuideBlock :prefix="`guideList[${index}]`" v-model="formData.guideList[index]"></GuideBlock>
                     <div class="flex justify-between mt-4">
                         <div></div>
                         <div>
-                            <t-button theme="danger" @click="handleRemove(index)">Remove Guide</t-button>
+                            <t-button theme="danger" @click="handleRemoveGuide(index)">Remove Guide</t-button>
+                        </div>
+                    </div>
+                </div>
+            </t-collapse-panel>
+
+            <t-collapse-panel value="1">
+                <template #header>
+                    <div class="header">Recommended content</div>
+                </template>
+                <template #headerRightContent>
+                    <t-button @click="handleAddRecommended" theme="primary" variant="base" size="small" >Add Content</t-button>
+                </template>
+                <div v-for="(recommend,index) in formData.recommendedContent" :key="index"  class="block" >
+                    <RecommendedBlock :prefix="`recommendedContent[${index}]`" v-model="formData.recommendedContent[index]"></RecommendedBlock>
+                    <div class="flex justify-between mt-4">
+                        <div></div>
+                        <div>
+                            <t-button theme="danger" @click="handleRemoveRecommended(index)">Remove Guide</t-button>
                         </div>
                     </div>
                 </div>
@@ -96,11 +129,11 @@ const handleRemove=(index:number)=>{
     background-color: rgba(0,0,0,0.1)!important;
     padding: 16px!important;
 }
-.guide-block{
+.block{
     background-color: #fff;
     padding: 16px;
 }
-.guide-block:nth-of-type(n+2){
+.block:nth-of-type(n+2){
     margin-top: 16px;
 }
 

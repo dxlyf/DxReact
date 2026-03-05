@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref,onBeforeUnmount,onUnmounted } from 'vue';
 import EditLayout from './components/Layouts/EditLayout.vue'
 import BasicInfo from './components/Product/BasicInfo/index.vue'
 import ShoppingGuides from './components/Product/ShoppingGuides/index.vue'
