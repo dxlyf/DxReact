@@ -13,6 +13,13 @@ type FormData = {
     gaLabel: string
     description: string
 }
+type FastAccessOption={
+    name:string
+    title:string
+    actionName:string
+    link:string
+    gaLabel:string
+}
 type Props = {
     prefix?: string
     modelValue: FormData
@@ -20,6 +27,36 @@ type Props = {
 const props = withDefaults(defineProps<Props>(), {
     prefix: 'recommendedContent'
 })
+const fastAccessOptions=shallowRef<FastAccessOption[]>([
+    {
+        name:'BuyNow',
+        title:'Buy Now',
+        actionName:'Buy Now',
+        link:'/buy-now',
+        gaLabel:'Buy Now'
+    },
+    {
+        name:'WhereToBuy',
+        title:'Where to buy',
+        actionName:'Where to buy',
+        link:'/where-to-buy',
+        gaLabel:'Where to buy'
+    },
+    {
+        name:'ContactUs',
+        title:'Contact us',
+        actionName:'Contact us',
+        link:'/contact-us',
+        gaLabel:'Contact us'
+    },
+    {
+        name:'ReserveNow',
+        title:'Reserve now',
+        actionName:'Reserve now',
+        link:'/reserve-now',
+        gaLabel:'Reserve now'
+    },
+])
 const formData = defineModel<FormData>({
     default: () => ({
         icon: '',
@@ -31,19 +68,20 @@ const formData = defineModel<FormData>({
         description: ''
     })
 })
-const fastAccessOptions = shallowRef(Array.from({ length: 30 }, (v, i) => {
-    return {
-        label: `Fast access ${i + 1}`,
-        value: `fastAccess${i + 1}`
-    }
-}))
+
+const handleFilledBlock=(item:FastAccessOption)=>{
+    formData.value.title=item.title
+    formData.value.actionName=item.actionName
+    formData.value.link=item.link
+    formData.value.gaLabel=item.gaLabel
+}
 </script>
 <template>
     <t-form-item label="Recommended content fast access">
         <div class="flex flex-wrap gap-1">
             <div class="p-2 border border-stone-300 cursor-pointer hover:text-blue-500"
-                v-for="(item, i) in fastAccessOptions" :key="item.value">
-                {{ item.label }}
+                v-for="(item, i) in fastAccessOptions" :key="i" @click="handleFilledBlock(item)">
+                {{ item.name }}
             </div>
         </div>
     </t-form-item>

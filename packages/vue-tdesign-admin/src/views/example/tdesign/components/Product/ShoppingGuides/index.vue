@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, toRaw,ref,shallowRef, shallowReactive } from 'vue'
+import { reactive, toRaw,ref,shallowRef, shallowReactive,provide} from 'vue'
 import GuideBlock from './GuideBlock.vue'
 import RecommendedBlock from './RecommendedBlock.vue'
 
@@ -14,6 +14,21 @@ const formData = reactive({
 const rules = {
 
 }
+const fastAccessOptions=shallowRef([])
+provide('guidedata',{
+fastAccessOptions
+})
+setTimeout(()=>{
+    fastAccessOptions.value=[
+        {
+            name:'BuyNow',
+            buttonTitle:'Buy Now',
+            linkTitle:'Buy Now',
+            linkType:'url',
+            gaLabel:'Buy Now'
+        }
+    ]
+},5000)
 const handleSubmit = (e) => {
     console.log('submit', toRaw(formData))
 }
@@ -103,7 +118,7 @@ const handleRemoveRecommended=(index:number)=>{
                     <div class="flex justify-between mt-4">
                         <div></div>
                         <div>
-                            <t-button theme="danger" @click="handleRemoveRecommended(index)">Remove Guide</t-button>
+                            <t-button theme="danger" @click="handleRemoveRecommended(index)">Remove Content</t-button>
                         </div>
                     </div>
                 </div>

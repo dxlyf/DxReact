@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import UploadCover from '@/views/example/tdesign/components/FUpload/FUploadCover2.vue'
-import { computed,ref,customRef, toRaw, type PropType, shallowRef} from 'vue'
+import { computed,ref,customRef, toRaw, type PropType, shallowRef, inject,watch} from 'vue'
 type SecondaryButtonItem={
     title:string
     link:string
@@ -17,6 +17,13 @@ type FormData = {
     gaLabel:string
     secondaryButton:SecondaryButtonItem[]
 }
+type FastAccessOption={
+    name:string
+    buttonTitle:string
+    linkTitle:string
+    linkType:string
+    gaLabel:string
+}
 type Props={
     prefix?:string
     modelValue:FormData
@@ -24,7 +31,36 @@ type Props={
 const props=withDefaults(defineProps<Props>(),{
     prefix:'guideList'
 })
-
+const fastAccessOptions=shallowRef<FastAccessOption[]>([
+    {
+        name:'BuyNow',
+        buttonTitle:'购买',
+        linkTitle:'/buy',
+        linkType:'relative-path',
+        gaLabel:'fdfd'
+    },
+    {
+        name:'WhereToBuy',
+        buttonTitle:'cdddd',
+        linkTitle:'aa',
+        linkType:'absolute-path',
+        gaLabel:''
+    },
+    {
+        name:'ContactUs',
+        buttonTitle:'ac',
+        linkTitle:'',
+        linkType:'relative-path',
+        gaLabel:''
+    },
+    {
+        name:'ReserveNow',
+        buttonTitle:'fa',
+        linkTitle:'bsa',
+        linkType:'absolute-path',
+        gaLabel:'fd'
+    },
+])
 const formData = defineModel<FormData>({ default: ()=>({
     title:'',
     cover:'',
@@ -86,6 +122,16 @@ const handleAddSecondaryItem=()=>{
         linkType:'relative-path'
     })
 }
+const handleFilledPrimaryBlock=(item:FastAccessOption)=>{
+    formData.value.primaryButtonTitle=item.buttonTitle
+    formData.value.primaryLinkTitle=item.linkTitle
+    formData.value.primaryLinkType=item.linkType
+    formData.value.gaLabel=item.gaLabel
+}
+const {fastAccessOptions:fastAccessOptionsFromParent}=inject('guidedata')
+watch(fastAccessOptionsFromParent,(val)=>{
+    console.log('fastAccessOptions-update',val)
+})
 </script>
 <template>
     <t-form-item :rules="[{required:true,message:'请上传title'}]" label="Title" :name="`${prefix}.title`">
@@ -123,8 +169,8 @@ const handleAddSecondaryItem=()=>{
     </t-form-item>
     <t-form-item label="Primary button fast access">
         <t-radio-group value="0">
-            <t-radio-button v-for="(item,i) in ['buy_now','where_to_buy','contacft_us','reserve_now']" :key="item" :value="item">
-                {{item}}
+            <t-radio-button @click="handleFilledPrimaryBlock(item)" v-for="(item,i) in fastAccessOptions" :key="i" >
+                {{item.name}}
             </t-radio-button>
         </t-radio-group>
     </t-form-item>

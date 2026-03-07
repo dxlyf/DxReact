@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useLang } from 'src/hooks/useLang';
 import type { TableProps ,FormInstanceFunctions, UploadInstanceFunctions} from 'tdesign-vue-next';
-import { reactive, shallowRef, computed, toRaw, ref,ShallowRef, shallowReactive } from 'vue';
+import { reactive,watch, shallowRef, computed, toRaw, ref,ShallowRef, shallowReactive } from 'vue';
 import {DialogPlugin, MessagePlugin as Message} from 'tdesign-vue-next'
+import { usePolling } from 'src/hooks/usePolling';
+
 const [,{currentLocale}]=useLang()
 type VideoGroup = {
     groupSlug: string
@@ -124,6 +126,9 @@ const importFormData=shallowReactive({
     file:[]
 })
 const [allLang]=useLang()
+const handleCloneDialogConfirm=()=>{
+    dialogFormRef.value.submit()
+}
  const handleCloneSubmit=async (e:any)=>{
  
     console.log('cloneFormData',toRaw(cloneFormData))
@@ -157,13 +162,52 @@ const importPostData=()=>{
          productId:'123'
      }
 }
+
+const {isPolling,pollingState,start:startPolling,stop:stopPolling,pollingCount,lastResult}=usePolling(async (id:number)=>{
+       console.log('执行轮询请求'+pollingCount.value)
+
+    //importing finished success
+    if(pollingCount.value>=5){
+        stopPolling()
+        return {
+            jobId:1,
+            status:'finished',
+            slug:'video-1'
+        }
+    }
+    //importing finished failed
+    return {
+        jobId:1,
+        status:'importing',
+        slug:'video-1'
+    }
+},{
+    interval:3000,
+    maxRetries:5,
+    onError:(err)=>{
+        Message.error(err.message)
+    }
+})
+watch(visibleImportDialog,(val)=>{
+    if(!val){
+        pollingState.value='idle'
+    }
+})
 const handleImportSubmit=(e:any)=>{
-     console.log('importFormData',toRaw(importFormData))
+    // console.log('importFormData',toRaw(importFormData))
      if(e.validateResult!==true){
         return
      }
-     dialogConfirmLoading.value=true
-     uploadRef.value.uploadFiles()
+     const file=importFormData.file[0].raw
+   ///  dialogConfirmLoading.value=true
+     const formData=new FormData()
+     formData.append('file',file)
+     formData.append('locale',importPostData().locale)
+     formData.append('appSlug',importPostData().appSlug)
+     formData.append('productId',importPostData().productId)
+
+     startPolling('123')
+
  }
  const handleImportUploadSuccess=()=>{
    dialogConfirmLoading.value=false
@@ -191,6 +235,13 @@ const handleImportSubmit=(e:any)=>{
     //     }
     // })
  }
+ // 导出视频
+ const exportVideos=async ()=>{
+    
+ }
+ const downloadTemplateExcel=()=>{
+
+ }
 </script>
 <template>
     <t-form class="w-full" @submit="handleSubmit" label-align="top" layout='vertical'>
@@ -206,7 +257,7 @@ const handleImportSubmit=(e:any)=>{
                     <t-space>
                         <t-button theme="primary" @click="visibleCloneDialog=true">Clone</t-button>
                         <t-button theme="primary" @click="visibleImportDialog=true">Import Videos</t-button>
-                        <t-button theme="primary" href="/download" target="_blank" download="videos.csv">Export Videos</t-button>
+                        <t-button theme="primary" @click="exportVideos">Export Videos</t-button>
                     </t-space>
                 </div>
             </div>
@@ -240,10 +291,10 @@ const handleImportSubmit=(e:any)=>{
     <t-dialog attach="body" :cancel-btn="null" :confirm-btn="{
         content:'Clone',
         theme:'primary',
-    }" :close-on-esc-keydown="false" :close-on-overlay-click="false" :confirm-loading="dialogConfirmLoading" :destroy-on-close="true" v-model:visible="visibleCloneDialog"   header="Clone Video Groups" >
+    }" @confirm="handleCloneDialogConfirm" :close-on-esc-keydown="false" :close-on-overlay-click="false" :confirm-loading="dialogConfirmLoading" :destroy-on-close="true" v-model:visible="visibleCloneDialog"   header="Clone Video Groups" >
         <t-form :data="cloneFormData"  ref="dialogFormRef" @submit="handleCloneSubmit" label-align="top">
             <t-form-item :rules="[{required:true,message:'请选择locale'}]" label="Clone to locale" name="locale">
-                <t-select v-model="cloneFormData.locale" :options="allLang" >
+                <t-select v-model="cloneFormData.locale" :options="allLang" clearable filterable >
                 </t-select>
             </t-form-item>
             <t-form-item :rules="[{required:true,message:'请选择group slug'}]" label="Video group slug" name="cloneGroupSlug">
@@ -256,16 +307,35 @@ const handleImportSubmit=(e:any)=>{
     </t-dialog>
 
     <!--import videos-->
- <t-dialog width="900px" attach="body" :close-on-esc-keydown="false" :close-on-overlay-click="false" :cancel-btn="null" :footer="false"  :destroy-on-close="true" v-model:visible="visibleImportDialog"   header="Import Videos" >
+ <t-dialog width="900px" attach="body"  :close-on-esc-keydown="false" :close-on-overlay-click="false" :cancel-btn="null" :footer="false"  :destroy-on-close="true" v-model:visible="visibleImportDialog"   header="Import Videos" >
         <t-form :data="importFormData"  ref="dialogFormRef" @submit="handleImportSubmit" label-align="top">
             <t-form-item  :rules="[{required:true,message:'请选择file'}]" label="Import file" name="file">
-               <t-upload @fail="handleImportUploadFail"  @success="handleImportUploadSuccess"  name="file"  :data="importPostData" ref="uploadRef" :auto-upload="false" action="/api/upload2" v-model="importFormData.file"></t-upload>
+               <t-upload theme="file" :allow-upload-duplicate-file="true" @fail="handleImportUploadFail"  @success="handleImportUploadSuccess"  name="file"  :data="importPostData" ref="uploadRef" :auto-upload="false" action="/api/upload2" v-model="importFormData.file"></t-upload>
                <t-space class="ml-4">
                     <t-button :loading="dialogConfirmLoading" theme="primary" type="submit">Import</t-button>
-                    <t-button theme="success" >Download Template Excel</t-button>
+                    <t-button theme="success" @click="downloadTemplateExcel">Download Template Excel</t-button>
                </t-space>
             </t-form-item>
-
+            <div v-if="pollingState!=='idle'">
+                <table class="job-table">
+                    <thead>
+                        <tr>
+                            <th>Slug</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="lastResult">
+                            <td>{{ lastResult.slug}}</td>
+                            <td>{{ lastResult.status }}</td>
+                        </tr>
+                        <tr>
+                            <td>dfsadf</td>
+                            <td><t-tag theme="warning">Importing</t-tag></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div></div>
         </t-form>
     </t-dialog>
@@ -284,6 +354,22 @@ const handleImportSubmit=(e:any)=>{
 .table :deep(.t-table__header tr th) {
 
 }
+.job-table{
+    width: 100%;
+    border-collapse: collapse;
 
+}
+.job-table :deep(:where(td,th)){
+    border: solid 1px rgba(0,0,0,0.2);
+    text-align: center;
+}
+.job-table :deep(thead th){
+    font-weight: 700;
+    padding: 4px 0;
+    background-color: rgba(0,0,0,0.1);
+}
+.job-table :deep(tbody td){
+    padding: 8px 0;
+}
 
 </style>

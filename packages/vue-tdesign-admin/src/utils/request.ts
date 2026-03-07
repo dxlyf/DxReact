@@ -1,124 +1,78 @@
-import axios,{AxiosError,type InternalAxiosRequestConfig,type AxiosResponse,type AxiosRequestConfig} from 'axios'
-import { t } from 'src/i18n'
-import router from 'src/router'
-import {MessagePlugin} from 'tdesign-vue-next'
+import axios,{AxiosError} from 'axios'
+import type { AxiosResponse, AxiosInterceptorManager, AxiosRequestConfig } from 'axios'
+import mitt from 'mitt'
+import MessagePlugin from './message'
+// import app from './app'
 
-export type ResponseData<T = unknown> = {
-    code: number
-    msg: string
-    data: T
-}
-class ProAxiosError<T = unknown, D = ResponseData> extends AxiosError{
-    constructor(message?: string,
-    code?: string,
-    config?: InternalAxiosRequestConfig<D>,
-    request?: any,
-    response?: AxiosResponse<T, D>,){
-        super(message,code,config,request,response)
-    }
-}
-// 扩展请求配置
-export interface RequestConfig<D = any> extends AxiosRequestConfig<D> {
-    skipBusinessErrorHandler?: boolean // 是否跳过全局的业务错误，自行处理
-}
-const defaultConfig:RequestConfig={
-    baseURL: '/api',
+const instance=axios.create({
+    baseURL: '',
     timeout: 10000,
-    responseType:'json',
-    skipBusinessErrorHandler:false
+})
+type ResposeData<T>={
+    code:number,
+    message:string,
+    data:T
 }
-const instance = axios.create(defaultConfig)
-
-instance.interceptors.request.use(
-    (config) => {
-        // 在发送请求之前做些什么
-        return config
-    },
-    (error) => {
-        // 对请求错误做些什么
-        return Promise.reject(error)
+type RequestConfig={
+  skipErrorTip?:boolean
+}&AxiosRequestConfig
+class ResponseError extends AxiosError{
+   isBusinessError:boolean
+}
+instance.interceptors.request.use((config)=>{
+    if(config.baseURL=='/'){
+        config.baseURL=import.meta.env.VITE_BASE_URL
     }
-)
-
-instance.interceptors.response.use(
-    (response) => {
-        // 2xx 范围内的状态码都会触发该函数。
-        // 对响应数据做点什么
-        const data=response.data as any
-        if(data.code!==0){
-            return Promise.reject(new ProAxiosError(data.msg,data.code,response.config,response.request,response))
-        }
-        return response
-    },
-    (error) => {
-        // 超出 2xx 范围的状态码都会触发该函数。
-        // 对响应错误做点什么
-        return Promise.reject(error)
+   // config.headers['Authorization']=`Bearer ${localStorage.getItem('token')}`
+    return config
 })
 
-
-instance.interceptors.response.use(
-    (response) => {
-        // 2xx 范围内的状态码都会触发该函数。
-        // 对响应数据做点什么
-        return response
-    },
-    (error:AxiosError) => {
-        // 超出 2xx 范围的状态码都会触发该函数。
-        // 对响应错误做点什么
-        if(error instanceof ProAxiosError){
-            // 处理自定义错误
-            if(!(error.config as RequestConfig)?.skipBusinessErrorHandler){
-                // 处理业务错误
-                MessagePlugin.error(error.message)
-            }
-        }else if(error.response){
-            const status=error.response?.status
-
-            // 处理其他错误
-            if(status===401){
-                // 处理未授权错误
-                MessagePlugin.error(t('message.unauthorized'))
-                // 处理未授权错误，例如跳转到登录页
-                router.push('/login')
-            }
-            if(error.response?.status===403){
-                // 处理禁止访问错误
-            }
-            if(error.response?.status===404){
-                // 处理资源不存在错误
-            }
-            if(error.response?.status===500){
-                // 处理服务器错误
-            }
-
-        }
-        return Promise.reject(error)
+instance.interceptors.response.use((res)=>{
+    if(res.data.code!==0){
+        return Promise.reject(new ResponseError(res.data.message||'请求失败'))
+    }
+    return res
+},(error)=>{
+    return Promise.reject(error)
 })
-const request = <T, D = any>(config?: RequestConfig<D>) => {
-    return instance.request<ResponseData<T>>(config).then((res)=>res.data)
+instance.interceptors.response.use((res)=>{
+    const data=res.data as ResposeData
+    if(data.code!==0){
+        return Promise.reject(new ResponseError(data.message||'请求失败',data.code+'',res.config,res.request,res))
+    }
+    return res
+},(error)=>{
+    if(error instanceof ResponseError){
+        const config=(error as ResponseError).config as RequestConfig
+        if(!config.skipErrorTip){
+            MessagePlugin.error(error.message)
+        }
+        return Promise.reject(error.message)
+    }else if(error.response){
+        const {status,statusText}=(error as AxiosError).response
+        switch(status){
+            case 400:
+                MessagePlugin.error('请求参数错误')
+                break
+            case 401:
+                MessagePlugin.error('未授权，请重新登录')
+                break
+            case 403:
+                MessagePlugin.error('拒绝访问')
+                break
+            case 404:
+                MessagePlugin.error('请求地址错误')
+                break
+            case 500:
+                MessagePlugin.error('服务器内部错误')
+                break
+            default:
+                MessagePlugin.error(statusText)
+        }
+    }
+    return Promise.reject(error)
+})
+export const request=<T>(config:RequestConfig)=>{
+    return instance.request<ResposeData<T>>(config).then(res=>res.data)
 }
-const get = <T, D = any>(url: string,config?: RequestConfig<D>) => {
-    return instance.get<ResponseData<T>>(url,config).then((res)=>res.data)
-}
-const post = <T, D = any>(url: string,data?:D,config?: RequestConfig<D>) => {
-    return instance.post<ResponseData<T>>(url,data,config).then((res)=>res.data)
-}
-const del = <T, D = any>(url: string,config?: RequestConfig<D>) => {
-    return instance.delete<ResponseData<T>>(url,config).then((res)=>res.data)
-}
-const put = <T, D = any>(url: string,data?:D,config?: RequestConfig<D>) => {
-    return instance.put<ResponseData<T>>(url,data,config).then((res)=>res.data)
-}
-const patch = <T, D = any>(url: string,data?:D,config?: RequestConfig<D>) => {
-    return instance.patch<ResponseData<T>>(url,data,config).then((res)=>res.data)
-}
-export {
-    instance,
-    request,
-    get,
-    post,
-    del,
-    put,
-    patch
-}
+
