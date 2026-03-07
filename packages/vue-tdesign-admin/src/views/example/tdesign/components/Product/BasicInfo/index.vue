@@ -7,6 +7,7 @@ import CountrySelect from '@/components/country-select/index.vue'
 const loading = ref(false)
 const detailData = ref<Record<string, any>>(null)
 const formData = reactive({
+    cover:'/uploads/aaa.jpg',
     showInfoSwitch: 0,
     isVirtual: 0,
     hideInSearch: 1,
@@ -175,7 +176,7 @@ const handleEnterSearchSynonym3 = ({ inputValue }) => {
                     <t-input v-model="formData.slug" placeholder="请输入唯一标识" :maxlength="255" />
                 </t-form-item>
                 <t-form-item label="Cover(封面图)" name="cover">
-                    <FUploadCover :load-check-image-config="{
+                    <FUploadCover v-model="formData.cover" :load-check-image-config="{
                         width: 870,
                         height: 870,
                         type: 'png'

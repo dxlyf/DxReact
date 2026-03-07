@@ -138,23 +138,16 @@ const checkImage=(options:CheckImageOptions,imageInfo:ImageInfo)=>{
   }
   return msg;
 }
-const checkImageDom=(img:HTMLImageElement,options:CheckImageOptions)=>{
-  const imageInfo={
-    width:img.naturalWidth,
-    height:img.naturalHeight,
-    type:img.src.split('.').pop()?.toLowerCase()||''
-  }
-  return checkImage(options,imageInfo)
-}
+
 const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
 
    return new Promise(async (resolve,reject)=>{
       const fileSize=file.size/1024/1024 // mb
       const fileName=file.name,type=file.type,ext=fileName.split('.').pop()?.toLowerCase()
       let msg=''
-      if(!props.extension?.some(d=>ext===d.toLowerCase())){
-         msg+=`/格式`
-      }
+      // if(!props.extension?.some(d=>ext===d.toLowerCase())){
+      //    msg+=`/格式`
+      // }
       if(fileSize>props.limit.size){
         msg+=`/文件大小应小于${props.limit.size}MB`
       //  MessagePlugin.error(`文件大小应小于${props.limit.size}MB`)
@@ -186,6 +179,15 @@ const handleDelete=()=>{
   state.thumbnailUrl=''
   state.error=''
   state.loadCheckImageError=''
+}
+
+const checkImageDom=(img:HTMLImageElement,options:CheckImageOptions)=>{
+  const imageInfo={
+    width:img.naturalWidth,
+    height:img.naturalHeight,
+    type:img.src.split('.').pop()?.toLowerCase()||''
+  }
+  return checkImage(options,imageInfo)
 }
 const handleCheckImage=({e}:any)=>{
   const img=e.target as HTMLImageElement
