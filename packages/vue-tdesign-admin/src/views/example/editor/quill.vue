@@ -6,5 +6,5 @@
     <script setup lang="ts">
     import QuillEditor from '@/components/quill-editor/index.vue'
     import { ref } from 'vue'
-    const content = ref('')
+    const content = ref('fdasfda<b>加粗</b>')
 </script>

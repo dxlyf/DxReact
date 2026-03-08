@@ -1,1 +1,0 @@
-export {h as jsxDEV} from './vdom'
