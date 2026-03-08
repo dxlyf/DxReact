@@ -1,0 +1,58 @@
+@import '../../../../styles/variables';
+
+.lyf-badge-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.lyf-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: $error-color;
+  color: #fff;
+  font-size: $font-size-sm;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+  transform: translate(50%, -50%);
+  
+  &-dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  
+  &-small {
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+    line-height: 16px;
+  }
+  
+  &-default {
+    background-color: $error-color;
+  }
+  
+  &-primary {
+    background-color: $primary-color;
+  }
+  
+  &-success {
+    background-color: $success-color;
+  }
+  
+  &-warning {
+    background-color: $warning-color;
+  }
+  
+  &-error {
+    background-color: $error-color;
+  }
+}

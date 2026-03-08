@@ -1,0 +1,56 @@
+@import '../../../../styles/variables';
+
+.lyf-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: $bg-color;
+  
+  &-header {
+    height: 64px;
+    padding: 0 $spacing-md;
+    background-color: $bg-color;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+  }
+  
+  &-sider {
+    width: 200px;
+    flex-shrink: 0;
+    background-color: $bg-color;
+    border-right: 1px solid $border-color;
+    transition: width 0.3s, flex-basis 0.3s;
+  }
+  
+  &-content {
+    flex: 1;
+    padding: $spacing-md;
+    overflow: auto;
+  }
+  
+  &-footer {
+    height: 64px;
+    padding: 0 $spacing-md;
+    background-color: $bg-color;
+    border-top: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &.lyf-layout-horizontal {
+    flex-direction: row;
+    
+    & .lyf-layout-sider {
+      height: 100vh;
+      border-right: 1px solid $border-color;
+    }
+    
+    & .lyf-layout-header,
+    & .lyf-layout-content,
+    & .lyf-layout-footer {
+      width: 100%;
+    }
+  }
+}

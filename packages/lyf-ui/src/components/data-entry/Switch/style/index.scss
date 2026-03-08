@@ -1,0 +1,83 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-switch {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: $transition-base;
+  border-radius: $border-radius-base;
+  background-color: $border-color;
+  
+  &-small {
+    width: 40px;
+    height: 20px;
+    
+    .lyf-switch-handle {
+      width: 16px;
+      height: 16px;
+      left: 2px;
+      top: 2px;
+    }
+  }
+  
+  &-default {
+    width: 48px;
+    height: 24px;
+    
+    .lyf-switch-handle {
+      width: 20px;
+      height: 20px;
+      left: 2px;
+      top: 2px;
+    }
+  }
+  
+  &-large {
+    width: 56px;
+    height: 28px;
+    
+    .lyf-switch-handle {
+      width: 24px;
+      height: 24px;
+      left: 2px;
+      top: 2px;
+    }
+  }
+  
+  &-checked {
+    background-color: $primary-color;
+    
+    .lyf-switch-handle {
+      transform: translateX(100%);
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    cursor: not-allowed;
+    background-color: $border-color;
+    
+    &.lyf-switch-checked {
+      background-color: $bg-color-secondary;
+    }
+  }
+  
+  &-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  
+  &-handle {
+    position: absolute;
+    border-radius: 50%;
+    background-color: #fff;
+    transition: $transition-base;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}

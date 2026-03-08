@@ -1,0 +1,73 @@
+@import '../../../../styles/variables';
+
+.lyf-list {
+  background-color: $bg-color;
+  
+  &-bordered {
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    overflow: hidden;
+  }
+  
+  &-split {
+    .lyf-list-item {
+      border-bottom: 1px solid $border-color;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+  
+  &-header {
+    padding: $spacing-md;
+    border-bottom: 1px solid $border-color;
+    background-color: $bg-color-secondary;
+    font-weight: 500;
+    color: $text-color;
+  }
+  
+  &-body {
+    padding: $spacing-xs 0;
+  }
+  
+  &-item {
+    padding: $spacing-md;
+    transition: $transition-base;
+    
+    &:hover {
+      background-color: rgba($primary-color, 0.05);
+    }
+  }
+  
+  &-item-meta {
+    display: flex;
+    align-items: flex-start;
+    
+    &-avatar {
+      margin-right: $spacing-sm;
+    }
+    
+    &-content {
+      flex: 1;
+    }
+    
+    &-title {
+      font-weight: 500;
+      color: $text-color;
+      margin-bottom: $spacing-xs;
+    }
+    
+    &-description {
+      color: $text-color-secondary;
+      font-size: $font-size-sm;
+    }
+  }
+  
+  &-footer {
+    padding: $spacing-md;
+    border-top: 1px solid $border-color;
+    background-color: $bg-color-secondary;
+    color: $text-color-secondary;
+  }
+}

@@ -1,0 +1,92 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-radio {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  &-inner {
+    width: 16px;
+    height: 16px;
+    border: 1px solid $border-color;
+    border-radius: 50%;
+    background-color: $bg-color;
+    transition: $transition-base;
+    position: relative;
+    margin-right: $spacing-xs;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: $primary-color;
+      opacity: 0;
+      transition: $transition-base;
+    }
+  }
+  
+  &:hover {
+    .lyf-radio-inner {
+      border-color: $primary-color;
+    }
+  }
+  
+  input:checked {
+    & ~ .lyf-radio-inner {
+      border-color: $primary-color;
+      
+      &::after {
+        opacity: 1;
+      }
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    cursor: not-allowed;
+    
+    &:hover {
+      .lyf-radio-inner {
+        border-color: $border-color;
+      }
+    }
+    
+    input:checked {
+      & ~ .lyf-radio-inner {
+        border-color: $border-color;
+        
+        &::after {
+          background-color: $text-color-placeholder;
+        }
+      }
+    }
+  }
+  
+  &-label {
+    color: $text-color;
+    font-size: $font-size-base;
+  }
+}
+
+.lyf-radio-group {
+  display: inline-block;
+  
+  .lyf-radio {
+    margin-right: $spacing-md;
+  }
+}

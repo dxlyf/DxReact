@@ -1,0 +1,172 @@
+@import '../../../../styles/variables';
+
+.lyf-tabs {
+  display: flex;
+  flex-direction: column;
+  
+  &-top,
+  &-bottom {
+    flex-direction: column;
+    
+    & .lyf-tabs-header {
+      order: 1;
+    }
+    
+    & .lyf-tabs-content {
+      order: 2;
+    }
+  }
+  
+  &-left,
+  &-right {
+    flex-direction: row;
+    
+    & .lyf-tabs-header {
+      width: 120px;
+      flex-shrink: 0;
+    }
+    
+    & .lyf-tabs-nav {
+      flex-direction: column;
+    }
+    
+    & .lyf-tabs-tab {
+      justify-content: flex-start;
+      padding: $spacing-sm 0;
+    }
+  }
+  
+  &-left {
+    & .lyf-tabs-header {
+      order: 1;
+    }
+    
+    & .lyf-tabs-content {
+      order: 2;
+    }
+  }
+  
+  &-right {
+    & .lyf-tabs-header {
+      order: 2;
+    }
+    
+    & .lyf-tabs-content {
+      order: 1;
+    }
+  }
+  
+  &-line {
+    & .lyf-tabs-header {
+      border-bottom: 1px solid $border-color;
+    }
+    
+    & .lyf-tabs-tab {
+      margin-right: $spacing-lg;
+      padding: $spacing-sm 0;
+      position: relative;
+      
+      &-active {
+        color: $primary-color;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background-color: $primary-color;
+        }
+      }
+    }
+  }
+  
+  &-card {
+    & .lyf-tabs-header {
+      border-bottom: 1px solid $border-color;
+    }
+    
+    & .lyf-tabs-nav {
+      border-bottom: none;
+    }
+    
+    & .lyf-tabs-tab {
+      margin-right: $spacing-xs;
+      padding: $spacing-xs $spacing-md;
+      border: 1px solid $border-color;
+      border-bottom: none;
+      border-radius: $border-radius-base $border-radius-base 0 0;
+      background-color: $bg-color-secondary;
+      
+      &-active {
+        background-color: $bg-color;
+        border-bottom: 1px solid $bg-color;
+        margin-bottom: -1px;
+      }
+    }
+  }
+  
+  &-editable-card {
+    & .lyf-tabs-header {
+      border-bottom: 1px solid $border-color;
+    }
+    
+    & .lyf-tabs-nav {
+      border-bottom: none;
+    }
+    
+    & .lyf-tabs-tab {
+      margin-right: $spacing-xs;
+      padding: $spacing-xs $spacing-md;
+      border: 1px solid $border-color;
+      border-bottom: none;
+      border-radius: $border-radius-base $border-radius-base 0 0;
+      background-color: $bg-color-secondary;
+      
+      &-active {
+        background-color: $bg-color;
+        border-bottom: 1px solid $bg-color;
+        margin-bottom: -1px;
+      }
+    }
+  }
+}
+
+.lyf-tabs-header {
+  margin-bottom: $spacing-md;
+  
+  & .lyf-tabs-nav {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.lyf-tabs-tab {
+  cursor: pointer;
+  transition: $transition-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: $primary-color;
+  }
+  
+  &-disabled {
+    cursor: not-allowed;
+    color: $text-color-disabled;
+    
+    &:hover {
+      color: $text-color-disabled;
+    }
+  }
+}
+
+.lyf-tabs-content {
+  flex: 1;
+  
+  & .lyf-tabs-tabpane {
+    padding: $spacing-md 0;
+  }
+}

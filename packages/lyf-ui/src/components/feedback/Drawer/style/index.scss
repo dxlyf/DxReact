@@ -1,0 +1,212 @@
+@import '../../../../styles/variables';
+
+.lyf-drawer-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.lyf-drawer-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: lyf-drawer-mask-fade-in 0.3s ease;
+}
+
+.lyf-drawer {
+  position: absolute;
+  background-color: $bg-color;
+  box-shadow: $box-shadow-lg;
+  animation: lyf-drawer-fade-in 0.3s ease;
+  max-height: 100vh;
+  overflow: hidden;
+  
+  &-left {
+    top: 0;
+    left: 0;
+    height: 100%;
+  }
+  
+  &-right {
+    top: 0;
+    right: 0;
+    height: 100%;
+  }
+  
+  &-top {
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  
+  &-bottom {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+  
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-md;
+    border-bottom: 1px solid $border-color;
+  }
+  
+  &-title {
+    font-size: $font-size-lg;
+    font-weight: 500;
+    color: $text-color;
+  }
+  
+  &-close {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background-color: transparent;
+    color: $text-color-secondary;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition-base;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  &-body {
+    padding: $spacing-md;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+  
+  &-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-sm;
+    padding: $spacing-md;
+    border-top: 1px solid $border-color;
+    background-color: $bg-color-secondary;
+  }
+  
+  &-button {
+    padding: $spacing-xs $spacing-md;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    cursor: pointer;
+    transition: $transition-base;
+    
+    &-cancel {
+      background-color: $bg-color;
+      color: $text-color;
+      
+      &:hover {
+        border-color: $primary-color;
+        color: $primary-color;
+      }
+    }
+    
+    &-ok {
+      background-color: $primary-color;
+      color: #fff;
+      border-color: $primary-color;
+      
+      &:hover {
+        background-color: darken($primary-color, 10%);
+        border-color: darken($primary-color, 10%);
+      }
+    }
+  }
+}
+
+@keyframes lyf-drawer-mask-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lyf-drawer-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.lyf-drawer-left {
+  animation: lyf-drawer-fade-in-left 0.3s ease;
+}
+
+.lyf-drawer-right {
+  animation: lyf-drawer-fade-in-right 0.3s ease;
+}
+
+.lyf-drawer-top {
+  animation: lyf-drawer-fade-in-top 0.3s ease;
+}
+
+.lyf-drawer-bottom {
+  animation: lyf-drawer-fade-in-bottom 0.3s ease;
+}
+
+@keyframes lyf-drawer-fade-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes lyf-drawer-fade-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes lyf-drawer-fade-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lyf-drawer-fade-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

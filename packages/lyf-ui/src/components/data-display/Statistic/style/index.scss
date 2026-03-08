@@ -1,0 +1,34 @@
+@import '../../../../styles/variables';
+
+.lyf-statistic {
+  text-align: center;
+  
+  &-title {
+    font-size: $font-size-base;
+    color: $text-color-secondary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  &-content {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: $spacing-xs;
+  }
+  
+  &-value {
+    font-size: $font-size-xxl;
+    font-weight: 500;
+    color: $text-color;
+  }
+  
+  &-prefix {
+    font-size: $font-size-lg;
+    color: $text-color-secondary;
+  }
+  
+  &-suffix {
+    font-size: $font-size-lg;
+    color: $text-color-secondary;
+  }
+}

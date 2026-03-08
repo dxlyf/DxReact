@@ -1,0 +1,98 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-transfer {
+  display: flex;
+  align-items: center;
+  
+  &-panel {
+    width: 200px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    background-color: $bg-color;
+    
+    &-header {
+      padding: $spacing-sm;
+      border-bottom: 1px solid $border-color;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    &-count {
+      color: $text-color-secondary;
+      font-size: $font-size-sm;
+    }
+    
+    &-body {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  }
+  
+  &-buttons {
+    display: flex;
+    flex-direction: column;
+    margin: 0 $spacing-md;
+  }
+  
+  &-button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    background-color: $bg-color;
+    cursor: pointer;
+    transition: $transition-base;
+    margin-bottom: $spacing-xs;
+    
+    &:hover {
+      border-color: $primary-color;
+      color: $primary-color;
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    &-disabled {
+      @include disabled;
+      cursor: not-allowed;
+      
+      &:hover {
+        border-color: $border-color;
+        color: $text-color-placeholder;
+      }
+    }
+  }
+  
+  &-item {
+    padding: $spacing-xs $spacing-sm;
+    cursor: pointer;
+    transition: $transition-base;
+    display: flex;
+    align-items: center;
+    
+    &:hover {
+      background-color: rgba($primary-color, 0.05);
+    }
+    
+    &-selected {
+      background-color: rgba($primary-color, 0.1);
+    }
+    
+    &-disabled {
+      @include disabled;
+      cursor: not-allowed;
+      
+      &:hover {
+        background-color: transparent;
+      }
+    }
+    
+    &-label {
+      margin-left: $spacing-xs;
+      flex: 1;
+    }
+  }
+}

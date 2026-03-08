@@ -1,0 +1,50 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-rate {
+  display: inline-flex;
+  align-items: center;
+  
+  &-item {
+    cursor: pointer;
+    margin-right: $spacing-xs;
+    
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+  
+  &-star {
+    position: relative;
+    font-size: 16px;
+    color: $text-color-placeholder;
+    
+    &-filled {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: $warning-color;
+      overflow: hidden;
+      
+      &-half {
+        width: 50%;
+      }
+    }
+    
+    &-empty {
+      display: block;
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    
+    .lyf-rate-item {
+      cursor: not-allowed;
+    }
+    
+    .lyf-rate-star-filled {
+      color: $text-color-placeholder;
+    }
+  }
+}

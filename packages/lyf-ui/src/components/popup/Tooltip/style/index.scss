@@ -1,0 +1,9 @@
+@import '../../../../styles/variables';
+
+.lyf-tooltip-content {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  color: $text-color;
+  background-color: $bg-color;
+  border-radius: $border-radius-base;
+}

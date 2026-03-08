@@ -1,0 +1,15 @@
+@import '../../../../styles/variables';
+
+.lyf-masonry {
+  width: 100%;
+  column-fill: balance;
+  
+  &-item {
+    break-inside: avoid;
+    margin-bottom: $spacing-sm;
+    background-color: $bg-color;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    overflow: hidden;
+  }
+}

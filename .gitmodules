@@ -215,3 +215,9 @@
 [submodule "packages/tdesign-react"]
 	path = packages/tdesign-react
 	url = https://github.com/Tencent/tdesign-react.git
+[submodule "packages/primevue"]
+	path = packages/primevue
+	url = git@github.com:primefaces/primevue.git
+[submodule "packages/formik"]
+	path = packages/formik
+	url = git@github.com:jaredpalmer/formik.git

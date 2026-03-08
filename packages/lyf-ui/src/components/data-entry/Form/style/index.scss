@@ -1,0 +1,85 @@
+@import '../../../../styles/variables';
+
+.lyf-form {
+  &-horizontal {
+    .lyf-form-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: $spacing-md;
+      
+      &-label {
+        width: 100px;
+        text-align: right;
+        margin-right: $spacing-md;
+        font-size: $font-size-base;
+        color: $text-color;
+      }
+      
+      &-control {
+        flex: 1;
+      }
+    }
+  }
+  
+  &-vertical {
+    .lyf-form-item {
+      margin-bottom: $spacing-md;
+      
+      &-label {
+        display: block;
+        margin-bottom: $spacing-xs;
+        font-size: $font-size-base;
+        color: $text-color;
+      }
+      
+      &-control {
+        width: 100%;
+      }
+    }
+  }
+  
+  &-inline {
+    display: flex;
+    flex-wrap: wrap;
+    
+    .lyf-form-item {
+      display: flex;
+      align-items: center;
+      margin-right: $spacing-md;
+      margin-bottom: $spacing-xs;
+      
+      &-label {
+        margin-right: $spacing-xs;
+        font-size: $font-size-base;
+        color: $text-color;
+      }
+      
+      &-control {
+        display: inline-block;
+      }
+    }
+  }
+}
+
+.lyf-form-item {
+  &-required {
+    color: $error-color;
+    margin-left: $spacing-xs;
+  }
+  
+  &-help {
+    margin-top: $spacing-xs;
+    font-size: $font-size-sm;
+    color: $text-color-secondary;
+    
+    &-error {
+      color: $error-color;
+    }
+  }
+  
+  &-error {
+    .lyf-form-item-help {
+      color: $error-color;
+    }
+  }
+}

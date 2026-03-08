@@ -1,0 +1,73 @@
+// 通用样式文件
+
+// 重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: $font-family;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  color: $text-color;
+  background-color: $bg-color-secondary;
+}
+
+// 链接样式
+a {
+  color: $primary-color;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 列表样式
+ul, ol {
+  list-style: none;
+}
+
+// 图片样式
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+// 表格样式
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// 代码样式
+code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  background-color: $bg-color-tertiary;
+  border-radius: $border-radius-sm;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: $bg-color-tertiary;
+  border-radius: $border-radius-base;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: $border-color;
+  border-radius: $border-radius-base;
+  
+  &:hover {
+    background-color: $border-color-light;
+  }
+}

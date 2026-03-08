@@ -1,0 +1,88 @@
+@import '../../../../styles/variables';
+
+.lyf-calendar {
+  width: 100%;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  overflow: hidden;
+  
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-md;
+    background-color: $bg-color-secondary;
+    border-bottom: 1px solid $border-color;
+  }
+  
+  &-nav {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: $border-radius-base;
+    background-color: $bg-color;
+    cursor: pointer;
+    transition: $transition-base;
+    
+    &:hover {
+      background-color: rgba($primary-color, 0.1);
+    }
+  }
+  
+  &-title {
+    font-size: $font-size-base;
+    font-weight: 500;
+    color: $text-color;
+    margin: 0;
+  }
+  
+  &-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: $bg-color-secondary;
+    border-bottom: 1px solid $border-color;
+  }
+  
+  &-weekday {
+    padding: $spacing-sm;
+    text-align: center;
+    font-size: $font-size-sm;
+    color: $text-color-secondary;
+  }
+  
+  &-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  &-day {
+    padding: $spacing-sm;
+    text-align: center;
+    cursor: pointer;
+    transition: $transition-base;
+    border-bottom: 1px solid $border-color;
+    border-right: 1px solid $border-color;
+    
+    &:hover {
+      background-color: rgba($primary-color, 0.05);
+    }
+    
+    &:nth-child(7n) {
+      border-right: none;
+    }
+    
+    &-other {
+      color: $text-color-placeholder;
+    }
+    
+    &-today {
+      color: $primary-color;
+      font-weight: 500;
+    }
+    
+    &-selected {
+      background-color: $primary-color;
+      color: #fff;
+    }
+  }
+}

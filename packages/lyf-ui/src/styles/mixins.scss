@@ -1,0 +1,109 @@
+// 样式混合文件
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 文本溢出
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行文本溢出
+@mixin text-ellipsis-multiline($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// 禁用状态
+@mixin disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+// 按钮基础样式
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-base;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-base;
+  border: 1px solid $border-color;
+  background-color: $bg-color;
+  color: $text-color;
+  cursor: pointer;
+  transition: $transition-base;
+  
+  &:hover {
+    border-color: $primary-color;
+    color: $primary-color;
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+  }
+  
+  &:active {
+    transform: translateY(1px);
+  }
+  
+  @include disabled;
+}
+
+// 输入框基础样式
+@mixin input-base {
+  width: 100%;
+  font-size: $font-size-base;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-base;
+  border: 1px solid $border-color;
+  background-color: $bg-color;
+  color: $text-color;
+  transition: $transition-base;
+  
+  &:hover {
+    border-color: $primary-color;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+  }
+  
+  &::placeholder {
+    color: $text-color-placeholder;
+  }
+  
+  @include disabled;
+}
+
+// 卡片基础样式
+@mixin card-base {
+  background-color: $bg-color;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-light;
+  border: 1px solid $border-color;
+  overflow: hidden;
+}
+
+// 布局基础样式
+@mixin layout-base {
+  width: 100%;
+  min-height: 100vh;
+}

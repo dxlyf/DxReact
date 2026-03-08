@@ -1,0 +1,53 @@
+@import '../../../../styles/variables';
+
+.lyf-anchor {
+  display: inline-block;
+  
+  &-content {
+    padding: $spacing-sm 0;
+  }
+  
+  &-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  &-item {
+    margin-bottom: $spacing-xs;
+  }
+  
+  &-link {
+    display: block;
+    padding: $spacing-xs $spacing-sm;
+    color: $text-color;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: $transition-base;
+    
+    &:hover {
+      color: $primary-color;
+    }
+    
+    &-active {
+      color: $primary-color;
+      border-left-color: $primary-color;
+      background-color: rgba($primary-color, 0.05);
+    }
+  }
+  
+  &-sub-list {
+    list-style: none;
+    padding: 0;
+    margin: $spacing-xs 0 $spacing-xs $spacing-md;
+    
+    .lyf-anchor-item {
+      margin-bottom: $spacing-xs;
+      
+      .lyf-anchor-link {
+        font-size: $font-size-sm;
+        padding: $spacing-xs;
+      }
+    }
+  }
+}

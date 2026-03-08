@@ -1,0 +1,204 @@
+@import '../../../../styles/variables';
+
+.lyf-steps {
+  
+  &-horizontal {
+    .lyf-steps-list {
+      display: flex;
+      flex-wrap: nowrap;
+      
+      .lyf-step {
+        flex: 1;
+        display: flex;
+        position: relative;
+        
+        &-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          z-index: 1;
+        }
+        
+        &-line {
+          position: absolute;
+          top: 15px;
+          left: 50%;
+          right: -50%;
+          height: 1px;
+          background-color: $border-color;
+          z-index: 0;
+        }
+        
+        &:last-child {
+          flex: 0 0 auto;
+          
+          & .lyf-step-line {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+  
+  &-vertical {
+    .lyf-steps-list {
+      display: flex;
+      flex-direction: column;
+      
+      .lyf-step {
+        display: flex;
+        position: relative;
+        margin-bottom: $spacing-lg;
+        
+        &-item {
+          display: flex;
+          z-index: 1;
+        }
+        
+        &-icon {
+          flex-shrink: 0;
+        }
+        
+        &-content {
+          margin-left: $spacing-md;
+          flex: 1;
+        }
+        
+        &-line {
+          position: absolute;
+          top: 30px;
+          bottom: -24px;
+          left: 15px;
+          width: 1px;
+          background-color: $border-color;
+          z-index: 0;
+        }
+        
+        &:last-child {
+          margin-bottom: 0;
+          
+          & .lyf-step-line {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+  
+  &-small {
+    .lyf-step {
+      &-icon {
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        font-size: 12px;
+      }
+      
+      &-title {
+        font-size: $font-size-sm;
+      }
+      
+      &-description {
+        font-size: $font-size-sm;
+      }
+    }
+  }
+  
+  &-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+.lyf-step {
+  
+  &-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: $bg-color;
+    border: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-base;
+    transition: $transition-base;
+  }
+  
+  &-icon-content {
+    display: block;
+  }
+  
+  &-title {
+    margin-top: $spacing-xs;
+    font-size: $font-size-base;
+    font-weight: 500;
+  }
+  
+  &-description {
+    margin-top: $spacing-xs;
+    font-size: $font-size-sm;
+    color: $text-color-secondary;
+  }
+  
+  &-wait {
+    .lyf-step-icon {
+      background-color: $bg-color;
+      border-color: $border-color;
+      color: $text-color-secondary;
+    }
+    
+    .lyf-step-title {
+      color: $text-color-secondary;
+    }
+  }
+  
+  &-process {
+    .lyf-step-icon {
+      background-color: $primary-color;
+      border-color: $primary-color;
+      color: #fff;
+    }
+    
+    .lyf-step-title {
+      color: $text-color;
+    }
+    
+    .lyf-step-line {
+      background-color: $primary-color;
+    }
+  }
+  
+  &-finish {
+    .lyf-step-icon {
+      background-color: $success-color;
+      border-color: $success-color;
+      color: #fff;
+    }
+    
+    .lyf-step-title {
+      color: $text-color;
+    }
+    
+    .lyf-step-line {
+      background-color: $success-color;
+    }
+  }
+  
+  &-error {
+    .lyf-step-icon {
+      background-color: $error-color;
+      border-color: $error-color;
+      color: #fff;
+    }
+    
+    .lyf-step-title {
+      color: $error-color;
+    }
+    
+    .lyf-step-line {
+      background-color: $error-color;
+    }
+  }
+}

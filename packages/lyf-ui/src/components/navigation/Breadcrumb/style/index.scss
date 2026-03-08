@@ -1,0 +1,40 @@
+@import '../../../../styles/variables';
+
+.lyf-breadcrumb {
+  font-size: $font-size-base;
+  
+  &-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  &-item {
+    display: flex;
+    align-items: center;
+    
+    a {
+      color: $text-color-secondary;
+      text-decoration: none;
+      
+      &:hover {
+        color: $primary-color;
+        text-decoration: underline;
+      }
+    }
+    
+    &:last-child {
+      a {
+        color: $text-color;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  &-separator {
+    margin: 0 $spacing-xs;
+    color: $text-color-secondary;
+  }
+}

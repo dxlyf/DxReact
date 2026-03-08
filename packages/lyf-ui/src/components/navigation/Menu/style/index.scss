@@ -1,0 +1,189 @@
+@import '../../../../styles/variables';
+
+.lyf-menu {
+  background-color: $bg-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  
+  &-horizontal {
+    ul {
+      display: flex;
+      flex-direction: row;
+    }
+    
+    .lyf-menu-item {
+      padding: 0 $spacing-md;
+      height: 40px;
+      line-height: 40px;
+      border-bottom: 2px solid transparent;
+      
+      &:hover {
+        color: $primary-color;
+      }
+      
+      &-selected {
+        color: $primary-color;
+        border-bottom-color: $primary-color;
+      }
+    }
+    
+    .lyf-menu-submenu {
+      position: relative;
+      
+      &-title {
+        padding: 0 $spacing-md;
+        height: 40px;
+        line-height: 40px;
+        cursor: pointer;
+        
+        &:hover {
+          color: $primary-color;
+        }
+      }
+      
+      &-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 160px;
+        background-color: $bg-color;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-base;
+        box-shadow: $box-shadow-base;
+        z-index: 10;
+      }
+    }
+  }
+  
+  &-vertical {
+    width: 160px;
+    
+    .lyf-menu-item {
+      padding: $spacing-xs $spacing-md;
+      height: 40px;
+      line-height: 40px;
+      border-left: 3px solid transparent;
+      
+      &:hover {
+        color: $primary-color;
+        background-color: rgba($primary-color, 0.05);
+      }
+      
+      &-selected {
+        color: $primary-color;
+        border-left-color: $primary-color;
+        background-color: rgba($primary-color, 0.05);
+      }
+    }
+    
+    .lyf-menu-submenu {
+      
+      &-title {
+        padding: $spacing-xs $spacing-md;
+        height: 40px;
+        line-height: 40px;
+        cursor: pointer;
+        
+        &:hover {
+          color: $primary-color;
+          background-color: rgba($primary-color, 0.05);
+        }
+      }
+      
+      &-arrow {
+        float: right;
+        font-size: 12px;
+        transition: transform 0.3s;
+      }
+      
+      &-open {
+        .lyf-menu-submenu-arrow {
+          transform: rotate(90deg);
+        }
+      }
+      
+      &-list {
+        padding-left: $spacing-md;
+      }
+    }
+  }
+  
+  &-dark {
+    background-color: #1f1f1f;
+    border-color: #333;
+    
+    .lyf-menu-item {
+      color: #fff;
+      
+      &:hover {
+        color: $primary-color;
+        background-color: rgba($primary-color, 0.1);
+      }
+      
+      &-selected {
+        color: $primary-color;
+        background-color: rgba($primary-color, 0.1);
+      }
+      
+      &-disabled {
+        color: #666;
+      }
+    }
+    
+    .lyf-menu-submenu {
+      
+      &-title {
+        color: #fff;
+        
+        &:hover {
+          color: $primary-color;
+          background-color: rgba($primary-color, 0.1);
+        }
+      }
+      
+      &-list {
+        background-color: #1f1f1f;
+        border-color: #333;
+      }
+    }
+    
+    .lyf-menu-group-title {
+      color: #666;
+    }
+  }
+  
+  &-item {
+    cursor: pointer;
+    transition: $transition-base;
+    
+    &-disabled {
+      cursor: not-allowed;
+      color: $text-color-disabled;
+      
+      &:hover {
+        color: $text-color-disabled;
+        background-color: transparent;
+      }
+    }
+  }
+  
+  &-submenu {
+    
+    &-list {
+      display: none;
+      
+      .lyf-menu-submenu-open > & {
+        display: block;
+      }
+    }
+  }
+  
+  &-group {
+    
+    &-title {
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
+      color: $text-color-secondary;
+    }
+  }
+}

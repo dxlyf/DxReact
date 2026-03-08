@@ -1,0 +1,8 @@
+@import '../../../../styles/variables';
+
+.lyf-app {
+  width: 100%;
+  min-height: 100vh;
+  background-color: $bg-color;
+  color: $text-color;
+}

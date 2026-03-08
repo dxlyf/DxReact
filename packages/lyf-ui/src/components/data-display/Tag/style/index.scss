@@ -1,0 +1,76 @@
+@import '../../../../styles/variables';
+
+.lyf-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 $spacing-sm;
+  border-radius: $border-radius-base;
+  font-size: $font-size-base;
+  color: $text-color;
+  background-color: $bg-color-secondary;
+  transition: $transition-base;
+  
+  &-small {
+    padding: 0 $spacing-xs;
+    font-size: $font-size-sm;
+  }
+  
+  &-large {
+    padding: 0 $spacing-md;
+    font-size: $font-size-lg;
+  }
+  
+  &-default {
+    background-color: $bg-color-secondary;
+    color: $text-color;
+  }
+  
+  &-primary {
+    background-color: rgba($primary-color, 0.1);
+    color: $primary-color;
+  }
+  
+  &-success {
+    background-color: rgba($success-color, 0.1);
+    color: $success-color;
+  }
+  
+  &-warning {
+    background-color: rgba($warning-color, 0.1);
+    color: $warning-color;
+  }
+  
+  &-error {
+    background-color: rgba($error-color, 0.1);
+    color: $error-color;
+  }
+  
+  &-closeable {
+    padding-right: $spacing-xs;
+  }
+  
+  &-content {
+    line-height: 20px;
+  }
+  
+  &-close {
+    margin-left: $spacing-xs;
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: inherit;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition-base;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+  }
+}

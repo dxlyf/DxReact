@@ -1,0 +1,89 @@
+@import '../../../../styles/variables';
+
+.lyf-progress {
+  
+  &-line-container {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+  
+  &-line-track {
+    flex: 1;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+    overflow: hidden;
+  }
+  
+  &-line-progress {
+    background-color: $primary-color;
+    transition: width 0.3s ease;
+  }
+  
+  &-info {
+    font-size: $font-size-sm;
+    color: $text-color;
+    min-width: 40px;
+  }
+  
+  &-circle-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  &-circle {
+    transform: rotate(-90deg);
+  }
+  
+  &-circle-track {
+    fill: none;
+    stroke: $bg-color-secondary;
+  }
+  
+  &-circle-progress {
+    fill: none;
+    stroke: $primary-color;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease;
+  }
+  
+  &-circle-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: $font-size-sm;
+    color: $text-color;
+  }
+  
+  &-success {
+    .lyf-progress-line-progress,
+    .lyf-progress-circle-progress {
+      background-color: $success-color;
+      stroke: $success-color;
+    }
+  }
+  
+  &-exception {
+    .lyf-progress-line-progress,
+    .lyf-progress-circle-progress {
+      background-color: $error-color;
+      stroke: $error-color;
+    }
+  }
+  
+  &-active {
+    .lyf-progress-line-progress {
+      animation: lyf-progress-active 2s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes lyf-progress-active {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}

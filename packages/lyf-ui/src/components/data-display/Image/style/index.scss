@@ -1,0 +1,39 @@
+@import '../../../../styles/variables';
+
+.lyf-image {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  
+  &-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: $transition-base;
+  }
+  
+  &-loading {
+    position: relative;
+  }
+  
+  &-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: $bg-color-secondary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &-loading-spinner {
+    color: $text-color-secondary;
+    font-size: $font-size-sm;
+  }
+  
+  &-error {
+    position: relative;
+  }
+}

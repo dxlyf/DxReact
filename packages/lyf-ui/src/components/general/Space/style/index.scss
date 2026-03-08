@@ -1,0 +1,30 @@
+@import '../../../../styles/variables';
+
+:root {
+  --lyf-space-small: 8px;
+  --lyf-space-middle: 16px;
+  --lyf-space-large: 24px;
+}
+
+.lyf-space {
+  display: flex;
+  gap: var(--lyf-space-size, var(--lyf-space-middle));
+  
+  &-horizontal {
+    flex-direction: row;
+  }
+  
+  &-vertical {
+    flex-direction: column;
+  }
+  
+  &-wrap {
+    flex-wrap: wrap;
+  }
+  
+  &-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

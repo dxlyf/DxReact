@@ -1,0 +1,51 @@
+@import '../../../../styles/variables';
+
+.lyf-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $bg-color-secondary;
+  color: $text-color;
+  border-radius: 50%;
+  overflow: hidden;
+  
+  &-small {
+    width: 24px;
+    height: 24px;
+    font-size: $font-size-sm;
+  }
+  
+  &-default {
+    width: 32px;
+    height: 32px;
+    font-size: $font-size-base;
+  }
+  
+  &-large {
+    width: 40px;
+    height: 40px;
+    font-size: $font-size-lg;
+  }
+  
+  &-square {
+    border-radius: $border-radius-base;
+  }
+  
+  &-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  &-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

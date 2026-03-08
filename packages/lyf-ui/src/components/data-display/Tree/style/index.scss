@@ -1,0 +1,59 @@
+@import '../../../../styles/variables';
+
+.lyf-tree {
+  width: 100%;
+  
+  &-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  &-node {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    
+    &-content {
+      padding: $spacing-xs $spacing-sm;
+      cursor: pointer;
+      transition: $transition-base;
+      display: flex;
+      align-items: center;
+      
+      &:hover {
+        background-color: rgba($primary-color, 0.05);
+      }
+      
+      &-selected {
+        background-color: rgba($primary-color, 0.1);
+        color: $primary-color;
+      }
+      
+      &-disabled {
+        color: $text-color-placeholder;
+        cursor: not-allowed;
+        
+        &:hover {
+          background-color: transparent;
+        }
+      }
+    }
+    
+    &-switcher {
+      margin-right: $spacing-xs;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    &-title {
+      flex: 1;
+    }
+    
+    &-children {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+  }
+}

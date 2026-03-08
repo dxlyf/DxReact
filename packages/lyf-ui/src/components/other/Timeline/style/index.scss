@@ -1,0 +1,127 @@
+@import '../../../../styles/variables';
+
+.lyf-timeline {
+  position: relative;
+  padding: $spacing-md 0;
+  
+  &-item {
+    position: relative;
+    padding-left: 28px;
+    padding-bottom: $spacing-md;
+    
+    &:last-child {
+      padding-bottom: 0;
+    }
+    
+    &-tail {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 2px;
+      height: 100%;
+      background-color: $border-color;
+    }
+    
+    &:last-child .lyf-timeline-item-tail {
+      display: none;
+    }
+    
+    &-head {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    &-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: $primary-color;
+      border: 2px solid $bg-color;
+    }
+    
+    &-blue .lyf-timeline-item-dot {
+      background-color: $primary-color;
+    }
+    
+    &-red .lyf-timeline-item-dot {
+      background-color: $error-color;
+    }
+    
+    &-green .lyf-timeline-item-dot {
+      background-color: $success-color;
+    }
+    
+    &-gray .lyf-timeline-item-dot {
+      background-color: $text-color-placeholder;
+    }
+    
+    &-content {
+      padding-left: $spacing-sm;
+    }
+    
+    &-label {
+      font-size: $font-size-sm;
+      color: $text-color-secondary;
+      margin-bottom: $spacing-xs;
+    }
+    
+    &-body {
+      font-size: $font-size-base;
+      color: $text-color;
+    }
+  }
+  
+  &-alternate {
+    .lyf-timeline-item {
+      &:nth-child(even) {
+        padding-left: 0;
+        padding-right: 28px;
+        text-align: right;
+        
+        .lyf-timeline-item-tail {
+          left: auto;
+          right: 8px;
+        }
+        
+        .lyf-timeline-item-head {
+          left: auto;
+          right: 0;
+        }
+        
+        .lyf-timeline-item-content {
+          padding-left: 0;
+          padding-right: $spacing-sm;
+        }
+      }
+    }
+  }
+  
+  &-right {
+    .lyf-timeline-item {
+      padding-left: 0;
+      padding-right: 28px;
+      text-align: right;
+      
+      .lyf-timeline-item-tail {
+        left: auto;
+        right: 8px;
+      }
+      
+      .lyf-timeline-item-head {
+        left: auto;
+        right: 0;
+      }
+      
+      .lyf-timeline-item-content {
+        padding-left: 0;
+        padding-right: $spacing-sm;
+      }
+    }
+  }
+}

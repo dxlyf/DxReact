@@ -1,0 +1,140 @@
+@import '../../../../styles/variables';
+
+$grid-columns: 24;
+$grid-gutter: 16px;
+
+.lyf-row {
+  display: flex;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  
+  &-flex {
+    display: flex;
+    
+    &.lyf-row-justify-flex-start {
+      justify-content: flex-start;
+    }
+    
+    &.lyf-row-justify-flex-end {
+      justify-content: flex-end;
+    }
+    
+    &.lyf-row-justify-center {
+      justify-content: center;
+    }
+    
+    &.lyf-row-justify-space-between {
+      justify-content: space-between;
+    }
+    
+    &.lyf-row-justify-space-around {
+      justify-content: space-around;
+    }
+    
+    &.lyf-row-align-top {
+      align-items: flex-start;
+    }
+    
+    &.lyf-row-align-middle {
+      align-items: center;
+    }
+    
+    &.lyf-row-align-bottom {
+      align-items: flex-end;
+    }
+  }
+}
+
+.lyf-col {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding-left: $grid-gutter / 2;
+  padding-right: $grid-gutter / 2;
+  
+  @for $i from 1 through $grid-columns {
+    &-#{$i} {
+      flex: 0 0 percentage($i / $grid-columns);
+      max-width: percentage($i / $grid-columns);
+    }
+    
+    &-offset-#{$i} {
+      margin-left: percentage($i / $grid-columns);
+    }
+    
+    &-push-#{$i} {
+      position: relative;
+      left: percentage($i / $grid-columns);
+    }
+    
+    &-pull-#{$i} {
+      position: relative;
+      right: percentage($i / $grid-columns);
+    }
+  }
+  
+  // 响应式布局
+  @media (max-width: 575px) {
+    @for $i from 1 through $grid-columns {
+      &-xs-#{$i} {
+        flex: 0 0 percentage($i / $grid-columns);
+        max-width: percentage($i / $grid-columns);
+      }
+      
+      &-xs-offset-#{$i} {
+        margin-left: percentage($i / $grid-columns);
+      }
+    }
+  }
+  
+  @media (min-width: 576px) and (max-width: 767px) {
+    @for $i from 1 through $grid-columns {
+      &-sm-#{$i} {
+        flex: 0 0 percentage($i / $grid-columns);
+        max-width: percentage($i / $grid-columns);
+      }
+      
+      &-sm-offset-#{$i} {
+        margin-left: percentage($i / $grid-columns);
+      }
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 991px) {
+    @for $i from 1 through $grid-columns {
+      &-md-#{$i} {
+        flex: 0 0 percentage($i / $grid-columns);
+        max-width: percentage($i / $grid-columns);
+      }
+      
+      &-md-offset-#{$i} {
+        margin-left: percentage($i / $grid-columns);
+      }
+    }
+  }
+  
+  @media (min-width: 992px) and (max-width: 1199px) {
+    @for $i from 1 through $grid-columns {
+      &-lg-#{$i} {
+        flex: 0 0 percentage($i / $grid-columns);
+        max-width: percentage($i / $grid-columns);
+      }
+      
+      &-lg-offset-#{$i} {
+        margin-left: percentage($i / $grid-columns);
+      }
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    @for $i from 1 through $grid-columns {
+      &-xl-#{$i} {
+        flex: 0 0 percentage($i / $grid-columns);
+        max-width: percentage($i / $grid-columns);
+      }
+      
+      &-xl-offset-#{$i} {
+        margin-left: percentage($i / $grid-columns);
+      }
+    }
+  }
+}

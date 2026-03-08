@@ -1,0 +1,27 @@
+@import '../../../../styles/variables';
+
+.lyf-popover {
+  background-color: $bg-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-lg;
+  max-width: 300px;
+  
+  &-content {
+    padding: $spacing-md;
+  }
+  
+  &-title {
+    font-size: $font-size-base;
+    font-weight: 500;
+    color: $text-color;
+    margin-bottom: $spacing-sm;
+    padding-bottom: $spacing-sm;
+    border-bottom: 1px solid $border-color;
+  }
+  
+  &-body {
+    font-size: $font-size-sm;
+    color: $text-color-secondary;
+  }
+}

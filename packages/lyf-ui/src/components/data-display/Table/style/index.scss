@@ -1,0 +1,67 @@
+@import '../../../../styles/variables';
+
+.lyf-table {
+  width: 100%;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  overflow: hidden;
+  position: relative;
+  
+  &-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  &-thead {
+    background-color: $bg-color-secondary;
+    
+    .lyf-table-th {
+      padding: $spacing-sm $spacing-md;
+      text-align: left;
+      font-weight: 500;
+      color: $text-color;
+      border-bottom: 1px solid $border-color;
+    }
+  }
+  
+  &-tbody {
+    .lyf-table-tr {
+      transition: $transition-base;
+      
+      &:hover {
+        background-color: rgba($primary-color, 0.05);
+      }
+      
+      &:nth-child(even) {
+        background-color: $bg-color-secondary;
+      }
+    }
+    
+    .lyf-table-td {
+      padding: $spacing-sm $spacing-md;
+      border-bottom: 1px solid $border-color;
+      color: $text-color;
+    }
+  }
+  
+  &-loading {
+    position: relative;
+  }
+  
+  &-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba($bg-color, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &-loading-spinner {
+    color: $primary-color;
+    font-size: $font-size-base;
+  }
+}

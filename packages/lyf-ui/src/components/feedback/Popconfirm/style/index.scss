@@ -1,0 +1,60 @@
+@import '../../../../styles/variables';
+
+.lyf-popconfirm {
+  background-color: $bg-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-lg;
+  padding: $spacing-md;
+  min-width: 240px;
+  
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+  
+  &-title {
+    font-size: $font-size-base;
+    font-weight: 500;
+    color: $text-color;
+  }
+  
+  &-description {
+    font-size: $font-size-sm;
+    color: $text-color-secondary;
+  }
+  
+  &-actions {
+    display: flex;
+    gap: $spacing-sm;
+    justify-content: flex-end;
+    margin-top: $spacing-sm;
+  }
+  
+  &-button {
+    padding: $spacing-xs $spacing-md;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    background-color: $bg-color;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    transition: $transition-base;
+    
+    &:hover {
+      border-color: $primary-color;
+      color: $primary-color;
+    }
+    
+    &-confirm {
+      background-color: $primary-color;
+      color: #fff;
+      border-color: $primary-color;
+      
+      &:hover {
+        background-color: darken($primary-color, 10%);
+        color: #fff;
+      }
+    }
+  }
+}

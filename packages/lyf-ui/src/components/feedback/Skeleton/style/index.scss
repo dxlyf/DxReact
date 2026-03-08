@@ -1,0 +1,75 @@
+@import '../../../../styles/variables';
+
+.lyf-skeleton {
+  background-color: $bg-color;
+  
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+  
+  &-text {
+    height: 16px;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+    width: 100%;
+    
+    &-short {
+      width: 70%;
+    }
+    
+    &-shorter {
+      width: 50%;
+    }
+  }
+  
+  &-avatar {
+    width: 48px;
+    height: 48px;
+    background-color: $bg-color-secondary;
+    border-radius: 50%;
+  }
+  
+  &-button {
+    width: 80px;
+    height: 32px;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+  }
+  
+  &-input {
+    height: 32px;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+  }
+  
+  &-image {
+    width: 100%;
+    height: 200px;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+  }
+  
+  &-animated {
+    .lyf-skeleton-text,
+    .lyf-skeleton-avatar,
+    .lyf-skeleton-button,
+    .lyf-skeleton-input,
+    .lyf-skeleton-image {
+      animation: lyf-skeleton-loading 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes lyf-skeleton-loading {
+  0% {
+    background-color: $bg-color-secondary;
+  }
+  50% {
+    background-color: lighten($bg-color-secondary, 5%);
+  }
+  100% {
+    background-color: $bg-color-secondary;
+  }
+}

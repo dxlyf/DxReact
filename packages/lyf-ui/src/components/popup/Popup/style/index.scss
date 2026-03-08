@@ -1,0 +1,86 @@
+@import '../../../../styles/variables';
+
+.lyf-popup {
+  background-color: $bg-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-lg;
+  animation: lyf-popup-fade-in 0.3s ease;
+  
+  &.lyf-popup-hidden {
+    animation: lyf-popup-fade-out 0.3s ease forwards;
+  }
+  
+  &-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+  
+  &-top {
+    .lyf-popup-arrow {
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0 6px;
+      border-color: $bg-color transparent transparent transparent;
+    }
+  }
+  
+  &-bottom {
+    .lyf-popup-arrow {
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 0 6px 6px 6px;
+      border-color: transparent transparent $bg-color transparent;
+    }
+  }
+  
+  &-left {
+    .lyf-popup-arrow {
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 6px 0 6px 6px;
+      border-color: transparent transparent transparent $bg-color;
+    }
+  }
+  
+  &-right {
+    .lyf-popup-arrow {
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 6px 6px 6px 0;
+      border-color: transparent $bg-color transparent transparent;
+    }
+  }
+}
+
+.lyf-popup-trigger {
+  display: inline-block;
+}
+
+@keyframes lyf-popup-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lyf-popup-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}

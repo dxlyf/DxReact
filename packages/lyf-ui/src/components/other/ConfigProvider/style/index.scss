@@ -1,0 +1,18 @@
+@import '../../../../styles/variables';
+
+.lyf-config-provider {
+  width: 100%;
+  height: 100%;
+}
+
+.lyf-theme-light {
+  // 亮色主题样式
+  background-color: $bg-color;
+  color: $text-color;
+}
+
+.lyf-theme-dark {
+  // 暗色主题样式
+  background-color: #141414;
+  color: rgba(255, 255, 255, 0.85);
+}

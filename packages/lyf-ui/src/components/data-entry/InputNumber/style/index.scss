@@ -1,0 +1,124 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-input-number {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  background-color: $bg-color;
+  transition: $transition-base;
+  
+  &:hover {
+    border-color: $primary-color;
+  }
+  
+  &:focus-within {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+  }
+  
+  &-small {
+    height: 32px;
+    
+    .lyf-input-number-input {
+      height: 30px;
+      font-size: $font-size-sm;
+      padding: 0 $spacing-xs;
+    }
+    
+    .lyf-input-number-button {
+      width: 24px;
+      height: 15px;
+      font-size: 10px;
+    }
+  }
+  
+  &-default {
+    height: 36px;
+    
+    .lyf-input-number-input {
+      height: 34px;
+      font-size: $font-size-base;
+      padding: 0 $spacing-sm;
+    }
+    
+    .lyf-input-number-button {
+      width: 28px;
+      height: 17px;
+      font-size: 12px;
+    }
+  }
+  
+  &-large {
+    height: 40px;
+    
+    .lyf-input-number-input {
+      height: 38px;
+      font-size: $font-size-lg;
+      padding: 0 $spacing-sm;
+    }
+    
+    .lyf-input-number-button {
+      width: 32px;
+      height: 19px;
+      font-size: 14px;
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    border-color: $border-color;
+    
+    &:hover {
+      border-color: $border-color;
+    }
+  }
+}
+
+.lyf-input-number-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: $text-color;
+  font-family: $font-family;
+  
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  & {
+    -moz-appearance: textfield;
+  }
+}
+
+.lyf-input-number-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background-color: $bg-color-secondary;
+  cursor: pointer;
+  transition: $transition-base;
+  
+  &:hover {
+    background-color: $bg-color-tertiary;
+  }
+  
+  &:disabled {
+    @include disabled;
+    cursor: not-allowed;
+  }
+  
+  &-up {
+    border-top-right-radius: $border-radius-base;
+    border-bottom: 1px solid $border-color;
+  }
+  
+  &-down {
+    border-bottom-right-radius: $border-radius-base;
+  }
+}

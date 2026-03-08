@@ -1,0 +1,111 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-upload {
+  display: inline-block;
+  position: relative;
+  
+  &-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
+  &-trigger {
+    display: inline-block;
+  }
+  
+  &-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-sm $spacing-md;
+    border: 1px dashed $border-color;
+    border-radius: $border-radius-base;
+    background-color: $bg-color;
+    color: $text-color-secondary;
+    cursor: pointer;
+    transition: $transition-base;
+    
+    &:hover {
+      border-color: $primary-color;
+      color: $primary-color;
+    }
+  }
+  
+  &-icon {
+    margin-right: $spacing-xs;
+    font-size: 16px;
+  }
+  
+  &-list {
+    margin-top: $spacing-sm;
+  }
+  
+  &-item {
+    display: flex;
+    align-items: center;
+    padding: $spacing-xs $spacing-sm;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    background-color: $bg-color;
+    margin-bottom: $spacing-xs;
+  }
+  
+  &-item-info {
+    flex: 1;
+  }
+  
+  &-item-name {
+    display: block;
+    margin-bottom: $spacing-xs;
+    color: $text-color;
+  }
+  
+  &-item-progress {
+    width: 100%;
+    height: 4px;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+    overflow: hidden;
+  }
+  
+  &-item-progress-bar {
+    height: 100%;
+    background-color: $primary-color;
+    transition: width 0.3s ease;
+  }
+  
+  &-item-remove {
+    margin-left: $spacing-sm;
+    color: $text-color-secondary;
+    cursor: pointer;
+    font-size: 16px;
+    
+    &:hover {
+      color: $error-color;
+    }
+  }
+  
+  &-disabled {
+    .lyf-upload-button {
+      @include disabled;
+      border-color: $border-color;
+      color: $text-color-placeholder;
+      cursor: not-allowed;
+      
+      &:hover {
+        border-color: $border-color;
+        color: $text-color-placeholder;
+      }
+    }
+    
+    .lyf-upload-input {
+      cursor: not-allowed;
+    }
+  }
+}

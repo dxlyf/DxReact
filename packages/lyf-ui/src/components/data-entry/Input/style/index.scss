@@ -1,0 +1,215 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-input-wrapper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  background-color: $bg-color;
+  transition: $transition-base;
+  
+  &:hover {
+    border-color: $primary-color;
+  }
+  
+  &:focus-within {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+  }
+  
+  &-small {
+    height: 32px;
+    
+    .lyf-input {
+      height: 30px;
+      font-size: $font-size-sm;
+    }
+    
+    .lyf-input-addon {
+      height: 30px;
+      font-size: $font-size-sm;
+      padding: 0 $spacing-sm;
+    }
+  }
+  
+  &-default {
+    height: 36px;
+    
+    .lyf-input {
+      height: 34px;
+      font-size: $font-size-base;
+    }
+    
+    .lyf-input-addon {
+      height: 34px;
+      font-size: $font-size-base;
+      padding: 0 $spacing-md;
+    }
+  }
+  
+  &-large {
+    height: 40px;
+    
+    .lyf-input {
+      height: 38px;
+      font-size: $font-size-lg;
+    }
+    
+    .lyf-input-addon {
+      height: 38px;
+      font-size: $font-size-lg;
+      padding: 0 $spacing-lg;
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    border-color: $border-color;
+    
+    &:hover {
+      border-color: $border-color;
+    }
+  }
+  
+  &-error {
+    border-color: $error-color;
+    
+    &:focus-within {
+      box-shadow: 0 0 0 2px rgba($error-color, 0.2);
+    }
+  }
+}
+
+.lyf-input-inner {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.lyf-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: 0 $spacing-sm;
+  color: $text-color;
+  font-family: $font-family;
+  
+  &::placeholder {
+    color: $text-color-placeholder;
+  }
+}
+
+.lyf-input-prefix,
+.lyf-input-suffix {
+  padding: 0 $spacing-xs;
+  color: $text-color-secondary;
+  white-space: nowrap;
+}
+
+.lyf-input-password-icon {
+  cursor: pointer;
+  
+  &:hover {
+    color: $primary-color;
+  }
+}
+
+.lyf-input-addon {
+  background-color: $bg-color-secondary;
+  border-color: $border-color;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  
+  &-before {
+    border-right: 1px solid $border-color;
+  }
+  
+  &-after {
+    border-left: 1px solid $border-color;
+  }
+}
+
+.lyf-input-search-button {
+  background-color: $primary-color;
+  border: none;
+  color: #fff;
+  height: 100%;
+  padding: 0 $spacing-md;
+  cursor: pointer;
+  transition: $transition-base;
+  
+  &:hover {
+    background-color: darken($primary-color, 10%);
+  }
+}
+
+.lyf-textarea-wrapper {
+  display: inline-block;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  background-color: $bg-color;
+  transition: $transition-base;
+  
+  &:hover {
+    border-color: $primary-color;
+  }
+  
+  &:focus-within {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+  }
+  
+  &-small {
+    .lyf-textarea {
+      font-size: $font-size-sm;
+    }
+  }
+  
+  &-default {
+    .lyf-textarea {
+      font-size: $font-size-base;
+    }
+  }
+  
+  &-large {
+    .lyf-textarea {
+      font-size: $font-size-lg;
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    border-color: $border-color;
+    
+    &:hover {
+      border-color: $border-color;
+    }
+  }
+  
+  &-error {
+    border-color: $error-color;
+    
+    &:focus-within {
+      box-shadow: 0 0 0 2px rgba($error-color, 0.2);
+    }
+  }
+}
+
+.lyf-textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: $spacing-xs $spacing-sm;
+  color: $text-color;
+  font-family: $font-family;
+  resize: vertical;
+  
+  &::placeholder {
+    color: $text-color-placeholder;
+  }
+}

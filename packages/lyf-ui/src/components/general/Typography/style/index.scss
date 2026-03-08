@@ -1,0 +1,135 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-typography {
+  margin: 0;
+  line-height: 1.5;
+  
+  &-h1 {
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: $spacing-md;
+  }
+  
+  &-h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: $spacing-md;
+  }
+  
+  &-h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: $spacing-sm;
+  }
+  
+  &-h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: $spacing-sm;
+  }
+  
+  &-h5 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: $spacing-xs;
+  }
+  
+  &-h6 {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: $spacing-xs;
+  }
+  
+  &-p {
+    font-size: $font-size-base;
+    margin-bottom: $spacing-md;
+  }
+  
+  &-span {
+    font-size: $font-size-base;
+  }
+  
+  &-a {
+    color: $primary-color;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  &-level-1 {
+    font-size: 32px;
+  }
+  
+  &-level-2 {
+    font-size: 24px;
+  }
+  
+  &-level-3 {
+    font-size: 20px;
+  }
+  
+  &-level-4 {
+    font-size: 16px;
+  }
+  
+  &-level-5 {
+    font-size: 14px;
+  }
+  
+  &-level-6 {
+    font-size: 12px;
+  }
+  
+  &-align-left {
+    text-align: left;
+  }
+  
+  &-align-center {
+    text-align: center;
+  }
+  
+  &-align-right {
+    text-align: right;
+  }
+  
+  &-align-justify {
+    text-align: justify;
+  }
+  
+  &-ellipsis {
+    @include text-ellipsis;
+  }
+  
+  &-disabled {
+    color: $text-color-disabled;
+  }
+  
+  &-mark {
+    background-color: #fff2e8;
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+  
+  &-code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875em;
+    padding: 0.2em 0.4em;
+    background-color: $bg-color-tertiary;
+    border-radius: $border-radius-sm;
+  }
+  
+  &-underline {
+    text-decoration: underline;
+  }
+  
+  &-delete {
+    text-decoration: line-through;
+  }
+  
+  &-strong {
+    font-weight: 600;
+  }
+}

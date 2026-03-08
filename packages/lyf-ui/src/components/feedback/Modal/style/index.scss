@@ -1,0 +1,134 @@
+@import '../../../../styles/variables';
+
+.lyf-modal-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lyf-modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: lyf-modal-mask-fade-in 0.3s ease;
+}
+
+.lyf-modal {
+  position: relative;
+  background-color: $bg-color;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-lg;
+  animation: lyf-modal-fade-in 0.3s ease;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-md;
+    border-bottom: 1px solid $border-color;
+  }
+  
+  &-title {
+    font-size: $font-size-lg;
+    font-weight: 500;
+    color: $text-color;
+  }
+  
+  &-close {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background-color: transparent;
+    color: $text-color-secondary;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition-base;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  &-body {
+    padding: $spacing-md;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  &-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-sm;
+    padding: $spacing-md;
+    border-top: 1px solid $border-color;
+    background-color: $bg-color-secondary;
+  }
+  
+  &-button {
+    padding: $spacing-xs $spacing-md;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-base;
+    cursor: pointer;
+    transition: $transition-base;
+    
+    &-cancel {
+      background-color: $bg-color;
+      color: $text-color;
+      
+      &:hover {
+        border-color: $primary-color;
+        color: $primary-color;
+      }
+    }
+    
+    &-ok {
+      background-color: $primary-color;
+      color: #fff;
+      border-color: $primary-color;
+      
+      &:hover {
+        background-color: darken($primary-color, 10%);
+        border-color: darken($primary-color, 10%);
+      }
+    }
+  }
+}
+
+@keyframes lyf-modal-mask-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lyf-modal-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

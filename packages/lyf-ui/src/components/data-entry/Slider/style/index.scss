@@ -1,0 +1,110 @@
+@import '../../../../styles/variables';
+@import '../../../../styles/mixins';
+
+.lyf-slider {
+  display: inline-block;
+  position: relative;
+  
+  &-vertical {
+    height: 200px;
+    width: 4px;
+    
+    .lyf-slider-track {
+      height: 100%;
+      width: 4px;
+    }
+    
+    .lyf-slider-track-filled {
+      position: absolute;
+      width: 4px;
+      background-color: $primary-color;
+      border-radius: $border-radius-base;
+    }
+    
+    .lyf-slider-handle {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+  
+  &-track {
+    width: 200px;
+    height: 4px;
+    background-color: $bg-color-secondary;
+    border-radius: $border-radius-base;
+    position: relative;
+    cursor: pointer;
+    
+    &-filled {
+      position: absolute;
+      height: 4px;
+      background-color: $primary-color;
+      border-radius: $border-radius-base;
+    }
+  }
+  
+  &-handle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid $primary-color;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: $transition-base;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      box-shadow: 0 0 0 6px rgba($primary-color, 0.1);
+    }
+  }
+  
+  &-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: $spacing-xs;
+    padding: $spacing-xs $spacing-sm;
+    background-color: $text-color;
+    color: #fff;
+    border-radius: $border-radius-base;
+    font-size: $font-size-sm;
+    white-space: nowrap;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: $text-color;
+    }
+  }
+  
+  &-disabled {
+    @include disabled;
+    
+    .lyf-slider-track {
+      background-color: $border-color;
+      cursor: not-allowed;
+    }
+    
+    .lyf-slider-track-filled {
+      background-color: $bg-color-secondary;
+    }
+    
+    .lyf-slider-handle {
+      border-color: $border-color;
+      cursor: not-allowed;
+      
+      &:hover {
+        box-shadow: none;
+      }
+    }
+  }
+}
