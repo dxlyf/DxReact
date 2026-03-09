@@ -75,7 +75,7 @@ const handleRemoveRecommended=(index:number)=>{
         <div class="py-4 px-4">
             <div class="grid grid-cols-2 w-full">
                 <t-form-item label="Background color" name="backgroundColor">
-                    <t-color-picker v-model="formData.backgroundColor" />
+                    <t-color-picker :color-modes="['monochrome','linear-gradient']" :swatch-colors="['RGB']" enable-alpha format="HEX" v-model="formData.backgroundColor" />
                 </t-form-item>
                 <t-form-item label="Show shopping guide" name="showShoppingGuide">
                     <t-switch v-model="formData.showShoppingGuide" :custom-value="[1, 0]" :label="['ON', 'OFF']" />

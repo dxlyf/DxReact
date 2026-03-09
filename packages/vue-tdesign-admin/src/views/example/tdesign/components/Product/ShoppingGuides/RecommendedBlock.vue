@@ -86,7 +86,7 @@ const handleFilledBlock=(item:FastAccessOption)=>{
         </div>
     </t-form-item>
     <t-form-item label="Icon" :name="`${prefix}.icon`">
-       <FUploadImage  v-model="formData.icon" tips="上传文件格式：svg,尺寸:64x64 px" ></FUploadImage>
+       <FUploadImage :vv="formData.title"  v-model="formData.icon" tips="上传文件格式：svg,尺寸:64x64 px" ></FUploadImage>
     </t-form-item>
     <t-form-item label="Countries" :name="`${prefix}.countries`">
         <CountrySelect v-model="formData.countries"></CountrySelect>

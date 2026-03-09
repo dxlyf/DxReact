@@ -125,41 +125,27 @@ const loadImage=(url:string)=>{
 }
 
 
-const checkImage=(options:CheckImageOptions,imageInfo:ImageInfo)=>{
-  let msg=''
-  if(typeof options.type==='string'&&options.type!==imageInfo.type){
-    msg+='/格式'
-  }
-  if(Number.isFinite(options.width)&&options.width!==0&&(options.width!==imageInfo.width||options.height!==imageInfo.height)){
-    msg+='/尺寸'
-  }
-  if(msg.length>0){
-    msg=`图片${msg.slice(1)}不符合规范，请重新上传`
-  }
-  return msg;
-}
-
 const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
-
+   state.error=''
    return new Promise(async (resolve,reject)=>{
       const fileSize=file.size/1024/1024 // mb
       const fileName=file.name,type=file.type,ext=fileName.split('.').pop()?.toLowerCase()
       let msg=''
-      // if(!props.extension?.some(d=>ext===d.toLowerCase())){
-      //    msg+=`/格式`
-      // }
+      if(props.skipLoadCheck&&!props.extension?.some(d=>ext===d.toLowerCase())){
+         msg+=`/格式`
+      }
       if(fileSize>props.limit.size){
-        msg+=`/文件大小应小于${props.limit.size}MB`
+        msg+=`/文件大小`
       //  MessagePlugin.error(`文件大小应小于${props.limit.size}MB`)
        // resolve(false)
        // return 
       }
       const img=await loadImage(await fileToBase64(file.raw) as string) as HTMLImageElement
-      // const width=props.limit.width
-      // const height=props.limit.height
-      // if(Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
-      //   msg+=`/尺寸`
-      // }
+      const width=props.limit.width
+      const height=props.limit.height
+      if(props.skipLoadCheck&&Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
+        msg+=`/尺寸`
+      }
       file.thumbnailUrl=img.src
       state.thumbnailUrl=img.src
       if(msg!==''){
@@ -179,6 +165,20 @@ const handleDelete=()=>{
   state.thumbnailUrl=''
   state.error=''
   state.loadCheckImageError=''
+}
+
+const checkImage=(options:CheckImageOptions,imageInfo:ImageInfo)=>{
+  let msg=''
+  if(typeof options.type==='string'&&options.type!==imageInfo.type){
+    msg+='/格式'
+  }
+  if(Number.isFinite(options.width)&&options.width!==0&&(options.width!==imageInfo.width||options.height!==imageInfo.height)){
+    msg+='/尺寸'
+  }
+  if(msg.length>0){
+    msg=`图片${msg.slice(1)}不符合规范，请重新上传`
+  }
+  return msg;
 }
 
 const checkImageDom=(img:HTMLImageElement,options:CheckImageOptions)=>{
@@ -234,7 +234,7 @@ const handleCheckImage=({e}:any)=>{
         </div>
          <t-image @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
          <t-image-viewer @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
-         <div v-if="imageUrl!==''" class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
+         <div v-if="showImage" class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">
               <t-icon name="browse" size="20" class="cursor-pointer" @click="state.showPreview=true"></t-icon>     
               <t-icon name="delete" size="20"  :class="[disabled?'text-gray-400 cursor-not-allowed':'cursor-pointer']" :disabled="disabled" @click="handleDelete"></t-icon>

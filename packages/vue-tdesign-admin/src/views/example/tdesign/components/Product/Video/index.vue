@@ -22,7 +22,7 @@ type VideoItem = {
     description: string
 }
 
-const videos = shallowRef<VideoGroup[]>([{
+const videos = ref<VideoGroup[]>([{
     groupSlug: 'group-1',
     groupId: 1,
     title: 'Group 1',
@@ -108,9 +108,12 @@ const videoColumns: TableProps['columns'] = [{
     fixed: 'right',
     width: 180
 }]
-const onDragSort = (group: any, params: any) => {
+const onDragSort = (group: VideoGroup, params: any) => {
     const { currentIndex, targetIndex, current, target, data, newData } = params;
-    group.videos = [...newData];
+    console.log('data',group)
+  //  const groupIndex=videos.value.findIndex(d=>d.groupId==group.groupId)
+    //videos.value[groupIndex].videos = [...newData];
+    group.videos=[...newData]
 }
 const dialogFormRef=shallowRef<FormInstanceFunctions>(null)
 const visibleCloneDialog=ref(false) // 克隆弹窗是否可见
@@ -262,7 +265,7 @@ const handleImportSubmit=(e:any)=>{
                 </div>
             </div>
             <div class="flex flex-col gap-4 px-4">
-                <div class="flex flex-col" v-for="group in videos" :key="group.groupId">
+                <div class="flex flex-col" v-for="(group,groupIndex) in videos" :key="group.groupId">
                     <div class="text-md font-semibold">
                         <t-link theme="primary">{{ group.title }}</t-link>
                     </div>

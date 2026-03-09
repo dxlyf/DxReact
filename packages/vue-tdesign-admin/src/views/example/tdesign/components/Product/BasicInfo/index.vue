@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CollapsePanel, type TdFormProps, type TdSelectInputProps, type TdTagInputProps } from 'tdesign-vue-next'
+import { CollapsePanel, type TdFormProps, type TdInputProps, type TdSelectInputProps, type TdTagInputProps } from 'tdesign-vue-next'
 import { reactive, ref, shallowReactive, shallowRef, computed, onBeforeMount, toRaw } from 'vue';
 import FUploadCover from '../../FUpload/FUploadCover2.vue'
 import CountrySelect from '@/components/country-select/index.vue'
@@ -13,7 +13,8 @@ const formData = reactive({
     hideInSearch: 1,
     searchSynonym: [],
     searchSynonym2: [],
-    searchSynonym3: []
+    searchSynonym3: [],
+    searchSynonym4:[]
 })
 const rules: TdFormProps['rules'] = {
     slug: [
@@ -159,10 +160,55 @@ const handleEnterSearchSynonym3 = ({ inputValue }) => {
     //console.log('create',index)
     if (index === -1) {
         formData.searchSynonym3 = [...formData.searchSynonym3, inputValue]
-        return true
+      //  return true
     }
 }
+const handlePasteeSearchSynonym3:TdInputProps['onPaste']=(ctx)=>{
+   if(ctx.pasteValue.trim()===''){
+    return
+   }
+   const values=ctx.pasteValue.split(',')
+   values.forEach(value=>{
+        handleAddSearchSynonym3(value)
+   })
+   ctx.e.preventDefault()
+   ctx.e.stopImmediatePropagation()
+}
 
+const searchSynonym4Options=computed(()=>{
+    return formData.searchSynonym4.map(v=>{
+        return {
+            value:v,
+            label:v,
+        }
+    })
+})
+const handleSynonymChange=(values:string[])=>{
+     const value=values[values.length-1]
+     const list=values.filter(v=>v==value)
+     if(list.length>1){
+        formData.searchSynonym4=values.filter(v=>v!==value)
+     }else{
+        formData.searchSynonym4=[...values]
+     }
+}
+const handleSynonymEnter=({inputValue})=>{
+     const index=formData.searchSynonym4.findIndex(item=>item==inputValue)
+     if(index==-1){
+        formData.searchSynonym4=[...formData.searchSynonym4,inputValue]
+     }
+}
+const handleSynonymPaste=(ctx)=>{
+     if(ctx.pasteValue.trim()===''){
+    return
+   }
+   const values=ctx.pasteValue.split(/,|;/g)
+   values.forEach(value=>{
+        handleSynonymEnter({inputValue:value})
+   })
+   ctx.e.preventDefault()
+   ctx.e.stopImmediatePropagation()
+}
 </script>
 <template>
     <t-form class="w-full" @submit="handleSubmit" :data="formData" :rules="rules" label-align="top" layout='vertical'>
@@ -286,10 +332,17 @@ const handleEnterSearchSynonym3 = ({ inputValue }) => {
                 </t-form-item>
                 <t-form-item label="Search synonym" name="searchSynonym3">
 
-                    <t-select @change="handleSelectSearchSynonym3" @enter="handleEnterSearchSynonym3" creatable
+                    <t-select @change="handleSelectSearchSynonym3" :input-props="{onPaste:handlePasteeSearchSynonym3}" @enter="handleEnterSearchSynonym3" creatable
                         :multiple="true" :min-collapsed-num="3" :options="searchSynonym3Options"
                         @create="handleAddSearchSynonym3" :clearable="true" :filterable="true"
                         :value="formData.searchSynonym3"></t-select>
+                    <div class="ml-4">是否隐藏在搜索结果中</div>
+                </t-form-item>
+                  <t-form-item label="Search synonym" name="searchSynonym4">
+
+                    <t-select @change="handleSynonymChange" :input-props="{onPaste:handleSynonymPaste}" creatable :multiple="true" :min-collapsed-num="3"
+                        :options="searchSynonym4Options" @enter="handleSynonymEnter" :clearable="true"
+                        :filterable="true" :value="formData.searchSynonym4"></t-select>
                     <div class="ml-4">是否隐藏在搜索结果中</div>
                 </t-form-item>
             </t-collapse-panel>

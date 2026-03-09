@@ -135,10 +135,10 @@ watch(fastAccessOptionsFromParent,(val)=>{
 </script>
 <template>
     <t-form-item :rules="[{required:true,message:'请上传title'}]" label="Title" :name="`${prefix}.title`">
-        <UploadCover v-model="formData.title"></UploadCover>
+        <UploadCover :skip-load-check="false"  :load-check-image-config="{type:'svg',width:362,height:32}" :extension="['svg','png']" tips="上传图片格式：SVG,尺寸：362x32" subtitle="支持上传扩展名：PNG、JPG、GIF、SVG" :limit="{size:2,width:362,height:32}" v-model="formData.title"></UploadCover>
     </t-form-item>
     <t-form-item :rules="[{required:true,message:'请上传cover'}]" label="Cover" :name="`${prefix}.cover`">
-        <UploadCover v-model="formData.cover"></UploadCover>
+        <UploadCover :limit="{size:2,width:720,height:720}"  tips="上传图片格式：SVG,尺寸：362x32" subtitle="支持上传扩展名：PNG、JPG、GIF、SVG" v-model="formData.cover"></UploadCover>
     </t-form-item>
     <t-form-item label="Highlight">
         <div class="flex flex-col w-full">
