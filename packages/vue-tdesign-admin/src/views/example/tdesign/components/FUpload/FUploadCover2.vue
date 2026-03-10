@@ -1,6 +1,6 @@
 
 <script lang="ts" setup>
-import { computed, ref,shallowReactive} from 'vue';
+import { computed,watch, ref,shallowReactive, shallowRef} from 'vue';
 import { Message, MessagePlugin, type UploadProps } from 'tdesign-vue-next';
 type CheckImageOptions={
   width?:number
@@ -60,7 +60,7 @@ const isUndef=(val:any)=>{
   return val===undefined||val===null||val===''
 }
 const showImage=computed(()=>{
-  return (!isUndef(imageUrl.value)||!isUndef(state.thumbnailUrl))
+  return !isUndef(imageUrl.value)
 })
 // res.url 图片地址；res.uploadTime 文件上传时间；res.error 上传失败的原因
 const formatResponse:UploadProps['formatResponse']= (res) => {
@@ -82,7 +82,8 @@ const accept=computed(()=>{
   return props.extension.map(v=>'.'+v).join(',')
 })
 const handleSuccess:UploadProps['onSuccess']=(ctx)=>{
-  imageUrl.value=ctx.response.url
+ // imageUrl.value=ctx.response.url
+  setImageUrl(ctx.response.url)
   state.showProgress=false
   state.progress=0
   console.log('handleSuccess',ctx)
@@ -146,13 +147,13 @@ const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
       if(props.skipLoadCheck&&Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
         msg+=`/尺寸`
       }
-      file.thumbnailUrl=img.src
-      state.thumbnailUrl=img.src
       if(msg!==''){
         state.error=`图片${msg.slice(1)}不符合规范，请重新上传`
         resolve(false)
         return
       }
+      file.thumbnailUrl=img.src
+      state.thumbnailUrl=img.src
       state.showProgress=true
       resolve(true)
    })
@@ -165,6 +166,7 @@ const handleDelete=()=>{
   state.thumbnailUrl=''
   state.error=''
   state.loadCheckImageError=''
+  files.value=[]
 }
 
 const checkImage=(options:CheckImageOptions,imageInfo:ImageInfo)=>{
@@ -200,12 +202,18 @@ const handleCheckImage=({e}:any)=>{
     return
   }
 }
+
+let isManualUpdate=false
+const setImageUrl=(url:string)=>{
+  isManualUpdate=true;
+  imageUrl.value=url
+}
 </script>
 
 <template>
     <div class="upload-wrap flex flex-col">
       <t-upload 
-      v-if="!showImage"
+      v-if="state.thumbnailUrl===''&&imageUrl===''"
       :disabled="disabled"
         :allow-upload-duplicate-file="true"
         class="upload w-[300px] h-[225px]"
@@ -218,7 +226,7 @@ const handleCheckImage=({e}:any)=>{
         theme="custom"
         :format-response="formatResponse"
         draggable
-        action="/api/upload"
+        action="/api/upload2"
       >
       <template #dragContent="{dragActive,files}">
         <div class="upload-drop border-dashed hover:border-blue-500 flex-1 flex flex-col items-center justify-center">
@@ -229,11 +237,13 @@ const handleCheckImage=({e}:any)=>{
       </template>
       </t-upload>
       <div class="w-[300px] h-[225px] relative group" v-else>
-        <div class="absolute top-0 w-full z-10" v-if="state.showProgress">
-          <t-progress class="w-full [&_.t-progress\_\_bar]:!rounded-none [&_.t-progress\_\_info]:!hidden" color="#00ff00" :percentage="state.progress" :label="false"></t-progress>
+        <div class="border border-gray-300 bg-gray-200 rounded-xs absolute top-0 w-full h-full z-10 flex flex-col justify-center items-center" v-if="state.showProgress">
+          <!-- <t-progress theme="circle"  color="#00ff00" :percentage="state.progress" :laebl="false"></t-progress> -->
+          <t-loading />
+          <div class="mt-4">上传中{{state.progress}}%</div>
         </div>
-         <t-image @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
-         <t-image-viewer @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
+         <t-image v-if="showImage" @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
+         <t-image-viewer v-if="showImage" @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
          <div v-if="showImage" class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">
               <t-icon name="browse" size="20" class="cursor-pointer" @click="state.showPreview=true"></t-icon>     

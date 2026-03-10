@@ -25,12 +25,12 @@
                              <template #suffix> <t-icon name="chevron-down" size="16" /></template>
                         </t-button>
                     </t-dropdown>
-                    <t-dropdown :options="settingOptions"  trigger="click" @click="handleSetting">
-
-                    <t-button variant="text" shape="circle">
-                        <t-avatar image="https://tdesign.gtimg.com/site/avatar.jpg" />
-                  
-                    </t-button>
+                    <t-dropdown  placement="bottom" :options="settingOptions"  trigger="hover" @click="handleSetting">
+                    
+                    <t-space :size="1">
+                       <t-avatar shape="circle" image="https://tdesign.gtimg.com/site/avatar.jpg" />
+                       <t-button variant="text">admin<template #suffix> <t-icon name="chevron-down" size="16" /></template></t-button>
+                    </t-space>
 
                     </t-dropdown>
                 </t-space>

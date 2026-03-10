@@ -185,6 +185,14 @@ const defaultRoutes: RouteRecordRaw[] = [
                   menuName: '查询列表',
                   icon: 'table'
                 }
+              }, {
+                path: 'field',
+                component: () => import('../views/example/tdesign/field.vue'),
+                meta: {
+                  title: '列表',
+                  menuName: 'field',
+                  icon: 'table'
+                }
               }
             ],
             meta: {

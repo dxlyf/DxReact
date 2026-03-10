@@ -1,34 +1,42 @@
 <script lang="ts">
-import {ref,reactive,defineComponent,useModel,type PropType, toRef,toRefs, computed} from 'vue'
+import {ref,watch,getCurrentInstance,getCurrentScope,reactive,useTemplateRef,defineComponent,useModel,type PropType, toRef,toRefs, computed, shallowRef, onMounted, onBeforeMount, shallowReactive, toRaw} from 'vue'
 import type { TdInputProps,TdInputNumberProps,FormInstanceFunctions,TdFormProps, TdFormItemProps, TdSelectProps } from 'tdesign-vue-next'
 
 
 export default defineComponent({
     name:'FField',
     props:{
-        type:{
-            type:Object as PropType<string>,
-            default:()=>{}
-        }
+        ctype:{
+            type:String as PropType<string>,
+            default:'input'
+        },
+        fieldRef:{}
     },
-    setup(props,{attrs,emit,expose}) {
-    
-        const type=toRef(props,'type')
+    setup(props,{attrs,emit,slots,expose}) {
+        const compRef=useTemplateRef('comp')
+        
         const fieldProps=computed(()=>{
-            return attrs
+            console.log('attrs',attrs)
+            console.log('props',props)
+            return {
+                ...attrs
+            }
         })
-        const compRef=ref()
-      
+        const instance=getCurrentInstance()
+        let currentExpose={}
+        //expose(currentExpose)
+        const fieldRef=toRef(props,'fieldRef')
+
         return {
-            compRef,
-            type,
+            fieldRef,
+            type:props.ctype,
             fieldProps
         }
     }
 })
 </script>
 <template>
-  <component :is="type" v-bind="fieldProps" >
+  <component ref="fieldRef" :is="type" v-bind="fieldProps" >
         <template v-for="(value,name,index) of $slots" :key="name" #[name]="slotData">
           <slot :name="name" v-bind="slotData || {}" />
         </template>
