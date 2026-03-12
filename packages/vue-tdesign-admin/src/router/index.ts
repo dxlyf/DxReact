@@ -294,6 +294,14 @@ const defaultRoutes: RouteRecordRaw[] = [
                 }
               }
             ]
+          },{
+            path: 'fontawesome',
+            component: () => import('../views/example/fontawesome.vue'),
+            meta: {
+              title: 'fontawesome',
+              menuName: 'fontawesome',
+              icon: 'table'
+            }
           }]
       },
       {

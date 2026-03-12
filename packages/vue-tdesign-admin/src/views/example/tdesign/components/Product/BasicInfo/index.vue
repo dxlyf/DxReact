@@ -3,7 +3,8 @@ import { CollapsePanel, type TdFormProps, type TdInputProps, type TdSelectInputP
 import { reactive, ref, shallowReactive, shallowRef, computed, onBeforeMount, toRaw } from 'vue';
 import FUploadCover from '../../FUpload/FUploadCover2.vue'
 import CountrySelect from '@/components/country-select/index.vue'
-
+import IconProvide from '../../FIcon/IconProvide.vue';
+import Icon from '../../FIcon/Icon.vue';
 const loading = ref(false)
 const detailData = ref<Record<string, any>>(null)
 const formData = reactive({
@@ -209,8 +210,14 @@ const handleSynonymPaste=(ctx)=>{
    ctx.e.preventDefault()
    ctx.e.stopImmediatePropagation()
 }
+
+const vvvv=shallowRef({})
+// setTimeout(()=>{
+//     vvvv.value={title:'fff'}
+// },3000)
 </script>
 <template>
+    <IconProvide :value="vvvv">
     <t-form class="w-full" @submit="handleSubmit" :data="formData" :rules="rules" label-align="top" layout='vertical'>
         <t-collapse :default-expand-all="true" :expand-mutex="false" :expand-on-row-click="true"
             expand-icon-placement="right" borderless>
@@ -237,8 +244,8 @@ const handleSynonymPaste=(ctx)=>{
                 </t-form-item>
                 <t-form-item label="Title(产品名称)" name="title">
                     <t-input v-model="formData.title" placeholder="请输入产品名称" :maxlength="255" />
-                    <template #help v-if="showEnglishDefaultValue('title')">
-                        <div>当前字段内容复用英文</div>
+                    <template #help >
+                        <Icon name="title"></Icon>
                     </template>
                 </t-form-item>
                 <t-form-item label="Slogan(产品标语)" name="slogan">
@@ -325,7 +332,7 @@ const handleSynonymPaste=(ctx)=>{
                 </t-form-item>
                 <t-form-item label="Search synonym" name="searchSynonym2">
 
-                    <t-select @change="handleSelectSearchSynonym" creatable :multiple="true" :min-collapsed-num="3"
+                    <t-select  @change="handleSelectSearchSynonym" creatable :multiple="true" :min-collapsed-num="3"
                         :options="searchSynonymOptions" @create="handleAddSearchSynonym" :clearable="true"
                         :filterable="true" :value="formData.searchSynonym2"></t-select>
                     <div class="ml-4">是否隐藏在搜索结果中</div>
@@ -340,9 +347,18 @@ const handleSynonymPaste=(ctx)=>{
                 </t-form-item>
                   <t-form-item label="Search synonym" name="searchSynonym4">
 
-                    <t-select @change="handleSynonymChange" :input-props="{onPaste:handleSynonymPaste}" creatable :multiple="true" :min-collapsed-num="3"
-                        :options="searchSynonym4Options" @enter="handleSynonymEnter" :clearable="true"
-                        :filterable="true" :value="formData.searchSynonym4"></t-select>
+                    <t-select :options="searchSynonym4Options" 
+                   
+                    :input-props="{onPaste:handleSynonymPaste}"
+                     creatable 
+                     multiple
+                     clearable
+                     filterable
+                      @change="handleSynonymChange" 
+                         @enter="handleSynonymEnter"
+                        :v-model="formData.searchSynonym4">
+                   
+                    </t-select>
                     <div class="ml-4">是否隐藏在搜索结果中</div>
                 </t-form-item>
             </t-collapse-panel>
@@ -390,6 +406,7 @@ const handleSynonymPaste=(ctx)=>{
             </t-space>
         </t-form-item>
     </t-form>
+    </IconProvide>  
 </template>
 <style lang="css" scoped>
 .header {

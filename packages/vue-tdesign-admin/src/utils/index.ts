@@ -52,3 +52,43 @@ export const fileToBase64 = (file: File | Blob): Promise<string> => {
         reader.onerror = reject;
     });
 };
+
+/**
+ * 添加URL参数（不刷新页面）
+ * @param {Object} params - 要添加的参数对象
+ * @param {boolean} replace - 是否替换当前历史记录（默认为false）
+ */
+export function addUrlParams(params: Record<string, string>, replace = false) {
+  const url = new URL(window.location.href)
+  
+  // 添加新参数
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value)
+  })
+  
+  // 获取新URL（不包含hash）
+  const newUrl = url.pathname + url.search + url.hash
+  
+  // 使用history API更新URL
+  if (replace) {
+    window.history.replaceState({ ...window.history.state }, '', newUrl)
+  } else {
+    window.history.pushState({ ...window.history.state }, '', newUrl)
+  }
+}
+
+/**
+ * 添加或修改多个URL参数
+ * @param url 原始URL
+ * @param params 参数对象
+ * @returns 修改后的URL
+ */
+export function setUrlParams(url: string, params: Record<string, string | number | boolean>): string {
+  const urlObj = new URL(url, window.location.origin)
+  
+  Object.entries(params).forEach(([key, value]) => {
+    urlObj.searchParams.set(key, String(value))
+  })
+  
+  return urlObj.toString()
+}

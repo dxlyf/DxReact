@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import FField from './components/FForm/FField.vue'
+import FFormFeild from './components/FForm/FFormFeild.vue'
 import {shallowRef,onMounted, reactive, toRaw,ref} from 'vue'
 
 const formRef=shallowRef()
 
 onMounted(()=>{
-    console.log('formRef',formRef.value)
+    console.log('formRef',formRef.value.fieldRef.submit)
 })
 const handleSubmit=()=>{
     console.log('formData',toRaw(formData))
@@ -19,10 +20,8 @@ const rules={
 </script>
 <template>
 
-<FField @submit="handleSubmit" ctype="t-form" :field-ref="formRef" :data="formData" :rules="rules">
-    <t-form-item name="name" label="name">
-        <FField ctype="t-input" v-model="formData.name"></FField>
-    </t-form-item>
+<FField @submit="handleSubmit" ctype="t-form" ref="formRef" :data="formData" :rules="rules">
+    <FFormFeild label="Name" type="t-input" name="name" :field-props="{modelValue:formData.name,'onUpdate:modelValue':(val)=>{console.log('v',val);formData.name=val}}"></FFormFeild>
     <FField ctype="t-button" type="submit" >提交</FField>
 </FField>
 </template>

@@ -2,8 +2,29 @@
 import { reactive, ref, shallowRef } from 'vue'
 import { useUserStore } from '@/stores/user'
 import ListLayout,{type Props as ListLayoutProps} from './components/Layouts/ListLayout.vue'
-import FSearchForm from './components/FForm/FSearchForm.vue'
-import type { TableProps } from 'tdesign-vue-next'
+import FSearchForm,{type FieldType} from './components/FForm/FSearchForm.vue'
+import { DialogPlugin, MessagePlugin, type TableProps } from 'tdesign-vue-next'
+
+
+const searchColumns:FieldType[]=[
+    {
+        label:'名称',
+        name:'name',
+        type:'text'
+    },    {
+        label:'名称2',
+        name:'name2',
+        type:'text'
+    },    {
+        label:'名称3',
+        name:'name3',
+        type:'text'
+    },    {
+        label:'名称4',
+        name:'name4',
+        type:'text'
+    }
+]
 
 const breadcrumbItems:ListLayoutProps['breadcrumbItems'] = [
     {
@@ -35,10 +56,11 @@ const columns:TableProps['columns']=[
         title:'Status'
     },{
         colKey:'actions',
+        cell:'cell_actions',
         title:'',
         width:160,
         fixed:'right'
-    }
+    },
 ]
 const tableData=shallowRef([])
 
@@ -105,16 +127,45 @@ const handlePaginationChange:TableProps['onPageChange']=(pageInfo)=>{
     loadTableData()
 }
 loadTableData()
+
+const handleDel=(row:any)=>{
+    tableData.value=tableData.value.filter(d=>d.id!==row.id)
+    const instance=DialogPlugin.confirm({
+        header:'确认删除吗？',
+        body:'删除后将无法恢复',
+        confirmBtn:{
+            content:'确认',
+            theme:'danger'
+        },
+        cancelBtn:{
+            content:'取消',
+            theme:'primary'
+        },
+        onConfirm:()=>{
+            MessagePlugin.success('删除成功')
+           // instance.destroy()
+        },
+        onCancel:()=>{
+            MessagePlugin.info('已取消删除')
+            //instance.destroy()
+        }
+    })
+}
 </script>
 <template>
+  
 <ListLayout title="列表" :breadcrumb-items="breadcrumbItems" >
     <template #form>
-        
+       <FSearchForm :columns="searchColumns"></FSearchForm>
     </template>
     <template #table>
         <t-table :disable-data-page="true" :loading="loading" @page-change="handlePaginationChange" :pagination="pagination" :row-class-name="({row})=>row._rowType&4?'pd-table-c-row':'pd-table-p-row'" row-key="id" :expand-icon="false" @expand-change="handleExpandChange" :expanded-row-keys="expandedRowKeys" :expand-on-row-click="false" :columns="columns" :data="tableData">
             <template #expandedRow="{ row }">
                 <t-table row-key="id" :columns="columns" :data="row.children"></t-table>
+            </template>
+            <template #status="{ row }">
+                <t-tag v-if="row.status==='published'" theme="success" variant="light">已发布</t-tag>
+                <t-tag v-else theme="warning">未发布</t-tag>
             </template>
             <template #id="{ row }">
                 {{ row._rowType&1 ?'' : row.id }}
@@ -149,6 +200,12 @@ loadTableData()
                         </div>
                     </div>
                </div>
+            </template>
+            <template #cell_actions="{row}">
+                <t-space>
+                    <t-link theme="primary" href="#">编辑</t-link>
+                    <t-link theme="danger" href="#" @click="handleDel(row)">删除</t-link>
+                </t-space>
             </template>
         </t-table>
     </template>

@@ -9,26 +9,21 @@ export default defineComponent({
         ctype:{
             type:String as PropType<string>,
             default:'input'
-        },
-        fieldRef:{}
+        }
     },
     setup(props,{attrs,emit,slots,expose}) {
         const compRef=useTemplateRef('comp')
         
         const fieldProps=computed(()=>{
-            console.log('attrs',attrs)
-            console.log('props',props)
             return {
                 ...attrs
             }
         })
         const instance=getCurrentInstance()
-        let currentExpose={}
-        //expose(currentExpose)
-        const fieldRef=toRef(props,'fieldRef')
-
+        expose({
+            fieldRef:compRef
+        })
         return {
-            fieldRef,
             type:props.ctype,
             fieldProps
         }
@@ -36,7 +31,7 @@ export default defineComponent({
 })
 </script>
 <template>
-  <component ref="fieldRef" :is="type" v-bind="fieldProps" >
+  <component ref="comp" :is="type" v-bind="fieldProps" >
         <template v-for="(value,name,index) of $slots" :key="name" #[name]="slotData">
           <slot :name="name" v-bind="slotData || {}" />
         </template>

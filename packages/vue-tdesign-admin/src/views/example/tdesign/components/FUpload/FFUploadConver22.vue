@@ -1,7 +1,7 @@
 
 <script lang="ts" setup>
 import { computed,watch, ref,shallowReactive, shallowRef} from 'vue';
-import { Message, MessagePlugin, type UploadFile, type UploadProps } from 'tdesign-vue-next';
+import { Message, MessagePlugin, type UploadProps } from 'tdesign-vue-next';
 type CheckImageOptions={
   width?:number
   height?:number
@@ -15,8 +15,7 @@ type ImageInfo={
   type:string
 }
 type Props={
-  disabled?:boolean
-  combo?:any[]
+  disabled?:boolean,
   loadCheckImageConfig?:CheckImageOptions
   limit?:{
     width?:number,
@@ -46,7 +45,6 @@ const props=withDefaults(defineProps<Props>(),{
 })
 
 const imageUrl=defineModel<string>()
-const files=shallowRef<UploadFile[]>([])
 const fileName=computed(()=>{
   return typeof imageUrl.value==='string'?imageUrl.value.split(/\\|\//).pop()||'':''
 })
@@ -63,11 +61,6 @@ const isUndef=(val:any)=>{
 }
 const showImage=computed(()=>{
   return !isUndef(imageUrl.value)
-})
-const showUpload=computed(()=>{
-  const url=imageUrl.value
-  const showProgress=state.showProgress
-  return !showProgress&&isUndef(url)
 })
 // res.url 图片地址；res.uploadTime 文件上传时间；res.error 上传失败的原因
 const formatResponse:UploadProps['formatResponse']= (res) => {
@@ -107,9 +100,6 @@ const handleProgress:UploadProps['onProgress']=(ctx)=>{
   console.log('handleProgress',ctx)
   state.progress=ctx.percent
 }
-const handleChange:UploadProps['onChange']=(values,ctx)=>{
-  console.log('handleChange',values)
-}
 const fileToBase64=(file:File|Blob)=>{
   return new Promise((resolve,reject)=>{
     const reader=new FileReader()
@@ -142,8 +132,6 @@ const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
       const fileSize=file.size/1024/1024 // mb
       const fileName=file.name,type=file.type,ext=fileName.split('.').pop()?.toLowerCase()
       let msg=''
-      // 检查file.type 是否在extension中
-     // console.log('fff',file.type)
       if(props.skipLoadCheck&&!props.extension?.some(d=>ext===d.toLowerCase())){
          msg+=`/格式`
       }
@@ -164,7 +152,7 @@ const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
         resolve(false)
         return
       }
-     // file.thumbnailUrl=img.src
+      file.thumbnailUrl=img.src
       state.thumbnailUrl=img.src
       state.showProgress=true
       resolve(true)
@@ -178,9 +166,7 @@ const handleDelete=()=>{
   state.thumbnailUrl=''
   state.error=''
   state.loadCheckImageError=''
-  state.showProgress=false
-  
- // files.value=[]
+  files.value=[]
 }
 
 const checkImage=(options:CheckImageOptions,imageInfo:ImageInfo)=>{
@@ -227,15 +213,13 @@ const setImageUrl=(url:string)=>{
 <template>
     <div class="upload-wrap flex flex-col">
       <t-upload 
-      v-if="showUpload"
+      v-if="state.thumbnailUrl===''&&imageUrl===''"
       :disabled="disabled"
         :allow-upload-duplicate-file="true"
         class="upload w-[300px] h-[225px]"
         :auto-upload="true"
         :beforeUpload="beforeUpload"
         :accept="accept"
-        :use-mock-progress="false"
-        @change="handleChange"
         @progress="handleProgress"
         @success="handleSuccess"
         @fail="handleFail"
@@ -252,16 +236,15 @@ const setImageUrl=(url:string)=>{
         </div>
       </template>
       </t-upload>
-      <div class="w-[300px] h-[225px] relative group" v-if="!showUpload">
-        <div v-if="state.showProgress" class="border border-gray-300 bg-gray-200 rounded-xs absolute top-0 w-full h-full z-10 flex flex-col justify-center items-center" >
+      <div class="w-[300px] h-[225px] relative group" v-else>
+        <div class="border border-gray-300 bg-gray-200 rounded-xs absolute top-0 w-full h-full z-10 flex flex-col justify-center items-center" v-if="state.showProgress">
           <!-- <t-progress theme="circle"  color="#00ff00" :percentage="state.progress" :laebl="false"></t-progress> -->
           <t-loading />
           <div class="mt-4">上传中{{state.progress}}%</div>
         </div>
-         <template v-if="showImage">
-          <t-image  @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
-         <t-image-viewer  @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
-         <div  class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
+         <t-image v-if="showImage" @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
+         <t-image-viewer v-if="showImage" @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
+         <div v-if="showImage" class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">
               <t-icon name="browse" size="20" class="cursor-pointer" @click="state.showPreview=true"></t-icon>     
               <t-icon name="delete" size="20"  :class="[disabled?'text-gray-400 cursor-not-allowed':'cursor-pointer']" :disabled="disabled" @click="handleDelete"></t-icon>
@@ -269,7 +252,6 @@ const setImageUrl=(url:string)=>{
             </div>
             <div class="text-white mt-4">{{ fileName }}</div>
          </div>
-         </template>
       </div>
       <div class="text-gray-500 text-xs mt-1" v-if="tips!==''||$slots.tips">
         <slot name="tips">{{tips}}</slot>

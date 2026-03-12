@@ -131,14 +131,11 @@ export default [
   },  {
   url: '/api/upload2',
     method: 'post',
-    response: async (req,res) => {
-         return {
-        code: 0,
-        msg:'success',
-        data: {
-          
-        },
-      }
+     rawResponse: async (req,res) => {
+      await delay(3000)
+     // res.writeHead(500,'upload error');
+     
+      res.end(JSON.stringify({code:0,msg:'',data:{files:[{url:'/uploads/aaa.jpg'}]}}))
     },
   },
   {
