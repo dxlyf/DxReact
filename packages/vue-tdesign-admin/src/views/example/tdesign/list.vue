@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { reactive, ref, shallowRef } from 'vue'
+import { nextTick, reactive, ref, shallowRef } from 'vue'
 import { useUserStore } from '@/stores/user'
 import ListLayout,{type Props as ListLayoutProps} from './components/Layouts/ListLayout.vue'
 import FSearchForm,{type FieldType} from './components/FForm/FSearchForm.vue'
 import { DialogPlugin, MessagePlugin, type TableProps } from 'tdesign-vue-next'
+import FTable from './components/FTable/index.vue'
+
 
 
 const searchColumns:FieldType[]=[
@@ -87,6 +89,7 @@ const loadTableData=async ()=>{
         current:pagination.current,
         pageSize:pagination.pageSize,
     }
+    console.log('params',params)
     loading.value=true
     await delay()
     const data=dataSourceList.slice((params.current-1)*params.pageSize,params.current*params.pageSize)
@@ -116,15 +119,28 @@ const expandedRowKeys=shallowRef([])
 const handleExpandChange:TableProps['onExpandChange']=(rowKeys,options)=>{
     expandedRowKeys.value=rowKeys
 }
-const pagination=reactive({
+const pagination=reactive<TableProps['pagination']>({
     total:0,
     pageSize:25,
     current:1,
+    pageSizeOptions:[5,10,25,50],
+    onPageSizeChange:(pageSize)=>{
+       console.log('onPageSizeChange',pageSize)
+    },
+    onChange:(pageInfo)=>{
+        console.log('page:onChange',pageInfo.current,pageInfo.pageSize,pagination.pageSize)
+ 
+    }
 })
 const handlePaginationChange:TableProps['onPageChange']=(pageInfo)=>{
-    pagination.current=pageInfo.current
-    pagination.pageSize=pageInfo.pageSize
-    loadTableData()
+    console.log('pageInfo',pageInfo.current,pageInfo.pageSize,pagination.pageSize)
+    if(pageInfo.pageSize!==pagination.pageSize){
+            pagination.current=1
+        }else{
+            pagination.current=pageInfo.current
+        }
+        pagination.pageSize=pageInfo.pageSize
+        loadTableData()
 }
 loadTableData()
 
@@ -159,7 +175,7 @@ const handleDel=(row:any)=>{
        <FSearchForm :columns="searchColumns"></FSearchForm>
     </template>
     <template #table>
-        <t-table :disable-data-page="true" :loading="loading" @page-change="handlePaginationChange" :pagination="pagination" :row-class-name="({row})=>row._rowType&4?'pd-table-c-row':'pd-table-p-row'" row-key="id" :expand-icon="false" @expand-change="handleExpandChange" :expanded-row-keys="expandedRowKeys" :expand-on-row-click="false" :columns="columns" :data="tableData">
+        <FTable :disable-data-page="true" :loading="loading" @page-change="handlePaginationChange" :pagination="pagination" :row-class-name="({row})=>row._rowType&4?'pd-table-c-row':'pd-table-p-row'" row-key="id" :expand-icon="false" @expand-change="handleExpandChange" :expanded-row-keys="expandedRowKeys" :expand-on-row-click="false" :columns="columns" :data="tableData">
             <template #expandedRow="{ row }">
                 <t-table row-key="id" :columns="columns" :data="row.children"></t-table>
             </template>
@@ -207,7 +223,7 @@ const handleDel=(row:any)=>{
                     <t-link theme="danger" href="#" @click="handleDel(row)">删除</t-link>
                 </t-space>
             </template>
-        </t-table>
+        </FTable>
     </template>
 </ListLayout>
 

@@ -356,7 +356,7 @@ const vvvv=shallowRef({})
                      filterable
                       @change="handleSynonymChange" 
                          @enter="handleSynonymEnter"
-                        :v-model="formData.searchSynonym4">
+                        :value="formData.searchSynonym4">
                    
                     </t-select>
                     <div class="ml-4">是否隐藏在搜索结果中</div>
