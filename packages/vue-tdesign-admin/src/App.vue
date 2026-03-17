@@ -1,8 +1,18 @@
 <template>
-  
-  <router-view />
+    <router-view v-slot="{Component,route}">
+        <component :is="Component" />
+    </router-view>
 </template>
-
+<style scoped>
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+</style>
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import {provide, shallowRef} from 'vue'

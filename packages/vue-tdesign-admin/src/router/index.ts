@@ -26,6 +26,10 @@ const defaultRoutes: RouteRecordRaw[] = [
         path: '',
         redirect: '/dashboard'
       },
+      { 
+        path:'/reload',
+        component: () => import('../views/reload.vue'),
+      },
       {
         path: '/error-page',
         component: () => import('../views/error-page.vue'),
@@ -191,6 +195,23 @@ const defaultRoutes: RouteRecordRaw[] = [
                 meta: {
                   title: '列表',
                   menuName: 'field',
+                  icon: 'table'
+                }
+              }, {
+                path: 'treelist',
+                component: () => import('../views/example/tdesign/treelist.vue'),
+                meta: {
+                  layout:'',
+                  title: '列表',
+                  menuName: 'treelist',
+                  icon: 'table'
+                }
+              }, {
+                path: 'videolist',
+                component: () => import('../views/example/tdesign/videolist.vue'),
+                meta: {
+                  title: '列表',
+                  menuName: 'videolist',
                   icon: 'table'
                 }
               }

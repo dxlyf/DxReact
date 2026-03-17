@@ -38,14 +38,14 @@
             </t-head-menu>
         </t-header>
         <t-content class="px-5 py-4">
-             <router-view v-slot="{Component}">
+             <!-- <router-view v-slot="{Component,route}">
                  <keep-alive >
-                    <component :is="Component" :key="$route.path"/>
+                    <component :is="Component" :key="route.path"/>
                  </keep-alive>
-            </router-view>
-    
+            </router-view> -->
+            <router-view></router-view>
         </t-content>
-        <t-footer>
+        <t-footer v-if="false">
         </t-footer>
     </t-layout>
     </t-layout>

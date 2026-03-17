@@ -1,0 +1,8 @@
+#app{
+    --td-brand-color:#3355ff;
+}
+#app .t-is-active .t-tree__label {
+    color:var(--td-brand-color);
+    background-color: #e8f0ff;
+    font-weight: 500;
+}

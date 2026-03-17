@@ -84,7 +84,7 @@ export const useLang=()=>{
             globalLang=[]
             getLangList().then((langList)=>{
                 promise.resolve(langList)
-                console.log('getLangList_after',langList)
+             //   console.log('getLangList_after',langList)
                 globalLang=langList
                 allLang.value=langList
             })
