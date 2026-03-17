@@ -221,6 +221,22 @@ const defaultRoutes: RouteRecordRaw[] = [
               menuName: 'tdesign',
               icon: 'table'
             }
+          },{
+            path: 'antd',
+            children: [{
+              path: 'treevue',
+              meta: {
+                title: 'treevue',
+                menuName: 'treevue',
+                icon: 'table'
+              },
+              component: () => import('../views/example/antd/treevue.vue'),
+            }],
+            meta: {
+              title: 'antd',
+              menuName: 'antd',
+              icon: 'table'
+            }
           }, {
             path: 'editor',
             children: [{
