@@ -157,11 +157,11 @@ const enableDrag = ref(false)
         <div class="mt-4 flex gap-4 flex-1">
             <div class="w-[260px] box-border p-3 bg-white rounded-sm">
                 <t-input @change="handleFilterInput" class="mb-2"></t-input>
-                <div class="flex justify-between mb-2">
+                <div class="flex justify-between mb-2 items-center h-6">
                         <t-switch v-model="enableDrag" :label="['开启拖拽','关闭拖拽']"></t-switch>
                           <t-button v-show='enableDrag' theme="primary" size="small">保存</t-button>
                 </div>
-                <t-tree :filter="handleFilterTreeNode" :activable="!enableDrag" @active="handleActive"
+                <t-tree :class="{'tree-drag-mode':enableDrag}" :filter="handleFilterTreeNode" :activable="!enableDrag" @active="handleActive"
                     @drag-start="handleDragStart" :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef"
                     :draggable="enableDrag" :data="state.data" hover @drop="handleDrop">
                     <!-- <template #icon="{ node }">
@@ -184,9 +184,8 @@ const enableDrag = ref(false)
                     </template> -->
                     <template #operations="{ node }">
                        <div v-if="node.data.draggable!==false">
-                         <t-icon name="drag-move"  style="cursor: move;" v-if="enableDrag"></t-icon>
-                        <div v-else-if="node.data.childCount > 0" class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs"
-                            > {{ node.data.childCount }}</div>
+                         <div  v-if="enableDrag" class="treeitem-move-icon"><t-icon name="drag-move" style="cursor: move;" ></t-icon></div>
+                        <div v-else-if="node.data.childCount > 0" class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs" > {{ node.data.childCount }}</div>
                        </div>
                     </template>
                 </t-tree>
@@ -194,7 +193,7 @@ const enableDrag = ref(false)
             <div class="flex-1 bg-white rounded-sm">
                 <div class="h-full flex flex-col items-center justify-center">
                     <div>
-                        <t-icon name="file"></t-icon>
+                        <t-icon name="file" sty></t-icon>
                     </div>
                     <div class="text-gray-500">暂无数据</div>
                 </div>
@@ -222,4 +221,10 @@ const enableDrag = ref(false)
 /* .t-tree__icon{
         width: 60px!important;
     } */
+     .tree-drag-mode .t-tree__item:has(.treeitem-move-icon) .t-tree__label{
+        cursor: move;
+     }
+     .tree-drag-mode{
+        --td-text-color-brand:#333;
+     }
 </style>
