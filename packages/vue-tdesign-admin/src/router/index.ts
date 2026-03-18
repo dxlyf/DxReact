@@ -153,7 +153,25 @@ const defaultRoutes: RouteRecordRaw[] = [
           icon: 'table'
         },
         children: [
-
+          {
+            path: 'component',
+            meta: {
+              title: '树',
+              menuName: '自定义组件',
+              icon: 'table'
+            },
+            children: [
+              {
+                path: 'tree',
+                component: () => import('../views/example/components/Tree/index.vue'),
+                meta: {
+                  title: '树',
+                  menuName: 'tree',
+                  icon: 'table'
+                }
+              }
+            ]
+          },
           {
             path: 'tdesign',
             children: [
