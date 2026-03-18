@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { TdBreadcrumbProps,TdTreeProps,TreeInstanceFunctions } from 'tdesign-vue-next';
+import type { TdBreadcrumbProps,TdTreeProps,TreeInstanceFunctions, TreeNodeModel } from 'tdesign-vue-next';
 import FLangSwitch from './components/FLangSwitch/index.vue';
 import './theme.css'
 import { ref, shallowRef,toRaw,watch } from 'vue';
 import {useRequest} from '@/hooks/useRequest2'
 import { cloneDeep } from 'lodash-es';
 import { useTree } from './hooks/useTree';
+import MainLayout from './components/Layouts/MainLayout.vue'
 const breadcrumbOptions:TdBreadcrumbProps['options'] = [
     {
         content:'首页',
@@ -22,7 +23,7 @@ const breadcrumbOptions:TdBreadcrumbProps['options'] = [
 
 type VideoGroupItem={
     id:number
-    slug:string
+    slug:string                    
     childCount:number
     nodes?:VideoGroupItem[]|null
 
@@ -115,6 +116,16 @@ const handleDrop: TdTreeProps['onDrop'] = ({dragNode,dropNode,dropPosition})=>{
     console.log('dropNode',dropNode)
     console.log('dropPosition',dropPosition)
 }
+const handleFilterTreeNode=shallowRef(null)
+const handleFilterInput=(val:string)=>{
+    if(val){
+        handleFilterTreeNode.value=(node:TreeNodeModel)=>{
+            return node.data.slug.includes(val)
+        }
+    }else{
+        handleFilterTreeNode.value=null
+    }
+}
 
 </script>                  
 <template>
@@ -136,17 +147,15 @@ const handleDrop: TdTreeProps['onDrop'] = ({dragNode,dropNode,dropPosition})=>{
     <FLangSwitch class="mt-4"></FLangSwitch>
     <div class="mt-4 flex gap-4 flex-1">
         <div class="w-[260px] box-border p-3 bg-white rounded-sm">
-            <t-tree :activable="true" :keys="{value:'id',label:'slug',children:'nodes'}" ref="treeRef" draggable :data="state.data"  hover @drop="handleDrop">
+            <t-input @change="handleFilterInput" class="mb-2"></t-input>
+            <t-tree :filter="handleFilterTreeNode" :activable="true" :keys="{value:'id',label:'slug',children:'nodes'}" ref="treeRef" draggable :data="state.data"  hover @drop="handleDrop">
                 <template #icon="{node}">
-                    <div class="flex gap-2">
-                         <div  class="tree-move-icon">
-                            <t-icon name="drag-move"></t-icon>
-                        </div>
-                    <div v-if="!node.isLeaf()" class="flex">
-                       
+                    <div  class="tree-move-icon" :class="{'tree-move-icon-leaf':node.isLeaf()}">
+                            <t-icon name="move" size="12" style="color:#333"></t-icon>
+                    </div>
+                    <div v-if="!node.isLeaf()" class="flex">       
                         <t-icon v-if="node.expanded" style="color:#333" name="caret-down-small" color="#333"></t-icon>
                         <t-icon v-else name="caret-right-small" style="color:#333"></t-icon>
-                    </div>
                     </div>
                 </template>
                 <!-- <template #label="{node}">
@@ -158,9 +167,7 @@ const handleDrop: TdTreeProps['onDrop'] = ({dragNode,dropNode,dropPosition})=>{
                     </div>
                 </template> -->
                 <template #operations="{node}">
-                    <div>
-                        <div class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-2" v-if="node.data.childCount>0">  {{node.data.childCount}}</div>
-                    </div>
+                    <div class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs" v-if="node.data.childCount>0">  {{node.data.childCount}}</div>
                 </template>
             </t-tree>
         </div>
@@ -180,9 +187,17 @@ const handleDrop: TdTreeProps['onDrop'] = ({dragNode,dropNode,dropPosition})=>{
         background-color: #f3f4f5!important;
     } */
     .tree-move-icon{
-        visibility: hidden;
+        display: none;
     }
+   
     .t-tree__icon{
-        width: 60px!important;
+        width: 30px!important;
+       justify-content: flex-end!important;
     }
+    .t-tree__item:hover>.t-tree__icon>.tree-move-icon{
+        display: block;
+    }
+    /* .t-tree__icon{
+        width: 60px!important;
+    } */
 </style>

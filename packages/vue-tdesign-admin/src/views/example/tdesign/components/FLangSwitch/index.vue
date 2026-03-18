@@ -34,9 +34,9 @@ const handleSwitch=(item:string)=>{
             </div>
             <div class="w-[1px] ml-2 h-[22px] bg-[#e6e8eb]"></div>
             </div>
-            <div v-else @click="handleSwitch(item)" class="h-8 flex items-center px-3 cursor-pointer text-[#212733] hover:bg-[#E8F0FF] rounded-sm">
+            <div v-else @click="handleSwitch(item)" class="h-8 flex items-center px-3 cursor-pointer text-[#212733] hover:bg-[#E8F0FF] active:bg-[#dfeaff] rounded-sm">
                 {{ item.label }}
-            </div>
+            </div>                         
         </template>
     </div>
 </template>

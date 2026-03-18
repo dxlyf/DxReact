@@ -125,9 +125,9 @@ const handleDelNav=(index:number)=>{
     formData.nav.splice(index,1)
 }
 // { currentIndex, targetIndex, current, target, data, newData, e }
-const onDragSort = (params:any) => {
-  console.log('交换行', params);
-  formData.nav = params.newData;
+const onDragSort:TableProps['onDragSort'] = ({current,targetIndex,target,data,newData,currentData}) => {
+//  console.log('交换行', params);
+  formData.nav =newData;
 };
 const handleFillNav=(item:any)=>{
   formData.nav.push({
