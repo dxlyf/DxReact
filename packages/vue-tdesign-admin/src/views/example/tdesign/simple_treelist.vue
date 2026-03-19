@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TdBreadcrumbProps, TdTreeProps, TreeInstanceFunctions, TreeNodeModel } from 'tdesign-vue-next';
+import type { FormInstanceFunctions, TdBreadcrumbProps, TdTreeProps, TreeInstanceFunctions, TreeNodeModel } from 'tdesign-vue-next';
 import FLangSwitch from './components/FLangSwitch/index.vue';
 import './theme.css'
 import { computed, reactive, ref, shallowRef, toRaw, watch } from 'vue';
@@ -29,6 +29,7 @@ type VideoGroupItem = {
     nodes?: VideoGroupItem[] | null
 
 }
+const formRef = shallowRef<FormInstanceFunctions>(null)
 
 const [state, treeInst] = useRequest<VideoGroupItem[]>({
     request: async () => {
@@ -38,7 +39,7 @@ const [state, treeInst] = useRequest<VideoGroupItem[]>({
                 slug: 'group1',
                 childCount: 2,
               //  disabled: true,
-                draggable: false,
+               // draggable: false,
                 nodes: [
                     {
                         id: 2,
@@ -129,15 +130,15 @@ const handleFilterInput = (val: string) => {
         handleFilterTreeNode.value = null
     }
 }
+const enableDrag=ref(true)
 const handleDragStart: TdTreeProps['onDragStart'] = ({ e,dragNode }) => {
-    console.log('handleDragStart','dragNode', dragNode)
-    e.stopImmediatePropagation()
+    //enableDrag.value=true
+  //  activeKeys.value=[]
 }
 const handleActive: TdTreeProps['onActive'] = (value, { trigger, node }) => {
     console.log('onActive', 'node', node, 'trigger', trigger)
 }
 const activeKeys=shallowRef([])
-const enableDrag = ref(false)
 const showEmpty=computed(()=>{
     return activeKeys.value.length<=0
 })
@@ -165,37 +166,33 @@ const requestProducts=async ()=>{
         </template>
             <div class="flex gap-4 flex-1">
             <div class="w-[260px] box-border p-3 bg-white rounded-sm">
-                <t-input @change="handleFilterInput" class="mb-2"></t-input>
-                <div class="flex justify-between mb-2 items-center h-6">
-                        <t-switch v-model="enableDrag" :label="['开启拖拽','关闭拖拽']"></t-switch>
-                          <t-button v-show='enableDrag' theme="primary" size="small">保存</t-button>
-                </div>
-                <t-tree v-model:actived="activeKeys" :class="{'tree-drag-mode':enableDrag}" :filter="handleFilterTreeNode" :activable="!enableDrag" @active="handleActive"
-                    @drag-start="handleDragStart" :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef"
-                    :draggable="enableDrag" :data="state.data" hover @drop="handleDrop">
-                    <!-- <template #icon="{ node }">
+                <t-input @change="handleFilterInput" class="mb-2"></t-input> 
+                <t-tree class="tree" activable  v-model:actived="activeKeys" :class="{'tree-drag-mode':enableDrag}" :filter="handleFilterTreeNode"  @active="handleActive"
+                    @drag-start="handleDragStart" :draggable="enableDrag" :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef"
+                     :data="state.data" hover @drop="handleDrop">
+                    <template #icon="{ node }">
                         <div class="tree-move-icon" :class="{ 'tree-move-icon-leaf': node.isLeaf() }">
                             <t-icon name="move" size="12" style="color:#333"></t-icon>
                         </div>
-                        <div v-if="!node.isLeaf()" class="flex">
+                        <div v-if="!node.isLeaf()" >
                             <t-icon v-if="node.expanded" style="color:#333" name="caret-down-small"
                                 color="#333"></t-icon>
                             <t-icon v-else name="caret-right-small" style="color:#333"></t-icon>
                         </div>
-                    </template> -->
+                    </template>
                     <!-- <template #label="{ node }">
-                        <div @click.stop class="flex justify-between group px-2 py-1 rounded-sm relative">
+                        <div @click.stop class="flex justify-between group relative">
                             <div class="flex-1">{{ node.label }} </div>
-                            <div class="flex-none invisible group-hover:visible mr-2">
-                                <t-icon name="drag-move"></t-icon>
+                            <div class="flex-none invisible group-hover:visible">
+                                <t-icon name="drag-move" style="cursor: move;"></t-icon>
                             </div>
+                           <div class="flex items-center">
+                             <div v-if="node.data.childCount > 0" class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs" > {{ node.data.childCount }}</div>
+                           </div>
                         </div>
                     </template> -->
                     <template #operations="{ node }">
-                       <div v-if="node.data.draggable!==false">
-                         <div  v-if="enableDrag" class="treeitem-move-icon"><t-icon name="drag-move" style="cursor: move;" ></t-icon></div>
-                        <div v-else-if="node.data.childCount > 0" class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs" > {{ node.data.childCount }}</div>
-                       </div>
+                        <div v-if="node.data.childCount > 0" class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs" > {{ node.data.childCount }}</div>
                     </template>
                 </t-tree>
             </div>
@@ -210,7 +207,7 @@ const requestProducts=async ()=>{
                     <div class="text-base font-bold mb-4">
                         {{ currentActiveNode.data.slug }}
                     </div>
-                    <t-form :data="formData" :rules="rules"  class="flex-1 flex flex-col" label-align="top">
+                    <t-form ref="formRef" reset-type="initial" :data="formData" :rules="rules"  class="flex-1 flex flex-col" label-align="top">
                         <t-form-item label="Slug" name="slug">
                             <t-input v-model="formData.slug" />
                         </t-form-item>
@@ -223,8 +220,8 @@ const requestProducts=async ()=>{
                              <t-form-item label="产品对比分组" name="ownerId">
                             <t-select :options="[]" v-model="formData.ownerId" ></t-select>
                         </t-form-item>
-                        <t-form-item label="关联产品" name="productIds">
-                            <FSelectDialog :request="requestProducts" title="请选择关联产品" v-model="formData.productIds" />
+                        <t-form-item label="关联产品" label-align="left" name="productIds">
+                            <FSelectDialog class="ml-auto" :request="requestProducts" title="请选择关联产品" text="添加产品" v-model="formData.productIds" />
                         </t-form-item>
 
                         <div class="flex justify-end mt-auto">
@@ -240,7 +237,7 @@ const requestProducts=async ()=>{
     </MainLayout>
   
 </template>
-<style>
+<style scoped>
 /* :deep(.t-is-active .t-tree__label){
         background-color: #f3f4f5!important;
     } */
@@ -256,14 +253,19 @@ const requestProducts=async ()=>{
 .t-tree__item:hover>.t-tree__icon>.tree-move-icon {
     display: block;
 } */
+ .tree :deep(.t-tree__icon) {
+    width: 30px !important;
+    justify-content: flex-end !important;
+}
 
+.tree-move-icon{
+    visibility: hidden;
+}
+
+.tree :deep(.t-tree__item--draggable:hover) .tree-move-icon{
+    visibility: visible;
+}
 /* .t-tree__icon{
         width: 60px!important;
     } */
-     .tree-drag-mode .t-tree__item:has(.treeitem-move-icon) .t-tree__label{
-        cursor: move;
-     }
-     .tree-drag-mode{
-        --td-text-color-brand:#333;
-     }
 </style>

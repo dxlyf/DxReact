@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<Props>(), {
     title: '',
     breadcrumbItems: () => []
 })
+
 </script>
 
 <template>

@@ -225,6 +225,15 @@ const defaultRoutes: RouteRecordRaw[] = [
                   icon: 'table'
                 }
               }, {
+                path: 'simple_treelist',
+                component: () => import('../views/example/tdesign/simple_treelist.vue'),
+                meta: {
+                  layout:'',
+                  title: '列表',
+                  menuName: 'treelist(简单模式)',
+                  icon: 'table'
+                }
+              }, {
                 path: 'videolist',
                 component: () => import('../views/example/tdesign/videolist.vue'),
                 meta: {

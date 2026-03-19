@@ -4,7 +4,6 @@ export type UseDialogProps={
 }&Partial<DialogProps>
 
 export const useDialog=(props:MaybeRefOrGetter<UseDialogProps>)=>{
-    const propsRef=computed(()=>toValue(props))
     const state=shallowReactive({
         visible:false,
         data:null
@@ -21,15 +20,21 @@ export const useDialog=(props:MaybeRefOrGetter<UseDialogProps>)=>{
         close()
     }
     const dialogProps=computed(()=>{
-        const {...restDialogProps}= propsRef.value
+        const {...restDialogProps}= toValue(props)
 
         return {
             width:'60%',
+            attach:'body',
             visible:state.visible,
+            closeOnEscKeydown:false,
+            closeOnOverlayClick:false,
+            closeBtn:false,
+            
+            destroyOnClose:true,
             onCancel:handleCancel,
             onClose:handleCancel,
             ...restDialogProps
-        }
+        } as DialogProps
     })
     return [dialogProps,{open,close}] as const
 }
