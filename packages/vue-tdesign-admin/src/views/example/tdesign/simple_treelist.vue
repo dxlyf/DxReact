@@ -8,6 +8,11 @@ import { cloneDeep } from 'lodash-es';
 import { useTree } from './hooks/useTree';
 import MainLayout from './components/Layouts/MainLayout.vue'
 import FSelectDialog from './components/FSelectDialog/index.vue'
+import EditForm from './components/ProductGroups/EditForm.vue';
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 const breadcrumbOptions: TdBreadcrumbProps['options'] = [
     {
         content: '首页',
@@ -111,8 +116,11 @@ const [state, treeInst] = useRequest<VideoGroupItem[]>({
 treeInst.request()
 const treeRef = shallowRef<TreeInstanceFunctions>()
 const handleNewAdd = () => {
-    console.log('treeData', toRaw(state.data))
-    console.log('treeRef', treeRef.value.getTreeData())
+    router.push({
+        path: './treelist_new',
+        query: {
+        }
+    })
 }
 
 const handleDrop: TdTreeProps['onDrop'] = ({ dragNode, dropNode, dropPosition }) => {
@@ -136,7 +144,8 @@ const handleDragStart: TdTreeProps['onDragStart'] = ({ e,dragNode }) => {
   //  activeKeys.value=[]
 }
 const handleActive: TdTreeProps['onActive'] = (value, { trigger, node }) => {
-    console.log('onActive', 'node', node, 'trigger', trigger)
+    console.log('value',value,'onActive', 'node', node, 'trigger', trigger)
+    activeKeys.value=value.slice()
 }
 const activeKeys=shallowRef([])
 const showEmpty=computed(()=>{
@@ -154,10 +163,14 @@ const rules={
 const delay=(time:number)=>{
     return new Promise(resolve=>setTimeout(resolve,time))
 }
-const requestProducts=async ()=>{
+const requestProducts=async (keywork:string)=>{
+    console.log('keywork',keywork)
+
     await delay(3000)
     return Array.from({ length: 1000 }, (item, index) => ({ value: index, label: `产品${index + 1}` }))
 }
+console.log('new',history.state)
+
 </script>
 <template>
     <MainLayout   show-lang title="产口分组" :breadcrumb-options="breadcrumbOptions">
@@ -167,7 +180,7 @@ const requestProducts=async ()=>{
             <div class="flex gap-4 flex-1">
             <div class="w-[260px] box-border p-3 bg-white rounded-sm">
                 <t-input @change="handleFilterInput" class="mb-2"></t-input> 
-                <t-tree class="tree" activable  v-model:actived="activeKeys" :class="{'tree-drag-mode':enableDrag}" :filter="handleFilterTreeNode"  @active="handleActive"
+                <t-tree class="tree" activable :actived="activeKeys" :class="{'tree-drag-mode':enableDrag}" :filter="handleFilterTreeNode"  @active="handleActive"
                     @drag-start="handleDragStart" :draggable="enableDrag" :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef"
                      :data="state.data" hover @drop="handleDrop">
                     <template #icon="{ node }">
@@ -204,33 +217,7 @@ const requestProducts=async ()=>{
                     <div class="text-gray-500">暂无数据</div>
                 </div>
                  <div v-else class="h-full flex flex-col">
-                    <div class="text-base font-bold mb-4">
-                        {{ currentActiveNode.data.slug }}
-                    </div>
-                    <t-form ref="formRef" reset-type="initial" :data="formData" :rules="rules"  class="flex-1 flex flex-col" label-align="top">
-                        <t-form-item label="Slug" name="slug">
-                            <t-input v-model="formData.slug" />
-                        </t-form-item>
-                             <t-form-item label="标题" name="title">
-                            <t-input v-model="formData.title" />
-                        </t-form-item>
-                             <t-form-item label="父级分组" name="parentId">
-                            <t-input v-model="formData.parentId" />
-                        </t-form-item>
-                             <t-form-item label="产品对比分组" name="ownerId">
-                            <t-select :options="[]" v-model="formData.ownerId" ></t-select>
-                        </t-form-item>
-                        <t-form-item label="关联产品" label-align="left" name="productIds">
-                            <FSelectDialog class="ml-auto" :request="requestProducts" title="请选择关联产品" text="添加产品" v-model="formData.productIds" />
-                        </t-form-item>
-
-                        <div class="flex justify-end mt-auto">
-                            <t-space>
-                                <!-- <t-button theme="default" size="small">取消</t-button> -->
-                                <t-button theme="primary">保存</t-button>
-                            </t-space>
-                        </div>
-                    </t-form>
+                     <EditForm :id="currentActiveNode.data.id"></EditForm>
                  </div>
             </div>
         </div>

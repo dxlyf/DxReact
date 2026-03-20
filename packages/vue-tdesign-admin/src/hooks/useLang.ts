@@ -1,4 +1,4 @@
-import { computed, inject, nextTick,ref, onBeforeMount,provide, shallowRef,getCurrentInstance} from "vue";
+import { computed, inject, nextTick,ref, onBeforeMount,provide, shallowRef,getCurrentInstance, watch} from "vue";
 
 export const LANG_PROVIDER_KEY='langProvider'
 export type LangItem={
@@ -64,7 +64,7 @@ const withResolvers=<T>()=>{
 }
 let promise:ReturnType<typeof withResolvers<LangItem[]>>|null=null
 export const useLang=()=>{
-    const currentLocale=ref('zh-CN')
+    const currentLocale=ref(localStorage.getItem('lang')||'zh-CN')
     const _allLang=shallowRef<LangItem[]>([])
     const allLang=computed<LangItem[]>({
         get:()=>{
@@ -72,6 +72,11 @@ export const useLang=()=>{
         },
         set:(v)=>{
             _allLang.value=v
+        }
+    })
+    watch(()=>currentLocale.value,(val)=>{
+        if(val){
+           localStorage.setItem('lang',val)
         }
     })
     const currentLanguage=computed(()=>{

@@ -233,6 +233,15 @@ const defaultRoutes: RouteRecordRaw[] = [
                   menuName: 'treelist(简单模式)',
                   icon: 'table'
                 }
+              },{
+                path: 'treelist_new',
+                component: () => import('../views/example/tdesign/treelist_new.vue'),
+                meta: {
+                  // layout:'',
+                  // title: '列表',
+                  // menuName: 'treelist(简单模式)新增页',
+                  // icon: 'table'
+                }
               }, {
                 path: 'videolist',
                 component: () => import('../views/example/tdesign/videolist.vue'),
@@ -460,4 +469,21 @@ const getFlatMenuData = (menuData: MenuDataItem[]) => {
 }
 export const menuData = transformMenuDataFromRoutes(routes)
 
+// router.beforeEach((to, from, next) => {
+//   //console.log('全局路由守卫',to)
+//   // 检查edittabs页面的productId参数
+//   // if (to.path === '/reload' && to.query.redirect) {
+//   //   console.log('全局路由守卫',to.query.redirect)
+//   //   next(to.query.redirect as string)
+//   // } else {
+//   //   next()
+//   // }
+//   next()
+// })
+// router.afterEach((to, from) => {
+//   if(to.path==='/reload'&&to.query.redirect){
+//     console.log('路由跳转卫afterEach',to.query.redirect)
+//     router.replace(to.query.redirect)
+//   }
+// })
 export default router

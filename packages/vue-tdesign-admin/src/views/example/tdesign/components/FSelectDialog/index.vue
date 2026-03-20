@@ -1,6 +1,7 @@
 tem<script setup lang="ts">
 import { ref, reactive, type Prop, computed, shallowRef, toRaw, onMounted } from 'vue'
 import { useDialog } from '@/hooks/useDialog'
+import { debounce } from 'lodash-es'
 type Option = {
     value: string | number
     label: string
@@ -11,11 +12,15 @@ type Props = {
     modelValue?: string[] | string
     multiple?: boolean
     options?: Option[]
-    request?: () => Promise<Option[]>
+    serverFilter?: boolean
+    openStartRequest?: boolean
+    request?: (keywork:string) => Promise<Option[]>
 }
 const props = withDefaults(defineProps<Props>(), {
     text: '',
     multiple: true,
+    openStartRequest: false,
+    serverFilter: true,
     options:()=>[]
 })
 const searchText = shallowRef('')
@@ -27,7 +32,11 @@ const finalOptions = computed(() => {
 const filterOptions = computed(() => {
     const filterText = searchText.value.toLowerCase()
     const options = finalOptions.value
+    const serverFilter = props.serverFilter
     if (!filterText) {
+        return options
+    }
+    if(serverFilter){
         return options
     }
     return options.filter(item => item.label.toLowerCase().includes(filterText))
@@ -49,7 +58,7 @@ const loadData = async () => {
     if (props.request) {
         try {
             loading.value = true
-            stateOptions.value = await props.request()
+            stateOptions.value = await props.request(searchText.value)
         } catch (e) {
             stateOptions.value = []
         } finally {
@@ -57,7 +66,11 @@ const loadData = async () => {
         }
     }
 }
-
+const debounceLoadData = debounce(loadData, 500)
+const handleSearch = (val:string) => {
+    searchText.value=val
+    debounceLoadData()
+}
 const setModelValue = (value: any[]) => {
     if (props.multiple) {
         model.value = value
@@ -68,7 +81,7 @@ const setModelValue = (value: any[]) => {
 const handleOpen = () => {
     selectedItems.value=Array.isArray(model.value)?model.value.slice():model.value!=null?[model.value]:[]
     dialogInst.open()
-    if(stateOptions.value.length===0){
+    if(props.openStartRequest){
         loadData()
     }
 }
@@ -113,7 +126,7 @@ const handleSelect = (checked: boolean, value: any) => {
         </slot>
         <t-dialog v-bind="dialogProps">
             <div class="flex flex-col">
-                <div class="mb-2"><t-input v-model="searchText" class="bg-gray-300" clearable placeholder="搜索">
+                <div class="mb-2"><t-input  @change="handleSearch" :value="searchText" class="bg-gray-300" clearable placeholder="搜索">
                         <template #label>
                             <t-icon name="search"></t-icon>
                         </template>

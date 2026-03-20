@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {useLang} from '@/hooks/useLang'
-
+import {useRoute,useRouter} from 'vue-router'
 const [langList,{currentLocale}]=useLang()
 type Props={
 
 }
+const router=useRouter()
+const route=useRoute()
 
 const props=withDefaults(defineProps<Props>(),{
     lang:'zh-CN',
@@ -22,6 +24,21 @@ const curLangList=computed(()=>{
 })
 const handleSwitch=(item:string)=>{
     currentLocale.value=item.value
+    router.replace({
+        path:'/reload',
+        query:{
+            redirect:route.fullPath
+        }
+    })
+    //  router.replace({
+    //     path:route.path,
+    //     state:{age:4343},
+    //     query:{
+    //         ...route.query,
+    //         t:Date.now()
+    //     }
+    //  })
+    
 }
 </script>
 <template>
