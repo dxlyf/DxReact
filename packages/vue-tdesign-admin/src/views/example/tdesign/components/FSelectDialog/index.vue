@@ -2,34 +2,54 @@ tem<script setup lang="ts">
 import { ref, reactive, type Prop, computed, shallowRef, toRaw, onMounted } from 'vue'
 import { useDialog } from '@/hooks/useDialog'
 import { debounce } from 'lodash-es'
+
 type Option = {
-    value: string | number
-    label: string
+    value?: string | number
+    label?: string
+    [Key:string]:any
 }
+type ValueType = string | number
 type Props = {
-    title?: string
-    text?: string
-    modelValue?: string[] | string
-    multiple?: boolean
-    options?: Option[]
-    serverFilter?: boolean
-    openStartRequest?: boolean
-    request?: (keywork:string) => Promise<Option[]>
+    size?: 'small' | 'medium' | 'large'
+    title?: string // 弹窗标题
+    text?: string // 弹窗按钮文本
+    valueField?: string // 选项值的字段
+    labelField?: string // 选项显示的字段
+    modelValue?: ValueType[] | ValueType // 选中的值或值
+    multiple?: boolean // 是否支持多选
+    serverFilter?: boolean // 是否开启服务器端过滤
+    options?: Option[] // 选项列表
+    openStartRequest?: boolean // 是否在打开时请求数据
+    itemRows?: number // 显示的行数
+    rowHeight?: number // 每行的高度
+    request?: (keywork:string) => Promise<Option[]> // 服务器端请求数据的函数
 }
+const emit = defineEmits(['confirm'])
 const props = withDefaults(defineProps<Props>(), {
     text: '',
+    valueField:'value',
+    labelField:'label',
     multiple: true,
     openStartRequest: false,
     serverFilter: true,
+    itemRows: 5,
+    rowHeight: 46,
     options:()=>[]
 })
 const searchText = shallowRef('')
 const stateOptions = shallowRef<Option[]>([])
+const listStyle=computed(()=>{
+    const height=props.itemRows*props.rowHeight
+    return {
+        height:height+'px',
+        maxHeight:height+'px',
+    }
+})
 const finalOptions = computed(() => {
     const propsOptions = props.options
     return props.request ? stateOptions.value : propsOptions
 })
-const filterOptions = computed(() => {
+const filterOptions = computed<any[]>(() => {
     const filterText = searchText.value.toLowerCase()
     const options = finalOptions.value
     const serverFilter = props.serverFilter
@@ -42,7 +62,7 @@ const filterOptions = computed(() => {
     return options.filter(item => item.label.toLowerCase().includes(filterText))
 })
 const model = defineModel<string[] | string>()
-const selectedItems = shallowRef([])
+const selectedValues = shallowRef([])
 const [dialogProps,dialogInst]=useDialog(()=>{
     return {
         header:props.title,
@@ -50,8 +70,8 @@ const [dialogProps,dialogInst]=useDialog(()=>{
         width:600
     }
 })
-const selectedItemsSet = computed(() => {
-    return new Set(selectedItems.value)
+const selectedValuesSet = computed(() => {
+    return new Set(selectedValues.value)
 })
 const loading = shallowRef(false)
 const loadData = async () => {
@@ -79,7 +99,7 @@ const setModelValue = (value: any[]) => {
     }
 }
 const handleOpen = () => {
-    selectedItems.value=Array.isArray(model.value)?model.value.slice():model.value!=null?[model.value]:[]
+    selectedValues.value=Array.isArray(model.value)?model.value.slice():model.value!=null?[model.value]:[]
     dialogInst.open()
     if(props.openStartRequest){
         loadData()
@@ -89,26 +109,28 @@ const handleClose = () => {
     dialogInst.close()
 }
 const handleConfirm = () => {
-    setModelValue(selectedItems.value.slice())
+    setModelValue(selectedValues.value.slice())
     handleClose()
+    const selectedDataItem=filterOptions.value.filter(item=>selectedValuesSet.value.has(item[props.valueField]))
+    emit('confirm',selectedValues,selectedDataItem)
 }
 const handleSelectAll = () => {
-    selectedItems.value = filterOptions.value.map(item => item.value)
+    selectedValues.value = filterOptions.value.map(item => item[props.valueField])
 }
 const handleUnSelectAll = () => {
-    selectedItems.value = filterOptions.value.filter(item => !selectedItems.value.includes(item.value)).map(item => item.value)
+    selectedValues.value = filterOptions.value.filter(item => !selectedValuesSet.value.has(item[props.valueField])).map(item => item[props.valueField])
 }
 const handleSelect = (checked: boolean, value: any) => {
     if (!props.multiple) {
-        selectedItems.value = checked ? [value] : []
+        selectedValues.value = checked ? [value] : []
         return
     }
     if (checked) {
-        selectedItemsSet.value.add(value)
-        selectedItems.value = Array.from(selectedItemsSet.value)
+        selectedValuesSet.value.add(value)
+        selectedValues.value = Array.from(selectedValuesSet.value)
     } else {
-        selectedItemsSet.value.delete(value)
-        selectedItems.value = Array.from(selectedItemsSet.value)
+        selectedValuesSet.value.delete(value)
+        selectedValues.value = Array.from(selectedValuesSet.value)
     }
 }
 
@@ -132,16 +154,16 @@ const handleSelect = (checked: boolean, value: any) => {
                         </template>
                     </t-input></div>
                 <t-loading size="small" loading v-if="loading" text="加载数据中..." />
-                <t-list v-else  :scroll="{ isFixedRowHeight: true, type: 'virtual', rowHeight: 46, bufferSize: 10 }"
-                    class="flex-1 h-[460px] max-h-[460px]" layout="vertical">
-                    <t-list-item v-for="item in filterOptions" :key="item.value">
-                        <slot name="item" :select="handleSelect" :checked="selectedItemsSet.has(item.value)" :item="item">
+                <t-list v-else  :scroll="{ isFixedRowHeight: true, type: 'virtual', rowHeight: rowHeight, bufferSize: itemRows }"
+                    class="flex-1" :style="listStyle" layout="vertical">
+                    <t-list-item v-for="item in filterOptions" :key="item[valueField]">
+                        <slot name="item" :select="handleSelect" :checked="selectedValuesSet.has(item[valueField])" :item="item">
                         <div class="flex gap-2">
                             <div>
-                                <t-checkbox @change="(checked) => handleSelect(checked, item.value)"
-                                    :checked="selectedItemsSet.has(item.value)" />
+                                <t-checkbox @change="(checked) => handleSelect(checked, item[valueField])"
+                                    :checked="selectedValuesSet.has(item[valueField])" />
                             </div>
-                            <div> {{ item.label }}</div>
+                            <div> {{ item[labelField] }}</div>
                         </div>
                         </slot>
                     </t-list-item>
@@ -156,7 +178,7 @@ const handleSelect = (checked: boolean, value: any) => {
                         </t-space>
                     </div>
                     <div class="flex gap-2">
-                        <div class="font-xs self-end">已选择<span class="font-bold">{{ selectedItems.length }}</span>项</div>
+                        <div class="font-xs self-end">已选择<span class="font-bold">{{ selectedValues.length }}</span>项</div>
                         <t-space>
                             <t-button theme="default" @click="handleClose">取消</t-button>
                             <t-button theme="primary" @click="handleConfirm">确定</t-button>

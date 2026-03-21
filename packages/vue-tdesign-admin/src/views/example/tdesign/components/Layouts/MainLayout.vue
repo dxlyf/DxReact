@@ -22,7 +22,7 @@ defineSlots<{
 </script>
 
 <template>
-    <div class="flex flex-col h-full box-border p-4">
+    <div class="flex flex-col h-full box-border min-h-0">
       <template v-if="showLang">
           <div class="mb-2">
             <t-breadcrumb separator="/" :options="breadcrumbOptions">
@@ -67,7 +67,7 @@ defineSlots<{
       </slot>
       </template>
     <slot name="content">
-         <t-loading :text="loadingText" :loading="loading" class="mt-4 flex flex-col flex-1" show-overlay >
+         <t-loading :text="loadingText" :loading="loading" class="mt-4 flex flex-col flex-1 min-h-0" show-overlay >
                     <slot></slot>
          </t-loading>
     </slot>

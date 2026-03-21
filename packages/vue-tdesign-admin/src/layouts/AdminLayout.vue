@@ -9,7 +9,7 @@
             </t-menu>  
         </t-aside>
         <!--min-w-0防止flex扩展-->
-    <t-layout class="min-w-0">
+    <t-layout class="min-w-0 min-h-0">
         <t-header class="sticky top-0 z-[1000]">
             <t-head-menu>
                 <template #logo>
@@ -37,7 +37,7 @@
                 </template>
             </t-head-menu>
         </t-header>
-        <t-content class="px-5 py-4">
+        <t-content class="px-5 py-4 min-h-0">
              <!-- <router-view v-slot="{Component,route}">
                  <keep-alive >
                     <component :is="Component" :key="route.path"/>

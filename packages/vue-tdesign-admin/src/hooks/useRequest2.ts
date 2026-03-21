@@ -8,14 +8,20 @@ export type UseRequestProps<T,Paramater extends Record<string,any>={}>={
     deafultParams?:Paramater
     defaultValue?:T
 }
+export type UseRequestState<T,Paramater extends Record<string,any>={}>={
+    loading:boolean
+    error:any
+    lastParams:Paramater
+    data:T
+}
 export const useRequest=<T,Paramater extends Record<string,any>={}>(props:UseRequestProps<T,Paramater>)=>{
     const {request:propRequest,defaultValue=null,manualRequest=false}=props
   
-    const state = shallowReactive({
+    const state = shallowReactive<UseRequestState<T,Paramater>>({
         loading: false,
         data: defaultValue as T,
         error: null,
-        lastParams: {},
+        lastParams: {} as Paramater,
     });
     /**
      * 触发请求
@@ -34,7 +40,7 @@ export const useRequest=<T,Paramater extends Record<string,any>={}>(props:UseReq
                 data=props.transform(data)
             }
             state.data=data as T
-            state.lastParams=params
+            state.lastParams=params as Paramater
             return data
         } catch (error) {
             state.error=error

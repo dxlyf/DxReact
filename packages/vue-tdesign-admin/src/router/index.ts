@@ -154,6 +154,14 @@ const defaultRoutes: RouteRecordRaw[] = [
         },
         children: [
           {
+            path: 'dom',
+            component: () => import('../views/dom.vue'),
+            meta: {
+              title: 'DOM',
+              menuName: 'DOM',
+              icon: 'table'
+            }
+          },{
             path: 'component',
             meta: {
               title: '树',
