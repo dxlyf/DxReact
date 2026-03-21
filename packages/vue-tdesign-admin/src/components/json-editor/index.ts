@@ -1,4 +1,3 @@
-<script setup lang="ts">
 import JsonEditor from './JsonEditor.vue'
 import SchemaField from './fields/SchemaField.vue'
 import StringField from './fields/StringField.vue'
@@ -8,7 +7,6 @@ import ObjectField from './fields/ObjectField.vue'
 import ArrayField from './fields/ArrayField.vue'
 import { Theme, createTheme } from './theme'
 import * as utils from './utils'
-import type { JsonSchema, ValidationError, ThemeConfig, FieldProps, JsonEditorConfig } from './types'
 
 export {
   JsonEditor,
@@ -23,19 +21,6 @@ export {
   utils
 }
 
-export type {
-  JsonSchema,
-  ValidationError,
-  ThemeConfig,
-  FieldProps,
-  JsonEditorConfig
-}
-</script>
+export * from './types'
 
-<template>
-  <JsonEditor v-bind="$attrs">
-    <template v-for="(_, name) in $slots" #[name]="slotData">
-      <slot :name="name" v-bind="slotData" />
-    </template>
-  </JsonEditor>
-</template>
+export default JsonEditor

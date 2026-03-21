@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { JsonEditor, Theme, type JsonSchema } from '@/components/json-editor/index'
+import { JsonEditor, Theme, type JsonSchema } from './index'
 import { MessagePlugin } from 'tdesign-vue-next'
 
 const editorRef = ref<InstanceType<typeof JsonEditor>>()
