@@ -11,7 +11,7 @@ import FSelectDialog from './components/FSelectDialog/index.vue'
 import EditForm from './components/ProductGroups/EditForm.vue';
 import { useRouter } from 'vue-router'
 import { useElementSize } from 'src/hooks/useElementSize';
-
+import {useElementBounding,useWindowScroll} from '@vueuse/core'
 const router = useRouter()
 
 const breadcrumbOptions: TdBreadcrumbProps['options'] = [
@@ -199,9 +199,9 @@ const requestProducts = async (keywork: string) => {
 //     }
 // })
 
-const treeHeight = computed(() => {
-    return Math.max(window.innerHeight - 300,200)
-})
+// const treeHeight = computed(() => {
+//     return Math.max(window.innerHeight - 300,200)
+// })
 let clearScrollTimeout: any
 let leftTreeWrap = shallowRef<HTMLDivElement>(null)
 let isFixedTop = shallowRef(false)
@@ -219,10 +219,19 @@ const setupScroll = () => {
     window.addEventListener('scroll', handle)
 }
 onMounted(() => {
-    clearScrollTimeout = setupScroll()
+   // clearScrollTimeout = setupScroll()
 })
 onBeforeUnmount(() => {
     clearScrollTimeout && clearScrollTimeout()
+})
+const treeWrapRef=shallowRef<HTMLDivElement>(null)
+const {top}=useElementBounding(treeWrapRef,{
+ // windowScroll:false
+})
+
+const treeHeight=computed(()=>{
+    console.log('top',top.value,'window.innerHeight',window.innerHeight,'scrollTop',window.pageYOffset)
+    return window.innerHeight-top.value+window.pageYOffset
 })
 </script>
 <template>
@@ -230,9 +239,10 @@ onBeforeUnmount(() => {
         <template #actions>
             <t-button theme="primary" @click="handleNewAdd">新增</t-button>
         </template>
-        <div class="grid grid-cols-[260px_1fr] gap-x-4">
-            <t-loading :loading="state.loading"  class="self-start grid grid-rows-[1fr]  box-border p-3 bg-white rounded-sm">
-                <div class="mb-2">
+        <div class="grid grid-cols-[260px_1fr] gap-x-4" >
+            <t-loading :loading="state.loading"  class="self-start grid grid-rows-[1fr]  box-border p-3 bg-white rounded-sm relative">
+               <div :style="{position:top<56?'fixed':'static',top:'56px'}">
+                 <div class="mb-2">
                         <t-input @change="handleFilterInput"></t-input>
                     </div>
                 <div ref="treeWrapRef">
@@ -269,6 +279,7 @@ onBeforeUnmount(() => {
                         </template>
                     </t-tree>
                 </div>
+               </div>
             </t-loading>
             <div class="grid grid-rows-[1fr]">
                 <div v-if="showEmpty" class="h-full flex flex-col items-center justify-center bg-white rounded-sm p-4">
