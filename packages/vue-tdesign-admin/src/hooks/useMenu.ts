@@ -107,7 +107,7 @@ export const useMenu = (props: MaybeRefOrGetter<UseMenuProps>={}) => {
   const getExpandedKeys = () => {
     const keys: string[] = []
     const menu = flatMenuData.find((item) => item.menuKey === route.meta.menuKey)
-    console.log(menu)
+  //  console.log(menu)
     if (menu&&menu.parentKeys) {
       keys.push(...menu.parentKeys)
     }

@@ -4,7 +4,6 @@ import { reactive, ref, shallowRef } from 'vue';
 import Table from '../components/FTable/index.vue'
 import type { TableProps } from 'tdesign-vue-next';
 import { useTable } from '../hooks/useTable';
-import { I } from 'vue-router/dist/router-CWoNjPRp.mjs';
 import { useSearchForm } from '../hooks/useSearchForm';
 const breadcrumbOptions = [
     {
@@ -19,120 +18,121 @@ const breadcrumbOptions = [
         content: 'index'
     }
 ]
-const statusOptions=[{
-    label:'全部',
-    value:''
-},{
-    label:'已发布',
-    value:'Publish'
-},{
-    label:'草稿',
-    value:'Draft'
+const statusOptions = [{
+    label: '全部',
+    value: ''
+}, {
+    label: '已发布',
+    value: 'Publish'
+}, {
+    label: '草稿',
+    value: 'Draft'
 }]
 
-const data=[
-            {
-                id:1,
-                image:'/uploads/aaa.jpg',
-                title:'视频标题',
-                location:'中国',
-                locale:'zh-CN',
-                status:'Publish',
-                publishTime:'2023-01-01'
+const data = [
+    {
+        id: 1,
+        image: '/uploads/aaa.jpg',
+        title: '视频标题',
+        location: '中国',
+        locale: 'zh-CN',
+        status: 'Publish',
+        publishTime: '2023-01-01'
 
-            },{
-                id:2,
-                image:'/uploads/aaa.jpg',
-                title:'视频标题',
-                location:'中国',
-                locale:'zh-CN',
-                status:'Draft',
-                publishTime:'2023-01-01'
-            }]
-        for(let i=0;i<98;i++){
-            data.push({
-                id:i+3,
-                image:'/uploads/aaa.jpg',
-                title:'视频标题'+i,
-                location:'中国',
-                locale:'zh-CN',
-                status:'Publish',
-                publishTime:'2023-01-01'
-            })
-        }
+    }, {
+        id: 2,
+        image: '/uploads/aaa.jpg',
+        title: '视频标题',
+        location: '中国',
+        locale: 'zh-CN',
+        status: 'Draft',
+        publishTime: '2023-01-01'
+    }]
+for (let i = 0; i < 98; i++) {
+    data.push({
+        id: i + 3,
+        image: '/uploads/aaa.jpg',
+        title: '视频标题' + i,
+        location: '中国',
+        locale: 'zh-CN',
+        status: 'Publish',
+        publishTime: '2023-01-01'
+    })
+}
 
- const [searchForm,searchInst]=useSearchForm({
-    defaultParams:{
+const [searchForm, searchInst] = useSearchForm({
+    defaultParams: {
         slug: '',
         author: '',
         location: '',
         title: '',
-        publishTime:['',''],
-        publishStartTime:'',
-        publishEndTime:'',
+        publishTime: ['', ''],
+        publishStartTime: '',
+        publishEndTime: '',
         status: ''
     },
-    onSearch:(params)=>{
-        console.log('onSearch',params)
+    onSearch: (params) => {
         tableInst.query(params)
     },
-    onReset:(params)=>{
+    onReset: (params) => {
         tableInst.query(params)
     }
 })
-       
-const [tableProps,tableInst]=useTable({
-    defaultParams:searchInst.searchParams.value,
-    request:async (params)=>{
-        const newParams={
+
+
+const [tableProps, tableInst] = useTable({
+    defaultParams: searchInst.searchParams.value,
+    request: async (params) => {
+        const newParams = {
             ...params,
             ...searchForm
         }
-        let newData=data.filter((item)=>{
+        let newData = data.filter((item) => {
             return item.title.includes(newParams.title)
         })
-        console.log('request','current',params.current,'pageSize',params.pageSize)
+        console.log('request', newParams)
         return {
-            success:true,
-            records:newData.slice((params.current-1)*params.pageSize,params.current*params.pageSize),
-            total:newData.length
+            success: true,
+            records: newData.slice((params.current - 1) * params.pageSize, params.current * params.pageSize),
+            total: newData.length
         }
     }
 })
 
-const columns:TableProps['columns']=[
+const columns: TableProps['columns'] = [
     {
-        title:'图片',
-        colKey:'image'
+        title: '图片',
+        colKey: 'image'
     },
     {
-        title:'标题',
-        colKey:'title',
-        width:160,
-        ellipsis:true
-    },{
-        title:'地区',
-        colKey:'location',
-        width:140,
+        title: '标题',
+        colKey: 'title',
+        width: 160,
+        ellipsis: true
+    }, {
+        title: '地区',
+        colKey: 'location',
+        width: 140,
     },
     {
-        title:'语言',
-        colKey:'locale',
-        width:120
-    },{
-        title:'状态',
-        colKey:'status',
-        width:120
-    },{
-        title:'发布时间',
-        colKey:'publishTime',
-        width:120
-    },{
-        title:'操作',
-        colKey:'actions',
-        width:160
+        title: '语言',
+        colKey: 'locale',
+        width: 120
+    }, {
+        title: '状态',
+        colKey: 'status',
+        width: 120
+    }, {
+        title: '发布时间',
+        colKey: 'publishTime',
+        width: 120
+    }, {
+        title: '操作',
+        colKey: 'actions',
+        width: 160
     }
 ]
+const expandSearch = ref(false)
 </script>
 <template>
 
@@ -140,7 +140,8 @@ const columns:TableProps['columns']=[
         <template #actions>
             <t-space>
                 <t-button theme="default">发布</t-button>
-                <t-dropdown trigger="click" :options="[{ content: '预览正式环境', value: '1' }, { content: '预览测试环境', value: '2' }]">
+                <t-dropdown trigger="click"
+                    :options="[{ content: '预览正式环境', value: '1' }, { content: '预览测试环境', value: '2' }]">
                     <t-button theme="default">
                         预览
                         <template #suffix> <t-icon name="chevron-down" size="16" /></template>
@@ -149,7 +150,7 @@ const columns:TableProps['columns']=[
                 <t-button theme="primary">新增</t-button>
             </t-space>
         </template>
-        <div class="grid grid-cols-4 gap-2">
+        <div class="grid grid-cols-4 2xl:grid-cols-5 gap-2">
             <div>
                 <t-input placeholder="包含Slug" v-model="searchForm.slug"></t-input>
             </div>
@@ -159,33 +160,44 @@ const columns:TableProps['columns']=[
             <div>
                 <t-input placeholder="包含位置" v-model="searchForm.location"></t-input>
             </div>
-            <div>
+            <div v-show="expandSearch">
                 <t-input placeholder="包含标题" v-model="searchForm.title"></t-input>
             </div>
-            <div>
+            <div v-show="expandSearch">
                 <t-date-range-picker clearable v-model="searchForm.publishTime" format="YYYY-MM-DD"
                     :placeholder="['开始时间', '结束时间']" />
             </div>
-             <div>
-               <t-select :options="statusOptions" placeholder="状态" v-model="searchForm.status"></t-select>
+            <div v-show="expandSearch">
+                <t-select :options="statusOptions" placeholder="状态" v-model="searchForm.status"></t-select>
             </div>
             <div>
-                <t-space>
+                <div class="flex gap-1">
                     <t-button theme="default" @click="searchInst.reset">重置</t-button>
                     <t-button theme="primary" @click="searchInst.search">查询</t-button>
-                </t-space>
+                    <t-link class="self-end !text-xs" theme="primary" @click="expandSearch=!expandSearch">
+                        {{ expandSearch ? '收起' : '展开' }}
+                        <template #suffixIcon> <t-icon :name="expandSearch ? 'chevron-up' : 'chevron-down'" size="12" /></template>
+                    </t-link>
+                </div>
             </div>
         </div>
-        <Table v-bind="tableProps" :columns="columns" >
+        <Table v-bind="tableProps" :columns="columns">
             <template #image="{ row }">
-                <t-image  style="width:50px;height: 50px;" :src="row.image"  />
+                <div class="size-[80px] object-cover [&_img]:object-cover">
+                    <t-image-viewer attach="body"  :images="[row.image]"  :z-index="1000"  ></t-image-viewer>
+                </div>
+         
+                                       <!-- <template #trigger="{open}">
+                        <t-image style="width:50px;height: 50px;" :src="row.image" @click="open" />
+                   </template> -->
+                
             </template>
             <template #title="{ row }">
-                <t-link theme="primary">{{row.title}}</t-link>
+                <t-link theme="primary">{{ row.title }}</t-link>
             </template>
-          
+
             <template #status="{ row }">
-                <t-tag variant="light" :theme="row.status==='Publish'?'success':'warning'">{{row.status}}</t-tag>
+                <t-tag variant="light" :theme="row.status === 'Publish' ? 'success' : 'warning'">{{ row.status }}</t-tag>
             </template>
             <template #actions="{ row }">
                 <t-space>
@@ -196,3 +208,12 @@ const columns:TableProps['columns']=[
         </Table>
     </MainLayout>
 </template>
+<style scoped>
+.viewer__base {
+  width: 160px;
+  height: 160px;
+  margin: 10px;
+  border: 4px solid var(--td-bg-color-secondarycontainer);
+  border-radius: var(--td-radius-medium);
+}
+</style>

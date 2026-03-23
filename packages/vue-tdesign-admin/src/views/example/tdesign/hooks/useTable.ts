@@ -65,10 +65,7 @@ export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) =>
                         console.log('pagination onChange', params)
                         pagination.current = params.current
                         pagination.pageSize = params.pageSize
-                        refresh({
-                            current: params.current,
-                            pageSize: params.pageSize,
-                        })
+                        refresh()
                     },
                     ...(propPagination || {}),
                 } as TableProps['pagination']
@@ -91,13 +88,15 @@ export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) =>
             }
             let newParams = {
                 ...params,
+            }
+            lastParams.value = newParams
+            const res = await propRequest({
+                ...newParams,
                 ...(propPagination === false ? {} : {
                     current: pagination.current,
                     pageSize: pagination.pageSize
                 }),
-            }
-            lastParams.value = newParams
-            const res = await propRequest(newParams)
+            })
             if (res.success) {
                 data.value = res.records
                 pagination.total = res.total
