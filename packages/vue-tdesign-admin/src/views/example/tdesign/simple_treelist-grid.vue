@@ -2,7 +2,7 @@
 import type { FormInstanceFunctions, TdBreadcrumbProps, TdTreeProps, TreeInstanceFunctions, TreeNodeModel } from 'tdesign-vue-next';
 import FLangSwitch from './components/FLangSwitch/index.vue';
 import './theme.css'
-import { computed, nextTick, onBeforeMount, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw, watch } from 'vue';
+import { computed, nextTick, onBeforeMount, onBeforeUnmount, onMounted, onUnmounted, reactive, ref, shallowRef, toRaw, watch } from 'vue';
 import { useRequest } from '@/hooks/useRequest2'
 import { cloneDeep } from 'lodash-es';
 import { useTree } from './hooks/useTree';
@@ -11,7 +11,7 @@ import FSelectDialog from './components/FSelectDialog/index.vue'
 import EditForm from './components/ProductGroups/EditForm.vue';
 import { useRouter } from 'vue-router'
 import {useElementBounding,useWindowScroll,useElementSize} from '@vueuse/core'
-import {useElementBounds} from '@/hooks/useElementBounds'
+import { useElementBounds } from 'src/hooks/useElementBounds';
 const router = useRouter()
 
 const breadcrumbOptions: TdBreadcrumbProps['options'] = [
@@ -150,8 +150,25 @@ const handleDrop: TdTreeProps['onDrop'] = ({ dragNode, dropNode,dropPosition }) 
     // treeInst.request()
     //console.log('drop',treeRef.value.getTreeData())
 }
+const handleDragStart: TdTreeProps['onDragStart'] = ({ e ,node}) => {
+    // 必须延迟10ms，否则会触发scroll事件
+    setTimeout(()=>{
+        dragging.value=true
+    },10)
+    console.log('handleDragStart',node.data?.id)
+  //  console.log('drag-start',dragNode.data.slug)
+    //document.body.style.overflow = 'hidden';
+   // document.documentElement.style.overflow = 'hidden';
+}
+const handleDragOver: TdTreeProps['onDragOver'] = ({ e, node }) => {
+   // console.log('handleDragOver',node.data?.id)
+    //e.preventDefault()
+}
 const handleDragEnd: TdTreeProps['onDragEnd'] = ({ e, node }) => {
-    dragging.value=false
+   dragging.value=false
+        console.log('handleDragEnd',node.data?.id)
+  //  document.body.style.overflow = '';
+  //  document.documentElement.style.overflow = '';
     //enableDrag.value=true
     // const id=node.data.id
     // const panret=node.getParent()
@@ -173,14 +190,17 @@ const handleFilterInput = (val: string) => {
     }
 }
 const enableDrag = ref(true)
-const handleDragStart: TdTreeProps['onDragStart'] = ({ e, dragNode }) => {
-    //enableDrag.value=true
-    //  activeKeys.value=[]
-}
+
 const handleActive: TdTreeProps['onActive'] = (value, { trigger, node }) => {
     // console.log('value',value,'onActive', 'node', node, 'trigger', trigger)
-    activeKeys.value = value.slice()
-    console.log('activeKeys.value',activeKeys.value)
+  // activeKeys.value = value.slice()
+   setTimeout(()=>{
+  
+    if(!delayDrag){
+        console.log('activeKeys.value',activeKeys.value)
+        activeKeys.value = value.slice()
+    }
+   },50)
 }
 const handleExpand: TdTreeProps['onExpand'] = (value, { trigger, node }) => {
     // console.log('value',value,'onExpand', 'node', node, 'trigger', trigger)
@@ -245,37 +265,61 @@ onBeforeUnmount(() => {
 const wrapRef=shallowRef<HTMLDivElement>(null)
 const treeWrapRef=shallowRef<HTMLDivElement>(null)
 const {top,bottom,height}=useElementBounds(wrapRef,{
-    delay:2000,
-   elementResize:false,
-   windowScroll:false,
-   elementMutation:false
+  windowScroll:true,
+  //windowResize:false,
+  elementResize:false
 })
 
 const treeHeight=computed(()=>{
     let marginBottomHeight=window.innerHeight-(top.value+window.pageYOffset)
-    console.log('height.value',height.value,'marginBottomHeight',marginBottomHeight)
+    //console.log('height.value',height.value,'window.innerHeight',window.innerHeight,'bottom',bottom.value,'marginBottomHeight',marginBottomHeight)
     return Math.round(Math.max(marginBottomHeight-80,200))
 })
-
+let delayDrag=false
+const handleOverflow=(e:MouseEvent)=>{
+    if(e.target&&(e.target as Element).closest('.t-tree__item')){
+     //   document.body.style.overflow = 'hidden';
+       // document.documentElement.style.overflow = 'hidden';
+         // 防止滚动条消失导致页面抖动，添加 padding 补偿
+       // const scrollbarWidth = window.innerHeight - document.documentElement.clientHeight;
+       // document.body.style.paddingRight = `${scrollbarWidth}px`;
+       delayDrag=true
+    }
+}
+const handleOverflowUp=(e:MouseEvent)=>{
+    //document.body.style.overflow = '';
+  //  document.documentElement.style.overflow = '';
+    delayDrag=false
+}
+// onMounted(()=>{
+//      document.addEventListener('mousedown',handleOverflow,true)
+//      document.addEventListener('mouseup',handleOverflowUp,true)
+// })
+// onUnmounted(()=>{
+//     document.removeEventListener('mousedown',handleOverflow,true)
+//     document.removeEventListener('mouseup',handleOverflowUp,true)
+// })
 </script>
 <template>
     <MainLayout show-lang title="产口分组" :breadcrumb-options="breadcrumbOptions">
         <template #actions>
             <t-button theme="primary" @click="handleNewAdd">新增</t-button>
         </template>
-        <div class="flex gap-4 flex-1 relative" ref="wrapRef" >
-            <t-loading :loading="state.loading"  class="sticky! top-[60px] flex-none  self-start w-[260px] flex flex-col  box-border p-3 bg-white rounded-sm">
-                 <div class="mb-2 grow-0 shrink-0">
+        <div   class="h-full grid grid-cols-[260px_1fr] grid-rows-1 gap-x-4 relative" ref="wrapRef" >
+            <t-loading :loading="state.loading"  class="!sticky top-[60px] self-start felx flex-col  box-border p-3 bg-white rounded-sm">
+                 <div class="mb-2 flex-none">
                         <t-input @change="handleFilterInput"></t-input>
                     </div>
-                <div  class="overflow-hidden flex-1 ">
+                <div >
                     <t-tree class="tree"  :height="treeHeight" @expand="handleExpand" :expanded="expandedKeys" activable
                         :actived="activeKeys" :class="{ 'tree-drag-mode': enableDrag }" :filter="handleFilterTreeNode"
-                        @active="handleActive" @drag-start="dragging=true" @drag-end="handleDragEnd" :draggable="enableDrag"
+                        @active="handleActive" @drag-over="handleDragOver" @drag-start="handleDragStart" @drag-end="handleDragEnd"  :draggable="enableDrag"
                         :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef" :data="state.data" hover
                         @drop="handleDrop" >
                         <template #icon="{ node }">
-                            <div class="tree-move-icon" :class="{ 'tree-move-icon-leaf': node.isLeaf() }">
+                            <div class="tree-move-icon" :class="{ 'tree-move-icon-leaf': node.isLeaf() }" @mousedown.prevent="()=>{
+                                console.log('move-icon-click')
+                            }">
                                 <t-icon name="move" size="12" style="color:#333"></t-icon>
                             </div>
                             <div v-if="!node.isLeaf()">
@@ -303,12 +347,12 @@ const treeHeight=computed(()=>{
                     </t-tree>
                 </div>
             </t-loading>
-            <div class="flex-1">
+            <div >
                 <div v-if="dragging||showEmpty" class="h-full flex flex-col items-center justify-center bg-white rounded-sm p-4">
                     <div>
                         <t-icon name="file"></t-icon>
                     </div>
-                    <div class="text-gray-500 mt-2">暂无数据{{ dragging ? '（请先释放）' : '' }}</div>
+                    <div class="text-gray-500 mt-2">暂无数据</div>
                 </div>
                 <div v-else class="h-full flex flex-col">
                     <EditForm :header="currentActiveNode.data.slug" :id="currentActiveNode.data.id">

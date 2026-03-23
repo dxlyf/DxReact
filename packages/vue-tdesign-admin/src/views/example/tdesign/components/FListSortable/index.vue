@@ -36,7 +36,7 @@ useDraggable(el, list, {
 </script>
 
 <template>
-  <div ref="el" class="max-h-[300px] overflow-y-auto rounded-sm p-4 bg-[#f8f9fa] flex flex-col gap-2 self-stretch border border-[#e6e8eb]">
+  <div  ref="el" class="max-h-[300px] overflow-y-auto rounded-sm p-4 bg-[#f8f9fa] flex flex-col gap-2 self-stretch border border-[#e6e8eb]">
      <div class="rounded-sm bg-white h-8 flex items-center box-border p-4 gap-2" v-for="(item,index) in list" :key="rowKey=='index'?index:item[rowKey]">
        <div class="handle"><t-icon name="move"></t-icon></div>
        <div><slot :item="item"></slot></div>

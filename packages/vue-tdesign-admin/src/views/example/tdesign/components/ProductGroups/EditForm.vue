@@ -74,8 +74,9 @@ const loadData=async()=>{
         }
     }
 }
-watch(()=>props.id,(val)=>{
+watch(()=>props.id,(val,oldVal)=>{
     if(val){
+        console.log('watch-props.id',val,oldVal)
         loadData()
     }
 },{
@@ -89,11 +90,11 @@ const rules={
 const [parentState,parentInst]=useRequest<{label:string,value:number}[]>({
     defaultValue:[],
     request:async ()=>{
-        return [{label:'测试',value:1},{label:'测试2',value:2}]
+        return [{label:'测试',value:1},{label:'测试2',value:2,disabled:true}]
     }
 })
 const parentOptions=computed(()=>{
-    return [{label:'',value:-1}].concat(parentState.data)
+    return [{label:'根节点',value:-1,children:parentState.data}]
 })
 const handleReturn=()=>{
     router.back()
@@ -163,8 +164,8 @@ const handleProductSort=(newList:any[])=>{
                 <t-input v-model="formData.title" />
             </t-form-item>
             <t-form-item label="父级" name="parentId">
-                <t-select v-model="formData.parentId" :options="parentOptions" clearable filterable>
-                    </t-select>
+                <t-tree-select v-model="formData.parentId" :data="parentOptions" clearable filterable>
+                    </t-tree-select>
             </t-form-item>
             <t-form-item label="所有者" name="ownerId">
                 <t-input v-model.number="formData.ownerIdId" />

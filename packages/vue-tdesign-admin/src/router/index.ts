@@ -242,6 +242,15 @@ const defaultRoutes: RouteRecordRaw[] = [
                   icon: 'table'
                 }
               },{
+                path: 'simple_treelist_grid',
+                component: () => import('../views/example/tdesign/simple_treelist-grid.vue'),
+                meta: {
+                  layout:'',
+                  title: '列表',
+                  menuName: 'treelist网格',
+                  icon: 'table'
+                }
+              },{
                 path: 'treelist_new',
                 component: () => import('../views/example/tdesign/treelist_new.vue'),
                 meta: {
@@ -251,11 +260,19 @@ const defaultRoutes: RouteRecordRaw[] = [
                   // icon: 'table'
                 }
               }, {
-                path: 'videolist',
-                component: () => import('../views/example/tdesign/videolist.vue'),
+                path: 'video',
+                children:[{
+                  path: 'list',
+                  component: () => import('../views/example/tdesign/video/video-list.vue'),
+                  meta: {
+                    title: '列表',
+                    menuName: '视频列表',
+                    icon: 'table'
+                  }
+                }],
                 meta: {
                   title: '列表',
-                  menuName: 'videolist',
+                  menuName: '视频相关',
                   icon: 'table'
                 }
               }
