@@ -4,12 +4,17 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import tailwindcss from '@tailwindcss/vite'
 import svgLoader from 'vite-svg-loader';
 import { viteMockServe } from 'vite-plugin-mock';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // https://vite.dev/config/
 export default defineConfig({
   resolve:{
     alias:{
-      'src': '/src',
-      '@': '/src'
+      'src': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src')
     }
   },
   css:{

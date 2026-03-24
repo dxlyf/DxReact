@@ -20,7 +20,8 @@ defineSlots<{
     default: any // 主内容区
     header: any // 
     content: any
-    actions: any // 操作按钮区
+    operation: any // 操作按钮区
+    title:any
 }>()
 </script>
 
@@ -40,7 +41,7 @@ defineSlots<{
                     </div>
                 </div>
                 <div class="flex-none">
-                    <slot name="actions">
+                    <slot name="operation">
                     </slot>
                 </div>
             </div>
@@ -78,9 +79,9 @@ defineSlots<{
         </template>
         <template v-else-if="layout==='edit'">
             <slot name="content">
-                <div class="flex flex-col flex-1 min-h-0 mt-4">
+                <t-loading :text="loadingText" :loading="loading" class="bg-white p-4 rounded-sm flex flex-col flex-1 min-h-0 mt-4 gap-y-4">
                     <slot></slot>
-                </div>
+                </t-loading>
             </slot>
         </template>
         <template v-else>

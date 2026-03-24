@@ -9,10 +9,13 @@ import { useTree } from './hooks/useTree';
 import MainLayout from './components/Layouts/MainLayout.vue'
 import FSelectDialog from './components/FSelectDialog/index.vue'
 import EditForm from './components/ProductGroups/EditForm.vue';
-import { useRouter } from 'vue-router'
+import { useRouter,useRoute } from 'vue-router'
 import {useElementBounding,useWindowScroll,useElementSize} from '@vueuse/core'
 import { useElementBounds } from 'src/hooks/useElementBounds';
 const router = useRouter()
+const route=useRoute()
+
+const id=route.query.id
 
 const breadcrumbOptions: TdBreadcrumbProps['options'] = [
     {
@@ -43,6 +46,7 @@ const delay = (time: number) => {
     return new Promise(resolve => setTimeout(resolve, time))
 }
 const [state, treeInst] = useRequest<VideoGroupItem[]>({
+    manualRequest:true,
     request: async () => {
         await delay(2000)
         return [
@@ -123,6 +127,27 @@ const [state, treeInst] = useRequest<VideoGroupItem[]>({
 treeInst.request().then((data) => {
     if (data) {
         expandedKeys.value = data.map(d => d.id)
+        if(id){
+            activeKeys.value=[Number(id)]
+
+            setTimeout(()=>{
+                // if(treeRef.value){
+                //     let node=treeRef.value.getItem(Number(id))
+                    
+                //     treeRef.value.scrollTo({
+                //         key:Number(id),
+                //     })
+                // }
+                let element=document.querySelector(`[data-value="${Number(id)}"]`)
+                if(element){
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'center'
+                    })
+                }
+            },500)
+        }
     }
 })
 const treeRef = shallowRef<TreeInstanceFunctions>()
@@ -196,10 +221,25 @@ const handleActive: TdTreeProps['onActive'] = (value, { trigger, node }) => {
   // activeKeys.value = value.slice()
    setTimeout(()=>{
   
-    if(!delayDrag){
+    //if(!delayDrag){
         console.log('activeKeys.value',activeKeys.value)
         activeKeys.value = value.slice()
-    }
+        if(activeKeys.value.length>0){
+            router.replace({
+                query:{
+                    ...router.currentRoute.value.query,
+                    id:activeKeys.value[0]
+                }
+            })
+        }else{
+            router.replace({
+                query:{
+                    ...router.currentRoute.value.query,
+                    id:undefined
+                }
+            })
+        }
+   // }
    },50)
 }
 const handleExpand: TdTreeProps['onExpand'] = (value, { trigger, node }) => {
@@ -207,11 +247,16 @@ const handleExpand: TdTreeProps['onExpand'] = (value, { trigger, node }) => {
     expandedKeys.value = value.slice()
 }
 const dragging=ref(false)
-const showEmpty = computed(() => {
-    return activeKeys.value.length <= 0
-})
+
 const currentActiveNode = computed(() => {
-    return treeRef.value.getItem(activeKeys.value[0])
+    const id=activeKeys.value[0]
+    if(treeRef.value){
+        return treeRef.value.getItem(id)
+    }
+    return null
+})
+const showEmpty = computed(() => {
+    return !currentActiveNode.value
 })
 const formData = reactive<any>({})
 const rules = {
@@ -315,7 +360,7 @@ const handleOverflowUp=(e:MouseEvent)=>{
                         :actived="activeKeys" :class="{ 'tree-drag-mode': enableDrag }" :filter="handleFilterTreeNode"
                         @active="handleActive" @drag-over="handleDragOver" @drag-start="handleDragStart" @drag-end="handleDragEnd"  :draggable="enableDrag"
                         :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef" :data="state.data" hover
-                        @drop="handleDrop" >
+                        @drop="handleDrop" :scroll="{type:'virtual',rowHeight:32,bufferSize:20}" >
                         <template #icon="{ node }">
                             <div class="tree-move-icon" :class="{ 'tree-move-icon-leaf': node.isLeaf() }" @mousedown.prevent="()=>{
                                 console.log('move-icon-click')

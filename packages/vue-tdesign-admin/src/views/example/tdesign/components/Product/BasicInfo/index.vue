@@ -19,7 +19,12 @@ const formData = reactive({
 })
 const rules: TdFormProps['rules'] = {
     slug: [
-        { required: true, message: '请输入Slug' }
+        { required: true, message: '请输入Slug' },
+        {
+            //pattern: /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/,
+            pattern:/^[a-z0-9_\-]+$/,
+            message: 'Slug只能包含小写字母、数字、短横线或下划线'
+        }
     ],
     cover: [
         { required: true, message: '请输入Cover' }

@@ -21,6 +21,8 @@ export type UseTableProps<T> = {
     searchInstance?: any,// 搜索实例对象
     defaultParams?: TableRequestParams,// 默认请求参数
     manualRequest?: boolean,// 是否手动触发请求
+    currentPageField?: string,// 当前页字段名
+    pageSizeField?: string,// 每页数量字段名
     pagination?: false | {
         current?: number,
         pageSize?: number,
@@ -93,8 +95,8 @@ export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) =>
             const res = await propRequest({
                 ...newParams,
                 ...(propPagination === false ? {} : {
-                    current: pagination.current,
-                    pageSize: pagination.pageSize
+                    [props.value.currentPageField || 'current']: pagination.current,
+                    [props.value.pageSizeField || 'pageSize']: pagination.pageSize
                 }),
             })
             if (res.success) {

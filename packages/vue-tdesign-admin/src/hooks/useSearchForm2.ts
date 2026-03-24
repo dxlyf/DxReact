@@ -27,7 +27,6 @@ const defaultFieldConfig:Record<SearchFormFieldType,SearchFormField<SearchFormFi
         type:FieldTypes.TEXT,
         defaultValue:'',
         transform:(value)=>value,
-        isValid:(value)=>value!==undefined&&value!==null&&value!=='',
         normalize:(value)=>value,
     },
     [FieldTypes.NUMBER]:{
@@ -50,28 +49,23 @@ const defaultFieldConfig:Record<SearchFormFieldType,SearchFormField<SearchFormFi
 } as const
 const createField=(value:SearchFormField|any)=>{
     if(isObject(value)){
-        const fieldConfig=defaultFieldConfig[(value as SearchFormField).type||FieldTypes.TEXT]
-        const mergeField={...fieldConfig,...value}
-        const {defaultValue,...restField}=mergeField
         return {
-            ...restField,
-            defaultValue:typeof defaultValue==='function'?defaultValue():defaultValue
+            ...defaultFieldConfig[(value as SearchFormField).type||FieldTypes.TEXT],
+            ...value,
         }
     }
     let type:SearchFormFieldType=FieldTypes.TEXT
-    let valueType=getType(value)
-    switch(valueType){
-        case 'String':
+    switch(Object.prototype.toString.call(value)){
+        case '[object String]':
           type=FieldTypes.TEXT
           break
-        case 'Number':
+        case '[object Number]':
           type=FieldTypes.NUMBER
           break
-        case 'Array':
-          value=value.slice()
+        case '[object Array]':
           type=FieldTypes.DATE_RANGE
           break 
-        case 'Boolean':
+        case '[object Boolean]':
           type=FieldTypes.BOOLEAN
           break
         default:
@@ -85,27 +79,7 @@ const createField=(value:SearchFormField|any)=>{
     
 }
 
-const isArray=(value:any)=>{
-    return Array.isArray(value)
-}
-const isObject=(value:any)=>{
-    return Object.prototype.toString.call(value) === '[object Object]'
-}
-const getType=(value:any)=>{
-    return Object.prototype.toString.call(value).slice(8,-1)
-}
-const cloneDeep=(target:any,obj:any)=>{
-    for(const [key,value] of Object.entries(obj)){
-        if(isArray(value)){
-            target[key]=cloneDeep([],value)
-        }else if(isObject(value)){
-            target[key]=cloneDeep({},value)
-        }else{
-            target[key]=value
-        }
-    }
-    return target
-}
+
 /**
  * 统一搜索表单基本配置和便捷开发
  */
@@ -119,14 +93,30 @@ export type UseSearchFormProps<T> = {
     syncParamsToUrl?: boolean,// 是否同步参数到URL
     filterEmpty?: boolean,// 是否过滤空值
     filterNullOrUndefined?: boolean,// 是否过滤null和undefined值
-    defaultParams?:T|Record<string,SearchFormFieldType>,// 默认数据值
+    defaultParams?:T,// 默认数据值
     transform?:(params:Record<string,any>,name:string,value:any)=>any,// 自定义参数值转换
-    normalize?:(params:Record<string,any>,name:string,value:any)=>any,// 自定义参数值转换
+    normalize?:(name:string,value:any)=>any,// 自定义参数值转换
     onSearch?: (params: Record<string, any>) => void,// 搜索回调
     onReset?: (params: Record<string, any>) => void,// 重置回调
 }
-
-
+const isArray=(value:any)=>{
+    return Array.isArray(value)
+}
+const isObject=(value:any)=>{
+    return Object.prototype.toString.call(value) === '[object Object]'
+}
+const cloneDeep=(target:any,obj:any)=>{
+    for(const [key,value] of Object.entries(obj)){
+        if(isArray(value)){
+            target[key]=cloneDeep([],value)
+        }else if(isObject(value)){
+            target[key]=cloneDeep({},value)
+        }else{
+            target[key]=value
+        }
+    }
+    return target
+}
 export const useSearchForm = <T extends Record<string, any>=any>(_props: MaybeRefOrGetter<UseSearchFormProps<T>>) => {
     const props = computed(() => ({
         defaultParams: {} as T,
@@ -135,16 +125,8 @@ export const useSearchForm = <T extends Record<string, any>=any>(_props: MaybeRe
         syncParamsToUrl: true,
         ...toValue(_props),
     }))
-    const initialSearchForm:any={}
-    const fieldConfig:Record<string,SearchFormField>=Object.keys(props.value.defaultParams).reduce((acc,key)=>{
-        const fieldConfig=props.value.defaultParams[key]
-        const field=createField(fieldConfig)
-        acc[key]=field
-        return acc
-    },{} as Record<string,SearchFormField>)
-    
     // 搜索表单数据
-    const searchForm = shallowReactive<T>(initialSearchForm)
+    const searchForm = shallowReactive<T>(cloneDeep({},props.value.defaultParams))
 
     const isSkipValue=(value:any):boolean=>{
         if(isArray(value)){
@@ -156,20 +138,11 @@ export const useSearchForm = <T extends Record<string, any>=any>(_props: MaybeRe
     const searchParams=computed(()=>{
         let params:Record<string,any>={}
         for(const [key,value] of Object.entries(searchForm)){
-            const valueType=fieldConfig[key]
-            let tmpValue=value
-            if(valueType){
-                tmpValue=valueType.transform(value)
-            }else{
-                tmpValue=value
-            }
-            if(props.value.transform){
-                tmpValue=props.value.transform(params,key,tmpValue)
-            }
-             if(isSkipValue(tmpValue)){
+            const finalValue=props.value.transform?props.value.transform(params,key,value):value
+             if(isSkipValue(finalValue)){
                 continue
             }
-            params[key]=tmpValue
+            params[key]=finalValue
         }
         return params
     })
@@ -187,35 +160,23 @@ export const useSearchForm = <T extends Record<string, any>=any>(_props: MaybeRe
                 urlInfo.searchParams.set(key,value as any)
             }
         }
-        window.history.replaceState({}, '', urlInfo.toString())
-    }
-    const defaultNormalize=(params:Record<string,any>,name:string,value:any)=>{
-        const valueType=fieldConfig[name]
-        if(valueType){
-            params[name]=valueType.normalize(value)
-        }
+        window.history.pushState({}, '', urlInfo.toString())
     }
     const pullParamsFromUrl=()=>{
         if(!props.value.syncParamsToUrl){
             return
         }
         const urlInfo = new URL(window.location.href,window.location.origin)
-        let newParams:Record<string,any>={}
         for(const [key,value] of urlInfo.searchParams.entries()){
-            if(!fieldConfig[key]){
+            const finalValue=props.value.normalize?props.value.normalize(key,value):value
+            if(isSkipValue(finalValue)){
                 continue
             }
-            if(props.value.normalize){
-               props.value.normalize(newParams,key,value)
+            if(Array.isArray(props.value.defaultParams[key])&&typeof finalValue==='string'){
+                searchForm[key as keyof T]=finalValue.split(',') as any
             }else{
-              defaultNormalize(newParams,key,value)
+                searchForm[key as keyof T]=finalValue
             }
-        }
-        for(const [key,value] of Object.entries(newParams)){
-             if(isSkipValue(value)){
-                continue
-            }
-            searchForm[key as keyof T]=value
         }
     }
     // 从URL中获取参数

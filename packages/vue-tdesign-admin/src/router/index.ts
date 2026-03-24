@@ -262,8 +262,14 @@ const defaultRoutes: RouteRecordRaw[] = [
               }, {
                 path: 'video',
                 children:[{
+                  path: 'new',
+                  component: () => import('../views/example/tdesign/video/new.vue'),
+                },{
+                  path: 'edit',
+                  component: () => import('../views/example/tdesign/video/edit.vue'),
+                },{
                   path: 'list',
-                  component: () => import('../views/example/tdesign/video/video-list.vue'),
+                  component: () => import('../views/example/tdesign/video/index.vue'),
                   meta: {
                     title: '列表',
                     menuName: '视频列表',
