@@ -356,7 +356,7 @@ const handleOverflowUp=(e:MouseEvent)=>{
                         <t-input @change="handleFilterInput"></t-input>
                     </div>
                 <div >
-                    <t-tree class="tree"  :height="treeHeight" @expand="handleExpand" :expanded="expandedKeys" activable
+                    <t-tree class="tree overscroll-contain"  :height="treeHeight" @expand="handleExpand" :expanded="expandedKeys" activable
                         :actived="activeKeys" :class="{ 'tree-drag-mode': enableDrag }" :filter="handleFilterTreeNode"
                         @active="handleActive" @drag-over="handleDragOver" @drag-start="handleDragStart" @drag-end="handleDragEnd"  :draggable="enableDrag"
                         :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef" :data="state.data" hover

@@ -4,7 +4,6 @@ import FSelectDialog from '../FSelectDialog/index.vue'
 import { useRequest } from 'src/hooks/useRequest2';
 import { useRouter } from 'vue-router'
 import FListSortable from '../FListSortable/index.vue'
-import { v } from 'vue-router/dist/router-CWoNjPRp.mjs';
 import type { FormInstanceFunctions } from 'tdesign-vue-next';
 
 const router = useRouter()
