@@ -33,9 +33,9 @@ const handleSubmit: TdFormProps['onSubmit'] = (e) => {
 }
 const instance = getCurrentInstance()
 const handleRefreshRouter = () => {
-    instance.vnode.key = Date.now()
-    console.log('instance', instance.vnode)
-
+  //  instance.vnode.key = Date.now()
+    console.log('instance', instance)
+   // router.go(0)
     // instance.appContext.app.config.globalProperties.$i18n.
 }
 const rules: Record<string, TdFormItemProps['rules']> = {

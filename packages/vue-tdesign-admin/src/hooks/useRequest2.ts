@@ -4,6 +4,9 @@ import { shallowReactive } from "vue";
 export type UseRequestProps<T,Paramater extends Record<string,any>={}>={
     request:(params:Paramater)=>Promise<T>
     transform?:(data:T)=>T
+    onSuccess?:(data:T,params:Paramater)=>void // 请求成功回调
+    onFail?:(error:unknown)=>void // 请求失败回调
+    onComplete?:()=>void // 请求完成回调    
     manualRequest?:boolean // 是否手动触发请求
     deafultParams?:Paramater
     defaultValue?:T
@@ -15,7 +18,7 @@ export type UseRequestState<T,Paramater extends Record<string,any>={}>={
     data:T
 }
 export const useRequest=<T,Paramater extends Record<string,any>={}>(props:UseRequestProps<T,Paramater>)=>{
-    const {request:propRequest,defaultValue=null,manualRequest=false}=props
+    const {request:propRequest,defaultValue=null,manualRequest=false,onSuccess,onFail,onComplete}=props
   
     const state = shallowReactive<UseRequestState<T,Paramater>>({
         loading: false,
@@ -41,12 +44,15 @@ export const useRequest=<T,Paramater extends Record<string,any>={}>(props:UseReq
             }
             state.data=data as T
             state.lastParams=params as Paramater
+            onSuccess?.(data,newParams as Paramater)
             return data
         } catch (error) {
             state.error=error
+            onFail?.(error)
             throw error
         }finally{
             state.loading=false
+            onComplete?.()
         }
     }
     // 重试上次请求

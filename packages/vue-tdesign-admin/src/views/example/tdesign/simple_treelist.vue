@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormInstanceFunctions, TdBreadcrumbProps, TdTreeProps, TreeInstanceFunctions, TreeNodeModel } from 'tdesign-vue-next';
+import { DialogPlugin, MessagePlugin, type FormInstanceFunctions, type TdBreadcrumbProps, type TdTreeProps, type TreeInstanceFunctions, type TreeNodeModel } from 'tdesign-vue-next';
 import FLangSwitch from './components/FLangSwitch/index.vue';
 import './theme.css'
 import { computed, nextTick, onBeforeMount, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw, watch } from 'vue';
@@ -44,7 +44,7 @@ const delay = (time: number) => {
 }
 const [state, treeInst] = useRequest<VideoGroupItem[]>({
     request: async () => {
-        await delay(2000)
+      //  await delay(2000)
         return [
             {
                 id: 1,
@@ -256,7 +256,28 @@ const treeHeight=computed(()=>{
     console.log('height.value',height.value,'marginBottomHeight',marginBottomHeight)
     return Math.round(Math.max(marginBottomHeight-80,200))
 })
+const confirmLoading=shallowRef(false)
+const handleDelTreeItem=(id)=>{
+  const dialog= DialogPlugin.confirm({
+    header:false,
+    body:'确认删除吗？',
+    closeBtn:false,
+    confirmBtn:{
+        theme:'danger',
+        content:'删除'
+    },
+    cancelBtn:'取消',
+    onConfirm:()=>{
+        dialog.setConfirmLoading(true)
+        MessagePlugin.success('删除成功'+id)
 
+    },
+    onClose:()=>{
+        dialog.destroy()
+    }
+   })
+   
+}
 </script>
 <template>
     <MainLayout show-lang title="产口分组" :breadcrumb-options="breadcrumbOptions">
@@ -299,6 +320,7 @@ const treeHeight=computed(()=>{
                             <div v-if="node.data.childCount > 0"
                                 class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs"> {{
                                     node.data.childCount }}</div>
+                                    <div class="mr-1 tree-item-del hidden"><t-icon @click="handleDelTreeItem(node.data.id)" name="delete" size="12"></t-icon></div>
                         </template>
                     </t-tree>
                 </div>
@@ -347,15 +369,18 @@ const treeHeight=computed(()=>{
 .tree :deep(.t-tree__item--draggable:hover) .tree-move-icon {
     visibility: visible;
 }
-.tree :deep(.t-tree__label>span){
+/* .tree :deep(.t-tree__label>span){
     display: inline-block;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
     width: fit-content;
-}
+} */
 .tree{
-    width: 240px;
+   
+}
+.tree :deep(.t-tree__item:hover .t-tree__operations>.tree-item-del){
+    display: inline-block;
 }
 /* .t-tree__icon{
         width: 60px!important;

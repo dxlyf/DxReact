@@ -7,12 +7,14 @@ type Props = {
     breadcrumbOptions: TdBreadcrumbProps['options']
     loading?: boolean
     loadingText?: string
+    showNotFound?: boolean
     showLang?: boolean
     title?: string
 }
 const [, { currentLanguage }] = useLang()
 const props = withDefaults(defineProps<Props>(), {
     showLang: false,
+    showNotFound: false,
     layout:'empty',
     breadcrumbOptions: () => []
 })

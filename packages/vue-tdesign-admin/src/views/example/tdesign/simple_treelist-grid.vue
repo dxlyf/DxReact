@@ -357,7 +357,7 @@ const handleOverflowUp=(e:MouseEvent)=>{
                     </div>
                 <div >
                     <t-tree class="tree overscroll-contain"  :height="treeHeight" @expand="handleExpand" :expanded="expandedKeys" activable
-                        :actived="activeKeys" :class="{ 'tree-drag-mode': enableDrag }" :filter="handleFilterTreeNode"
+                        :actived="activeKeys"  :filter="handleFilterTreeNode"
                         @active="handleActive" @drag-over="handleDragOver" @drag-start="handleDragStart" @drag-end="handleDragEnd"  :draggable="enableDrag"
                         :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef" :data="state.data" hover
                         @drop="handleDrop" :scroll="{type:'virtual',rowHeight:32,bufferSize:20}" >
@@ -388,6 +388,9 @@ const handleOverflowUp=(e:MouseEvent)=>{
                             <div v-if="node.data.childCount > 0"
                                 class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs"> {{
                                     node.data.childCount }}</div>
+                             <div class="">
+                                <t-icon name="delete" size="12"></t-icon>
+                             </div>
                         </template>
                     </t-tree>
                 </div>
@@ -436,15 +439,15 @@ const handleOverflowUp=(e:MouseEvent)=>{
 .tree :deep(.t-tree__item--draggable:hover) .tree-move-icon {
     visibility: visible;
 }
-.tree :deep(.t-tree__label>span){
+/* .tree :deep(.t-tree__label>span){
     display: inline-block;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
     width: fit-content;
-}
+} */
 .tree{
-    width: 240px;
+   
 }
 /* .t-tree__icon{
         width: 60px!important;

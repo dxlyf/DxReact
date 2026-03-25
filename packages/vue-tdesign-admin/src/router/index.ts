@@ -26,8 +26,8 @@ const defaultRoutes: RouteRecordRaw[] = [
         path: '',
         redirect: '/dashboard'
       },
-      { 
-        path:'/reload',
+      {
+        path: '/reload',
         component: () => import('../views/reload.vue'),
       },
       {
@@ -161,7 +161,7 @@ const defaultRoutes: RouteRecordRaw[] = [
               menuName: 'DOM',
               icon: 'table'
             }
-          },{
+          }, {
             path: 'component',
             meta: {
               title: '树',
@@ -227,7 +227,7 @@ const defaultRoutes: RouteRecordRaw[] = [
                 path: 'treelist',
                 component: () => import('../views/example/tdesign/treelist.vue'),
                 meta: {
-                  layout:'',
+                  layout: '',
                   title: '列表',
                   menuName: 'treelist',
                   icon: 'table'
@@ -236,21 +236,21 @@ const defaultRoutes: RouteRecordRaw[] = [
                 path: 'simple_treelist',
                 component: () => import('../views/example/tdesign/simple_treelist.vue'),
                 meta: {
-                  layout:'',
+                  layout: '',
                   title: '列表',
                   menuName: 'treelist(简单模式)',
                   icon: 'table'
                 }
-              },{
+              }, {
                 path: 'simple_treelist_grid',
                 component: () => import('../views/example/tdesign/simple_treelist-grid.vue'),
                 meta: {
-                  layout:'',
+                  layout: '',
                   title: '列表',
                   menuName: 'treelist网格',
                   icon: 'table'
                 }
-              },{
+              }, {
                 path: 'treelist_new',
                 component: () => import('../views/example/tdesign/treelist_new.vue'),
                 meta: {
@@ -261,13 +261,13 @@ const defaultRoutes: RouteRecordRaw[] = [
                 }
               }, {
                 path: 'video',
-                children:[{
+                children: [{
                   path: 'new',
                   component: () => import('../views/example/tdesign/video/new.vue'),
-                },{
+                }, {
                   path: 'edit',
                   component: () => import('../views/example/tdesign/video/edit.vue'),
-                },{
+                }, {
                   path: 'list',
                   component: () => import('../views/example/tdesign/video/index.vue'),
                   meta: {
@@ -275,6 +275,32 @@ const defaultRoutes: RouteRecordRaw[] = [
                     menuName: '视频列表',
                     icon: 'table'
                   }
+                }, {
+                  path: 'product_group',
+                  children: [
+                    {
+                      path:'index',
+                    component: () => import('../views/example/tdesign/video/product_video_groups/index.vue'),
+                      meta: {
+                        title: '详情',
+                        menuName: '产品视频分组',
+                        icon: 'table'
+                      },
+                    },
+                    {
+                      path: 'show',
+                      component: () => import('../views/example/tdesign/video/product_video_groups/show.vue'),
+
+                    },
+                    {
+                      path: 'new',
+                      component: () => import('../views/example/tdesign/video/product_video_groups/new.vue'),
+
+                    },{
+                      path: 'edit',
+                      component: () => import('../views/example/tdesign/video/product_video_groups/edit.vue'),
+                    }
+                  ]
                 }],
                 meta: {
                   title: '列表',
@@ -288,7 +314,7 @@ const defaultRoutes: RouteRecordRaw[] = [
               menuName: 'tdesign',
               icon: 'table'
             }
-          },{
+          }, {
             path: 'antd',
             children: [{
               path: 'treevue',
@@ -398,7 +424,7 @@ const defaultRoutes: RouteRecordRaw[] = [
                 }
               }
             ]
-          },{
+          }, {
             path: 'fontawesome',
             component: () => import('../views/example/fontawesome.vue'),
             meta: {

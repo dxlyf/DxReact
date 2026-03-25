@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="../dist/vue.js"></script>
+    <script src="../libs/vue-router/dist/vue-router.js"></script>
+</head>
+
+<body>
+    <div id="app"></div>
+    <template id="tmpApp">
+        <div class="app">
+            <div>
+                <router-link to="/">首页</router-link>
+                <router-link to="/about">关于</router-link>
+            </div>
+            <router-view></router-view>
+        </div>
+    </template>
+    <script>
+        Vue.use(VueRouter)
+        const { ref, onBeforeUnmount, shallowReactive } = Vue
+        const useRoute = () => {
+            const _route = app.$route
+
+             console.log('useRoute',_route.fullPath)
+            const route = shallowReactive({ ..._route })
+            let unwatch = app.$watch('$route', (newVal, oldVal) => {
+                //  console.log('useRoute',newVal,oldVal)
+               // console.log('watch:route',newVal,oldVal)
+                // console.log('watch:route',route.path,newVal)
+                // Object.assign(route, newVal)
+               // console.log('watch:route',route.path,newVal.path)
+                if(newVal.path === route.path){
+                    console.log('watch:route',route.path,newVal.path)
+                    route.fullPath=newVal.fullPath
+                    route.query={...newVal.query}
+                }
+            })
+            // const lb=router.history.listen((to, from) => {
+            //     console.log('listen',to,from)
+            // })
+            
+            onBeforeUnmount(() => {
+                //router.history.unlisten(lb)
+                if (unwatch) {
+                    console.log('unwatch')
+                    unwatch()
+                }
+               // console.log('useRoute unmounted')
+            })
+            return route
+        }
+        const TNav = {
+
+            template: '<div>  <button @click="handle">刷新</button></div>',
+            setup() {
+                const route = useRoute()
+                const handle = () => {
+                    router.replace({
+                        path: '/reload',
+                        query: {
+                            ...route.query,
+                            redirect: route.fullPath,
+                        }
+                    })
+                }
+                return {
+                    handle
+                }
+            }
+        }
+
+        const Home = {
+            template: '<div>{{title}}<TNav></TNav></div>',
+            setup() {
+                console.log('Home')
+                return {
+                    title: '首页'
+                }
+            }
+        }
+        const About = {
+            template: `<div>{{title}}
+                <input type="text"  @input="handleInput"/>
+                <TNav></TNav>
+                </div>`,
+            setup() {
+                const route = useRoute()
+                console.log('About')
+          
+                const handleInput = (e) => {
+                    router.replace({
+                        query: {
+                            id:e.target.value,
+                        }
+                    })
+                }
+                return {
+                    handleInput,
+                    title: '关于'
+                }
+            }
+        }
+        const reload = {
+            template: '<div>reload</div>',
+            setup() {
+                console.log('reload')
+                const route = useRoute()
+                const redirect = route.query.redirect
+                console.log('enter-load', redirect)
+                Vue.onMounted(() => {
+                    if (redirect) {
+                        router.replace(redirect)
+                    }
+                })
+                return {
+                    title: '刷新'
+                }
+            }
+        }
+        const router = new VueRouter({
+            routes: [
+                {
+                    path: '/',
+                    name: 'home',
+                    component: Home,
+                    meta: {
+                        title: '首页'
+                    }
+                },
+                {
+                    path: '/about',
+                    name: 'about',
+                    component: About,
+                    meta: {
+                        title: '关于'
+                    }
+                },
+                {
+                    path: '/reload',
+                    name: 'reload',
+                    component: reload,
+                    meta: {
+                        title: '刷新'
+                    }
+                }
+            ]
+
+        })
+
+        Vue.component('TNav',TNav)
+        const app = new Vue({
+            template: '#tmpApp',
+            router
+        })
+       app.$mount('#app')
+
+    </script>
+</body>
+
+</html>

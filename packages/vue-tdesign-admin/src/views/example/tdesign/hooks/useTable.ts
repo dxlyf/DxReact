@@ -38,6 +38,8 @@ export type UseTableProps<T> = {
 
 export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) => {
     const props = computed(() => ({
+        pageSizeField:'pageSize',
+        currentPageField:'current',
         manualRequest: false,
         pagination: {},
         ...toValue(_props)

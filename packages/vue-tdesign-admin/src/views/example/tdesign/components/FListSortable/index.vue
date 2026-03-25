@@ -32,14 +32,20 @@ useDraggable(el, list, {
     emit('change',list.value.slice())
   }
  })
-
+const handleRemove=(index:number)=>{
+  list.value.splice(index,1)
+  emit('change',list.value.slice())
+}
 </script>
 
 <template>
   <div  ref="el" class="max-h-[300px] overflow-y-auto rounded-sm p-4 bg-[#f8f9fa] flex flex-col gap-2 self-stretch border border-[#e6e8eb]">
      <div class="rounded-sm bg-white h-8 flex items-center box-border p-4 gap-2" v-for="(item,index) in list" :key="rowKey=='index'?index:item[rowKey]">
-       <div class="handle"><t-icon name="move"></t-icon></div>
-       <div><slot :item="item"></slot></div>
+       <div class="handle flex-none"><t-icon name="move"></t-icon></div>
+       <div class="flex-1"><slot :item="item"></slot></div>
+       <div @click="handleRemove(index)" class="justify-self-end flex-none cursor-pointer hover:bg-gray-200 hover:text-red-500 rounded-sm px-1">
+          <t-icon name="delete" size="12"></t-icon>
+       </div>
      </div>
   </div>
 </template>

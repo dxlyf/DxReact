@@ -4,7 +4,7 @@ import FSelectDialog from '../FSelectDialog/index.vue'
 import { useRequest } from 'src/hooks/useRequest2';
 import { useRouter } from 'vue-router'
 import FListSortable from '../FListSortable/index.vue'
-import type { FormInstanceFunctions } from 'tdesign-vue-next';
+import { DialogPlugin, type FormInstanceFunctions } from 'tdesign-vue-next';
 
 const router = useRouter()
 
@@ -55,7 +55,7 @@ const loadData=async()=>{
     if(props.id){
         try{
             loading.value=true
-            await delay(2000)
+          //  await delay(2000)
             detailData.value={
                 id:props.id,
                 slug:'test-slug',
@@ -99,7 +99,23 @@ const handleReturn=()=>{
     router.back()
 }
 const handleReset=()=>{
-    syncFormData()
+  const dialog= DialogPlugin.confirm({
+    header:false,
+    body:'确认重置吗？',
+    closeBtn:false,
+    confirmBtn:{
+        theme:'danger',
+        content:'重置'
+    },
+    cancelBtn:'取消',
+    onConfirm:()=>{
+        syncFormData()
+        dialog.destroy() 
+    },
+    onClose:()=>{
+       dialog.destroy()
+    }
+    })
 }
 const submitLoading=shallowRef(false)
 const handleUpdate=async()=>{
