@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const breadcrumbOptions=[]
 </script>
 <template>
     <MainLayout layout='list' show-lang title="产品视频分组" :breadcrumb-options="breadcrumbOptions">

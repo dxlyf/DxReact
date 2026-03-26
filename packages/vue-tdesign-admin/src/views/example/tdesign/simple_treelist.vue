@@ -166,6 +166,9 @@ const handleFilterTreeNode = shallowRef(null)
 const handleFilterInput = (val: string) => {
     if (val) {
         handleFilterTreeNode.value = (node: TreeNodeModel) => {
+            if(node.data.title!=null){
+                return node.data.title.includes(val)
+            }
             return node.data.slug.includes(val)
         }
     } else {
@@ -266,14 +269,12 @@ const handleDelTreeItem=(id)=>{
         theme:'danger',
         content:'删除'
     },
-    cancelBtn:'取消',
+    theme:'danger',
+   // cancelBtn:'取消',
     onConfirm:()=>{
         dialog.setConfirmLoading(true)
         MessagePlugin.success('删除成功'+id)
 
-    },
-    onClose:()=>{
-        dialog.destroy()
     }
    })
    

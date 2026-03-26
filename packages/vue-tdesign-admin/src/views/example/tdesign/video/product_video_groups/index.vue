@@ -20,16 +20,6 @@ const breadcrumbOptions = [
         content: 'index'
     }
 ]
-const statusOptions = [{
-    label: '全部',
-    value: ''
-}, {
-    label: '已发布',
-    value: 'Publish'
-}, {
-    label: '草稿',
-    value: 'Draft'
-}]
 type ProductVideoGroupDTO={
     id:number
     slug:string
@@ -99,7 +89,7 @@ const [tableProps, tableInst] = useTable({
 
 const columns: TableProps['columns'] = [
     {
-        title: '标题',
+        title: '视频分组名称',
         colKey: 'title'
     },{
         title: '',
@@ -107,12 +97,7 @@ const columns: TableProps['columns'] = [
         width:60
     }
 ]
-const expandSearch = ref(false)
-const handlePreview=(item)=>{
-    console.log('handlePreview',item.value)
-}
 const handleCreate=()=>{
-    console.log('handleCreate')
     router.push({path:'./new'})
 }
 const handleEdit=(item)=>{
@@ -129,28 +114,24 @@ const handleEdit=(item)=>{
         </template>
         <div class="grid grid-cols-4 2xl:grid-cols-5 gap-2">
             <div>
-                <t-input placeholder="包含Slug" v-model="searchForm.slug"></t-input>
+                <t-input placeholder="输入slug" v-model="searchForm.slug"></t-input>
             </div>
             <div>
-                <t-input placeholder="包含标题" v-model="searchForm.title"></t-input>
+                <t-input placeholder="输入分组名称" v-model="searchForm.title"></t-input>
             </div>
             <div>
-                <div class="flex gap-1">
+                <div class="flex gap-4">
                     <t-button theme="default" @click="searchInst.reset">重置</t-button>
                     <t-button theme="primary" @click="searchInst.search">查询</t-button>
-                    <t-link class="self-end !text-xs" theme="primary" @click="expandSearch=!expandSearch">
-                        {{ expandSearch ? '收起' : '展开' }}
-                        <template #suffixIcon> <t-icon :name="expandSearch ? 'chevron-up' : 'chevron-down'" size="12" /></template>
-                    </t-link>
                 </div>
             </div>
         </div>
-        <t-enhanced-table treeExpandAndFoldIcon v-bind="tableProps" :show-header="false" :columns="columns" :tree="{childrenKey:'nodes'}">
+        <t-enhanced-table  v-bind="tableProps"  :columns="columns" :tree="{childrenKey:'nodes'}">
            <template #treeExpandAndFoldIcon="{row,type}">
                 <t-icon :name="type==='expand' ? 'caret-right-small' : 'caret-down-small'" size="16" />
             </template>
             <template #title="{row}">
-                <t-link @click="handleEdit(row)" theme="primary">{{row.title}}</t-link>
+                <t-link @click="handleEdit(row)" theme="primary">{{row.title||row.slug}}</t-link>
             </template>
             <template #childCount="{row}">
                 <div v-if="row.childCount!==null" class="rounded-full bg-gray-600 text-white text-xs inline-block min-w-6 text-center p-1">

@@ -92,7 +92,10 @@ const [tableProps, tableInst] = useTable({
             ...searchForm
         }
         let newData = data.filter((item) => {
-            return item.title.includes(newParams.title)
+            if(newParams.title){
+                return item.title.includes(newParams.title)
+            }
+            return true
         })
         console.log('request', newParams)
         return {

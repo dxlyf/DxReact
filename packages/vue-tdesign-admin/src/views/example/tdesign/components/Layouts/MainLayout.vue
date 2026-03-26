@@ -82,7 +82,12 @@ defineSlots<{
         <template v-else-if="layout==='edit'">
             <slot name="content">
                 <t-loading :text="loadingText" :loading="loading" class="bg-white p-4 rounded-sm flex flex-col flex-1 min-h-0 mt-4 gap-y-4">
-                    <slot></slot>
+                    <div v-if="showNotFound" class="h-full flex flex-col items-center justify-center text-center">
+                        <div>
+                            <t-alert theme="error">页面详情信息不存在</t-alert>
+                        </div>
+                    </div>
+                    <slot v-else></slot>
                 </t-loading>
             </slot>
         </template>
