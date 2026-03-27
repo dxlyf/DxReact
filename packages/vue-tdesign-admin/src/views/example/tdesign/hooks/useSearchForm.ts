@@ -19,14 +19,14 @@ export type SearchFormField<T extends SearchFormFieldType='text'>={
     type:T
     defaultValue?:FieldValueType[T]|(()=>FieldValueType[T])
     isValid?:(value:FieldValueType[T]|null|undefined)=>boolean
-    transform?:(value:FieldValueType[T])=>FieldValueType[T]
+    transform?:(value:any)=>FieldValueType[T]
     normalize?:(value:string)=>FieldValueType[T]
 }
 const defaultFieldConfig:Record<SearchFormFieldType,SearchFormField<SearchFormFieldType>>={
     [FieldTypes.TEXT]:{
         type:FieldTypes.TEXT,
         defaultValue:'',
-        transform:(value)=>value,
+        transform:(value:string)=>value,
         isValid:(value)=>value!==undefined&&value!==null&&value!=='',
         normalize:(value)=>value,
     },

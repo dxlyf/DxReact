@@ -7,7 +7,6 @@ export default defineComponent({
     beforeRouteEnter(to, form, next) {
         console.log('beforeRouteEnter', to.query.redirect)
         next(function (vm) {
-            debugger
             vm.$router.replace(vm.redirect)
         })
     },

@@ -2,11 +2,11 @@ import { computed, ref, shallowRef, toRaw, toValue, watch } from 'vue'
 import type { TdSelectProps } from 'tdesign-vue-next'
 import { debounce } from 'lodash-es'
 export type UseSelectProps<T> = {
-    debounce?: number
-    remote?: boolean
-    multiple?: boolean
-    manualRequest?:boolean
-    request?: (keyword: string) => Promise<T[]>
+    debounce?: number // 延迟时间
+    serverFilter?: boolean // 是否服务器端过滤
+    multiple?: boolean // 是否支持多选
+    manualRequest?:boolean // 是否手动请求
+    request?: (keyword: string) => Promise<T[]> // 请求函数
 } & Partial<TdSelectProps>
 export type Option = {
     label?: string | number | boolean
@@ -18,7 +18,7 @@ export const useSelect = <T extends Option>(tProps: UseSelectProps<T> | (() => U
     const props = computed(() => {
         return {
             debounce: 100,
-            remote: false,
+            serverFilter: true,
             manualRequest:false,
             keys: {
                 label: 'label',
@@ -27,6 +27,9 @@ export const useSelect = <T extends Option>(tProps: UseSelectProps<T> | (() => U
             },
             ...(typeof tProps === 'function' ? tProps() : tProps)
         }
+    })
+    const isRemote = computed(() => {
+        return !!props.value.request
     })
     const getItemLabel = (item: T) => {
         return item[props.value.keys.label]
@@ -91,26 +94,37 @@ export const useSelect = <T extends Option>(tProps: UseSelectProps<T> | (() => U
         return options.value
     })
     const selectProps = computed<TdSelectProps>(() => {
-        const { request, debounce, remote, ...restProps } = props.value
+        const { request, debounce, serverFilter,manualRequest, ...restProps } = props.value
+        
         return {
             clearable: true,
-            ...(remote ? {
+            ...(isRemote.value ? {
+                loadingText: '加载中...',
                 empty: isEmptyData.value ? '没有找到相关数据' : '暂无数据',
-                onSearch,
-                filterable: true,
                 options: displayOptions.value,
                 loading: loading.value,
                 // loadingText: '搜索中...',
-            } : {
-                loadingText: '加载中...',
+            }:{}),
+            ...(serverFilter?{
+                onSearch,
                 filterable: true,
-                filter: onFilter
+            }:{
+                filterable: true,
+                filter: onFilter,
             }),
-            ...restProps,
+            ...restProps
         }
     })
-    if(!props.value.manualRequest){
+    if(!props.value.manualRequest&&isRemote.value){
         loadData(true)
     }
-    return [selectProps] as const
+    return [selectProps,{
+        options,
+        loading,
+        loadData,
+        debounceLoadData,
+        request:()=>{
+            return loadData(true)
+        }
+    }] as const
 }

@@ -89,7 +89,6 @@ const [tableProps, tableInst] = useTable({
     request: async (params) => {
         const newParams = {
             ...params,
-            ...searchForm
         }
         let newData = data.filter((item) => {
             if(newParams.title){
@@ -171,7 +170,7 @@ const handleSubmitClone=async (data:any)=>{
 <template>
 
     <MainLayout layout='list' show-lang title="视频列表" :breadcrumb-options="breadcrumbOptions">
-        <template #actions>
+        <template #operation>
             <t-space>
                 <FCloneDialog :on-submit="handleSubmitClone"></FCloneDialog>
                 <t-button theme="default" @click="handleOpenPublish">发布</t-button>
@@ -187,7 +186,7 @@ const handleSubmitClone=async (data:any)=>{
         </template>
         <div class="grid grid-cols-4 2xl:grid-cols-5 gap-2">
             <div>
-                <t-input placeholder="包含Slug" v-model="searchForm.slug"></t-input>
+                <t-input placeholder="包含Slug" v-model.trim="searchForm.slug"></t-input>
             </div>
             <div>
                 <t-input placeholder="包含Author" v-model="searchForm.author"></t-input>

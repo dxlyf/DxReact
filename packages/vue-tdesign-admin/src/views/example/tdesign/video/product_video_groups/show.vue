@@ -113,7 +113,8 @@ const handleCreateSubGroup = () => {
     router.push({
         path: './new',
         query:{
-            parent_id:detailState.data?.id
+            parent_id:detailState.data?.id,
+            parent_title:detailState.data?.title
         }
     })
 }
@@ -137,9 +138,7 @@ const handleDel = () => {
    })
 }
 const handleReturn = () => {
-    router.replace({
-        path: './index'
-    })
+    router.back()
 }
 const isArrayOrNotEmpty=(arr:any)=>{
     return Array.isArray(arr) && arr.length>0
@@ -155,7 +154,14 @@ const handleToSubGroup=(item:ChildItem)=>{
 }
 // 跳转视频详情
 const handleToVideo=(item:VideoItem)=>{
-     window.open(`/example/tdesign/video/product_video_groups/sub_group?id=${item.id}`,'_blank')
+    const url=router.resolve({
+        path:'/example/tdesign/video/new',
+        query:{
+            id:'fdfda'
+        }
+    })
+    console.log('url',url)
+    // window.open(`/example/tdesign/video/product_video_groups/sub_group?id=${item.id}`,'_blank')
 }
 </script>
 <template>

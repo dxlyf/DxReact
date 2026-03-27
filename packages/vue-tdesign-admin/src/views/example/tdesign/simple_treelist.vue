@@ -282,7 +282,7 @@ const handleDelTreeItem=(id)=>{
 </script>
 <template>
     <MainLayout show-lang title="产口分组" :breadcrumb-options="breadcrumbOptions">
-        <template #actions>
+        <template #operation>
             <t-button theme="primary" @click="handleNewAdd">新增</t-button>
         </template>
         <div class="flex gap-4 flex-1 relative" ref="wrapRef" >

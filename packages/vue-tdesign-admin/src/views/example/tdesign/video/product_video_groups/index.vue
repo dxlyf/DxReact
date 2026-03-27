@@ -114,7 +114,7 @@ const handleEdit=(item)=>{
         </template>
         <div class="grid grid-cols-4 2xl:grid-cols-5 gap-2">
             <div>
-                <t-input placeholder="输入slug" v-model="searchForm.slug"></t-input>
+                <t-input placeholder="输入slug"  v-model.trim="searchForm.slug"></t-input>
             </div>
             <div>
                 <t-input placeholder="输入分组名称" v-model="searchForm.title"></t-input>
