@@ -2,7 +2,7 @@
 import { DialogPlugin, MessagePlugin, type FormInstanceFunctions, type TdBreadcrumbProps, type TdTreeProps, type TreeInstanceFunctions, type TreeNodeModel } from 'tdesign-vue-next';
 import FLangSwitch from './components/FLangSwitch/index.vue';
 import './theme.css'
-import { computed, nextTick, onBeforeMount, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw, watch } from 'vue';
+import { computed, nextTick, onBeforeMount, onUpdated, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw, watch } from 'vue';
 import { useRequest } from '@/hooks/useRequest2'
 import { cloneDeep } from 'lodash-es';
 import { useTree } from './hooks/useTree';
@@ -10,8 +10,8 @@ import MainLayout from './components/Layouts/MainLayout.vue'
 import FSelectDialog from './components/FSelectDialog/index.vue'
 import EditForm from './components/ProductGroups/EditForm.vue';
 import { useRouter } from 'vue-router'
-import {useElementBounding,useWindowScroll,useElementSize} from '@vueuse/core'
-import {useElementBounds} from '@/hooks/useElementBounds'
+import { useElementBounding, useWindowScroll, useElementSize } from '@vueuse/core'
+import { useElementBounds } from '@/hooks/useElementBounds'
 const router = useRouter()
 
 const breadcrumbOptions: TdBreadcrumbProps['options'] = [
@@ -42,9 +42,10 @@ const formRef = shallowRef<FormInstanceFunctions>(null)
 const delay = (time: number) => {
     return new Promise(resolve => setTimeout(resolve, time))
 }
+const scrollConfig = shallowRef<TdTreeProps['scroll']>({ type: 'virtual' })
 const [state, treeInst] = useRequest<VideoGroupItem[]>({
     request: async () => {
-      //  await delay(2000)
+        await delay(1000)
         return [
             {
                 id: 1,
@@ -94,11 +95,30 @@ const [state, treeInst] = useRequest<VideoGroupItem[]>({
                     }
                 ]
             }, ...Array.from({ length: 30 }, (v, i) => ({
-                id: i + 4,
+                id: i + 10,
                 slug: `group${i + 4}`,
                 childCount: 0,
-                nodes: null
-            }))
+            })),
+            , {
+                id: 4001,
+                slug: `group40-1`,
+                childCount: 0,
+                nodes: [
+                    {
+                        id: 4001001,
+                        slug: `group40-1-1`,
+                        childCount: 0,
+                        nodes: [
+                            {
+                                id: 4001001001,
+                                slug: `group40-1-1-1`,
+                                childCount: 0,
+                                nodes: null
+                            }
+                        ]
+                    }
+                ]
+            }
         ]
     },
     // transform(data){
@@ -120,11 +140,83 @@ const [state, treeInst] = useRequest<VideoGroupItem[]>({
     //     treeData.value= data.map(d=>mapTreeDataItem(d,-1,0))
     // }
 })
+let flatteTreeData = []
+let deepFlatMap = (data: any[], parentIds: any) => {
+    if (!Array.isArray(data)) {
+        return []
+    }
+    return data.reduce((acc, item) => {
+        const childs = deepFlatMap(item.nodes, parentIds ? parentIds.concat(item.id) : [item.id])
+        const newItem = {
+            ...item,
+            parentIds: parentIds ? parentIds : null
+        }
+        acc.push(newItem)
+        if (childs.length > 0) {
+            acc = acc.concat(childs)
+        }
+        return acc
+    }, [])
+}
+
 treeInst.request().then((data) => {
     if (data) {
-        expandedKeys.value = data.map(d => d.id)
+        flatteTreeData = deepFlatMap(data)
+        // console.log('flatteTreeData',flatteTreeData)
+        let activeId = 4001001001
+        const activeNode = flatteTreeData.find(d => d.id === activeId)
+        if (activeNode) {
+            activeKeys.value = [activeId]
+            expandedKeys.value = activeNode.parentIds ? activeNode.parentIds : []
+
+            let hasCheckedFocus = false
+            const checkFocus = () => {
+                if(hasCheckedFocus){
+                    return
+                }
+                const curNode = document.querySelector('.t-tree__item[data-value="'+activeId+'"]')
+                //document.querySelector('.s-tree-item-label[data-value="' + activeId + '"]')
+                console.log('curNode', curNode)
+                if (curNode) {
+                   
+                    hasCheckedFocus=true;
+                    setTimeout(()=>{
+                        if(curNode.scrollIntoView){
+                             curNode.scrollIntoView({
+                                behavior:'smooth',
+                                block:"center"
+                            })
+                        }else{
+                            (curNode as HTMLInputElement).focus();// 需要tab-index支持
+                        }
+                    },50);
+                } else {
+                    setTimeout(checkFocus, 50)
+                }
+            }
+            checkFocus()
+            // setTimeout(()=>{
+            //     const curNode=document.querySelector('.s-tree-item-label[data-value="'+activeId+'"]')
+            //     if(curNode){
+            //         (curNode as HTMLInputElement).focus()
+            //     }
+            //     //let node=treeRef.value.getItem(activeId)
+
+            //     // treeRef.value.scrollTo({
+            //     //     key:activeId,
+            //     //     index:0,
+            //     //     top:10,
+            //     //     behavior:'smooth'
+            //     // })
+
+            //    // document.querySelector
+            // },2000)
+        } else {
+            expandedKeys.value = data.map(d => d.id)
+        }
     }
 })
+
 const treeRef = shallowRef<TreeInstanceFunctions>()
 const handleNewAdd = () => {
     router.push({
@@ -134,24 +226,24 @@ const handleNewAdd = () => {
     })
 }
 
-const handleDrop: TdTreeProps['onDrop'] = ({ dragNode, dropNode,dropPosition }) => {
-    nextTick(()=>{
-        const id=dragNode.data.id
-        const panret=dropPosition===0?dropNode:dropNode.getParent()
-        const index=dragNode.getIndex()
-        const parentId=panret?panret.data.id:null
-        console.log('drop','id',id,'parentId',parentId,'dropPosition',dropPosition,'index',index)
-        console.log('dropNode',dropNode.data.slug,'dragNode',dragNode.data.slug)
+const handleDrop: TdTreeProps['onDrop'] = ({ dragNode, dropNode, dropPosition }) => {
+    nextTick(() => {
+        const id = dragNode.data.id
+        const panret = dropPosition === 0 ? dropNode : dropNode.getParent()
+        const index = dragNode.getIndex()
+        const parentId = panret ? panret.data.id : null
+        console.log('drop', 'id', id, 'parentId', parentId, 'dropPosition', dropPosition, 'index', index)
+        console.log('dropNode', dropNode.data.slug, 'dragNode', dragNode.data.slug)
     })
     // console.log('dragNode', dragNode)
     // console.log('dropNode', dropNode)
     // console.log('dropPosition', dropPosition)
-  //  state.data=cloneDeep(treeRef.value.getTreeData())
+    //  state.data=cloneDeep(treeRef.value.getTreeData())
     // treeInst.request()
     //console.log('drop',treeRef.value.getTreeData())
 }
 const handleDragEnd: TdTreeProps['onDragEnd'] = ({ e, node }) => {
-    dragging.value=false
+    dragging.value = false
     //enableDrag.value=true
     // const id=node.data.id
     // const panret=node.getParent()
@@ -160,13 +252,13 @@ const handleDragEnd: TdTreeProps['onDragEnd'] = ({ e, node }) => {
 
     // console.log('drag-end','id',id,'parentId',parentId,'index',index,'node',node)
     // dragging.value=false
-     //  console.log('drag-end',treeRef.value.getTreeData())
+    //  console.log('drag-end',treeRef.value.getTreeData())
 }
 const handleFilterTreeNode = shallowRef(null)
 const handleFilterInput = (val: string) => {
     if (val) {
         handleFilterTreeNode.value = (node: TreeNodeModel) => {
-            if(node.data.title!=null){
+            if (node.data.title != null) {
                 return node.data.title.includes(val)
             }
             return node.data.slug.includes(val)
@@ -176,20 +268,33 @@ const handleFilterInput = (val: string) => {
     }
 }
 const enableDrag = ref(true)
+let activeTimeId:any
 const handleDragStart: TdTreeProps['onDragStart'] = ({ e, dragNode }) => {
     //enableDrag.value=true
     //  activeKeys.value=[]
+    if(activeTimeId){
+        clearTimeout(activeTimeId)
+        activeTimeId=null
+    }
 }
+
 const handleActive: TdTreeProps['onActive'] = (value, { trigger, node }) => {
     // console.log('value',value,'onActive', 'node', node, 'trigger', trigger)
-    activeKeys.value = value.slice()
-    console.log('activeKeys.value',activeKeys.value)
+    console.log('onActive',value)
+    activeTimeId=setTimeout(()=>{
+        activeKeys.value = value.slice()
+        router.replace({
+            query:{
+                id:value[0]
+            }
+        })
+    },50)
 }
 const handleExpand: TdTreeProps['onExpand'] = (value, { trigger, node }) => {
     // console.log('value',value,'onExpand', 'node', node, 'trigger', trigger)
     expandedKeys.value = value.slice()
 }
-const dragging=ref(false)
+const dragging = ref(false)
 const showEmpty = computed(() => {
     return activeKeys.value.length <= 0
 })
@@ -240,44 +345,47 @@ const setupScroll = () => {
     window.addEventListener('scroll', handle)
 }
 onMounted(() => {
-   // clearScrollTimeout = setupScroll()
+    // clearScrollTimeout = setupScroll()
 })
 onBeforeUnmount(() => {
     clearScrollTimeout && clearScrollTimeout()
 })
-const wrapRef=shallowRef<HTMLDivElement>(null)
-const treeWrapRef=shallowRef<HTMLDivElement>(null)
-const {top,bottom,height}=useElementBounds(wrapRef,{
-    delay:2000,
-   elementResize:false,
-   windowScroll:false,
-   elementMutation:false
+const wrapRef = shallowRef<HTMLDivElement>(null)
+const treeWrapRef = shallowRef<HTMLDivElement>(null)
+const { top, bottom, height } = useElementBounds(wrapRef, {
+    delay: 2000,
+    elementResize: false,
+    windowScroll: false,
+    elementMutation: false
 })
 
-const treeHeight=computed(()=>{
-    let marginBottomHeight=window.innerHeight-(top.value+window.pageYOffset)
-    console.log('height.value',height.value,'marginBottomHeight',marginBottomHeight)
-    return Math.round(Math.max(marginBottomHeight-80,200))
+const treeHeight = computed(() => {
+    let marginBottomHeight = window.innerHeight - (top.value + window.pageYOffset)
+    console.log('height.value', height.value, 'marginBottomHeight', marginBottomHeight)
+    return Math.round(Math.max(marginBottomHeight - 80, 200))
 })
-const confirmLoading=shallowRef(false)
-const handleDelTreeItem=(id)=>{
-  const dialog= DialogPlugin.confirm({
-    header:false,
-    body:'确认删除吗？',
-    closeBtn:false,
-    confirmBtn:{
-        theme:'danger',
-        content:'删除'
-    },
-    theme:'danger',
-   // cancelBtn:'取消',
-    onConfirm:()=>{
-        dialog.setConfirmLoading(true)
-        MessagePlugin.success('删除成功'+id)
+const confirmLoading = shallowRef(false)
+const handleDelTreeItem = (id) => {
+    const dialog = DialogPlugin.confirm({
+        header: false,
+        body: '确认删除吗？',
+        closeBtn: false,
+        confirmBtn: {
+            theme: 'danger',
+            content: '删除'
+        },
+        theme: 'danger',
+        // cancelBtn:'取消',
+        onConfirm: () => {
+            dialog.setConfirmLoading(true)
+            MessagePlugin.success('删除成功' + id)
 
-    }
-   })
-   
+        }
+    })
+
+}
+const handleRef = (el) => {
+    // console.log('el',el)
 }
 </script>
 <template>
@@ -285,17 +393,18 @@ const handleDelTreeItem=(id)=>{
         <template #operation>
             <t-button theme="primary" @click="handleNewAdd">新增</t-button>
         </template>
-        <div class="flex gap-4 flex-1 relative" ref="wrapRef" >
-            <t-loading :loading="state.loading"  class="sticky! top-[60px] flex-none  self-start w-[260px] flex flex-col  box-border p-3 bg-white rounded-sm">
-                 <div class="mb-2 grow-0 shrink-0">
-                        <t-input @change="handleFilterInput"></t-input>
-                    </div>
-                <div  class="overflow-hidden flex-1 ">
-                    <t-tree class="tree"  :height="treeHeight" @expand="handleExpand" :expanded="expandedKeys" activable
+        <div class="flex gap-4 flex-1 relative" ref="wrapRef">
+            <t-loading :loading="state.loading"
+                class="sticky! top-[60px] flex-none  self-start w-[260px] flex flex-col  box-border p-3 bg-white rounded-sm">
+                <div class="mb-2 grow-0 shrink-0">
+                    <t-input @change="handleFilterInput"></t-input>
+                </div>
+                <div class="overflow-hidden flex-1 ">
+                    <t-tree class="tree" :height="treeHeight" @expand="handleExpand" :expanded="expandedKeys" activable
                         :actived="activeKeys" :class="{ 'tree-drag-mode': enableDrag }" :filter="handleFilterTreeNode"
-                        @active="handleActive" @drag-start="dragging=true" @drag-end="handleDragEnd" :draggable="enableDrag"
-                        :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef" :data="state.data" hover
-                        @drop="handleDrop" >
+                        @active="handleActive" @drag-start="dragging = true" @drag-end="handleDragEnd"
+                        :draggable="enableDrag" :keys="{ value: 'id', label: 'slug', children: 'nodes' }" ref="treeRef"
+                        :data="state.data" hover @drop="handleDrop">
                         <template #icon="{ node }">
                             <div class="tree-move-icon" :class="{ 'tree-move-icon-leaf': node.isLeaf() }">
                                 <t-icon name="move" size="12" style="color:#333"></t-icon>
@@ -305,6 +414,10 @@ const handleDelTreeItem=(id)=>{
                                     color="#333"></t-icon>
                                 <t-icon v-else name="caret-right-small" style="color:#333"></t-icon>
                             </div>
+                        </template>
+                        <template #label="{ node }">
+                            <span :ref="handleRef" class="s-tree-item-label" :data-value="node.value" tabindex="-1">{{
+                                node.label }}</span>
                         </template>
                         <!-- <template #label="{ node }">
                         <div @click.stop class="flex justify-between group relative">
@@ -321,13 +434,15 @@ const handleDelTreeItem=(id)=>{
                             <div v-if="node.data.childCount > 0"
                                 class="bg-[rgba(0,0,0,0.6)] text-white rounded-full px-1 mr-1 text-xs"> {{
                                     node.data.childCount }}</div>
-                                    <div class="mr-1 tree-item-del hidden"><t-icon @click="handleDelTreeItem(node.data.id)" name="delete" size="12"></t-icon></div>
+                            <div class="mr-1 tree-item-del hidden"><t-icon @click="handleDelTreeItem(node.data.id)"
+                                    name="delete" size="12"></t-icon></div>
                         </template>
                     </t-tree>
                 </div>
             </t-loading>
             <div class="flex-1">
-                <div v-if="dragging||showEmpty" class="h-full flex flex-col items-center justify-center bg-white rounded-sm p-4">
+                <div v-if="dragging || showEmpty"
+                    class="h-full flex flex-col items-center justify-center bg-white rounded-sm p-4">
                     <div>
                         <t-icon name="file"></t-icon>
                     </div>
@@ -370,6 +485,7 @@ const handleDelTreeItem=(id)=>{
 .tree :deep(.t-tree__item--draggable:hover) .tree-move-icon {
     visibility: visible;
 }
+
 /* .tree :deep(.t-tree__label>span){
     display: inline-block;
     text-overflow: ellipsis;
@@ -377,12 +493,12 @@ const handleDelTreeItem=(id)=>{
     overflow: hidden;
     width: fit-content;
 } */
-.tree{
-   
-}
-.tree :deep(.t-tree__item:hover .t-tree__operations>.tree-item-del){
+.tree {}
+
+.tree :deep(.t-tree__item:hover .t-tree__operations>.tree-item-del) {
     display: inline-block;
 }
+
 /* .t-tree__icon{
         width: 60px!important;
     } */

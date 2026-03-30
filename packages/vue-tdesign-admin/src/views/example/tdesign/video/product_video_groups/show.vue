@@ -176,19 +176,19 @@ const handleToVideo=(item:VideoItem)=>{
       </t-space>
        </template>
        <div class="list" >
-            <div class="flex h-15 items-center">
+            <div class="flex py-4">
                 <div class="flex-1 text-center text-base">分组标识</div>
                 <div class="flex-1 text-center">{{ detailState.data?.slug }}</div>
             </div>
-                <div class="flex h-15 items-center">
+                <div class="flex py-4">
                 <div class="flex-1 text-center text-base">分组标题</div>
                 <div class="flex-1 text-center">{{ detailState.data?.title }}</div>
             </div>
-                <div class="flex h-15 items-center">
+                <div class="flex py-4">
                 <div class="flex-1 text-center text-base">父级分组</div>
                 <div class="flex-1 text-center">{{ detailState.data?.parentTitle??'-' }}</div>
             </div>
-                <div class="flex items-start  pt-4">
+                <div class="flex py-4">
                 <div class="flex-1 text-center text-base">子分组列表</div>
                 <div class="flex-1 text-center" >
                     <div v-if="isArrayOrNotEmpty(detailState.data.childList)">
@@ -200,7 +200,7 @@ const handleToVideo=(item:VideoItem)=>{
                     </div>
                 </div>
             </div>
-                  <div class="flex items-start  pt-4" >
+                  <div class="flex py-4" >
                 <div class="flex-1 text-center text-base">子视频分组</div>
                 <div class="flex-1 text-center" >
                     <div v-if="isArrayOrNotEmpty(detailState.data.videoList)">

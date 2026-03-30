@@ -96,7 +96,12 @@ const parentOptions=computed(()=>{
     return [{label:'根节点',value:-1,children:parentState.data}]
 })
 const handleReturn=()=>{
-    router.back()
+    router.replace({
+        path:'/example/tdesign/simple_treelist',
+        query:{
+            id:''
+        }
+    })
 }
 const handleReset=()=>{
   const dialog= DialogPlugin.confirm({

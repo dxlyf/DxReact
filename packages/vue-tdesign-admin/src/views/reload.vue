@@ -38,5 +38,10 @@ export default defineComponent({
 })
 </script>
 <template>
-    <button @click="handleReturn">返回</button>
+ <div class="flex flex-col items-center justify-center h-full">
+    <t-dialog header="切换">
+
+    </t-dialog>
+ </div>
+
 </template>

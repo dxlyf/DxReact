@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type TdSelectProps } from 'tdesign-vue-next'
-import { shallowReactive, shallowRef, useAttrs, computed, ref, reactive, onMounted } from 'vue'
+import { shallowReactive, shallowRef,onBeforeUnmount, useAttrs, computed, ref, reactive, onMounted } from 'vue'
 import { debounce } from 'lodash-es'
 type Props = {
     defaultOptions?:any[]
