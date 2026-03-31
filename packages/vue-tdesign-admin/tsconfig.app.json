@@ -13,6 +13,7 @@
     "noUncheckedSideEffectImports": true,
     "strictNullChecks": false,
     "erasableSyntaxOnly": false,
+    "verbatimModuleSyntax": false,
     "paths": {
       "src/*":["./src/*"],
       "@/*":["./src/*"]
