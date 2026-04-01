@@ -2,7 +2,8 @@
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, reactive, toRaw } from 'vue'
 import type { TabPanel, TdFormItemProps, TdInputProps, TdInputNumberProps, TdSelectProps, TdCheckTagProps, TdCheckboxProps, TdUploadProps, TdCheckTagGroupProps } from 'tdesign-vue-next'
 import FSelect from './components/FSelect/index.vue'
-import FCollapse from './components/FCollapse/index.vue'
+import Collapse from './components/FCollapse/index.vue'
+import CollapsePanel from './components/FCollapse/CollapsePanel.vue'
 import { useSelect } from './hooks/useSelect'
 const activeTabKey = ref(1)
 
@@ -74,11 +75,23 @@ const [selectProps] = useSelect(() => ({
         <template #panel>
 
           <div class="bg-white p-4">
-            <FCollapse header="添加指南">
-                <template #headerRight>
-                    <t-button size="small" theme="primary">添加</t-button>
-                </template>
-            </FCollapse>
+            <Collapse >
+                <CollapsePanel value="1" header="选项1">
+                         <Collapse >
+                            <CollapsePanel value="1" header="选项1-1"></CollapsePanel>
+                            <CollapsePanel value="2" header="选项1-2"></CollapsePanel>
+                          </Collapse>
+                    <template #headerRight>
+                        <t-button theme="primary" size="small">添加</t-button>
+                    </template>
+                </CollapsePanel>
+                <CollapsePanel value="2" header="选项2">
+                    <p>选项2的内容</p>
+                                      <template #headerRight>
+                        <t-button theme="primary" size="small">添加</t-button>
+                    </template>
+                </CollapsePanel>
+            </Collapse>
           </div>
         </template>
       </t-tab-panel>
