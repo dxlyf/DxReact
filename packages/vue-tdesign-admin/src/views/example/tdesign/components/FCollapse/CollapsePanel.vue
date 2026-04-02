@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { type VNode, getCurrentInstance, ref, provide, inject } from 'vue'
+import { type VNode, getCurrentInstance, ref, provide, inject, TransitionHooks, TransitionProps, BaseTransitionProps } from 'vue'
 import { type CollapseItemProps, useCollapseItem } from './useCollapse'
 
-
+import CollapseTransition from './collapse-transition.vue'
 const props = defineProps<CollapseItemProps>()
 
 defineSlots<{
@@ -69,7 +69,20 @@ function onLeaveCancelled(el) {
     console.log('onLeaveCancelled')
 
 }
-
+const transitionEvents:TransitionProps={
+    onEnter:(el)=>{
+        el.style.height = el.scrollHeight + 'px'
+    },
+    onAfterEnter:(el)=>{
+        el.style.height = 'auto'
+    },
+    onBeforeLeave:(el)=>{
+        el.style.height = el.scrollHeight + 'px'
+    },
+    onLeave:(el)=>{
+        el.style.height ='0'
+    },
+}
 </script>
 
 <template>
@@ -86,36 +99,26 @@ function onLeaveCancelled(el) {
                 <slot name="headerRight"></slot>
             </div>
         </div>
-        <transition name="collapse" >
-            <div v-if="isActive" class="collapse-item-wrap">
-                <div class="bg-white p-4 box-border rounded-b-sm" :class="[contentClass ? contentClass : '']">
-                    <slot></slot>
+        <transition name="collapse" v-bind="transitionEvents">
+                <div v-show="isActive"  class="p-collapse-item-content overflow-hidde" >
+                   <div class="bg-white box-border rounded-b-sm p-4"> <slot></slot></div>
                 </div>
-            </div>
         </transition>
     </div>
 </template>
 <style>
 
-.collapse-item-wrap{
-    display: grid;
-    overflow: hidden;
-    grid-template-rows: 1fr;
-    will-change: transform,grid-template-rows,height;
-
-}
-.collapse-item-wrap>div{
-    min-height: 0px;
-}
-.collapse-leave-active,
-.collapse-enter-active{
-    transition: grid-template-rows 150ms cubic-bezier(0,.6,0,1);
-   
+ .collapse-enter-active,
+.collapse-leave-active{
+    transition: height 200ms cubic-bezier(0.34, 0.69, 0.1, 1);
 }
 
 .collapse-enter-from,
 .collapse-leave-to {
-  grid-template-rows: 0fr;
+  height: 0;
+}
+.p-collapse-item-content{
+
 }
 
 

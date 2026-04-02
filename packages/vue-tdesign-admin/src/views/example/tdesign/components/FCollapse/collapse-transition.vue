@@ -4,26 +4,26 @@
   </transition>
 </template>
 <style>
-
+:root {
+  --collapse-transition-duration: 0.3s;
+}
 .collapse-transition {
   transition:
-    getCssVar('transition-duration') height ease-in-out,
-    getCssVar('transition-duration') padding-top ease-in-out,
-    getCssVar('transition-duration') padding-bottom ease-in-out;
+    var(--collapse-transition-duration) height ease-in-out,
+    var(--collapse-transition-duration) padding-top ease-in-out,
+    var(--collapse-transition-duration) padding-bottom ease-in-out;
 }
 
 .collapse-transition-leave-active,
 .collapse-transition-enter-active {
   transition:
-    getCssVar('transition-duration') max-height ease-in-out,
-    getCssVar('transition-duration') padding-top ease-in-out,
-    getCssVar('transition-duration') padding-bottom ease-in-out;
+    var(--collapse-transition-duration) max-height ease-in-out,
+    var(--collapse-transition-duration) padding-top ease-in-out,
+    var(--collapse-transition-duration) padding-bottom ease-in-out;
 }
 </style>
 
 <script lang="ts" setup>
-import { useNamespace } from '@element-plus/hooks'
-
 import type { RendererElement } from 'vue'
 
 defineOptions({

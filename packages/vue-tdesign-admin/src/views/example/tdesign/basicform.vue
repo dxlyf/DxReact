@@ -77,7 +77,7 @@ const [selectProps] = useSelect(() => ({
           <div class="bg-white p-4">
             <Collapse >
                 <CollapsePanel value="1" header="选项1">
-                         <Collapse >
+               <Collapse >
                             <CollapsePanel value="1" header="选项1-1"></CollapsePanel>
                             <CollapsePanel value="2" header="选项1-2"></CollapsePanel>
                           </Collapse>
