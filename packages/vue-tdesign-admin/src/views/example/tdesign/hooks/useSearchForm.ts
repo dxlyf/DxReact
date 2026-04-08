@@ -22,6 +22,13 @@ export type SearchFormField<T extends SearchFormFieldType='text'>={
     transform?:(value:any)=>FieldValueType[T]
     normalize?:(value:string)=>FieldValueType[T]
 }
+export type FormField<T extends SearchFormFieldType='text'>={
+    type:T
+    defaultValue?:FieldValueType[T]
+    isValid?:(value:FieldValueType[T]|null|undefined)=>boolean
+    transform?:(value:any)=>FieldValueType[T]
+    normalize?:(value:string)=>FieldValueType[T]
+}
 const defaultFieldConfig:Record<SearchFormFieldType,SearchFormField<SearchFormFieldType>>={
     [FieldTypes.TEXT]:{
         type:FieldTypes.TEXT,
@@ -56,7 +63,7 @@ const createField=(value:SearchFormField|any)=>{
         return {
             ...restField,
             defaultValue:typeof defaultValue==='function'?defaultValue():defaultValue
-        }
+        } as FormField
     }
     let type:SearchFormFieldType=FieldTypes.TEXT
     let valueType=getType(value)
@@ -81,7 +88,7 @@ const createField=(value:SearchFormField|any)=>{
     return {
         ...defaultFieldConfig[type],
         defaultValue:value,
-    }
+    } as FormField
     
 }
 
@@ -119,7 +126,7 @@ export type UseSearchFormProps<T> = {
     syncParamsToUrl?: boolean,// 是否同步参数到URL
     filterEmpty?: boolean,// 是否过滤空值
     filterNullOrUndefined?: boolean,// 是否过滤null和undefined值
-    defaultParams?:T|Record<string,SearchFormFieldType>,// 默认数据值
+    defaultParams?:T|Record<string,SearchFormField>,// 默认数据值
     transform?:(params:Record<string,any>,name:string,value:any)=>any,// 自定义参数值转换
     normalize?:(params:Record<string,any>,name:string,value:any)=>any,// 自定义参数值转换
     onSearch?: (params: Record<string, any>) => void,// 搜索回调
@@ -135,14 +142,19 @@ export const useSearchForm = <T extends Record<string, any>=any>(_props: MaybeRe
         syncParamsToUrl: true,
         ...toValue(_props),
     }))
-    const initialSearchForm:any={}
-    const fieldConfig:Record<string,SearchFormField>=Object.keys(props.value.defaultParams).reduce((acc,key)=>{
-        const fieldConfig=props.value.defaultParams[key]
-        const field=createField(fieldConfig)
-        acc[key]=field
-        return acc
-    },{} as Record<string,SearchFormField>)
-    
+    let initialSearchForm:any={}
+    let fieldConfig:Record<string,FormField>={}
+    const initSearchForm=(defaultParams:any)=>{
+        initialSearchForm={}
+        fieldConfig=Object.keys(defaultParams).reduce((acc,key)=>{
+            const fieldConfig=defaultParams[key]
+            const field=createField(fieldConfig)
+            acc[key]=field
+            initialSearchForm[key]=field.defaultValue
+            return acc
+        },{} as Record<string,FormField>)
+    }
+    initSearchForm(props.value.defaultParams)
     // 搜索表单数据
     const searchForm = shallowReactive<T>(initialSearchForm)
 
@@ -236,6 +248,8 @@ export const useSearchForm = <T extends Record<string, any>=any>(_props: MaybeRe
     return [searchForm,{
         search,
         reset,
+        pullParamsFromUrl,
+        pushParamsToUrl,
         searchParams
     }] as const
    }

@@ -121,6 +121,23 @@ export default [
     },
   },
   {
+    url:'/api/download',
+    method:'get',
+    rawResponse: async (req,res) => {
+       const filePath = path.resolve(__dirname, '../public/vite.svg');
+        const stat = fs.statSync(filePath);
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Description, Content-Disposition');
+        res.writeHead(200, {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': stat.size,
+          'Content-Disposition': 'attachment; filename="vite.svg"'
+        });
+        
+        const readStream = fs.createReadStream(filePath);
+        readStream.pipe(res);
+    },
+  },
+  {
   url: '/api/uploaderror',
     method: 'post',
     rawResponse: async (req,res) => {

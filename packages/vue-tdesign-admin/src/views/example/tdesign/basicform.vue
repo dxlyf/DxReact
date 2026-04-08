@@ -5,6 +5,7 @@ import FSelect from './components/FSelect/index.vue'
 import Collapse from './components/FCollapse/index.vue'
 import CollapsePanel from './components/FCollapse/CollapsePanel.vue'
 import { useSelect } from './hooks/useSelect'
+import axios from 'axios'
 const activeTabKey = ref(1)
 
 const formData = reactive<any>({
@@ -53,6 +54,69 @@ const [selectProps] = useSelect(() => ({
   //options:optionsSource.slice(0,10),
   remote: true,
 }))
+
+const handleDownLoad=()=>{
+    // axios.get('/api/download',{
+    //     responseType:'blob',
+    //     headers:{
+    //         'custome-userId':'123'
+    //     }
+    // }).then(res=>{
+    //     const blob=res.data;
+    //     const filename=res.headers['content-disposition']?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
+    //     console.log(filename,'filename',res.headers['content-disposition'])
+    //     const url = URL.createObjectURL(blob);
+    //     const a = document.createElement('a');
+    //     a.href = url;
+    //     a.download = filename;
+    //     a.click();
+    //     URL.revokeObjectURL(url);
+    // })
+
+    fetch('/api/download',{
+        method:'GET',
+        headers:{
+            'custome-userId':'123'
+        }
+    }).then(async res=>{
+      const reader=res.body.getReader();
+      let chunk=[]
+      let contentLength=Number(res.headers.get('Content-Length')) || 0;
+      let progress=0;
+      let fileLen=0
+      while(true){
+        const {done,value}=await reader.read();
+        if(done){
+          break;
+        }
+        fileLen+=value.byteLength;
+        progress=fileLen/contentLength*100;
+        console.log('progress',progress,'fileLen',fileLen,'contentLength',contentLength)
+        chunk.push(value);
+      }
+      const blob=new Blob(chunk);
+   //   const match=res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/);
+   //   const filename=match?.[1] || 'aaa.svg';
+      const filename=res.headers.get('Content-Disposition')?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
+      console.log(filename,'filename',res.headers.get('Content-Disposition'))
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    })
+    //     const blob=await res.blob();
+    //     const filename=res.headers.get('Content-Disposition')?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
+    //     console.log(filename,'filename',res.headers.get('Content-Disposition'))
+    //     const url = URL.createObjectURL(blob);
+    //     const a = document.createElement('a');
+    //     a.href = url;
+    //     a.download = filename;
+    //     a.click();
+    //     URL.revokeObjectURL(url);
+    // })
+}
 </script>
 
 <template>
@@ -61,6 +125,7 @@ const [selectProps] = useSelect(() => ({
     <t-tabs v-model="activeTabKey">
       <t-tab-panel :value="1" label="基础信息">
         <t-form @submit="handleSubmit" :rules="rules" :data="formData" ref="formRef" class="w-full">
+          <t-button @click="handleDownLoad">下载</t-button>
           <t-form-item label="动态搜索" name="virtualSelect">
             <t-select v-bind="selectProps"></t-select>
           </t-form-item>

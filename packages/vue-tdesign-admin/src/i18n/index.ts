@@ -1,4 +1,4 @@
-import { createI18n } from 'vue-i18n'
+import { createI18n, type TranslateOptions } from 'vue-i18n'
 
 import en from './locales/en'
 import zhCN from './locales/zh'
@@ -41,7 +41,7 @@ export const setLocale = (locale: SupportLocale) => {
 export const getLocale = () => {
   return i18n.global.locale.value
 }
-export const t = (key: string) => {
-  return i18n.global.t(key)
+export const t = (key: string,options?:any) => {
+  return i18n.global.t(key,options)
 }
 export default i18n

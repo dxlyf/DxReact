@@ -4,7 +4,7 @@ import { reactive, ref, shallowRef } from 'vue';
 import Table from '../components/FTable/index.vue'
 import type { TableProps } from 'tdesign-vue-next';
 import { useTable } from '../hooks/useTable';
-import { useSearchForm } from '../hooks/useSearchForm';
+import { useSearchForm } from '../hooks/useSearchForm2';
 import { useDialog } from '@/hooks/useDialog';
 import FCloneDialog from '../components/FCloneDialog/index.vue';
 import { useRouter } from 'vue-router'
@@ -66,14 +66,22 @@ for (let i = 0; i < 98; i++) {
 
 const [searchForm, searchInst] = useSearchForm({
     defaultParams: {
-        slug: '',
+        slug: 'aa',
         author: '',
         location: '',
         title: '',
         publishTime: ['', ''],
-        publishStartTime: '',
-        publishEndTime: '',
+     //   publishStartTime: '',
+      //  publishEndTime: '',
         status: ''
+    },
+    transform:(params,name,value)=>{
+        if(params.publishTime){
+            params.publishStartTime=params.publishTime[0]
+            params.publishEndTime=params.publishTime[1]
+            delete params.publishTime
+        }
+        return params
     },
     onSearch: (params) => {
         tableInst.query(params)
@@ -198,10 +206,12 @@ const handleSubmitClone=async (data:any)=>{
                 <t-input placeholder="包含标题" v-model="searchForm.title"></t-input>
             </div>
             <div v-show="expandSearch">
-                <t-date-range-picker clearable @change="(value)=>{
+                <!-- <t-date-range-picker clearable @change="(value)=>{
                     searchForm.publishStartTime=value[0]
                     searchForm.publishEndTime=value[1]
                 }" :value="[searchForm.publishStartTime,searchForm.publishEndTime]" format="YYYY-MM-DD"
+                    :placeholder="['开始时间', '结束时间']" /> -->
+                       <t-date-range-picker clearable  v-model="searchForm.publishTime" format="YYYY-MM-DD"
                     :placeholder="['开始时间', '结束时间']" />
             </div>
             <div v-show="expandSearch">

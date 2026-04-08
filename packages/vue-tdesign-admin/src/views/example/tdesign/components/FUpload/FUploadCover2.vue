@@ -1,6 +1,6 @@
 
 <script lang="ts" setup>
-import { computed,watch, ref,shallowReactive, shallowRef} from 'vue';
+import { computed,watch, ref,shallowReactive, shallowRef,customRef} from 'vue';
 import { Message, MessagePlugin, type UploadFile, type UploadProps } from 'tdesign-vue-next';
 type CheckImageOptions={
   width?:number
@@ -222,6 +222,20 @@ const setImageUrl=(url:string)=>{
   isManualUpdate=true;
   imageUrl.value=url
 }
+
+const headers=customRef((track,trigger)=>{
+   return {
+    get:()=>{
+      console.log('get headers')
+      return {
+        'custom-userId':Date.now().toString()
+      }
+    },
+    set:()=>{
+      
+    }
+   }
+})
 </script>
 
 <template>
@@ -235,6 +249,7 @@ const setImageUrl=(url:string)=>{
         :beforeUpload="beforeUpload"
         :accept="accept"
         :use-mock-progress="false"
+        :headers="headers"
         @change="handleChange"
         @progress="handleProgress"
         @success="handleSuccess"

@@ -128,6 +128,7 @@ const instance = axios.create(defaultRequestConfig);
     if (token){
         config.headers!["Authorization"] = token;
     }
+  
     // 配置token
     requestEmitter.emit('onStartRequest',{config:config}) 
     

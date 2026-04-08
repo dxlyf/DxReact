@@ -184,6 +184,14 @@ const defaultRoutes: RouteRecordRaw[] = [
             path: 'tdesign',
             children: [
               {
+                path: 'download/apps',
+                component: () => import('../views/example/tdesign/download/apps/index.vue'),
+                meta: {
+                  title: '下载',
+                  menuName: '应用',
+                  icon: 'table'
+                }
+              },{
                 path: 'basicform',
                 component: () => import('../views/example/tdesign/basicform.vue'),
                 meta: {
