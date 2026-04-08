@@ -122,22 +122,22 @@
                 stateNode: null,
 
                 // Fiber
-                return: null,
-                child: null,
-                sibling: null,
-                index: 0,
+                return: null,// 父fiber
+                child: null, // 子fiber
+                sibling: null, // 兄弟fiber
+                index: 0, // 子fiber的索引
 
-                ref: null,
-                refCleanup: null,
+                ref: null, // ref
+                refCleanup: null, // refCleanup
 
                 // pendingProps - defined at the bottom as dynamic properties
-                memoizedProps: null,
+                memoizedProps: null, 
                 updateQueue: null,
                 memoizedState: null,
                 dependencies: null,
 
                 // Effects
-                flags: FiberFlags.NoFlags,
+                flags: FiberFlags.NoFlags,// 
                 subtreeFlags: FiberFlags.NoFlags,
                 deletions: null,
 
