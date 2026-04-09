@@ -184,13 +184,36 @@ const defaultRoutes: RouteRecordRaw[] = [
             path: 'tdesign',
             children: [
               {
-                path: 'download/apps',
-                component: () => import('../views/example/tdesign/download/apps/index.vue'),
+                path: 'searchform',
+                component: () => import('../views/example/tdesign/searchform.vue'),
                 meta: {
-                  title: '下载',
-                  menuName: '应用',
+                  menuName: '搜索表单',
                   icon: 'table'
                 }
+              },{
+                path: 'download',
+                meta: {
+                  title: '下载',
+                  menuName: '下载',
+                  icon: 'table'
+                },
+                children:[
+                  {
+                    path: 'apps',
+                    component: () => import('../views/example/tdesign/download/apps/index.vue'),
+                    meta: {
+                      title: '应用',
+                      menuName: '应用',
+                      icon: 'table'
+                    }
+                  }, {
+                    path: 'apps/edit',
+                    component: () => import('../views/example/tdesign/download/apps/edit.vue'),
+                    meta: {
+         
+                    }
+                  }
+                ]
               },{
                 path: 'basicform',
                 component: () => import('../views/example/tdesign/basicform.vue'),

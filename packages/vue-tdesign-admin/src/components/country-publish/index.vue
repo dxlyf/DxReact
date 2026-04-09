@@ -10,7 +10,7 @@
         <div class="before:content-['*'] before:text-red-500">起始时间</div>
         <div class="before:content-['*'] before:text-red-500">结束时间</div>
       </div>
-      <div class="grid grid-cols-[100px_100px_400px]  gap-4" v-for="(lang, index) in langList" :key="lang.value">
+      <div class="grid grid-cols-[100px_100px_200px_200px]  gap-4" v-for="(lang, index) in langList" :key="lang.value">
         <div class="flex items-center">{{ lang.label }}</div>
         <div> <t-form-item :label-width="0" :name="`${prefix}.${lang.suffix}.status`">
             <t-select v-model="model[lang.suffix].status" placeholder="请选择状态">
@@ -18,7 +18,7 @@
               <t-option value="publish" label="Publish" />
             </t-select>
           </t-form-item></div>
-      <div>
+      <!-- <div>
         <t-form-item :label-width="0" :name="`${prefix}.${lang.suffix}.startTime`" :rules="[{ required: true, message: '请选择发布时间',validator:(val:any,{formData})=>{
 
             if(!formData[lang.suffix].startTime||!formData[lang.suffix].endTime){
@@ -34,8 +34,8 @@
         } }]">
           <t-date-range-picker :clearable="true" :enable-time-picker="true" :value="[model[lang.suffix].startTime,model[lang.suffix].endTime]" @change="(date)=>handleDateChange(lang.suffix,date)"></t-date-range-picker>
           </t-form-item>
-        </div>
-        <!-- <div> <t-form-item :label-width="0" :rules="[{ required: true, message: '请选择起始时间' }]"
+        </div> -->
+        <div> <t-form-item :label-width="0" :rules="[{ required: true, message: '请选择起始时间' }]"
             :name="`${prefix}.${lang.suffix}.startTime`">
             <t-date-picker
               :disableDate="(date: any) => disableDate('before', model[lang.suffix].startTime, model[lang.suffix].endTime, date)"
@@ -48,7 +48,7 @@
               :disableDate="(date: any) => disableDate('after', model[lang.suffix].startTime, model[lang.suffix].endTime, date)"
               v-model="model[lang.suffix].endTime" placeholder="请选择结束时间" enable-time-picker
               format="YYYY-MM-DD HH:mm:ss" />
-          </t-form-item></div> -->
+          </t-form-item></div>
       </div>
     </div>
   </div>
@@ -80,6 +80,7 @@ interface Props {
 //   (e: 'update:modelValue', value: LanguageItem[]): void
 // }
 const model = defineModel<Record<string, LanguageItem>>({ default: () => ({}) })
+
 
 const props = withDefaults(defineProps<Props>(), {
   // modelValue: () => [],
@@ -114,9 +115,10 @@ const disableDate = (type: string, start: any, end: any, date: Dayjs) => {
 //const formData = reactive<Record<string, LanguageItem>>({})
 
 watch(langList, () => {
-const data: Record<string, LanguageItem> = reactive({})
+//const data: Record<string, LanguageItem> = reactive({})
   langList.value.forEach(item => {
-    data[item.suffix] = {
+    
+    model.value[item.suffix] = {
       code: item.value,
       name: item.label,
       status: 'draft',
@@ -124,11 +126,13 @@ const data: Record<string, LanguageItem> = reactive({})
       endTime: undefined,
       ...(model.value[item.suffix] || {})
     }
+
   })
-  model.value = data
+  //console.log('data',toRaw(data),' model.value ',toRaw( model.value ))
+//  model.value = data
 }, {
   flush: 'pre',
-  //immediate:true,
+  immediate:true,
 })
 const handleAutoFill = () => {
   const english = model.value['en_us']

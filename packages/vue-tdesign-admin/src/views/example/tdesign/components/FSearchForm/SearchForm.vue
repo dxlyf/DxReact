@@ -11,10 +11,10 @@ const props = withDefaults(defineProps<SearchFormProps>(), {
     syncParamsToUrl: true,
     showExpand: true,
     defaultExpand: false,
-    mountedQuery: false,
+    mountedQuery: true,
     columns: () => []
 })
-const emit = defineEmits(['search', 'reset'])
+const emit = defineEmits(['search', 'reset','change'])
 const expandRows = shallowRef(props.defaultExpand)
 const slots = useSlots()
 const getSlots = (prefix: string) => {
@@ -111,11 +111,23 @@ const [formData, searchFormInstance] = useSearchForm(computed(() => {
     return {
         defaultParams: initialSearchParams,
         syncParamsToUrl: props.syncParamsToUrl,
+        transform:(params,name,value)=>{
+            if(props.transform){
+                props.transform(params,name,value)
+            }
+        },
+        normalize:(params,name,value)=>{
+            if(props.normalize){
+                props.normalize(params,name,value)
+            }
+        },
         onSearch: (params) => {
             emit('search', params)
+            emit('change', params)
         },
         onReset: (params) => {
             emit('reset', params)
+            emit('change', params)
         }
     }
 }))
@@ -161,10 +173,12 @@ defineExpose({
                         :toggleExpandRows="toggleExpandRows">
                         <div class="flex">
                             <t-button theme="default" @click="searchFormInstance.reset">重置</t-button>
-                            <t-button class="ml-4!" theme="primary" @click="searchFormInstance.search" :loading="loading">查询</t-button>
+                            <t-button class="!ml-4" theme="primary" @click="searchFormInstance.search" :loading="loading">查询</t-button>
                             <div class="flex items-end ml-1" v-if="visibleExpandBlock">
-                                <t-link size="small" theme="primary" @click="toggleExpandRows">
+                                <t-link size="small" hover="color" theme="primary" @click="toggleExpandRows">
                                     {{ expandRows ? '收起' : '展开' }}
+                                    <t-icon v-if="!expandRows" name="chevron-down-s" />
+                                    <t-icon v-else name="chevron-up-s" />
                                 </t-link>
                             </div>
                         </div>

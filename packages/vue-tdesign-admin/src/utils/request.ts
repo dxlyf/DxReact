@@ -1,7 +1,7 @@
 import axios,{AxiosError} from 'axios'
 import type { AxiosResponse, AxiosInterceptorManager, AxiosRequestConfig } from 'axios'
 import mitt from 'mitt'
-import MessagePlugin from './message'
+import {MessagePlugin} from 'tdesign-vue-next'
 // import app from './app'
 
 const instance=axios.create({

@@ -63,8 +63,15 @@ const router = useRouter()
 const route = useRoute()
 const params = route.params
 const loading=shallowRef(false)
-const formData=shallowReactive<any>({
+const formData=reactive<any>({
     theme:'primary',
+    countryPublish:{
+        'zh_cn':{
+            status: 'draft',
+            startTime: '2026-04-09 00:00:00',
+            endTime: '2026-04-13 00:00:00',
+        }
+    }
 })
 
 const rules:FormRules={

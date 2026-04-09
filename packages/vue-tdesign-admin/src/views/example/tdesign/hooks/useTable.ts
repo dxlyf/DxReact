@@ -33,7 +33,7 @@ export type UseTableProps<T> = {
     onSuccess?: (data: TableResponse<T>, params: TableRequestParams) => void,// 请求成功回调函数
     onFail?: (res: TableResponse<T> | unknown) => void,// 请求失败回调函数
     onComplete?: () => void,// 请求完成回调函数
-    tableProps?: TableProps,// 表格配置
+    tableProps?: Partial<TableProps>,// 表格配置
 }
 
 export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) => {
