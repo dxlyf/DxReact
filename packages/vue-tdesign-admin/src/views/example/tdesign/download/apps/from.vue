@@ -4,12 +4,13 @@ import { computed, reactive, shallowReactive, shallowRef, toRaw } from 'vue'
 import { useRequest } from 'src/hooks/useRequest2'
 import MainLayout from '@/views/example/tdesign/components/Layouts/MainLayout.vue'
 import UploadImage from '@/views/example/tdesign/components/FUpload/FUploadImage.vue'
-type LocaleContentItem = {
-    locale: string
-    value: string
-}
+import FLanguageFields from '@/views/example/tdesign/components/FLanguageFields/index.vue'
+import APPFormItem,{type APPCategoryDTO} from '@/views/example/tdesign/download/apps/APPFormItem.vue'
+import { TdFormProps } from 'tdesign-vue-next'
+type LocaleContentItem = Record<string, string>
+ 
 type FormData = {
-    id?:string
+    id?: string
     iconUrl?: string
     qrCodeUrl?: string
     iconFile?: File
@@ -22,9 +23,13 @@ type FormData = {
     countries?: string[]
     productIds?: number[]
     downloadBaseCategoryIds: number[]
-    name?: LocaleContentItem[]
-    description?: LocaleContentItem[]
-    status: LocaleContentItem[]
+    name?: LocaleContentItem
+    description?: LocaleContentItem
+    status: LocaleContentItem
+    ios?:APPCategoryDTO
+    google?:APPCategoryDTO
+    apk?:APPCategoryDTO
+
 }
 type Props = {
     id?: string
@@ -60,10 +65,20 @@ const breadcrumbOptions = computed(() => {
     }]
 })
 const props = defineProps<Props>()
-const submitLoading=shallowRef(false)
-const router=useRouter()
+const submitLoading = shallowRef(false)
+const router = useRouter()
 
-const createFormData=():FormData=>{
+const createAppCategory=():APPCategoryDTO=>{
+    return {
+        version: '',
+        links: {},
+        systemInfo: {},
+        compatibility: {},
+        additionalInfo: {},
+        supportingDevice: {},
+    }
+}
+const createFormData = (): FormData => {
     return {
         slug: '',
         iconUrl: '/uploads/aaa.jpg',
@@ -77,48 +92,164 @@ const createFormData=():FormData=>{
         countries: [],
         productIds: [],
         downloadBaseCategoryIds: [],
-        name: [],
-        description: [],
-        status: [],
+        name: {},
+        description: {},
+        status: {},
+        ios: createAppCategory(),
+        google: createAppCategory(),
+        apk: createAppCategory(),
     }
 }
-const formData=shallowReactive<FormData>(createFormData())
-const [detail,detailInst]=useRequest({
-    manualRequest:true,
-    request:async (params)=>{
+const formData = reactive<FormData>(createFormData())
+const [detail, detailInst] = useRequest({
+    manualRequest: true,
+    request: async (params) => {
         return {}
     }
 })
-const rules={
+const rules: TdFormProps['rules'] = {
+    slug: [{ required: true, whitespace: true, message: '请输入slug' }],
+    status: [{
+        required: true, validator: (val: any) => {
+            if (val !== null && typeof val === 'object' && Object.keys(val).length > 0) {
+                return true
+            }
+            return {
+                result: false,
+                message: '请选择状态',
+                type: 'error'
+            }
+        }
+    }],
+    publishAt: [{ required: true, message: '请选择上线时间' }],
+    offlineAt: [{ required: true, message: '请选择下线时间' }],
+}
 
+const [productState, productStateInst] = useRequest({
+    manualRequest: false,
+    defaultValue: [],
+    request: async (params) => {
+        return [{
+            label: '产品1',
+            value: 1
+        }, {
+            label: '产品2',
+            value: 2
+        }]
+    }
+})
+const [downloadBaseCategoryState, downloadBaseCategoryStateInst] = useRequest({
+    manualRequest: false,
+    defaultValue: [],
+    request: async (params) => {
+        return [{
+            label: '下载分类1',
+            value: 1
+        }, {
+            label: '下载分类2',
+            value: 2
+        }]
+    }
+})
+const handleReturn = () => {
+    router.push({ path: './apps' })
 }
-const handleReturn=()=>{
-    router.push({path:'./apps'})
-}
-const handleSubmit=()=>{
-    console.log('handleSubmit',toRaw(formData))
+const handleSubmit = () => {
+    console.log('handleSubmit', toRaw(formData))
 }
 
 </script>
 <template>
-    <MainLayout :show-not-found="!!detail.error"  :loading="detail.loading" :title="pageInfo.title" layout="edit" show-lang :breadcrumb-options="breadcrumbOptions">
+    <MainLayout :show-not-found="!!detail.error" :loading="detail.loading" :title="pageInfo.title" layout="edit"
+        show-lang :breadcrumb-options="breadcrumbOptions">
         <template #operation>
             <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>
         </template>
-        <t-form  @submit="handleSubmit" :data="formData" :rules="rules" class="w-full" label-align="top">
-            <t-form-item label="slug">
-                <t-input v-model="formData.slug" placeholder="请输入slug" />
-                <template #tips>
-                   仅可用英文、数字、下划线和短横线
-                </template>
-            </t-form-item>
-            <t-form-item label="icon" name="iconUrl">
-                <UploadImage :multiple="true" v-model="formData.iconUrl"  v-model:rawfile="formData.iconFile" />
-            </t-form-item>
+        <t-form @submit="handleSubmit" :data="formData" :rules="rules" class="w-full" label-align="top">
+            <t-collapse :default-expand-all="true" :expand-mutex="false" :expand-on-row-click="true"
+                expand-icon-placement="right" borderless>
+                <t-collapse-panel value="1">
+                    <template #header>
+                        <div class="header">基础信息</div>
+                    </template>
+                    <t-form-item label="Slug" name="slug">
+                        <t-input :maxlength="255" v-model.trim="formData.slug" placeholder="请输入slug" />
+                        <template #tips>
+                            仅可用英文、数字、下划线和短横线
+                        </template>
+                    </t-form-item>
+                    <t-form-item label="Icon" name="iconUrl">
+                        <UploadImage v-model="formData.iconUrl" v-model:rawfile="formData.iconFile" />
+                    </t-form-item>
+                    <t-form-item label="QR Code" name="qrCodeUrl">
+                        <UploadImage v-model="formData.qrCodeUrl" v-model:rawfile="formData.qrCodeFile" />
+                    </t-form-item>
+                    <t-form-item label="名称" name="name">
+                        <FLanguageFields title="名称" placeholder="下载APP名称" :field-props="{ maxlength: 255 }"
+                            v-model="formData.name" btn-text="编辑" />
+                    </t-form-item>
+                    <t-form-item label="描述" name="description">
+                        <FLanguageFields title="描述" placeholder="下载APP描述" type="textarea" v-model="formData.description"
+                            btn-text="编辑" />
+                    </t-form-item>
+                    <t-form-item label="停止更新" name="stopUpdating">
+                        <t-switch v-model="formData.stopUpdating" :custom-value="[true, false]"
+                            :label="['ON', 'OFF']" />
+                    </t-form-item>
+                    <t-form-item label="隐藏在下载中心" name="isHideen">
+                        <t-switch v-model="formData.isHideen" :custom-value="[true, false]" :label="['ON', 'OFF']" />
+                    </t-form-item>
+                    <t-form-item label="发布状态" name="status">
+                        <FLanguageFields title="发布状态" default-value="Draft" placeholder="下载APP发布状态" type="select"
+                            :options="[{ value: 'Draft', label: '草稿' }, { value: 'Publish', label: '发布' }]"
+                            v-model="formData.status" btn-text="编辑" />
+                    </t-form-item>
+                    <t-form-item label="上线时间" name="publishAt">
+                        <t-date-picker format="YYYY-MM-DD HH:mm:ss" :enable-time-picker="true"
+                            v-model="formData.publishAt" />
+                    </t-form-item>
+                    <t-form-item label="下线时间" name="offlineAt">
+                        <t-date-picker format="YYYY-MM-DD HH:mm:ss" :enable-time-picker="true"
+                            v-model="formData.offlineAt" />
+                    </t-form-item>
+                    <t-form-item label="国家" name="countries">
+
+                    </t-form-item>
+                    <t-form-item label="关联产品" name="productIds">
+                        <t-select :scroll="{ type: 'virtual' }" v-model="formData.productIds" :multiple="true"
+                            :options="productState.data" filterable placeholder="请选择产品ID" />
+                    </t-form-item>
+                    <t-form-item label="应用分类" name="downloadBaseCategoryIds">
+                        <t-select :scroll="{ type: 'virtual' }" v-model="formData.downloadBaseCategoryIds"
+                            :multiple="true" :options="downloadBaseCategoryState.data" filterable
+                            placeholder="请选择应用分类" />
+                    </t-form-item>
+                </t-collapse-panel>
+
+                <t-collapse-panel value="2">
+                    <template #header>
+                        <div class="header">IOS</div>
+                    </template>
+                    <APPFormItem prefix="ios" v-model="formData.ios"/>
+                </t-collapse-panel>
+                <t-collapse-panel value="3">
+                    <template #header>
+                        <div class="header">Google Play</div>
+                    </template>
+                    <APPFormItem prefix="google" v-model="formData.google"/>
+                </t-collapse-panel>
+                <t-collapse-panel value="4">
+                    <template #header>
+                        <div class="header">APK</div>
+                    </template>
+                    <APPFormItem prefix="apk" v-model="formData.apk"/>
+                </t-collapse-panel>
+
+            </t-collapse>
+
             <div class="flex justify-end">
                 <t-space>
-                    <t-button theme="primary" :loading="submitLoading"
-                        type="submit">创建视频</t-button>
+                    <t-button theme="primary" :loading="submitLoading" type="submit">提交</t-button>
                 </t-space>
             </div>
 
@@ -126,3 +257,10 @@ const handleSubmit=()=>{
         </t-form>
     </MainLayout>
 </template>
+<style lang="css" scoped>
+.header {
+    border-left: solid 4px var(--td-brand-color-7);
+    padding-left: 4px;
+    line-height: 1;
+}
+</style>

@@ -3,7 +3,7 @@ import type {DialogProps} from 'tdesign-vue-next'
 export type UseDialogProps={
 }&Partial<DialogProps>
 
-export const useDialog=(props:MaybeRefOrGetter<UseDialogProps>)=>{
+export const useDialog=(props:()=>UseDialogProps)=>{
     const state=shallowReactive({
         visible:false,
         data:null
