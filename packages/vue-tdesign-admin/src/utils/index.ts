@@ -95,3 +95,42 @@ export function setUrlParams(url: string, params: Record<string, string | number
 
 
 
+// 工具函数：将嵌套对象转换为 FormData
+function objectToFormData(obj:Record<string,any>, formData = new FormData(), parentKey = '') {
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            const fieldName = parentKey ? `${parentKey}[${key}]` : key;
+            
+            if (value === null || value === undefined) {
+                continue;
+            }
+            
+            // 处理 File 或 Blob 对象
+            if (value instanceof File || value instanceof Blob) {
+                formData.append(fieldName, value);
+            }
+            // 处理数组
+            else if (Array.isArray(value)) {
+                value.forEach((item, index) => {
+                    if (item instanceof File || item instanceof Blob) {
+                        formData.append(`${fieldName}[${index}]`, item);
+                    } else if (typeof item === 'object') {
+                        objectToFormData(item, formData, `${fieldName}[${index}]`);
+                    } else {
+                        formData.append(`${fieldName}[${index}]`, String(item));
+                    }
+                });
+            }
+            // 处理普通对象
+            else if (typeof value === 'object') {
+                objectToFormData(value, formData, fieldName);
+            }
+            // 处理基本类型
+            else {
+                formData.append(fieldName, String(value));
+            }
+        }
+    }
+    return formData;
+}

@@ -47,7 +47,7 @@
                             <div>
                                 <t-form-item :rules="[{ required: true, message: '请选择Slug' }]" :label-width="0"
                                     :name="`section_${item.suffix}[${index}].slug`">
-                                    <t-select clearable :min-collapsed-num="3" filterable multiple
+                                    <t-select clearable :min-collapsed-num="5"  filterable multiple
                                         :options="getSlugOptions(sectionItem.type)" v-model="sectionItem.slug">
                                     </t-select>
                                 </t-form-item>
@@ -117,25 +117,10 @@ const createColorOptions = (val: any) => {
 }
 const getSlugOptions = (type: string) => {
     if (type === 'text') {
-        return [{
-            label: 'Slug1',
-            value: 'slug1',
-        }, {
-            label: 'Slug2',
-            value: 'slug2',
-        }, {
-            label: 'Slug3',
-            value: 'slug3',
-        }, {
-            label: 'Slug4',
-            value: 'slug4',
-        }, {
-            label: 'Slug5',
-            value: 'slug5',
-        }, {
-            label: 'Slug6',
-            value: 'slug6',
-        }]
+        return Array.from({ length: 50 }, (_, i) => ({
+            label: `Slug${i + 1}`,
+            value: `slug${i + 1}`,
+        }))
     } else if (type === 'image') {
         return [{
             label: '图片Slug',

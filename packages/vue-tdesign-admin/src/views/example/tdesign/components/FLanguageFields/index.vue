@@ -3,7 +3,7 @@ import { reactive, ref, shallowRef, toRaw, watch } from 'vue'
 import { useLang } from '@/hooks/useLang'
 import { useDialog } from '@/hooks/useDialog'
 import { FormInstanceFunctions } from 'tdesign-vue-next'
-import { isObject } from 'lodash-es'
+import { cloneDeep, isObject } from 'lodash-es'
 import {storeToRefs} from 'pinia'
 type Props = {
     title: string
@@ -31,6 +31,7 @@ const model = defineModel<Record<string, any>>({ default: () => ({}) })
 const formData = ref({})
 
 const bindInitialValue = (allLang:any[]) => {
+ //   console.log('bindInitialValue', allLang)
     const value = toRaw(model.value)
     let initialValue:any = {}
     allLang.forEach((item) => {
@@ -41,8 +42,9 @@ const bindInitialValue = (allLang:any[]) => {
 watch(() => allLang.value, (val) => {
     if (val) {
         bindInitialValue(val)
+        model.value=cloneDeep(toRaw(formData.value))
     }
-})
+},{immediate:true})
 const handleOpen = () => {
 
     bindInitialValue(allLang.value)

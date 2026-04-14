@@ -46,16 +46,23 @@ const data=Array.from({length:100},(v,i)=>({
     slug:'slug'+(i+1),
     name:'name'+(i+1),
     publishAt:'2023-01-01',
-    status:'Publish'
+    status:'Publish',
+    products:Array.from({length:58},(v,i)=>'product'+(i+1))
 }))
 const [tableProps, tableInst] = useTable({
   //  defaultParams: searchInst.searchParams.value,
     manualRequest: true,
     tableProps:{
         dragSort:'row-handler',
-        onDragSort:({current,target,newData})=>{
-            console.log('onDragSort',newData)
-            tableInst.data.value=newData
+        onDragSort:({current,target,newData,currentIndex,targetIndex})=>{
+           // console.log('onDragSort',current.id,target.id,'currentIndex',currentIndex,'targetIndex',targetIndex)
+           let currentId=current.id;
+           let targetId=target.id 
+           let currentNewIndex=newData.findIndex((item)=>item.id===currentId)
+           let targetNewIndex=newData.findIndex((item)=>item.id===targetId)
+           let position=currentNewIndex<targetNewIndex?'before':'after'
+           console.log('position',position,currentId,targetId)
+           tableInst.data.value=newData
         }
     },
     request: async (params) => {
@@ -90,7 +97,11 @@ const columns: TableProps['columns'] = [
     }, {
         title: '名称',
         colKey: 'name',
-        ellipsis:true
+        ellipsis:true,
+        width: 160,
+    } ,{
+        title: '关联产品',
+        colKey: 'products',
     }, {
         title: '状态',
         colKey: 'status',
@@ -193,6 +204,11 @@ const handleDelete=(row)=>{
 
             <template #status="{ row }">
                 <t-tag variant="light" :theme="row.status === 'Publish' ? 'success' : 'warning'">{{ row.status }}</t-tag>
+            </template>
+            <template #products="{ row }">
+                 <t-typography-paragraph :ellipsis="{row:2,expandable:false,collapsible:true}">
+                    <t-tag variant="light"  class="ml-1 mt-1" theme="default" v-for="(item,i) in row.products" :key="i">{{ item }}</t-tag>
+                </t-typography-paragraph>
             </template>
             <template #actions="{ row }">
                 <t-space>

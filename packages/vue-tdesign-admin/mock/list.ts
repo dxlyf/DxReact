@@ -5,8 +5,112 @@ import path from 'path'
 import fs from 'fs'
 import { IncomingMessage, ServerResponse } from 'http'
 import {fileURLToPath} from 'node:url'
+import * as querystring from 'node:querystring'
 const __dirname=path.dirname(fileURLToPath(import.meta.url))
 
+
+
+/**
+ * 解析 multipart/form-data 格式的请求体
+ * @param {string} body - 原始请求体字符串
+ * @param {string} boundary - 分隔符
+ * @returns {Promise<Object>} 解析后的参数对象
+ */
+function parseMultipart(body, boundary) {
+    return new Promise((resolve, reject) => {
+        const result = {};
+        const parts = body.split(`--${boundary}`);
+        
+        for (const part of parts) {
+            if (part === '--' || part === '--\r\n' || part.trim() === '') continue;
+            
+            // 分离头部和内容
+            const [headerSection, content] = part.split('\r\n\r\n');
+            if (!headerSection || !content) continue;
+            
+            // 提取字段名
+            const nameMatch = headerSection.match(/name="([^"]+)"/);
+            const filenameMatch = headerSection.match(/filename="([^"]+)"/);
+            
+            if (nameMatch) {
+                const fieldName = nameMatch[1];
+                let fieldValue = content.replace(/\r\n$/, '');
+                
+                if (filenameMatch) {
+                    // 文件类型字段
+                    result[fieldName] = {
+                        filename: filenameMatch[1],
+                        data: fieldValue,
+                        contentType: headerSection.match(/Content-Type: ([^\r\n]+)/)?.[1] || 'application/octet-stream'
+                    };
+                } else {
+                    // 普通表单字段
+                    result[fieldName] = fieldValue;
+                }
+            }
+        }
+        
+        resolve(result);
+    });
+}
+
+/**
+ * 获取请求参数（支持 JSON、表单、文件上传）
+ * @param {http.IncomingMessage} req - HTTP 请求对象
+ * @returns {Promise<Object>} 解析后的参数对象
+ */
+async function getRequestBody(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+        
+        // 监听数据事件，收集请求体
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        
+        req.on('end', async () => {
+            try {
+                const contentType = req.headers['content-type'] || '';
+                let parsedBody = {};
+                
+                // 根据 Content-Type 解析数据
+                if (contentType.includes('application/json')) {
+                    // JSON 格式
+                    try {
+                        parsedBody = JSON.parse(body || '{}');
+                    } catch (e) {
+                        parsedBody = {};
+                    }
+                } 
+                else if (contentType.includes('application/x-www-form-urlencoded')) {
+                    // 表单格式
+                    parsedBody = querystring.parse(body);
+                }
+                else if (contentType.includes('multipart/form-data')) {
+                    // 文件上传格式
+                    const boundaryMatch = contentType.match(/boundary=(.+)$/);
+                    if (boundaryMatch) {
+                        parsedBody = await parseMultipart(body, boundaryMatch[1]);
+                    } else {
+                        parsedBody = {};
+                    }
+                }
+                else {
+                    // 其他格式，返回原始字符串
+                    parsedBody = { raw: body };
+                }
+                
+                resolve(parsedBody);
+            } catch (error) {
+                reject(error);
+            }
+        });
+        
+        req.on('error', (error) => {
+            reject(error);
+        });
+    });
+}
 const data=Array.from({length:100}).map((item,index)=>{
             return {
               id:index+1,
@@ -179,6 +283,22 @@ export default [
       data: {
         name: 'vben',
       },
+    },
+  },
+    {
+    url: '/api/savefile',
+    method: 'post',
+    rawResponse: async (req,res) => {
+      const body = await getRequestBody(req)
+
+      console.log('body',body)
+       res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          code:0,
+          msg:'success',
+          data: body
+        }));
     },
   },
   {

@@ -7,6 +7,8 @@ import UploadImage from '@/views/example/tdesign/components/FUpload/FUploadImage
 import FLanguageFields from '@/views/example/tdesign/components/FLanguageFields/index.vue'
 import APPFormItem,{type APPCategoryDTO} from '@/views/example/tdesign/download/apps/APPFormItem.vue'
 import { TdFormProps } from 'tdesign-vue-next'
+import {cloneDeep} from 'lodash-es'
+import { request } from 'src/utils/request'
 type LocaleContentItem = Record<string, string>
  
 type FormData = {
@@ -154,8 +156,68 @@ const [downloadBaseCategoryState, downloadBaseCategoryStateInst] = useRequest({
 const handleReturn = () => {
     router.push({ path: './apps' })
 }
-const handleSubmit = () => {
+
+// 工具函数：将嵌套对象转换为 FormData
+function objectToFormData(obj:Record<string,any>, formData = new FormData(), parentKey = '') {
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            const fieldName = parentKey ? `${parentKey}[${key}]` : key;
+            
+            if (value === null || value === undefined) {
+                continue;
+            }
+            
+            // 处理 File 或 Blob 对象
+            if (value instanceof File || value instanceof Blob) {
+                formData.append(fieldName, value);
+            }
+            // 处理数组
+            else if (Array.isArray(value)) {
+                value.forEach((item, index) => {
+                    if (item instanceof File || item instanceof Blob) {
+                        formData.append(`${fieldName}[${index}]`, item);
+                    } else if (typeof item === 'object') {
+                        objectToFormData(item, formData, `${fieldName}[${index}]`);
+                    } else {
+                        formData.append(`${fieldName}[${index}]`, String(item));
+                    }
+                });
+            }
+            // 处理普通对象
+            else if (typeof value === 'object') {
+                objectToFormData(value, formData, fieldName);
+            }
+            // 处理基本类型
+            else {
+                formData.append(fieldName, String(value));
+            }
+        }
+    }
+    return formData;
+}
+const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
+    if(e.validateResult!==true){
+        return
+    }
     console.log('handleSubmit', toRaw(formData))
+    const form = objectToFormData(toRaw(formData))
+   // console.log('handleSubmit', form)
+
+  // let form=new FormData()
+   //form.append('obj[slug]', formData.slug)
+    request({
+        url: '/api/savefile',
+        method: 'POST',
+        data: form,
+        // headers: {
+        //     'Content-Type': 'multipart/form-data'
+        // }
+    }).then(res => {
+        console.log('handleSubmit:success', res)
+    }).catch(err => {
+        console.log('handleSubmit:error', err)
+    })
 }
 
 </script>
@@ -165,7 +227,7 @@ const handleSubmit = () => {
         <template #operation>
             <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>
         </template>
-        <t-form @submit="handleSubmit" :data="formData" :rules="rules" class="w-full" label-align="top">
+        <t-form @submit="handleSubmit" :data="formData"  class="w-full" label-align="top">
             <t-collapse :default-expand-all="true" :expand-mutex="false" :expand-on-row-click="true"
                 expand-icon-placement="right" borderless>
                 <t-collapse-panel value="1">
@@ -256,6 +318,7 @@ const handleSubmit = () => {
 
         </t-form>
     </MainLayout>
+  
 </template>
 <style lang="css" scoped>
 .header {

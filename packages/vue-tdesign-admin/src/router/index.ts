@@ -207,6 +207,24 @@ const defaultRoutes: RouteRecordRaw[] = [
                       icon: 'table'
                     }
                   }, {
+                    path: 'app_categories',
+                    component: () => import('../views/example/tdesign/download/app_categories/index.vue'),
+                    meta: {
+                      title: '应用分类',
+                      menuName: '应用分类',
+                      icon: 'table'
+                    }
+                  }, {
+                    path: 'app_categories/new',
+                    component: () => import('../views/example/tdesign/download/app_categories/new.vue'),
+                    meta: {
+                    }
+                  },{
+                    path: 'app_categories/edit',
+                    component: () => import('../views/example/tdesign/download/app_categories/edit.vue'),
+                    meta: {
+                    }
+                  }, {
                     path: 'apps/edit',
                     component: () => import('../views/example/tdesign/download/apps/edit.vue'),
                     meta: {
