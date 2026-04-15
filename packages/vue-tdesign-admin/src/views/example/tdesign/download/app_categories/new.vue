@@ -33,11 +33,11 @@ const formData = reactive<FormData>({
 
 })
 watch(()=>allLang.value,(val)=>{
-    // if(Array.isArray(val)&&val.length>0){
-    //     val.forEach(item=>{
-    //         formData[item.value]=''
-    //     })
-    // }
+    if(Array.isArray(val)&&val.length>0){
+        val.forEach(item=>{
+            formData[item.value]=''
+        })
+    }
 },{immediate:true})
 const submitLoading = ref(false)
 

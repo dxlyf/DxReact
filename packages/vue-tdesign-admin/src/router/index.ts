@@ -227,9 +227,22 @@ const defaultRoutes: RouteRecordRaw[] = [
                   }, {
                     path: 'apps/edit',
                     component: () => import('../views/example/tdesign/download/apps/edit.vue'),
+                  },
+                  {
+                    path: 'firmwares',
+                    component: () => import('../views/example/tdesign/download/firmwares/index.vue'),
                     meta: {
-         
+                      title: '固件',
+                      menuName: '固件',
+                      icon: 'table'
                     }
+                  },
+                  {
+                    path: 'firmwares/new',
+                    component: () => import('../views/example/tdesign/download/firmwares/new.vue'),
+                  }, {
+                    path: 'firmwares/edit',
+                    component: () => import('../views/example/tdesign/download/firmwares/edit.vue'),
                   }
                 ]
               },{
