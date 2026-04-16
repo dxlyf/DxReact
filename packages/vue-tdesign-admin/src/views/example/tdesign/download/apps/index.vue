@@ -9,6 +9,7 @@ import { useDialog } from '@/hooks/useDialog';
 import FCloneDialog from '@/views/example/tdesign/components/FCloneDialog/index.vue';
 import { useRouter } from 'vue-router'
 import {SearchForm,type SearchField} from '@/views/example/tdesign/components/FSearchForm'
+import ProductSelect from '@/views/example/tdesign/components/ProductSelect/index.vue'
 const router=useRouter()
 const breadcrumbOptions = [
     {
@@ -151,9 +152,22 @@ const searchColumns:SearchField[]=[
         props: {
             placeholder: '请输入名称'
         }
+    },{
+        name: 'products',
+        type:ProductSelect,
+        props: {
+            placeholder: '请选择关联产品',
+            multiple:true,
+            popupProps:{
+                // style:{
+                //     width:'100%'
+                // }
+            }
+        }
     }
 ]
 const handleSearch=(params:any)=>{
+    console.log('handleSearch',params)
     tableInst.query(params)
     
 }

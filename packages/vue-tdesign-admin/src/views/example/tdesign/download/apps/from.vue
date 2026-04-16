@@ -125,6 +125,7 @@ const rules: TdFormProps['rules'] = {
     }],
     publishAt: [{ required: true, message: '请选择上线时间' }],
     offlineAt: [{ required: true, message: '请选择下线时间' }],
+    downloadBaseCategoryIds: [{ required: true, message: '请选择下载分类' }],
 }
 
 const [productState, productStateInst] = useRequest({
@@ -227,7 +228,7 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
         <template #operation>
             <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>
         </template>
-        <t-form @submit="handleSubmit" :data="formData"  class="w-full" label-align="top">
+        <t-form @submit="handleSubmit" :data="formData" :rules="rules"  class="w-full" label-align="top">
             <t-collapse :default-expand-all="true" :expand-mutex="false" :expand-on-row-click="true"
                 expand-icon-placement="right" borderless>
                 <t-collapse-panel value="1">
@@ -286,6 +287,7 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
                             :multiple="true" :options="downloadBaseCategoryState.data" filterable
                             placeholder="请选择应用分类" />
                     </t-form-item>
+                    <div></div>
                 </t-collapse-panel>
 
                 <t-collapse-panel value="2">

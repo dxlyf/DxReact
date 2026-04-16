@@ -23,7 +23,7 @@ const model = defineModel<APPCategoryDTO>()
         <t-input v-model:value="model.version"  />
     </t-form-item>
     <t-form-item label="下载链接" :name="`${props.prefix}.links`">
-        <FLanguageFields  v-model="model.links" title="下载链接"  btn-text="编辑" />
+        <FLanguageFields :rules="[{message:'必须为http',pattern:/^https?:\/\//}]" v-model="model.links" title="下载链接"  btn-text="编辑" />
     </t-form-item>
   <t-form-item label="系统信息" :name="`${props.prefix}.systemInfo`">
         <FLanguageFields  v-model="model.systemInfo" title="系统信息"   btn-text="编辑" />

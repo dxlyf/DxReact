@@ -1,7 +1,8 @@
 import type {TdColProps} from 'tdesign-vue-next'
+import type {Component} from 'vue'
 export type SearchField={
     name:string
-    type:string
+    type:string|Component
     span?:number
     colProps?:TdColProps
     visible?:boolean

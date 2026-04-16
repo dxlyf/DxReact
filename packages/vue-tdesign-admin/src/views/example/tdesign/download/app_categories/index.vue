@@ -22,10 +22,10 @@ const breadcrumbOptions = [
 ]
 
 
-const data=Array.from({length:100},(v,i)=>({
+const data=Array.from({length:1},(v,i)=>({
     id:i+1,
-    name:'name'+(i+1),
-    apps:Array.from({length:58},(v,i)=>'product'+(i+1))
+    name:'name放大放大放大放大放大发打发打发发大水发到付啊打发 放大'+(i+1),
+    apps:Array.from({length:7},(v,i)=>'product'+(i+1))
 }))
 const [tableProps, tableInst] = useTable({
   //  defaultParams: searchInst.searchParams.value,
@@ -63,7 +63,7 @@ const columns: TableProps['columns'] = [
     }, {
         title: '名称',
         colKey: 'name',
-        ellipsis:true,
+      //  ellipsis:true,
         width:200,
     }, {
         title: '应用',
@@ -143,7 +143,7 @@ const ellipsis = computed(() => {
                 <t-icon name="move"></t-icon>
             </template>
             <template #apps="{ row }">
-                <ExpandableText class="ac-apps" :lines="2">
+                <ExpandableText class="ac-apps" :lines="3">
                        <div v-for="(item,i) in row.apps" :key="i" class="ac-app">
                         {{item}}
                     </div>
