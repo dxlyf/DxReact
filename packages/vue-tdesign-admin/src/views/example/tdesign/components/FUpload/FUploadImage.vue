@@ -188,7 +188,7 @@ const beforeUpload:TdUploadProps['beforeUpload']=async (file)=>{
       let msg=''
       // 检查file.type 是否在extension中
      // console.log('fff',file.type)
-      if(props.skipLoadCheck&&!props.extension?.some(d=>ext===d.toLowerCase())){
+      if(props.skipLoadCheck&&props.extension?.length>0&&ext&&!props.extension?.some(d=>ext===d.toLowerCase())){
          msg+=`/格式`
       }
       if(fileSize>props.limit.size){

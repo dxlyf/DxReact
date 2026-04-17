@@ -245,7 +245,7 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
                         <UploadImage v-model="formData.iconUrl" v-model:rawfile="formData.iconFile" />
                     </t-form-item>
                     <t-form-item label="QR Code" name="qrCodeUrl">
-                        <UploadImage v-model="formData.qrCodeUrl" v-model:rawfile="formData.qrCodeFile" />
+                        <UploadImage :extension="[]" v-model="formData.qrCodeUrl" v-model:rawfile="formData.qrCodeFile" />
                     </t-form-item>
                     <t-form-item label="名称" name="name">
                         <FLanguageFields title="名称" placeholder="下载APP名称" :field-props="{ maxlength: 255 }"
