@@ -5,6 +5,7 @@ import FUploadCover from '../../FUpload/FUploadCover2.vue'
 import CountrySelect from '@/components/country-select/index.vue'
 import IconProvide from '../../FIcon/IconProvide.vue';
 import Icon from '../../FIcon/Icon.vue';
+import { uniqBy } from 'lodash-es';
 const loading = ref(false)
 const detailData = ref<Record<string, any>>(null)
 const formData = reactive({
@@ -15,7 +16,8 @@ const formData = reactive({
     searchSynonym: [],
     searchSynonym2: [],
     searchSynonym3: [],
-    searchSynonym4:[]
+    searchSynonym4:[],
+    videoGroupSlug:''
 })
 const rules: TdFormProps['rules'] = {
     slug: [
@@ -63,6 +65,26 @@ const isJson = (str: string) => {
     return true
 }
 const videoGroupSlugOptions = ref([])
+
+const bindVideoGroupSlugOptions=()=>{
+    const options=[{title:'aa',slug:'aaa'},{title:'bb',slug:'bbb'}]
+    const productSlug='aaa'
+    const currentLocale='en'
+    const selectedItem=options.find(d=>d.slug==formData.videoGroupSlug||d.slug==`${productSlug}-videos-${currentLocale}`)
+    if(selectedItem&&!options.some(d=>d.slug!==selectedItem.slug)){
+        options.push({
+            title:selectedItem.title,
+            slug:selectedItem.slug
+        })
+    }
+    let newOptions=options.map(d=>{
+        return {
+            label:d.slug+'*'+d.title,
+            value:d.slug
+        }
+    })
+    const selectedValue=formData.videoGroupSlug||`${productSlug}-videos-${currentLocale}`
+}
 const showEnglishDefaultValue = (fieldName: string) => {
     if (!detailData.value) {
         return false

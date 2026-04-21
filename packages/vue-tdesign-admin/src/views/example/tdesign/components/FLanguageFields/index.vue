@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, shallowRef, toRaw, watch } from 'vue'
+import { nextTick, reactive, ref, shallowRef, toRaw, toValue, unref, watch } from 'vue'
 import { useLang } from '@/hooks/useLang'
 import { useDialog } from '@/hooks/useDialog'
 import { FormInstanceFunctions } from 'tdesign-vue-next'
@@ -15,12 +15,14 @@ type Props = {
     fieldProps?: Record<string, any>
     defaultValue?: any
     rules?: any[]
+    initValue?:boolean
 }
 const props = withDefaults(defineProps<Props>(), {
     width: 600,
     btnText: '编辑',
     type: 'text',
     defaultValue: '',
+    initValue:false,
     fieldProps: () => ({})
 
 })
@@ -33,16 +35,32 @@ const formData = ref({})
 const bindInitialValue = (allLang:any[]) => {
  //   console.log('bindInitialValue', allLang)
     const value = toRaw(model.value)
+    const obj=isObject(value)?value:{}
     let initialValue:any = {}
     allLang.forEach((item) => {
-        initialValue[item.value] = props.defaultValue
+        if(obj[item.value]){
+            initialValue[item.value] = obj[item.value]
+        }else{
+            initialValue[item.value] = props.defaultValue
+        }
     })
-    formData.value = isObject(value) ? { ...initialValue, ...value } : initialValue
+    formData.value = initialValue
 }
-watch(() => allLang.value, (val) => {
+watch(model, (val) => {
+    console.log('model.value',toRaw(val))
+    
+})
+watch(() => allLang.value, async (val) => {
     if (val) {
         bindInitialValue(val)
-        model.value=cloneDeep(toRaw(formData.value))
+        if(props.initValue){
+            const data=cloneDeep(toRaw(formData.value))
+        //    Object.assign(model.value,data)
+           // emit('update:modelValue',data)
+           model.value=data
+         //  await nextTick()
+           console.log('initValue',toRaw(model.value),data)
+        }
     }
 },{immediate:true})
 const handleOpen = () => {

@@ -202,23 +202,23 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
         return
     }
     console.log('handleSubmit', toRaw(formData))
-    const form = objectToFormData(toRaw(formData))
-   // console.log('handleSubmit', form)
+//     const form = objectToFormData(toRaw(formData))
+//    // console.log('handleSubmit', form)
 
-  // let form=new FormData()
-   //form.append('obj[slug]', formData.slug)
-    request({
-        url: '/api/savefile',
-        method: 'POST',
-        data: form,
-        // headers: {
-        //     'Content-Type': 'multipart/form-data'
-        // }
-    }).then(res => {
-        console.log('handleSubmit:success', res)
-    }).catch(err => {
-        console.log('handleSubmit:error', err)
-    })
+//   // let form=new FormData()
+//    //form.append('obj[slug]', formData.slug)
+//     request({
+//         url: '/api/savefile',
+//         method: 'POST',
+//         data: form,
+//         // headers: {
+//         //     'Content-Type': 'multipart/form-data'
+//         // }
+//     }).then(res => {
+//         console.log('handleSubmit:success', res)
+//     }).catch(err => {
+//         console.log('handleSubmit:error', err)
+//     })
 }
 
 </script>
@@ -228,7 +228,7 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
         <template #operation>
             <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>
         </template>
-        <t-form @submit="handleSubmit" :data="formData" :rules="rules"  class="w-full" label-align="top">
+        <t-form @submit="handleSubmit" :data="formData"   class="w-full" label-align="top">
             <t-collapse :default-expand-all="true" :expand-mutex="false" :expand-on-row-click="true"
                 expand-icon-placement="right" borderless>
                 <t-collapse-panel value="1">
