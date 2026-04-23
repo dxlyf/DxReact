@@ -154,6 +154,14 @@ const defaultRoutes: RouteRecordRaw[] = [
         },
         children: [
           {
+            path: 'file',
+            component: () => import('../views/example/file.vue'),
+            meta: {
+              title: '首页',
+              menuName: 'file',
+              icon: 'table'
+            }
+          },{
             path: 'dom',
             component: () => import('../views/dom.vue'),
             meta: {

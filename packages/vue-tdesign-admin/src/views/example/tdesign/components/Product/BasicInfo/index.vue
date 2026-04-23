@@ -65,13 +65,18 @@ const isJson = (str: string) => {
     return true
 }
 const videoGroupSlugOptions = ref([])
-
+Promise.allSettled([Promise.resolve({age:43}),Promise.resolve({age:44})]).then(res=>{
+    res[0].status==='fulfilled'
+    res[0].v
+    console.log('res',res)
+    res[0].age
+})
 const bindVideoGroupSlugOptions=()=>{
     const options=[{title:'aa',slug:'aaa'},{title:'bb',slug:'bbb'}]
     const productSlug='aaa'
     const currentLocale='en'
     const selectedItem=options.find(d=>d.slug==formData.videoGroupSlug||d.slug==`${productSlug}-videos-${currentLocale}`)
-    if(selectedItem&&!options.some(d=>d.slug!==selectedItem.slug)){
+    if(selectedItem){
         options.push({
             title:selectedItem.title,
             slug:selectedItem.slug
@@ -83,6 +88,7 @@ const bindVideoGroupSlugOptions=()=>{
             value:d.slug
         }
     })
+    newOptions=uniqBy(newOptions,'value')
     const selectedValue=formData.videoGroupSlug||`${productSlug}-videos-${currentLocale}`
 }
 const showEnglishDefaultValue = (fieldName: string) => {
