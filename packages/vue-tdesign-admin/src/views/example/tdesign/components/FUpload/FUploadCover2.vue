@@ -1,7 +1,8 @@
 
 <script lang="ts" setup>
-import { computed,watch, ref,shallowReactive, shallowRef,customRef} from 'vue';
+import { computed,watch, ref,shallowReactive, shallowRef,customRef, onMounted} from 'vue';
 import { Message, MessagePlugin, type UploadFile, type UploadProps } from 'tdesign-vue-next';
+import { checkDimensions, getImageDimensions } from './util';
 type CheckImageOptions={
   width?:number
   height?:number
@@ -19,9 +20,10 @@ type Props={
   combo?:any[]
   loadCheckImageConfig?:CheckImageOptions
   limit?:{
+    type?:'before'|'after'
     width?:number,
     height?:number,
-    size:number
+    size?:number
   },
   resize?:any[]
   tips?:string
@@ -32,19 +34,22 @@ type Props={
 }
 
 const props=withDefaults(defineProps<Props>(),{
-  limit:()=>({
-   // width:200,
-   // height:200,
-    size:2
-  }), // mb
+  limit:()=>({}), // mb
   disabled:false,
   resize:()=>[],
 //  accept:'.jpg,.png,.gif,.svg',
   extension:()=>['png','jpg','jpeg','gif','svg'],
-  //tips:',
-  skipLoadCheck:false
+  subtitle:'支持jpg、png、gif、svg格式',
+  tip:''
+ // skipLoadCheck:false
 })
-
+const limit = computed(() => {
+    return {
+        size: 2,
+        type: 'after',
+        ...(props.limit || {}),
+    }
+})
 const imageUrl=defineModel<string>()
 const files=shallowRef<UploadFile[]>([])
 const fileName=computed(()=>{
@@ -69,6 +74,30 @@ const showUpload=computed(()=>{
   const showProgress=state.showProgress
   return !showProgress&&isUndef(url)
 })
+
+
+let lastCheckImage:any=null
+const checkImageDimensions =  async (file: File | string) => {
+    if(limit.value.type!=='after'||lastCheckImage===file||!(limit.value.width||limit.value.height)){
+        return
+    }
+    try {
+        state.error=''
+        if(!file){
+            return
+        }
+        lastCheckImage=file
+        const { width, height } = await getImageDimensions(file)
+        const result=checkDimensions(limit.value,{width,height})
+        if(!result.valid){
+            state.error='图片尺寸不符合规范，请重新上传'
+        }
+    } catch (err) {
+          state.error='图片加载失败'
+          lastCheckImage=null
+    }
+}
+
 // res.url 图片地址；res.uploadTime 文件上传时间；res.error 上传失败的原因
 const formatResponse:UploadProps['formatResponse']= (res) => {
   console.log('formatResponse',res)
@@ -97,7 +126,7 @@ const handleSuccess:UploadProps['onSuccess']=(ctx)=>{
 }
 const handleFail:UploadProps['onFail']=(ctx)=>{
   console.log('handleFail',ctx)
-  imageUrl.value=''
+  setImageUrl('')
   state.thumbnailUrl=''
   state.error=ctx?.response?.error||'上传失败'
   state.showProgress=false
@@ -147,16 +176,16 @@ const beforeUpload:UploadProps['beforeUpload']=async (file)=>{
       if(props.skipLoadCheck&&!props.extension?.some(d=>ext===d.toLowerCase())){
          msg+=`/格式`
       }
-      if(fileSize>props.limit.size){
+      if(fileSize>limit.value.size){
         msg+=`/文件大小`
       //  MessagePlugin.error(`文件大小应小于${props.limit.size}MB`)
        // resolve(false)
        // return 
       }
       const img=await loadImage(await fileToBase64(file.raw) as string) as HTMLImageElement
-      const width=props.limit.width
-      const height=props.limit.height
-      if(props.skipLoadCheck&&Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
+      const width=limit.value.width
+      const height=limit.value.height
+      if(limit.value.type==='before'&&Number.isFinite(width)&&Number.isFinite(height)&&(img.naturalWidth!==width||img.naturalHeight!==height)){
         msg+=`/尺寸`
       }
       if(msg!==''){
@@ -174,7 +203,7 @@ const handleDelete=()=>{
   if(props.disabled){
     return
   }
-  imageUrl.value=''
+  setImageUrl('')
   state.thumbnailUrl=''
   state.error=''
   state.loadCheckImageError=''
@@ -221,8 +250,12 @@ let isManualUpdate=false
 const setImageUrl=(url:string)=>{
   isManualUpdate=true;
   imageUrl.value=url
+  checkImageDimensions(url)
 }
 
+onMounted(()=>{
+  checkImageDimensions(imageUrl.value)
+})
 const headers=customRef((track,trigger)=>{
    return {
     get:()=>{
@@ -274,7 +307,7 @@ const headers=customRef((track,trigger)=>{
           <div class="mt-4">上传中{{state.progress}}%</div>
         </div>
          <template v-if="showImage">
-          <t-image  @load="handleCheckImage" class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
+          <t-image   class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
          <t-image-viewer  @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
          <div  class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">

@@ -4,6 +4,8 @@ import { computed, reactive, shallowReactive, shallowRef, toRaw } from 'vue'
 import { useRequest } from 'src/hooks/useRequest2'
 import MainLayout from '@/views/example/tdesign/components/Layouts/MainLayout.vue'
 import UploadImage from '@/views/example/tdesign/components/FUpload/FUploadImage.vue'
+import FUploadCover2 from '@/views/example/tdesign/components/FUpload/FUploadCover2.vue'
+
 import FLanguageFields from '@/views/example/tdesign/components/FLanguageFields/index.vue'
 import APPFormItem,{type APPCategoryDTO} from '@/views/example/tdesign/download/apps/APPFormItem.vue'
 import { TdFormProps } from 'tdesign-vue-next'
@@ -13,6 +15,7 @@ type LocaleContentItem = Record<string, string>
  
 type FormData = {
     id?: string
+    cover?: string
     iconUrl?: string
     qrCodeUrl?: string
     iconFile?: File
@@ -82,6 +85,7 @@ const createAppCategory=():APPCategoryDTO=>{
 }
 const createFormData = (): FormData => {
     return {
+        cover:'/uploads/aaa.jpg',
         slug: '',
         iconUrl: '/uploads/aaa.jpg',
         qrCodeUrl: '',
@@ -241,8 +245,11 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
                             仅可用英文、数字、下划线和短横线
                         </template>
                     </t-form-item>
+                     <t-form-item label="图片"  name="cover">
+                        <FUploadCover2  :limit="{width:200,height:200}" v-model="formData.cover" v-model:rawfile="formData.coverFile" />
+                    </t-form-item>
                     <t-form-item label="Icon" name="iconUrl">
-                        <UploadImage v-model="formData.iconUrl" v-model:rawfile="formData.iconFile" />
+                        <UploadImage :limit="{width:200,height:200}" v-model="formData.iconUrl" v-model:rawfile="formData.iconFile" />
                     </t-form-item>
                     <t-form-item label="QR Code" name="qrCodeUrl">
                         <UploadImage :extension="[]" v-model="formData.qrCodeUrl" v-model:rawfile="formData.qrCodeFile" />
