@@ -17,7 +17,109 @@ declare module 'vue-router' {
   }
 }
 const defaultRoutes: RouteRecordRaw[] = [
-
+  {
+    path:'/new',
+    component: () => import('../layouts/NewAdminLayout.vue'),
+    children: [ {
+        path: 'system',
+        name: 'System',
+        meta: {
+          title: '系统管理',
+          menuName: '系统管理',
+          icon: 'setting'
+        },
+        children: [
+          {
+            path: 'user',
+            name: 'SystemUser',
+            component: () => import('../views/system/user/index.vue'),
+            meta: {
+              title: '用户管理',
+              menuName: '用户管理',
+              icon: 'user',
+              permission: 'system:user:list'
+            }
+          },
+          {
+            path: 'role',
+            name: 'Role',
+            component: () => import('../views/system/role/index.vue'),
+            meta: {
+              title: '角色管理',
+              menuName: '角色管理',
+              icon: 'user-group',
+              permission: 'system:role:list'
+            }
+          },
+          {
+            path: 'menu',
+            name: 'SystemMenu',
+            component: () => import('../views/system/menu/index.vue'),
+            meta: {
+              title: '菜单管理',
+              menuName: '菜单管理',
+              icon: 'menu',
+              permission: 'system:menu:list'
+            }
+          },
+          {
+            path: 'button',
+            name: 'SystemButton',
+            component: () => import('../views/system/button/index.vue'),
+            meta: {
+              title: '按钮权限',
+              menuName: '按钮权限',
+              icon: 'lock',
+              permission: 'system:button:list'
+            }
+          },
+          {
+            path: 'api',
+            name: 'SystemApi',
+            component: () => import('../views/system/api/index.vue'),
+            meta: {
+              title: 'API权限',
+              menuName: 'API权限',
+              icon: 'link',
+              permission: 'system:api:list'
+            }
+          },
+          {
+            path: 'dept',
+            name: 'SystemDept',
+            component: () => import('../views/system/dept/index.vue'),
+            meta: {
+              title: '部门管理',
+              menuName: '部门管理',
+              icon: 'organization',
+              permission: 'system:dept:list'
+            }
+          },
+          {
+            path: 'dict',
+            name: 'SystemDict',
+            component: () => import('../views/system/dict/index.vue'),
+            meta: {
+              title: '字典管理',
+              menuName: '字典管理',
+              icon: 'books',
+              permission: 'system:dict:list'
+            }
+          },
+          {
+            path: 'log',
+            name: 'SystemLog',
+            component: () => import('../views/system/log/index.vue'),
+            meta: {
+              title: '日志管理',
+              menuName: '日志管理',
+              icon: 'text',
+              permission: 'system:log:list'
+            }
+          }
+        ]
+      }]
+  },
   {
     path: '/',
     component: () => import('../layouts/AdminLayout.vue'),
@@ -25,6 +127,15 @@ const defaultRoutes: RouteRecordRaw[] = [
       {
         path: '',
         redirect: '/dashboard'
+      },
+       {
+        path: 'new/system',
+        component: () => import('@/views/system/menu/index.vue'),
+        meta: {
+          title: '系统管理',
+          menuName: '系统管理',
+          icon: 'setting'
+        }
       },
       {
         path: '/reload',
@@ -85,37 +196,6 @@ const defaultRoutes: RouteRecordRaw[] = [
           title: '用户编辑',
           hideMenu: true
         }
-      },
-      {
-        path: 'system',
-        name: 'System',
-        meta: {
-          title: '系统管理',
-          menuName: '系统管理',
-          icon: 'setting'
-        },
-        children: [
-          {
-            path: 'role',
-            name: 'Role',
-            component: () => import('../views/Role.vue'),
-            meta: {
-              title: '角色管理',
-              menuName: '角色管理',
-              icon: 'user-group'
-            }
-          },
-          {
-            path: 'permission',
-            name: 'Permission',
-            component: () => import('../views/Permission.vue'),
-            meta: {
-              title: '权限管理',
-              menuName: '权限管理',
-              icon: 'lock'
-            }
-          }
-        ]
       },
       {
         path: 'settings',
