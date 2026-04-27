@@ -40,6 +40,7 @@ export const withResolvers =()=>{
 export const confirm = (options: ConfirmProps) => {
     const { header = false, onConfirm, ...restOptions } = options
     const dialog = DialogPlugin.confirm({
+        header,
         ...restOptions,
         onConfirm: async () => {
             try {

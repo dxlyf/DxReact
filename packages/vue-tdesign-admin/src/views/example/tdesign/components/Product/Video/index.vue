@@ -182,6 +182,7 @@ const {isPolling,pollingState,start:startPolling,stop:stopPolling,pollingCount,l
     return {
         jobId:1,
         status:'importing',
+        message:'导入中...',
         slug:'video-1'
     }
 },{
@@ -198,18 +199,20 @@ watch(visibleImportDialog,(val)=>{
 })
 const handleImportSubmit=(e:any)=>{
     // console.log('importFormData',toRaw(importFormData))
-     if(e.validateResult!==true){
-        return
-     }
-     const file=importFormData.file[0].raw
-   ///  dialogConfirmLoading.value=true
-     const formData=new FormData()
-     formData.append('file',file)
-     formData.append('locale',importPostData().locale)
-     formData.append('appSlug',importPostData().appSlug)
-     formData.append('productId',importPostData().productId)
+//      if(e.validateResult!==true){
+//         dialogFormRef.value.clearValidate(['file'])
+//         return
+//      }
+//      const file=importFormData.file[0].raw
+//    ///  dialogConfirmLoading.value=true
+//      const formData=new FormData()
+//      formData.append('file',file)
+//      formData.append('locale',importPostData().locale)
+//      formData.append('appSlug',importPostData().appSlug)
+//      formData.append('productId',importPostData().productId)
 
      startPolling('123')
+    
 
  }
  const handleImportUploadSuccess=()=>{
@@ -312,14 +315,14 @@ const handleImportSubmit=(e:any)=>{
     <!--import videos-->
  <t-dialog width="900px" attach="body"  :close-on-esc-keydown="false" :close-on-overlay-click="false" :cancel-btn="null" :footer="false"  :destroy-on-close="true" v-model:visible="visibleImportDialog"   header="Import Videos" >
         <t-form :data="importFormData"  ref="dialogFormRef" @submit="handleImportSubmit" label-align="top">
-            <t-form-item  :rules="[{required:true,message:'请选择file'}]" label="Import file" name="file">
+            <t-form-item   :rules="[{required:true,message:'请选择file'}]" label="Import file" name="file">
                <t-upload theme="file" :allow-upload-duplicate-file="true" @fail="handleImportUploadFail"  @success="handleImportUploadSuccess"  name="file"  :data="importPostData" ref="uploadRef" :auto-upload="false" action="/api/upload2" v-model="importFormData.file"></t-upload>
                <t-space class="ml-4">
                     <t-button :loading="dialogConfirmLoading" theme="primary" type="submit">Import</t-button>
                     <t-button theme="success" @click="downloadTemplateExcel">Download Template Excel</t-button>
                </t-space>
             </t-form-item>
-            <div v-if="pollingState!=='idle'">
+            <div v-if="lastResult">
                 <table class="job-table">
                     <thead>
                         <tr>
@@ -328,13 +331,15 @@ const handleImportSubmit=(e:any)=>{
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="lastResult">
+                        <tr v-if="lastResult&&lastResult.status==='finished'">
                             <td>{{ lastResult.slug}}</td>
                             <td>{{ lastResult.status }}</td>
                         </tr>
-                        <tr>
-                            <td>dfsadf</td>
-                            <td><t-tag theme="warning">Importing</t-tag></td>
+                        <tr v-else>
+                            <td class="text-red-500">{{lastResult.slug}}</td>
+                            <td>
+                                <t-loading size="small" :text="lastResult.message"></t-loading>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

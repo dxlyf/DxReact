@@ -58,12 +58,7 @@ export function usePolling<T = any>(
   } = options
 
   const pollingState=shallowRef<'idle'|'polling'|'stopped'>('idle')
-  const isPolling = computed({
-    get:()=>pollingState.value==='polling',
-    set:(val)=>{
-      pollingState.value=val?'polling':'stopped'
-    }
-  })
+  const isPolling = computed(()=>pollingState.value==='polling')
   const pollingCount=shallowRef<number>(0)
   const retryCount = shallowRef<number>(0)
   const error = shallowRef<Error | null>(null)
@@ -114,7 +109,7 @@ export function usePolling<T = any>(
     if (isPolling.value) return
     lastParams = params
     pollingCount.value=0
-    isPolling.value = true
+    pollingState.value='polling'
     retryCount.value = 0
     error.value = null
     
@@ -129,7 +124,7 @@ export function usePolling<T = any>(
    * 停止轮询
    */
   const stop = (): void => {
-    isPolling.value = false
+    pollingState.value='stopped'
     if (timerId !== null) {
       clearTimeout(timerId)
       timerId = null

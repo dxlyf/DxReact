@@ -59,7 +59,7 @@ const [tableProps, tableInst] = useTable<TableDataRecord>({
 
 const columns: TableProps['columns'] = [
     {
-        title: 'Slug',
+        title: '标识符',
         colKey: 'slug',
       //  width: 160,
         ellipsis: true
@@ -92,7 +92,7 @@ const searchColumns=computed<SearchField[]>(()=>{
                 placeholder: '包含Slug'
             }
         },{
-            name: 'category',
+            name: 'firmwareCategoryId',
             type: 't-select',
             defaultValue:'',
             props: {
@@ -111,7 +111,7 @@ const searchColumns=computed<SearchField[]>(()=>{
                 ]
             }
         },{
-            name: 'version',
+            name: 'linkVersion',
             type: 't-input',
             defaultValue:'',
             props: {
@@ -125,7 +125,7 @@ const handleSearch=(params:any)=>{
     
 }
 const handleCreate=()=>{
-    router.push({path:'./new'})
+    router.push({path:'./firmwares/new'})
 }
 const handleEdit=(row:TableDataRecord)=>{
    // console.log('handleEdit',row)
@@ -152,6 +152,10 @@ const actions=[
         order:1000,
         onClick:(data)=>{
             console.log('编辑',data)
+            router.push({
+                path:'./firmwares/edit',
+                query:{id:data.id}
+            })
         }
     },
     {
