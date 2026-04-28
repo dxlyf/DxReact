@@ -5,6 +5,7 @@ import { debounce } from 'lodash-es'
 type Props = {
     defaultOptions?:any[]
     request: (params: { keyword: string, current: number, pageSize: number }) => Promise<{ total: number, records: any[] }>
+    formatLabel?: (item: any) => string
     debounce?: number // 搜索防抖时间
     multiple?: boolean // 是否支持多选
     manualRequest?: boolean
@@ -70,8 +71,17 @@ const displayOptions = computed(() => {
     }
     return headOptions.concat(curOptions)
 })
+const formatDisplayOptions=computed(()=>{
+    return displayOptions.value.map(item=>{
+        return {
+            ...item,
+            label:props.formatLabel?.(item) || getLabel(item)
+        }
+    })
+})
 const loading=ref(false)
 const lastParams={curent:''}
+
 
 
 const request = async (keyword:string,loadMore:boolean=false) => {
@@ -127,7 +137,7 @@ const handlePageChange = ({ current, pageSize }: { current: number, pageSize: nu
 
 const selectProps = computed<TdSelectProps>(() => {
     const {filterable,...restAttrs}=attrs
-    const curOptions=displayOptions.value
+    const curOptions=formatDisplayOptions.value
     return {
         ...(props.request ? {
             options:curOptions,

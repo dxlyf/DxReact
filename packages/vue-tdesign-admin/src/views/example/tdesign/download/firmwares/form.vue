@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computed, reactive, shallowReactive, shallowRef, toRaw, watch } from 'vue'
 import { useRequest } from 'src/hooks/useRequest2'
 import MainLayout from '@/views/example/tdesign/components/Layouts/MainLayout.vue'
@@ -14,6 +14,8 @@ import { request } from 'src/utils/request'
 import DownLoadVersionFields, { type DownloadVersionDTO } from './DownLoadVersionFields.vue'
 import DocumentFields, { type DocumentDTO } from './DocumentFields.vue'
 import { confirm } from '@/views/example/tdesign/util'
+import FSelectPagination from '@/views/example/tdesign/components/FSelectPagination/index.vue'
+import { delay } from 'src/utils'
 type LocaleContentItem = Record<string, string>
 
 
@@ -30,7 +32,7 @@ type FormData = {
     version: string
     url: string
     releaseAt: string
-    products: ({ value: string, label: string })[]
+    products: {value:string,label:string}[]
     downloadVersions: DownloadVersionDTO[]
     documents: DocumentDTO[]
 }
@@ -70,7 +72,7 @@ const breadcrumbOptions = computed(() => {
 const props = defineProps<Props>()
 const submitLoading = shallowRef(false)
 const router = useRouter()
-
+const route=useRoute()
 
 const createFormData = (): FormData => {
     return {
@@ -92,8 +94,9 @@ const createFormData = (): FormData => {
 }
 const formData = reactive<FormData>(createFormData())
 const [detail, detailInst] = useRequest({
-    manualRequest: router.id !== undefined,
+    manualRequest:!route.query.id,
     request: async (params) => {
+        //await delay(2000)
         return {
             id: 1,
             slug: 'firmware1',
@@ -108,7 +111,20 @@ const [detail, detailInst] = useRequest({
             url: 'https://www.baidu.com',
             releaseAt: '2023-01-01',
             products: [{ value: '1', label: '产品1' }],
-            downloadVersions: [{ version: '1.0.0', url: 'https://www.baidu.com' }]
+            downloadVersions: [{ version: '1.0.0', url: 'https://www.baidu.com' }],
+            documents: [{ categoryId: 'category1', linksAttributes:[
+                {
+                    locale:'zh-CN',
+                    url:'https://www.baidu.comfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                    version:'1.0.0',
+                    releaseAt:'2023-01-01'
+                }, {
+                    locale:'zh-CN',
+                    url:'https://www.baidu.comfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                    version:'',
+                    releaseAt:''
+                }
+            ] }] 
         }
     },
     onSuccess: (data: any) => {
@@ -126,8 +142,24 @@ const [detail, detailInst] = useRequest({
         formData.releaseAt = data.releaseAt
         formData.products = data.products
         formData.downloadVersions = data.downloadVersions
+        formData.documents = data.documents
     }
 })
+
+const productData=Array.from({length:100},(item,index)=>({
+    label:`产品${index+1}`,
+    value:(index+1)+''
+}))
+const handleRequestProduct=({keywork,current,pageSize})=>{
+         let data=productData
+        if(keywork){
+            data=productData.filter(item=>item.label.includes(keywork))
+        }
+        return {
+            total:data.length,
+            records:data.slice((current-1)*pageSize,current*pageSize)
+        }     
+}
 const rules: TdFormProps['rules'] = {
     slug: [{ required: true, whitespace: true, message: '请输入唯一标识符' }],
     status: [{
@@ -259,6 +291,9 @@ const handleRemoveDocumentItem = (i: number) => {
         }
     })
 }
+const formatlabel=(item:any)=>{
+    return `(${item.value}) ${item.label}`
+}
 </script>
 <template>
     <MainLayout :show-not-found="!!detail.error" :loading="detail.loading" :title="pageInfo.title" layout="edit"
@@ -315,8 +350,7 @@ const handleRemoveDocumentItem = (i: number) => {
                         <t-date-picker format="YYYY-MM-DD" v-model="formData.releaseAt" />
                     </t-form-item>
                     <t-form-item label="关联产品" name="products">
-                        <t-select :scroll="{ type: 'virtual' }" v-model="formData.products" :multiple="true"
-                            :options="productState.data" value-type="object" filterable />
+                            <FSelectPagination :format-label="formatlabel" v-model="formData.products" :request="handleRequestProduct" :multiple="true" />
                     </t-form-item>
                     <div></div>
                 </t-collapse-panel>
