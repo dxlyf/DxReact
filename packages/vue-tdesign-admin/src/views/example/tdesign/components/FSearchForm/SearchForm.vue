@@ -184,7 +184,7 @@ defineExpose({
                         </div>
                     </slot>
                 </template>
-                 <component v-else-if="item.type=='t-input'" :is="item.type" @enter="searchFormInstance.search" v-model.trim="formData[item.name]" v-bind="item.props">
+                 <component v-else-if="item.type=='t-input'" :is="item.type" @enter="searchFormInstance.search"  v-model.trim="formData[item.name]" v-bind="item.props">
                     <template v-for="(value, name) in item.slots" #[name]="slotData">
                         <slot :name="value" v-bind="slotData || {}"></slot>
                     </template>

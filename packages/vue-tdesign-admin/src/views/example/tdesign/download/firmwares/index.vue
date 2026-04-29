@@ -31,7 +31,7 @@ type TableDataRecord={
 }
 const data=Array.from({length:100},(v,i)=>({
     id:i+1,
-    slug:'slug'+(i+1),
+    slug:'slugffffffffffffffffffffffffffffffffffffffffff'+(i+1),
     category:'category'+(i+1),
     version:'version'+(i+1)
 }))
@@ -67,7 +67,7 @@ const columns: TableProps['columns'] = [
         title: '分类',
         colKey: 'category',
         ellipsis:true,
-        width: 180,
+        width: 480,
     } ,{
         title: '版本',
         colKey: 'version',
@@ -202,7 +202,8 @@ const actions=[
         <Table v-bind="tableProps" :columns="columns">
 
             <template #slug="{ row }">
-                <t-link theme="primary">{{ row.slug }}</t-link>
+                <t-link class="!inline" theme="primary" href="/example/tdesign/download/firmwares">{{ row.slug||'-'}}</t-link>
+                <!-- <a class="not-hover:text-blue-500 hover:underline" :href="`https://www.baidu.com?wd=${row.slug}`">{{ row.slug }}</a> -->
             </template>
 
             <template #category="{ row }">

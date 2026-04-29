@@ -12,7 +12,9 @@ const formData = reactive<any>({
   virtualSelect: {
     value: 2,
     label: '选项2'
-  }
+  },
+  enabled: false,
+  concatType:'0'
 })
 
 
@@ -55,67 +57,67 @@ const [selectProps] = useSelect(() => ({
   remote: true,
 }))
 
-const handleDownLoad=()=>{
-    // axios.get('/api/download',{
-    //     responseType:'blob',
-    //     headers:{
-    //         'custome-userId':'123'
-    //     }
-    // }).then(res=>{
-    //     const blob=res.data;
-    //     const filename=res.headers['content-disposition']?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
-    //     console.log(filename,'filename',res.headers['content-disposition'])
-    //     const url = URL.createObjectURL(blob);
-    //     const a = document.createElement('a');
-    //     a.href = url;
-    //     a.download = filename;
-    //     a.click();
-    //     URL.revokeObjectURL(url);
-    // })
+const handleDownLoad = () => {
+  // axios.get('/api/download',{
+  //     responseType:'blob',
+  //     headers:{
+  //         'custome-userId':'123'
+  //     }
+  // }).then(res=>{
+  //     const blob=res.data;
+  //     const filename=res.headers['content-disposition']?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
+  //     console.log(filename,'filename',res.headers['content-disposition'])
+  //     const url = URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     a.download = filename;
+  //     a.click();
+  //     URL.revokeObjectURL(url);
+  // })
 
-    fetch('/api/download',{
-        method:'GET',
-        headers:{
-            'custome-userId':'123'
-        }
-    }).then(async res=>{
-      const reader=res.body.getReader();
-      let chunk=[]
-      let contentLength=Number(res.headers.get('Content-Length')) || 0;
-      let progress=0;
-      let fileLen=0
-      while(true){
-        const {done,value}=await reader.read();
-        if(done){
-          break;
-        }
-        fileLen+=value.byteLength;
-        progress=fileLen/contentLength*100;
-        console.log('progress',progress,'fileLen',fileLen,'contentLength',contentLength)
-        chunk.push(value);
+  fetch('/api/download', {
+    method: 'GET',
+    headers: {
+      'custome-userId': '123'
+    }
+  }).then(async res => {
+    const reader = res.body.getReader();
+    let chunk = []
+    let contentLength = Number(res.headers.get('Content-Length')) || 0;
+    let progress = 0;
+    let fileLen = 0
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
       }
-      const blob=new Blob(chunk);
-   //   const match=res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/);
-   //   const filename=match?.[1] || 'aaa.svg';
-      const filename=res.headers.get('Content-Disposition')?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
-      console.log(filename,'filename',res.headers.get('Content-Disposition'))
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    })
-    //     const blob=await res.blob();
-    //     const filename=res.headers.get('Content-Disposition')?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
-    //     console.log(filename,'filename',res.headers.get('Content-Disposition'))
-    //     const url = URL.createObjectURL(blob);
-    //     const a = document.createElement('a');
-    //     a.href = url;
-    //     a.download = filename;
-    //     a.click();
-    //     URL.revokeObjectURL(url);
-    // })
+      fileLen += value.byteLength;
+      progress = fileLen / contentLength * 100;
+      console.log('progress', progress, 'fileLen', fileLen, 'contentLength', contentLength)
+      chunk.push(value);
+    }
+    const blob = new Blob(chunk);
+    //   const match=res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/);
+    //   const filename=match?.[1] || 'aaa.svg';
+    const filename = res.headers.get('Content-Disposition')?.split('=')[1]?.trim().replace(/"/g, '') || 'aaa.svg';
+    console.log(filename, 'filename', res.headers.get('Content-Disposition'))
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  })
+  //     const blob=await res.blob();
+  //     const filename=res.headers.get('Content-Disposition')?.split('=')[1]?.trim().replace(/"/g,'') || 'aaa.svg';
+  //     console.log(filename,'filename',res.headers.get('Content-Disposition'))
+  //     const url = URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     a.download = filename;
+  //     a.click();
+  //     URL.revokeObjectURL(url);
+  // })
 }
 </script>
 
@@ -129,7 +131,15 @@ const handleDownLoad=()=>{
           <t-form-item label="动态搜索" name="virtualSelect">
             <t-select v-bind="selectProps"></t-select>
           </t-form-item>
-
+          <t-form-item label="启用" name="enable">
+            <t-switch v-model="formData.enable" :label="['启用','禁用']"></t-switch>
+          </t-form-item>
+           <t-form-item label="连接类型" name="concatType" v-show="formData.enable">
+              <t-radio-group v-model="formData.concatType">
+                <t-radio value="0">前缀</t-radio>
+                <t-radio value="1">后缀</t-radio>
+              </t-radio-group>
+          </t-form-item>
           <t-form-item>
             <t-button type="submit" theme="primary">提交</t-button>
           </t-form-item>
@@ -140,22 +150,22 @@ const handleDownLoad=()=>{
         <template #panel>
 
           <div class="bg-white p-4">
-            <Collapse >
-                <CollapsePanel value="1" header="选项1">
-               <Collapse >
-                            <CollapsePanel value="1" header="选项1-1"></CollapsePanel>
-                            <CollapsePanel value="2" header="选项1-2"></CollapsePanel>
-                          </Collapse>
-                    <template #headerRight>
-                        <t-button theme="primary" size="small">添加</t-button>
-                    </template>
-                </CollapsePanel>
-                <CollapsePanel value="2" header="选项2">
-                    <p>选项2的内容</p>
-                                      <template #headerRight>
-                        <t-button theme="primary" size="small">添加</t-button>
-                    </template>
-                </CollapsePanel>
+            <Collapse>
+              <CollapsePanel value="1" header="选项1">
+                <Collapse>
+                  <CollapsePanel value="1" header="选项1-1"></CollapsePanel>
+                  <CollapsePanel value="2" header="选项1-2"></CollapsePanel>
+                </Collapse>
+                <template #headerRight>
+                  <t-button theme="primary" size="small">添加</t-button>
+                </template>
+              </CollapsePanel>
+              <CollapsePanel value="2" header="选项2">
+                <p>选项2的内容</p>
+                <template #headerRight>
+                  <t-button theme="primary" size="small">添加</t-button>
+                </template>
+              </CollapsePanel>
             </Collapse>
           </div>
         </template>
