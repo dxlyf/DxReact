@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {SearchForm,type SearchField} from '@/views/example/tdesign/components/FSearchForm/index'
 import { TdSelectProps } from 'tdesign-vue-next'
-import { shallowRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 const columns=shallowRef<SearchField[]>([{
     name:'name',
     type:'t-input',
@@ -45,6 +45,13 @@ const handleReset=(params:any)=>{
 const spans=shallowRef(12)
 const syncParamsToUrl=shallowRef(false)
 const defaultColumns=shallowRef(4)
+const autoReponse=shallowRef(true)
+const showColumns=computed(()=>{
+    if(autoReponse.value){
+        return 
+    }
+   return defaultColumns.value
+})
 const collapseShowRows=shallowRef(1)
 const addColumn=()=>{
     columns.value=columns.value.concat({
@@ -71,11 +78,12 @@ const addColumn=()=>{
     </div>
     <div>
 
-        <t-input-number v-model="defaultColumns" :min="1" :max="12" :step="1" />
+        <t-input-number v-model="defaultColumns" :min="1" :max="12" :step="1" :disabled="autoReponse" />
+        <t-checkbox v-model="autoReponse">自动响应</t-checkbox>
     </div>
     <div>
         <t-input-number v-model="collapseShowRows" :min="1" :step="1" />
     </div>
-    <SearchForm class="bg-white p-4 mt-4 rounded-sm" :mounted-query="true" :collapse-show-rows="collapseShowRows" :default-columns="defaultColumns" :spans="spans" :sync-params-to-url="syncParamsToUrl" @search="handleSubmit" @reset="handleReset" :columns="columns">
+    <SearchForm class="bg-white p-4 mt-4 rounded-sm" :mounted-query="true" :collapse-show-rows="collapseShowRows" :default-columns="showColumns" :spans="spans" :sync-params-to-url="syncParamsToUrl" @search="handleSubmit" @reset="handleReset" :columns="columns">
     </SearchForm>
 </template>
