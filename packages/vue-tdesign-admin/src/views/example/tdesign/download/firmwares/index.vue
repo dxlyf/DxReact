@@ -4,7 +4,7 @@ import { computed, reactive, ref, shallowRef } from 'vue';
 import Table from '@/views/example/tdesign/components/FTable/index.vue'
 import { type TableProps } from 'tdesign-vue-next';
 import { useTable } from '@/views/example/tdesign/hooks/useTable';
-import { useRouter } from 'vue-router'
+import { useRouter,RouterLink } from 'vue-router'
 import { confirm,confirmDelete,delay } from '@/views/example/tdesign/util'
 import {SearchForm,type SearchField} from '@/views/example/tdesign/components/FSearchForm'
 import TableAction from '@/views/example/tdesign/components/FTable/TableAction.vue'
@@ -127,9 +127,11 @@ const handleSearch=(params:any)=>{
 const handleCreate=()=>{
     router.push({path:'./firmwares/new'})
 }
-const handleEdit=(row:TableDataRecord)=>{
+const handleEdit=(row:TableDataRecord,e:MouseEvent)=>{
    // console.log('handleEdit',row)
     router.push({path:'./firmwares/edit',query:{id:row.id}})
+    e.preventDefault()
+    console.log('e',e)
 }
 
 const handleDelete=(row:TableDataRecord)=>{
@@ -202,7 +204,8 @@ const actions=[
         <Table v-bind="tableProps" :columns="columns">
 
             <template #slug="{ row }">
-                <t-link class="!inline" theme="primary" href="/example/tdesign/download/firmwares">{{ row.slug||'-'}}</t-link>
+                <!-- <RouterLink :to="`/firmwares/${row.id}`">{{ row.slug||'-' }}</RouterLink> -->
+                <t-link class="!inline" @click="(e)=>handleEdit(row,e)" theme="primary" :href="`/firmwares/edit?id=${row.id}&l=1`">{{ row.slug||'-'}}</t-link>
                 <!-- <a class="not-hover:text-blue-500 hover:underline" :href="`https://www.baidu.com?wd=${row.slug}`">{{ row.slug }}</a> -->
             </template>
 

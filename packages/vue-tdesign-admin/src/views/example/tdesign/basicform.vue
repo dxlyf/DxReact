@@ -6,6 +6,8 @@ import Collapse from './components/FCollapse/index.vue'
 import CollapsePanel from './components/FCollapse/CollapsePanel.vue'
 import { useSelect } from './hooks/useSelect'
 import axios from 'axios'
+import type { FormProps } from 'tdesign-vue-next'
+import { useTitle } from 'src/hooks/useTitle'
 const activeTabKey = ref(1)
 
 const formData = reactive<any>({
@@ -14,17 +16,32 @@ const formData = reactive<any>({
     label: '选项2'
   },
   enabled: false,
-  concatType:'0'
+  concatType:'0',
+  linkType:'relative',
+  linkUrl:''
 })
 
 
 const selectOptions = ref([])
 
 
-const rules = {
+const rules:FormProps['rules'] = {
   virtualSelect: [{
     required: true,
     message: '请选择动态搜索'
+  }],
+  linkUrl:[{
+     validator:(val,{formData})=>{
+        if(formData.linkType==='absolute'){
+            if(val&&!val.toLowerCase().startsWith('http')){
+                return {
+                  result:false,
+                  message:'请输入正确的绝对链接'
+                }
+            }
+        }
+        return true
+     }
   }]
 }
 const handleSubmit = async (e: any) => {
@@ -119,18 +136,43 @@ const handleDownLoad = () => {
   //     URL.revokeObjectURL(url);
   // })
 }
+
+const LinkTypeOptions = ref([
+  {
+    label: '相对',
+    value: 'relative'
+  },
+  {
+    label: '绝对',
+    value: 'absolute'
+  }
+])
+
+const title=ref('基础表单')
+useTitle(title)
+const handleCahngeTab=(val:number)=>{
+    title.value=`基础表单${val}`
+}
 </script>
 
 <template>
 
   <div>
-    <t-tabs v-model="activeTabKey">
+    <t-tabs v-model="activeTabKey" @change="handleCahngeTab">
       <t-tab-panel :value="1" label="基础信息">
         <t-form @submit="handleSubmit" :rules="rules" :data="formData" ref="formRef" class="w-full">
           <t-button @click="handleDownLoad">下载</t-button>
           <t-form-item label="动态搜索" name="virtualSelect">
             <t-select v-bind="selectProps"></t-select>
           </t-form-item>
+          <div class="flex">
+            <t-form-item label="链接类型" name="linkType">
+              <t-select :options="LinkTypeOptions" v-model="formData.linkType"></t-select>
+            </t-form-item>
+              <t-form-item label="链接地址" name="linkUrl">
+              <t-input v-model="formData.linkUrl" placeholder="请输入链接地址"></t-input>
+            </t-form-item>
+          </div>
           <t-form-item label="启用" name="enable">
             <t-switch v-model="formData.enable" :label="['启用','禁用']"></t-switch>
           </t-form-item>
