@@ -1,6 +1,9 @@
 import { unref,toValue,type MaybeRefOrGetter, computed, shallowReactive} from 'vue'
 import type {DialogProps} from 'tdesign-vue-next'
 export type UseDialogProps={
+    autoHeight?:boolean
+    enableMaxHeight?:boolean
+    margin?:[number,number]
 }&Partial<DialogProps>
 
 export const useDialog=(props:()=>UseDialogProps)=>{
@@ -20,11 +23,22 @@ export const useDialog=(props:()=>UseDialogProps)=>{
         close()
     }
     const dialogProps=computed(()=>{
-        const {...restDialogProps}= toValue(props)
+        const {autoHeight=true,top,margin=[50,50],dialogStyle={},enableMaxHeight=true,...restDialogProps}= toValue(props)
 
         return {
-            width:'60%',
+           //600 width:'60%',
             attach:'body',
+            dialogClassName:'f-dialog-wrap',
+            dialogStyle:autoHeight?{
+                [enableMaxHeight?'maxHeight':'height']:`calc(100vh - ${Math.floor(margin[0]+margin[1])}px)`,
+                display:'flex',
+                flexDirection:'column',
+                ...dialogStyle
+                
+            }:{
+                ...dialogStyle
+            },
+            top:autoHeight?margin[0]:top,
             visible:state.visible,
             closeOnEscKeydown:false,
             closeOnOverlayClick:false,

@@ -197,7 +197,7 @@ const actions=[
     <MainLayout layout='list' show-lang title="固件列表" :breadcrumb-options="breadcrumbOptions">
         <template #operation>
             <t-space>
-                <t-button theme="primary" @click="handleCreate">新增</t-button>
+                <t-button themtexe="primary" type="" @click="handleCreate">新增</t-button>
             </t-space>
         </template>
         <SearchForm :columns="searchColumns" @change="handleSearch"></SearchForm>

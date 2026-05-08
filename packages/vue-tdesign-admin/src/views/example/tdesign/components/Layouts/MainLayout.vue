@@ -100,3 +100,8 @@ defineSlots<{
         </template>
     </div>
 </template>
+<style>
+    .f-dialog-wrap .t-dialog__body{
+        flex:auto;
+    }
+</style>

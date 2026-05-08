@@ -19,11 +19,12 @@
     }
     const obj=computed(()=>props.data)
     const translationData=computed(()=>props.translationData)
+    
     provide('REUSE_ENGLISH_CONTEXT',{
         // 判断是否显示复用英语提示
         data:obj,
         translationData:translationData,
-        checkVisible:(name:string)=>{
+        isVisible:(name:string)=>{
             const obj=props.data
             const translationData=props.translationData
             const translationMissing=translationData&&isNullOrUndefined(getObjValue(translationData,name))||isNullOrUndefined(obj?.id)

@@ -41,8 +41,8 @@ const stateOptions = shallowRef<Option[]>([])
 const listStyle=computed(()=>{
     const height=props.itemRows*props.rowHeight
     return {
-        height:height+'px',
-        maxHeight:height+'px',
+     //  height:height+'px',
+      // maxHeight:height+'px',
     }
 })
 const finalOptions = computed(() => {
@@ -67,7 +67,8 @@ const [dialogProps,dialogInst]=useDialog(()=>{
     return {
         header:props.title,
         attach:'body',
-        width:600
+        width:600,
+        //enableMaxHeight:false
     }
 })
 const selectedValuesSet = computed(() => {
@@ -147,7 +148,7 @@ const handleSelect = (checked: boolean, value: any) => {
             </t-button>
         </slot>
         <t-dialog v-bind="dialogProps">
-            <div class="flex flex-col">
+            <div class="flex flex-col max-h-full h-full">
                 <div class="mb-2"><t-input  @change="handleSearch" :value="searchText" class="bg-gray-300" clearable placeholder="搜索">
                         <template #label>
                             <t-icon name="search"></t-icon>
@@ -155,7 +156,7 @@ const handleSelect = (checked: boolean, value: any) => {
                     </t-input></div>
                 <t-loading size="small" loading v-if="loading" text="加载数据中..." />
                 <t-list v-else  :scroll="{ isFixedRowHeight: true, type: 'virtual', rowHeight: rowHeight, bufferSize: itemRows }"
-                    class="flex-1" :style="listStyle" layout="vertical">
+                    class="flex-1 min-h-0" :style="listStyle" layout="vertical">
                     <t-list-item v-for="item in filterOptions" :key="item[valueField]">
                         <slot name="item" :select="handleSelect" :checked="selectedValuesSet.has(item[valueField])" :item="item">
                         <div class="flex gap-2">

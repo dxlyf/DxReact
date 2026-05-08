@@ -1,43 +1,54 @@
-import {type MaybeRefOrGetter,ref,onMounted,onUnmounted,toValue,watch, Ref, MaybeRef, unref,toRaw} from 'vue'
+import { type MaybeRefOrGetter, ref, onMounted, onUnmounted, toValue, watch, Ref, MaybeRef, unref, toRaw } from 'vue'
 
-export type UseTitleOptions={
-    restoreOnUnmount?:boolean
+export type UseTitleOptions = {
+    restoreOnUnmount?: boolean
+    delay?: number
 }
-export const useTitle2=(title:MaybeRefOrGetter<string>,options:UseTitleOptions={restoreOnUnmount:true})=>{
-    const {restoreOnUnmount=true}=options
-    const titleRef=ref(document.title)
-    const updatePageTitle=()=>{
-        document.title=toValue(title)
+export const useTitle2 = (title: MaybeRefOrGetter<string>, options: UseTitleOptions = { restoreOnUnmount: true }) => {
+    const { restoreOnUnmount = true, delay = -1 } = options
+    const titleRef = ref(document.title)
+    let timeId: any = 0
+    const updatePageTitle = () => {
+        document.title = toValue(title)
     }
-    onMounted(updatePageTitle)
-    watch(()=>toValue(title),()=>{
-        updatePageTitle()
-    },{
-        flush:'post'
+    onMounted(() => {
+        if (delay >= 0) {
+            timeId = setTimeout(() => {
+                updatePageTitle()
+            }, delay)
+        } else {
+            updatePageTitle()
+        }
     })
-    onUnmounted(()=>{
-        if(restoreOnUnmount){
-            document.title=titleRef.value
+    watch(() => toValue(title), () => {
+        updatePageTitle()
+    }, {
+        flush: 'post'
+    })
+    onUnmounted(() => {
+        clearTimeout(timeId)
+        if (restoreOnUnmount) {
+            document.title = titleRef.value
         }
     })
 }
 
-export const useTitle=(title:MaybeRef<string>,options:UseTitleOptions={})=>{
-    const {restoreOnUnmount=true}=options
-    const titleRef=ref(document.title)
-    const updatePageTitle=()=>{
-        document.title=unref(title)
+export const useTitle = (title: MaybeRef<string>, options: UseTitleOptions = {}) => {
+    const { restoreOnUnmount = true } = options
+    const titleRef = ref(document.title)
+    const updatePageTitle = () => {
+        document.title = unref(title)
     }
-    
+
     onMounted(updatePageTitle)
-    watch(()=>unref(title),()=>{
+    watch(() => unref(title), () => {
         updatePageTitle()
-    },{
-        flush:'post'
+    }, {
+        flush: 'post'
     })
-    onUnmounted(()=>{
-        if(restoreOnUnmount){
-            document.title=titleRef.value
+    onUnmounted(() => {
+        if (restoreOnUnmount) {
+            document.title = titleRef.value
         }
     })
 
