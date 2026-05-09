@@ -272,6 +272,13 @@ const defaultRoutes: RouteRecordRaw[] = [
             path: 'tdesign',
             children: [
               {
+                path: 'select',
+                component: () => import('../views/example/tdesign/select/index.vue'),
+                meta: {
+                  menuName: '下拉框',
+                  icon: 'table'
+                }
+              },{
                 path: 'searchform',
                 component: () => import('../views/example/tdesign/searchform.vue'),
                 meta: {
@@ -335,7 +342,7 @@ const defaultRoutes: RouteRecordRaw[] = [
                 ]
               },{
                 path: 'basicform',
-                component: () => import('../views/example/tdesign/basicform.vue'),
+                component: () => import('../views/example/tdesign/basicform/index.vue'),
                 meta: {
                   title: '基本表单',
                   menuName: '基本表单',

@@ -28,7 +28,7 @@ const model=defineModel<DownloadVersionDTO>()
     <t-form-item label="发布时间" :name="`${prefix}.releaseAt`">
         <t-date-picker v-model="model.releaseAt" format="YYYY-MM-DD" />
     </t-form-item>
-    <t-form-item label="适用国家" :name="`${prefix}.countries`" :rules="[{required:true,message:'请选择适用国家'}]">
+    <t-form-item label="适用国家" :name="`${prefix}.countries`" :rules="[{required:false,message:'请选择适用国家'}]">
         <CountrySelect v-model="model.countries" />
     </t-form-item>
 </template>

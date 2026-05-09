@@ -15,11 +15,13 @@ type Props = {
     },
     valueType?:string
     modelValue?:any
+    defaultSelectedIndex?:number|number[]
 }
 const props = withDefaults(defineProps<Props>(), {
     debounce: 1000,
     multiple: false,
     manualRequest: false,
+    defaultSelectedIndex:-1,
     defaultOptions:()=>[],
     keys:()=>({
         label:'label',
@@ -31,6 +33,15 @@ const attrs = useAttrs()
 const options = shallowRef<any[]>([])
 const modelValue=defineModel<any>()
 const valueSet=new Set()
+
+const setModelValue=(selected:any[])=>{
+    const mapValue=props.valueType==='object'?selected.map(item=>({...item})):selected.map(item=>getItemValue(item))
+    if(props.valueType==='object'){
+        modelValue.value=selected.length<=0?[]:(props.multiple?mapValue:mapValue[0])
+    }else{
+        modelValue.value=selected.length<=0?undefined:(props.multiple?mapValue:mapValue[0])
+    }
+}
 const getItemValue=(item:any)=>{
     return item[props.keys.value]
 }
@@ -71,11 +82,22 @@ const displayOptions = computed(() => {
     }
     return headOptions.concat(curOptions)
 })
+const formatShowLabel=(item:any)=>{
+    return props.formatLabel?.(item) || getLabel(item)
+}
 const formatDisplayOptions=computed(()=>{
     return displayOptions.value.map(item=>{
         return {
             ...item,
-            label:props.formatLabel?.(item) || getLabel(item)
+            label:getLabel(item),
+            value:getItemValue(item),
+            content:()=>formatShowLabel(item)
+           // label:props.formatLabel?.(item) || getLabel(item)
+        //    slots:{
+        //        default:()=>{
+        //          return formatShowLabel(item)
+        //        }
+        //    }
         }
     })
 })
@@ -106,6 +128,7 @@ const request = async (keyword:string,loadMore:boolean=false) => {
         options.value.forEach(item=>{
             valueSet.add(getItemValue(item))
         })
+        return data
     }catch(err){
         pagination.current = 1
         pagination.total = 0
@@ -136,7 +159,7 @@ const handlePageChange = ({ current, pageSize }: { current: number, pageSize: nu
 }
 
 const selectProps = computed<TdSelectProps>(() => {
-    const {filterable,...restAttrs}=attrs
+    const {filterable,tagProps,...restAttrs}=attrs
     const curOptions=formatDisplayOptions.value
     return {
         ...(props.request ? {
@@ -165,18 +188,45 @@ const handlePopVisible=(visible:boolean)=>{
     }
 }
 const handleScrollToBottom=()=>{
-    console.log('handleScrollToBottom',pagination.current,pagination.totalPages)
+   // console.log('handleScrollToBottom',pagination.current,pagination.totalPages)
     if(!loading.value&&pagination.current<pagination.totalPages){
         pagination.current++
         request(lastParams.curent,true)
     }
 }
-
+const handleClose =(index: number, onClose: (index: number) => void) =>
+({ e }: { e: MouseEvent }) => {
+    e.stopPropagation();
+    onClose(index);
+};
+onMounted(()=>{
+    if(Array.isArray(props.defaultSelectedIndex)&&props.defaultSelectedIndex.length>0){
+        const selectedIndexes=props.defaultSelectedIndex as number[]
+        request('').then(d=>{ 
+             if(options.value&&options.value.length>0){
+                setModelValue(options.value.filter((d,i)=>selectedIndexes.includes(i)))
+             }
+        })
+    }else if(typeof props.defaultSelectedIndex==='number'&&props.defaultSelectedIndex>=0){
+        const selectedIndex=props.defaultSelectedIndex as number
+       request('').then(d=>{
+             if(options.value&&options.value.length>selectedIndex){
+                setModelValue([options.value[selectedIndex]])
+             }
+        })
+    }
+})
 </script>
 
 
 <template>
-    <t-select :popup-props="{ 'onScrollToBottom': handleScrollToBottom}" v-bind="selectProps"  v-model="modelValue" @popup-visible-change="handlePopVisible">
+    <t-select  :popup-props="{ 'onScrollToBottom': handleScrollToBottom}" v-bind="selectProps"  v-model="modelValue" @popup-visible-change="handlePopVisible">
+     <template v-if="multiple" #valueDisplay="{ value, onClose }">
+        <t-tag v-for="(item, index) in value" :key="index" :closable="true" :on-close="handleClose(index, onClose)">
+          {{formatShowLabel(item) }}
+        </t-tag>
+      </template>
+      <template v-else #valueDisplay="item"> {{formatShowLabel(item)}} </template>
         <template #panelTopContent>
             <div>
                 <!-- <div style="padding: 6px 6px 0 6px">

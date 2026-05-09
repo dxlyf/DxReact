@@ -68,7 +68,7 @@ const [dialogProps,dialogInst]=useDialog(()=>{
         header:props.title,
         attach:'body',
         width:600,
-        //enableMaxHeight:false
+        enableMaxHeight:false
     }
 })
 const selectedValuesSet = computed(() => {

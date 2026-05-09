@@ -22,7 +22,7 @@ type LocaleContentItem = Record<string, string>
 type FormData = {
     id?: string
     slug: string
-    productTitle: string
+    productTitle: {value:string,label:string}
     productTitleId?: number
     firmwareCategoryId: string
     stopUpdating: boolean
@@ -77,7 +77,7 @@ const route=useRoute()
 const createFormData = (): FormData => {
     return {
         slug: '',
-        productTitle: '',
+        productTitle: {},
         productTitleId: undefined,
         firmwareCategoryId: '',
         stopUpdating: false,
@@ -100,7 +100,7 @@ const [detail, detailInst] = useRequest({
         return {
             id: 1,
             slug: 'firmware1',
-            productTitle: '固件1',
+            productTitle: {},
             productTitleId: 1,
             firmwareCategoryId: 'category1',
             stopUpdating: false,
@@ -110,7 +110,7 @@ const [detail, detailInst] = useRequest({
             version: '1.0.0',
             url: 'https://www.baidu.com',
             releaseAt: '2023-01-01',
-            products: [{ value: '1', label: '产品1' }],
+            products:[],// [{ value: '1', label: '产品1' }],
             downloadVersions: [{ version: '1.0.0', url: 'https://www.baidu.com' }],
             documents: [{ categoryId: 'category1', linksAttributes:[
                 {
@@ -146,14 +146,15 @@ const [detail, detailInst] = useRequest({
     }
 })
 
-const productData=Array.from({length:100},(item,index)=>({
+const productData=Array.from({length:1000},(item,index)=>({
     label:`产品${index+1}`,
     value:(index+1)+''
 }))
-const handleRequestProduct=({keywork,current,pageSize})=>{
+const handleRequestProduct=({keyword,current,pageSize})=>{
          let data=productData
-        if(keywork){
-            data=productData.filter(item=>item.label.includes(keywork))
+        if(keyword){
+          
+            data=productData.filter(item=>item.label.includes(keyword))
         }
         return {
             total:data.length,
@@ -174,9 +175,9 @@ const rules: TdFormProps['rules'] = {
             }
         }
     }],
-    publishAt: [{ required: true, message: '请选择发布时间' }],
-    products: [{ required: true, message: '请选择关联产品' }],
-    url: [{ pattern: /^https?:\/\//, message: '下载链接地址：请以http或https协议开头' }]
+   // publishAt: [{ required: true, message: '请选择发布时间' }],
+ //   products: [{ required: true, message: '请选择关联产品' }],
+  //  url: [{ pattern: /^https?:\/\//, message: '下载链接地址：请以http或https协议开头' }]
 }
 
 const [productState, productStateInst] = useRequest({
@@ -314,9 +315,9 @@ const formatlabel=(item:any)=>{
                             仅可用英文、数字、下划线和短横线
                         </template>
                     </t-form-item>
-                    <t-form-item label="关联产品标题" name="productTitleId">
-                        <t-select :scroll="{ type: 'virtual' }" v-model="formData.productTitleId"
-                            :options="productState.data" filterable />
+                    <t-form-item label="关联产品标题" name="productTitle">
+                    
+                    <FSelectPagination :default-selected-index="0" :format-label="formatlabel" v-model="formData.productTitle" :request="handleRequestProduct"  />
                     </t-form-item>
                     <t-form-item label="固件分类" name="firmwareCategoryId">
                         <t-select :scroll="{ type: 'virtual' }" v-model="formData.firmwareCategoryId"
@@ -350,7 +351,7 @@ const formatlabel=(item:any)=>{
                         <t-date-picker format="YYYY-MM-DD" v-model="formData.releaseAt" />
                     </t-form-item>
                     <t-form-item label="关联产品" name="products">
-                            <FSelectPagination :format-label="formatlabel" v-model="formData.products" :request="handleRequestProduct" :multiple="true" />
+                            <FSelectPagination :default-selected-index="[0,1]" :format-label="formatlabel" v-model="formData.products" :request="handleRequestProduct" :multiple="true" />
                     </t-form-item>
                     <div></div>
                 </t-collapse-panel>
