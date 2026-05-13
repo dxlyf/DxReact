@@ -1,7 +1,9 @@
 <template>
+   <t-config-provider :global-config="globalConfig">
     <router-view v-slot="{Component,route}">
         <component :is="Component" />
     </router-view>
+    </t-config-provider>
 </template>
 <style scoped>
 .fade-enter-from,
@@ -15,11 +17,18 @@
 </style>
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import {provide, shallowRef} from 'vue'
+import {provide, shallowReactive, shallowRef,h, defineComponent} from 'vue'
+import dayjs from 'dayjs'
+import {DatePicker} from 'tdesign-vue-next'
 const router = useRouter()
 const langKey='lang'
 const langRef=shallowRef([])
 provide(langKey,langRef)
+const globalConfig=shallowReactive({
+  datePicker:{
+     defaultTime:dayjs().format('HH:mm:ss')
+  }
+})
 
 const delay=(time:number)=>new Promise((resolve)=>setTimeout(resolve,time))
 let loaind=false

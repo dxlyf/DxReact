@@ -1,5 +1,6 @@
 <script setup lang="ts">
 
+import dayjs from 'dayjs'
 import type { FormProps,FormInstanceFunctions } from 'tdesign-vue-next'
 import { reactive, ref, shallowRef, toRaw ,watch} from 'vue'
 
@@ -10,12 +11,14 @@ const formData = reactive<{
   linkUrl:string
   concatType:string
   enableEnable:string
+  currentDateTime:string
 }>({
     slug:'',
   linkType:'relative',
   linkUrl:'',
   concatType:'1',
-  enableEnable:'1'
+  enableEnable:'1',
+  currentDateTime:''
 })
 
 const formRef=shallowRef<FormInstanceFunctions>()
@@ -101,6 +104,9 @@ watch(()=>formData.linkType,(val)=>{
         </t-radio-group>
         </t-form-item>
        </div>
+       <t-form-item label="当前日期时间选择" name="currentDateTime" class="flex-1">
+            <t-date-picker  v-model="formData.currentDateTime" enable-time-picker format="YYYY-MM-DD HH:mm:ss" />
+        </t-form-item>
        <t-button theme="primary" type="submit">提交</t-button>
     </t-form>
 

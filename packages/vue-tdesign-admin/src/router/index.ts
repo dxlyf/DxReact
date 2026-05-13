@@ -464,6 +464,33 @@ const defaultRoutes: RouteRecordRaw[] = [
                   menuName: '视频相关',
                   icon: 'table'
                 }
+              },
+              {
+                path: 'product_comparison',
+                children: [{
+                    path: 'key_feature_categories',
+                    redirect: '/example/tdesign/product_comparison/key_feature_categories/index',
+                    children: [
+                    {
+                      path: 'index',
+                      component: () => import('../views/example/tdesign/product_comparison/key_feature_categories/index.vue'),
+                      meta: {
+                        title: '关键特性分类',
+                        menuName: '关键特性分类',
+                        icon: 'table'
+                      }
+                    },
+                    {
+                      path: 'new',
+                      component: () => import('../views/example/tdesign/product_comparison/key_feature_categories/new.vue'),
+                    }
+                  ]
+                }],
+                meta: {
+                  title: '产品对比',
+                  menuName: '产品对比',
+                  icon: 'table'
+                }
               }
             ],
             meta: {

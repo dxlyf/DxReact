@@ -504,8 +504,9 @@ const testDirectoryPicker = async () => {
         const files = Array.from({ length: fileCount }, (v, i) => `__test_concurrent_${i}.ts`)
         log(2, `准备并发写入${fileCount}个文件`)
         const errors = []
-        await Promise.all(files.map(async (file) => {
+        await Promise.all(files.map(async (file,index) => {
             try {
+                console.log(`(${index})并发写入文件 ${file}`)
                 const fileHandle = await getFileHandleWithTimeout(dirHandle, file, { create: true })
                 const w = await fileHandle.createWritable()
                 await w.write(`// test file concurrent ${file}\n export const value=${Date.now()};\n`)
@@ -518,7 +519,7 @@ const testDirectoryPicker = async () => {
         }))
         if (errors.length > 0) {
             log(3, `❌ 并发写入 ${errors.length}/${fileCount}  个文件写入失败`)
-            console.tab(errors)
+            console.table(errors)
             log(4, `⚠ 确认是并发写入 + 外部程序干扰导致的问题`)
         } else {
             log(3, `✅ 并发全部 ${fileCount} 个文件写入成功`)
@@ -536,6 +537,7 @@ const testDirectoryPicker = async () => {
         const errors2 = []
         for (const [i, name] of files.entries()) {
             try {
+                console.log(`(${i})串行写入文件 ${name}`)
                 const fh = await getFileHandleWithTimeout(dirHandle, name, { create: true })
                 const w = await fh.createWritable()
                 await w.write(`// test file serial ${name}\n export const value=${Date.now()};\n`)

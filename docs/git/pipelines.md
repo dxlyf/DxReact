@@ -199,3 +199,88 @@ workflow:
 > 只在不影响代码逻辑的提交时使用（文档、注释、格式），**永远不要用它来绕过必要的测试**。
 
 如果你还想了解 CI/CD 流程的完整设计（比如如何配置 `.gitlab-ci.yml` 或 GitHub Actions），或者想知道更多 Git 推送选项的用法，随时告诉我！
+
+
+在 `git merge` 过程中，如果遇到冲突或需要编辑合并信息，通常会打开一个文本编辑器（默认可能是 **Vim**、**Nano** 或 **VS Code** 等）。以下是常见编辑器的退出方法：
+
+## 最常见的情况：Vim 编辑器
+
+如果界面底部显示 `~` 波浪号，没有任何提示文字，那就是 **Vim**：
+
+```bash
+# 方法1：保存并退出
+:wq
+# 然后按 Enter
+
+# 方法2：强制保存并退出（如果只读文件）
+:wq!
+# 然后按 Enter
+
+# 方法3：不保存退出（取消合并）
+:q!
+
+# 方法4：保存并退出（等效命令）
+:x
+```
+
+**步骤**：
+1. 按 `Esc` 键（确保退出输入模式）
+2. 输入冒号 `:`
+3. 输入 `wq` 或 `q!`
+4. 按 `Enter`
+
+## Nano 编辑器
+
+如果底部显示文件操作命令（`^X Exit` 等）：
+
+```bash
+# 保存并退出
+Ctrl + X   # 退出
+Y          # 确认保存
+Enter      # 确认文件名
+
+# 不保存退出
+Ctrl + X
+N          # 不保存
+```
+
+## VS Code 或其他图形编辑器
+
+直接关闭编辑器窗口或点击保存按钮。
+
+## 查看当前编辑器类型
+
+```bash
+# 查看 git 配置的默认编辑器
+git config core.editor
+
+# 查看全局编辑器
+git config --global core.editor
+```
+
+## 预防措施：修改默认编辑器
+
+如果不想进入 Vim，可以设置成更熟悉的编辑器：
+
+```bash
+# 设置为 Nano（简单）
+git config --global core.editor "nano"
+
+# 设置为 VS Code
+git config --global core.editor "code --wait"
+
+# 设置为 Sublime Text
+git config --global core.editor "subl -n -w"
+```
+
+## 其他合并相关退出场景
+
+```bash
+# 如果合并信息已写好，只需保存并退出（Vim 中 :wq）
+# 编辑器中可以修改合并提交信息，删掉冲突说明即可
+
+# 如果不想进行这次合并：
+git merge --abort  # 放弃合并，回到合并前状态
+```
+
+**最简单的办法**：如果看到 Vim，按 `Esc` 键，然后输入 `:wq` 再按 `Enter` 即可保存并退出。
