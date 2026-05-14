@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { nextTick, reactive, ref, shallowRef, toRaw, toValue, unref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, shallowRef, toRaw, toValue, unref, watch } from 'vue'
 import { useLang } from '@/hooks/useLang'
 import { useDialog } from '@/hooks/useDialog'
 import { FormInstanceFunctions } from 'tdesign-vue-next'
 import { cloneDeep, isObject } from 'lodash-es'
 import {storeToRefs} from 'pinia'
+import { useNormalizedModel } from 'src/hooks/useNormalizedModel2'
 type Props = {
     title: string
     btnText?: string
@@ -31,7 +32,7 @@ const [allLang] = useLang()
 const formRef = shallowRef<FormInstanceFunctions>()
 const model = defineModel<Record<string, any>>({ default: () => ({}) })
 const formData = ref({})
-
+const innerValue=ref({})
 const bindInitialValue = (allLang:any[]) => {
  //   console.log('bindInitialValue', allLang)
     const value = toRaw(model.value)
@@ -46,23 +47,49 @@ const bindInitialValue = (allLang:any[]) => {
     })
     formData.value = initialValue
 }
-watch(model, (val) => {
-    console.log('model.value',toRaw(val))
-    
+
+useNormalizedModel(model,{
+    defaults:computed(()=>{
+        return allLang.value.reduce((prev, cur) => {
+            prev[cur.value] = ''
+            return prev
+        }, {})
+    })
 })
-watch(() => allLang.value, async (val) => {
-    if (val) {
-        bindInitialValue(val)
-        if(props.initValue){
-            const data=cloneDeep(toRaw(formData.value))
-        //    Object.assign(model.value,data)
-           // emit('update:modelValue',data)
-           model.value=data
-         //  await nextTick()
-           console.log('initValue',toRaw(model.value),data)
-        }
-    }
-},{immediate:true})
+
+
+// 监听 model 变化，确保结构完整
+// watch(
+//   () => model.value,
+//   (newVal) => {
+//     if (newVal) {
+//       // 如果缺少某些属性，补充默认值
+//       const fullValue ={}
+//       // 只有值发生变化时才更新，避免无限循环
+//       if (JSON.stringify(newVal) !== JSON.stringify(fullValue)) {
+//         model.value = fullValue
+//       }
+//     }
+//   },
+//   { immediate: true, deep: true }
+// )
+// watch(() => allLang.value, async (val) => {
+//     if (val) {
+//         bindInitialValue(val)
+//         if(props.initValue){
+//             const data=cloneDeep(toRaw(formData.value))
+//         //    Object.assign(model.value,data)
+//            // emit('update:modelValue',data)
+//         //   console.log('更新model.value-before')
+        
+//            model.value=data
+//           // Object.assign(model.value,data)
+//             // console.log('更新model.value-after')
+//           // await nextTick()
+//           // console.log('initValue','model',toRaw(model.value),'data',data)
+//         }
+//     }
+// },{immediate:true})
 const handleOpen = () => {
 
     bindInitialValue(allLang.value)

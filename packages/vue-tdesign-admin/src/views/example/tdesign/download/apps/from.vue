@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { computed, reactive, shallowReactive, shallowRef, toRaw } from 'vue'
+import { computed, reactive, shallowReactive, shallowRef, toRaw,watchEffect } from 'vue'
 import { useRequest } from 'src/hooks/useRequest2'
 import MainLayout from '@/views/example/tdesign/components/Layouts/MainLayout.vue'
 import UploadImage from '@/views/example/tdesign/components/FUpload/FUploadImage.vue'
@@ -11,6 +11,8 @@ import APPFormItem,{type APPCategoryDTO} from '@/views/example/tdesign/download/
 import { TdFormProps } from 'tdesign-vue-next'
 import {cloneDeep} from 'lodash-es'
 import { request } from 'src/utils/request'
+import { delay } from '../../util'
+
 type LocaleContentItem = Record<string, string>
  
 type FormData = {
@@ -108,9 +110,19 @@ const createFormData = (): FormData => {
 }
 const formData = reactive<FormData>(createFormData())
 const [detail, detailInst] = useRequest({
-    manualRequest: true,
+    manualRequest: false,
     request: async (params) => {
+        await delay(1000)
         return {}
+    },
+    onSuccess(res){
+        console.log('res',res)
+        formData.apk = {
+            ...createAppCategory(),
+            links:{
+                'zh-CN':'ffffdfd'
+            }
+        }
     }
 })
 const rules: TdFormProps['rules'] = {
@@ -159,7 +171,7 @@ const [downloadBaseCategoryState, downloadBaseCategoryStateInst] = useRequest({
     }
 })
 const handleReturn = () => {
-    router.push({ path: './apps' })
+    router.push({ path: '../apps' })
 }
 
 // 工具函数：将嵌套对象转换为 FormData

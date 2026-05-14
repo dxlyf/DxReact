@@ -23,13 +23,13 @@ const model = defineModel<APPCategoryDTO>()
         <t-input v-model:value="model.version"  />
     </t-form-item>
     <t-form-item label="下载链接" :name="`${props.prefix}.links`">
-        <FLanguageFields init-value :rules="[{message:'必须为http',pattern:/^https?:\/\//}]" v-model="model.links" title="下载链接"  btn-text="编辑" />
+        <FLanguageFields init-value :rules="[{message:'必须为http',pattern:/^https?:\/\//}]" v-model="model.links" title="下载链接2"  btn-text="编辑" />
     </t-form-item>
   <t-form-item label="系统信息" :name="`${props.prefix}.systemInfo`">
         <FLanguageFields  v-model="model.systemInfo" title="系统信息"   btn-text="编辑" />
     </t-form-item>
   <t-form-item label="兼容性" :name="`${props.prefix}.compatibility`">
-        <FLanguageFields  v-model="model.compatibility" title="兼容性" btn-text="编辑" />
+        <FLanguageFields v-model="model.compatibility" title="兼容性" btn-text="编辑" />
     </t-form-item>
      <t-form-item label="支持设备" :name="`${props.prefix}.supportingDevice`">
         <FLanguageFields  v-model="model.supportingDevice" type="textarea" title="支持设备"  btn-text="编辑" />
