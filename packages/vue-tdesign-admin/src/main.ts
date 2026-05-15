@@ -7,12 +7,18 @@ import 'ant-design-vue/dist/reset.css';
 import {DatePicker} from 'tdesign-vue-next'
 import TDesign from 'tdesign-vue-next/esm'
 // import 'tdesign-vue-next/esm/style/index.js'
-import 'tdesign-vue-next/es/style/index.css'
+//import 'tdesign-vue-next/es/style/index.css'
 import i18n from './i18n'
 import './style.css'
 import './styles/index.less'
 import './utils/app'
 import dayjs from 'dayjs';
+import TDesignChat from '@tdesign-vue-next/chat'; // 引入 Chat 组件
+
+//import '@tdesign-vue-next/chat/es/style/index.css';
+
+import 'tdesign-vue-next/es/style/index.css'; // 引入少量全局样式变量
+import '@tdesign-vue-next/chat/es/style/index.css';
 // const app=createRenderer({
 //     ...nodeOps,
 //     patchProp:(el,propName,value)=>{
@@ -25,6 +31,7 @@ app.use(router)
 app.use(pinia)
 app.use(TDesign)
 app.use(Antd)
+app.use(TDesignChat)
 
 app.mount('#app')
 // app.component('TDatePicker',defineComponent({

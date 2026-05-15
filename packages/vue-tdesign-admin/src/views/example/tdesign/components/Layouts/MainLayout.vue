@@ -66,7 +66,7 @@ defineSlots<{
                         </slot>
                     </div>
                     <div class="flex-none">
-                        <slot name="actions">
+                        <slot name="operation">
                         </slot>
                     </div>
                 </div>

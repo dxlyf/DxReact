@@ -485,6 +485,29 @@ const defaultRoutes: RouteRecordRaw[] = [
                       component: () => import('../views/example/tdesign/product_comparison/key_feature_categories/new.vue'),
                     }
                   ]
+                },
+                {
+                    path: 'product-features',
+                    redirect: '/example/tdesign/product_comparison/product-features/index',
+                    children: [
+                    {
+                      path: 'index',
+                      component: () => import('../views/example/tdesign/product_comparison/product-features/index.vue'),
+                      meta: {
+                        title: '产品关键特性',
+                        menuName: '产品关键特性',
+                        icon: 'table'
+                      }
+                    },
+                    {
+                      path: 'new',
+                      component: () => import('../views/example/tdesign/product_comparison/product-features/new.vue'),
+                    },
+                    {
+                      path: 'edit',
+                      component: () => import('../views/example/tdesign/product_comparison/product-features/edit.vue'),
+                    }
+                  ]
                 }],
                 meta: {
                   title: '产品对比',

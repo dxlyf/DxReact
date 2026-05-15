@@ -3,6 +3,7 @@ import { ref } from 'vue'
 const activeTabKey = ref(1)
 import ConcatForm from './ConcatForm.vue'
 import CollapsePanel from './CollapsePanel.vue'
+import Chat from './chat.vue'
 
 const tabs=[
   {
@@ -14,6 +15,10 @@ const tabs=[
     label:'面板展开',
     value:2,
     component:CollapsePanel
+  },{
+      label:'聊天',
+      value:3,
+      component:Chat
   }
 ]
 </script>
