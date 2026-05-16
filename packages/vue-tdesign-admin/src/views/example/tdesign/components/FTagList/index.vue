@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
     lineThreshold?: number
     theme?: 'default' | 'primary' | 'warning' | 'danger' | 'success'
 }>(), {
+    theme:'primary',
     maxLines: 2,
     lineThreshold: 5
 })
@@ -93,13 +94,13 @@ onUnmounted(() => {
         <div ref="containerRef" class="tag-container">
             <t-tag v-for="(item, i) in visibleItems" :key="i"
                 variant="light" :theme="theme ?? 'default'" size="small">{{ item }}</t-tag>
-        </div>
-        <div v-if="!expanded && hasMore" class="tag-actions" @click.stop="toggleExpand">
-            <t-tag theme="primary" variant="light" size="small" style="cursor: pointer">+{{ items.length - visibleItems.length }}</t-tag>
-            <t-link theme="primary" size="small">展开</t-link>
-        </div>
-        <div v-else-if="expanded" class="tag-actions" @click="toggleExpand">
-            <t-link theme="primary" size="small">收起</t-link>
+            <div v-if="!expanded && hasMore" class="tag-actions" @click.stop="toggleExpand">
+                <t-tag theme="primary" variant="light" size="small" style="cursor: pointer">+{{ items.length - visibleItems.length }}</t-tag>
+                <t-link theme="primary" size="small">展开</t-link>
+            </div>
+            <div v-else-if="expanded" class="tag-actions" @click="toggleExpand">
+                <t-link theme="primary" size="small">收起</t-link>
+            </div>
         </div>
     </div>
 </template>
@@ -113,7 +114,6 @@ onUnmounted(() => {
 }
 
 .tag-actions {
-    margin-top: 4px;
     display: inline-flex;
     align-items: center;
     gap: 4px;

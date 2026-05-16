@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import MainLayout from 'src/views/example/tdesign/components/Layouts/MainLayout.vue';
 import Table from 'src/views/example/tdesign/components/FTable/index.vue';
+import FTagList from 'src/views/example/tdesign/components/FTagList/index.vue';
 import type { TableProps } from 'tdesign-vue-next';
 import { DialogPlugin } from 'tdesign-vue-next';
 import { useTable } from '../../hooks/useTable';
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
 
 const router = useRouter();
 
@@ -56,7 +56,7 @@ const [tableProps, tableInst] = useTable({
 const columns: TableProps['columns'] = [
   {
     title: '#',
-    colKey: 'rowIndex',
+    colKey: 'serial-number',
     width: 60
   },
   {
@@ -81,27 +81,6 @@ const columns: TableProps['columns'] = [
     width: 160
   }
 ]
-
-const MAX_VISIBLE_TAGS = 10
-
-const expandedRows = ref<Set<number>>(new Set())
-
-const toggleExpand = (id: number) => {
-  const newSet = new Set(expandedRows.value)
-  if (newSet.has(id)) {
-    newSet.delete(id)
-  } else {
-    newSet.add(id)
-  }
-  expandedRows.value = newSet
-}
-
-const visibleFeatures = (row: KeyFeatureCategory) => {
-  if (expandedRows.value.has(row.id)) return row.feature
-  return row.feature.slice(0, MAX_VISIBLE_TAGS)
-}
-
-const hasMoreFeatures = (row: KeyFeatureCategory) => row.feature.length > MAX_VISIBLE_TAGS
 
 const handleCreate = () => {
   router.push({ path: './new' })
@@ -136,9 +115,6 @@ tableInst.query()
       </t-space>
     </template>
     <Table v-bind="tableProps" :columns="columns">
-      <template #rowIndex="{ rowIndex }">
-        {{ rowIndex + 1 }}
-      </template>
       <template #title="{ row }">
         <t-link theme="primary">{{ row.title || '-' }}</t-link>
       </template>
@@ -146,25 +122,7 @@ tableInst.query()
         {{ row.slug || '-' }}
       </template>
       <template #feature="{ row }">
-        <div v-if="row.feature && row.feature.length" class="feature-tags">
-          <t-tag variant="light" theme="default" v-for="(item, i) in visibleFeatures(row)" :key="i">{{ item }}</t-tag>
-          <t-tag
-            v-if="!expandedRows.has(row.id) && hasMoreFeatures(row)"
-            theme="primary"
-            variant="light"
-            style="cursor: pointer"
-            @click.stop="toggleExpand(row.id)"
-          >
-            +{{ row.feature.length - MAX_VISIBLE_TAGS }}
-          </t-tag>
-          <t-link
-            v-if="hasMoreFeatures(row)"
-            theme="primary"
-            @click="toggleExpand(row.id)"
-          >
-            {{ expandedRows.has(row.id) ? '收起' : '展开全部' }}
-          </t-link>
-        </div>
+        <FTagList v-if="row.feature && row.feature.length" :items="row.feature" />
         <span v-else>-</span>
       </template>
       <template #actions="{ row }">
@@ -176,12 +134,3 @@ tableInst.query()
     </Table>
   </MainLayout>
 </template>
-
-<style scoped>
-.feature-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-</style>

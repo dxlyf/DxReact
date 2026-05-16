@@ -38,6 +38,8 @@ const productOptions = [
     { label: '产品五', value: '产品五', slug: 'product-5' }
 ]
 
+const slugOptions = productOptions.map(p => ({ label: p.label, value: p.slug }))
+
 const categoryOptions = [
     { label: '关键特性分类一', value: '关键特性分类一' },
     { label: '关键特性分类二', value: '关键特性分类二' },
@@ -106,7 +108,7 @@ const formData = reactive<FormData>({
 })
 
 const rules = {
-    title: [{ required: true, message: '请选择产品名称' }],
+    slug: [{ required: true, message: '请选择产品Slug' }],
     category: [{ required: true, message: '请选择关联分类' }]
 }
 
@@ -115,9 +117,9 @@ const collapseRef = ref()
 const expandedPanel = ref(['basic', 'category', 'features'])
 const isInitializing = ref(false)
 
-const handleProductChange = (value: string) => {
-    const product = productOptions.find(p => p.value === value)
-    formData.slug = product?.slug ?? ''
+const handleSlugChange = (value: string) => {
+    const product = productOptions.find(p => p.slug === value)
+    formData.title = product?.label ?? ''
 }
 
 watch(() => formData.category, (val) => {
@@ -181,12 +183,15 @@ const handleSubmit = async (e: any) => {
                     <template #header>
                         <div class="border-l-4 border-l-blue-600 pl-2 leading-none">基础信息</div>
                     </template>
-                    <t-form-item label="产品名称" name="title" :rules="rules.title">
-                        <t-select v-model="formData.title" :options="productOptions" placeholder="请选择产品名称" filterable
-                            clearable @change="handleProductChange" />
+                    <t-form-item label="产品Slug" name="slug" :rules="rules.slug">
+                        <t-select v-model="formData.slug" :options="slugOptions" placeholder="请选择产品Slug" filterable
+                            clearable @change="handleSlugChange" />
                     </t-form-item>
-                    <t-form-item label="产品Slug" name="slug">
-                        <t-input v-model="formData.slug" placeholder="选择产品名称后自动生成" disabled />
+                    <t-form-item  name="title">
+                        <template #label>
+                            <span>产品名称</span><span class="text-xs text-gray-400">（选择产品Slug后自动带出）</span>
+                        </template>
+                        <t-input v-model="formData.title" placeholder="选择产品Slug后自动带出" disabled />
                     </t-form-item>
                     <div></div>
                 </t-collapse-panel>
@@ -211,6 +216,8 @@ const handleSubmit = async (e: any) => {
                             <FeatureList
                                 v-model="formData.features"
                                 :show-header="false"
+                                :disabled-title="true"
+                                :disabled-type="true"
                             />
                         </div>
                     </t-form-item>

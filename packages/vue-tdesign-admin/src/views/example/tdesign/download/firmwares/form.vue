@@ -148,7 +148,8 @@ const [detail, detailInst] = useRequest({
 
 const productData=Array.from({length:1000},(item,index)=>({
     label:`产品${index+1}`,
-    value:(index+1)+''
+    value:(index+1)+'',
+    slug:'ff'
 }))
 const handleRequestProduct=({keyword,current,pageSize})=>{
          let data=productData
@@ -295,6 +296,10 @@ const handleRemoveDocumentItem = (i: number) => {
 const formatlabel=(item:any)=>{
     return `(${item.value}) ${item.label}`
 }
+// 关联产品标题改变时，更新关联产品
+const handleProductTitleChange = (val: any,{option}) => {
+    console.log('handleProductTitleChange', val,option)
+}
 </script>
 <template>
     <MainLayout :show-not-found="!!detail.error" :loading="detail.loading" :title="pageInfo.title" layout="edit"
@@ -315,9 +320,9 @@ const formatlabel=(item:any)=>{
                             仅可用英文、数字、下划线和短横线
                         </template>
                     </t-form-item>
-                    <t-form-item label="关联产品标题" name="productTitle">
+                    <t-form-item label="关联产品标题" name="productTitle" :rules="[{required:true,message:'请选择关联产品'}]">
                     
-                    <FSelectPagination :default-selected-index="0" :format-label="formatlabel" v-model="formData.productTitle" :request="handleRequestProduct"  />
+                    <FSelectPagination  @change="handleProductTitleChange" :format-label="formatlabel" v-model="formData.productTitle" :request="handleRequestProduct"  />
                     </t-form-item>
                     <t-form-item label="固件分类" name="firmwareCategoryId">
                         <t-select :scroll="{ type: 'virtual' }" v-model="formData.firmwareCategoryId"
@@ -350,7 +355,7 @@ const formatlabel=(item:any)=>{
                     <t-form-item label="发布日期" name="releaseAt">
                         <t-date-picker format="YYYY-MM-DD" v-model="formData.releaseAt" />
                     </t-form-item>
-                    <t-form-item label="关联产品" name="products">
+                    <t-form-item label="关联产品" name="products" >
                             <FSelectPagination :default-selected-index="[0,1]" :format-label="formatlabel" v-model="formData.products" :request="handleRequestProduct" :multiple="true" />
                     </t-form-item>
                     <div></div>

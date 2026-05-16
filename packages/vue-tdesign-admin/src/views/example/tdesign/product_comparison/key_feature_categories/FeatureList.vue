@@ -19,11 +19,15 @@ export interface FeatureItem {
 
 const features = defineModel<FeatureItem[]>({ required: true })
 
-defineProps<{
+const props = withDefaults(defineProps<{
     showAdd?: boolean
     showDelete?: boolean
     showHeader?: boolean
-}>()
+    emptyText?: string
+}>(), {
+    showHeader: true,
+    emptyText: '暂无特性，点击右上角「新增特性」添加'
+})
 
 const emit = defineEmits<{
     (e: 'add'): void
@@ -73,7 +77,7 @@ const [drawerProps, drawerInst] = useDrawer(() => ({
 
 const addFeature = () => {
     const maxId = features.value.reduce((max, f) => Math.max(max, f.id), 0)
-    const item: FeatureItem = { id: maxId + 1, title: '', type: 'text' }
+    const item: FeatureItem = { id: maxId + 1, title: '', type: 'image' }
     features.value.push(item)
     editingIndex.value = features.value.length - 1
     setEditingCopy(item)
@@ -127,7 +131,7 @@ const removeFeature = (index: number) => {
                     '文本'
                     }}</t-tag>
                 <div class="flex items-center gap-2 shrink-0">
-                    <div v-if="showDelete !== false" @click.stop class="inline-flex">
+                    <div v-if="showDelete" @click.stop class="inline-flex">
                         <DeleteIcon class="text-sm cursor-pointer hover:text-red-500 transition-colors"
                             @click="removeFeature(index)" />
                     </div>
@@ -135,7 +139,7 @@ const removeFeature = (index: number) => {
                 </div>
             </div>
             <div v-if="features.length === 0" class="text-center text-gray-400 py-8">
-                暂无特性，点击右上角「新增特性」添加
+                {{ props.emptyText }}
             </div>
         </div>
     </div>
@@ -147,11 +151,15 @@ const removeFeature = (index: number) => {
                     <span class="text-white text-xs min-w-6 py-1 shrink-0 rounded-sm bg-blue-800 text-center">{{
                         editingIndex >= 0 ? editingIndex + 1 : '+'
                     }}</span>
+                    <t-tag>english</t-tag>
                 </div>
             </slot>
         </template>
         <t-form ref="featureFormRef" v-if="editingFeatureCopy" :data="editingFeatureCopy" :label-width="100" class="w-full" label-align="top">
-            <t-form-item label="特性名称" name="title" :rules="[{ required: true, message: '请输入特性名称', whitespace: true }]">
+            <t-form-item name="title" :rules="[{ required: true, message: '请输入特性名称', whitespace: true }]">
+                    <template #label>
+                    特性名称 <span class="text-xs text-gray-400">(全局)</span>
+                </template>
                 <t-input v-model="editingFeatureCopy.title" placeholder="请输入特性名称" :maxlength="255" />
             </t-form-item>
             <t-form-item>
@@ -168,14 +176,17 @@ const removeFeature = (index: number) => {
                     参数图片 <span class="text-xs text-gray-400">(全局)</span>
                 </template>
                 <FUploadImage v-model="editingFeatureCopy.imageUrl" />
-            </t-form-item>
-            <t-form-item label="参数文案" key="text" v-if="editingFeatureCopy.type === 'text'">
-                <FLanguageFields initValue v-model="editingFeatureCopy.content" title="参数文案" btn-text="编辑"
-                    :field-props="{ maxlength: 10 }" />
+                <template #tips>
+                    支持png、svg, 64x64,≤0.5MB
+                </template>
             </t-form-item>
             <t-form-item label="参数前缀">
                 <FLanguageFields initValue v-model="editingFeatureCopy.prefix" title="参数前缀" btn-text="编辑"
                     :field-props="{ maxlength: 20 }" />
+            </t-form-item>
+             <t-form-item label="参数文案" key="text" v-if="editingFeatureCopy.type === 'text'">
+                <FLanguageFields initValue v-model="editingFeatureCopy.content" title="参数文案" btn-text="编辑"
+                    :field-props="{ maxlength: 10 }" />
             </t-form-item>
             <t-form-item label="参数描述">
                 <FLanguageFields initValue v-model="editingFeatureCopy.description" title="参数描述" btn-text="编辑"

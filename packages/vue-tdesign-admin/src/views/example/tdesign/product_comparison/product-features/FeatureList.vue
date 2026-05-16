@@ -17,11 +17,19 @@ export interface FeatureItem {
 
 const features = defineModel<FeatureItem[]>({ required: true })
 
-defineProps<{
+const props = withDefaults(defineProps<{
     showAdd?: boolean
     showDelete?: boolean
     showHeader?: boolean
-}>()
+    disabledTitle?: boolean
+    disabledType?: boolean
+    emptyText?: string
+}>(), {
+    showHeader: true,
+    disabledTitle: false,
+    disabledType: false,
+    emptyText: '暂无特性数据'
+})
 
 const emit = defineEmits<{
     (e: 'add'): void
@@ -94,7 +102,7 @@ const openEditFeature = (index: number) => {
                 </div>
             </div>
             <div v-if="features.length === 0" class="text-center text-gray-400 py-8">
-                暂无特性数据
+                {{ props.emptyText }}
             </div>
         </div>
     </div>
@@ -111,13 +119,13 @@ const openEditFeature = (index: number) => {
         </template>
         <t-form ref="featureFormRef" v-if="editingFeatureCopy" :data="editingFeatureCopy" :label-width="120" class="w-full" label-align="top">
             <t-form-item label="特性名称" name="title">
-                <t-input v-model="editingFeatureCopy.title" disabled />
+                <t-input v-model.trim="editingFeatureCopy.title" :disabled="props.disabledTitle" />
             </t-form-item>
             <t-form-item>
                 <template #label>
                     参数类型 <span class="text-xs text-gray-400">(全局)</span>
                 </template>
-                <t-radio-group v-model="editingFeatureCopy.type" disabled>
+                <t-radio-group v-model="editingFeatureCopy.type" :disabled="props.disabledType">
                     <t-radio value="image">图片</t-radio>
                     <t-radio value="text">文本</t-radio>
                 </t-radio-group>
@@ -129,16 +137,16 @@ const openEditFeature = (index: number) => {
                 <FUploadImage v-model="editingFeatureCopy.imageUrl" />
             </t-form-item>
             <t-form-item label="参数文案" key="text" v-if="editingFeatureCopy.type === 'text'">
-                <t-input v-model="editingFeatureCopy.content" placeholder="请输入参数文案" :maxlength="10" />
+                <t-input v-model.trim="editingFeatureCopy.content" placeholder="请输入参数文案" :maxlength="10" show-limit-number />
             </t-form-item>
             <t-form-item label="参数前缀">
-                <t-input v-model="editingFeatureCopy.prefix" placeholder="请输入参数前缀" :maxlength="20" />
+                <t-input v-model.trim="editingFeatureCopy.prefix" placeholder="请输入参数前缀" :maxlength="20" show-limit-number/>
             </t-form-item>
             <t-form-item label="参数描述">
-                <t-input v-model="editingFeatureCopy.description" placeholder="请输入参数描述" :maxlength="40" />
+                <t-input v-model.trim="editingFeatureCopy.description" placeholder="请输入参数描述" :maxlength="40" show-limit-number />
             </t-form-item>
             <t-form-item label="浮动注释">
-                <t-input v-model="editingFeatureCopy.floatComment" placeholder="请输入浮动注释" />
+                <t-input v-model.trim="editingFeatureCopy.floatComment" placeholder="请输入浮动注释" />
             </t-form-item>
         </t-form>
     </t-drawer>
