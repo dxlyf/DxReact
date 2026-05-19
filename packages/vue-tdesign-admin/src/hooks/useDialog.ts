@@ -28,7 +28,7 @@ export const useDialog=(props:()=>UseDialogProps)=>{
         return {
            //600 width:'60%',
             attach:'body',
-            dialogClassName:'f-dialog-wrap',
+            dialogClassName:autoHeight?'f-dialog-wrap f-dialog-ah-wrap':'f-dialog-wrap',
             dialogStyle:autoHeight?{
                 [enableMaxHeight?'maxHeight':'height']:`calc(100vh - ${Math.floor(margin[0]+margin[1])}px)`,
                 display:'flex',

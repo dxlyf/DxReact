@@ -1,4 +1,4 @@
-import type {TdColProps} from 'tdesign-vue-next'
+import type {TdColProps,ColProps} from 'tdesign-vue-next'
 import type {Component} from 'vue'
 export type SearchField={
     name:string
@@ -24,6 +24,8 @@ export type SearchFormProps={
     syncParamsToUrl?:boolean // 是否同步查询参数到URL参数
     showExpand?:boolean // 是否显示展开按钮
     defaultExpand?:boolean // 默认展开
+    querySpan?:number // 查询表单列数
+    queryColProps?:ColProps // 查询表单列属性
     columns:SearchField[] // 查询表单列
     transform?:(params:Record<string,any>,name:string,value:any)=>void // 自定义转换函数
     normalize?:(params:Record<string,any>,name:string,value:any)=>void // 自定义归一化函数

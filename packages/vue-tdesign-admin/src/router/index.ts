@@ -286,6 +286,18 @@ const defaultRoutes: RouteRecordRaw[] = [
                   icon: 'table'
                 }
               },{
+                path: 'user/role',
+                component: () => import('../views/example/tdesign/user/role/index.vue'),
+                meta: {
+                  title: '角色管理',
+                  menuName: '角色管理',
+                  icon: 'table'
+                }
+              },{
+                path: 'user/role/new',
+                component: () => import('../views/example/tdesign/user/role/new.vue'),
+                meta: {}
+              },{
                 path: 'download',
                 meta: {
                   title: '下载',

@@ -43,34 +43,34 @@ app.mount('#app')
 //           })
 //         }
 // }))
-const traverseVNode = (vnode: VNode, callback: (vnode: VNode) => void) => {
-  if (!vnode) return
+// const traverseVNode = (vnode: VNode, callback: (vnode: VNode) => void) => {
+//   if (!vnode) return
 
-  callback(vnode)
+//   callback(vnode)
 
-  if (vnode.component?.subTree) {
-    traverseVNode(vnode.component.subTree, callback)
-  }
+//   if (vnode.component?.subTree) {
+//     traverseVNode(vnode.component.subTree, callback)
+//   }
 
-  const children = vnode.children
-  if (Array.isArray(children)) {
-    children.forEach(child => {
-      if (child && typeof child === 'object' && 'type' in child) {
-        traverseVNode(child as VNode, callback)
-      }
-    })
-  } else if (children && typeof children === 'object' && 'type' in children) {
-    traverseVNode(children as VNode, callback)
-  }
+//   const children = vnode.children
+//   if (Array.isArray(children)) {
+//     children.forEach(child => {
+//       if (child && typeof child === 'object' && 'type' in child) {
+//         traverseVNode(child as VNode, callback)
+//       }
+//     })
+//   } else if (children && typeof children === 'object' && 'type' in children) {
+//     traverseVNode(children as VNode, callback)
+//   }
 
-  if (vnode.dynamicChildren) {
-    vnode.dynamicChildren.forEach(child => {
-      if (child && typeof child === 'object' && 'type' in child) {
-        traverseVNode(child as VNode, callback)
-      }
-    })
-  }
-}
+//   if (vnode.dynamicChildren) {
+//     vnode.dynamicChildren.forEach(child => {
+//       if (child && typeof child === 'object' && 'type' in child) {
+//         traverseVNode(child as VNode, callback)
+//       }
+//     })
+//   }
+// }
 // app.mixin({
 
 //   beforeMount() {

@@ -46,7 +46,7 @@
 // })
 </script>
 <template>
-    <t-table v-bind="$attrs" class="table">
+    <t-table v-bind="$attrs" class="ftable">
         <template v-for="(value,name) in $slots" #[name]="slotData">
             <slot :name="name" v-bind="slotData||{}"></slot>
         </template>
@@ -54,7 +54,7 @@
 
 </template>
 <style scoped>
-.table :global(.t-table__header th){
+.ftable :global(.t-table__header th){
     background-color: #f8f9fa;
     color:#212733;
     font-weight: 600;

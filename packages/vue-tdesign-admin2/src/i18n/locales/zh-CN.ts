@@ -1,0 +1,36 @@
+export default {
+  common: {
+    confirm: '确认',
+    cancel: '取消',
+    submit: '提交',
+    save: '保存',
+    delete: '删除',
+    edit: '编辑',
+    create: '创建',
+    search: '搜索',
+    reset: '重置',
+    back: '返回',
+    logout: '退出登录',
+    settings: '设置',
+  },
+  login: {
+    title: '登录',
+    username: '用户名',
+    password: '密码',
+    tenant: '租户',
+    loginBtn: '登 录',
+    selectTenant: '选择租户',
+  },
+  menu: {
+    dashboard: '仪表盘',
+    tenantManagement: '租户管理',
+    userManagement: '用户管理',
+    roleManagement: '角色管理',
+    settings: '系统设置',
+  },
+  error: {
+    forbidden: '无权限访问',
+    notFound: '页面不存在',
+    subscriptionExpired: '租户已过期，请联系管理员',
+  },
+}

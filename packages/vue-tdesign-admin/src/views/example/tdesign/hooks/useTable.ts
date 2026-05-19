@@ -23,6 +23,7 @@ export type UseTableProps<T> = {
     manualRequest?: boolean,// 是否手动触发请求
     currentPageField?: string,// 当前页字段名
     pageSizeField?: string,// 每页数量字段名
+    selection?: boolean,// 是否开启选择
     pagination?: false | {
         current?: number,
         pageSize?: number,
@@ -53,12 +54,21 @@ export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) =>
         total: 0,
         pageSizeOptions: [5, 10, 25, 50],
     })
+    const selectedRowKeys = shallowRef<(string | number)[]>([])
     let lastParams: any = shallowRef({})
+
+    const handleSelectChange: TableProps['onSelectChange'] = (keys) => {
+        selectedRowKeys.value = keys
+    }
     const tableProps = computed(() => {
-        let { pagination: propPagination, tableProps: propTableProps = {} } = props.value
+        let { pagination: propPagination,selection, tableProps: propTableProps = {} } = props.value
         return {
             rowKey: 'id',
             disableDataPage: true,  
+            ...(selection?{
+                selectedRowKeys:selectedRowKeys.value,
+                onSelectChange: handleSelectChange,
+            }:{}),
             ...(propPagination === false ? {} : {
                 pagination: {
                     current: pagination.current,
@@ -131,6 +141,7 @@ export const useTable = <T = any>(_props: MaybeRefOrGetter<UseTableProps<T>>) =>
         query(props.value.defaultParams || {})
     }
     return [tableProps, {
+        selectedRowKeys,
         pagination,
         lastParams,
         data,

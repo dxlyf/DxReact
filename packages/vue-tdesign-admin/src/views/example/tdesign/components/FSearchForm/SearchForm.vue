@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, shallowRef, toRaw, useSlots } from 'vue';
+import { computed, onMounted, shallowRef, toRaw, useSlots ,watchEffect} from 'vue';
 import type { SearchFormProps, InnerSearchField } from './types'
 import { useSearchForm } from '../../hooks/useSearchForm2';
+//import {useBreakpoints} from '@/hooks/useMatchMedia'
+
+//const breakpoints = useBreakpoints()
 
 const props = withDefaults(defineProps<SearchFormProps>(), {
     loading:false,
@@ -72,7 +75,8 @@ const finalColumns = computed(() => {
         key: 'query-button',
         colProps: {
             offset:0,
-            span: defaultSpan,
+            span: props.querySpan||defaultSpan,
+            ...(props.queryColProps || {})
         },
         type: 'QueryButton',
     }
@@ -181,6 +185,7 @@ defineExpose({
                                     <t-icon v-else name="chevron-up-s" />
                                 </t-link>
                             </div>
+                            <slot name="extra-button"></slot>
                         </div>
                     </slot>
                 </template>

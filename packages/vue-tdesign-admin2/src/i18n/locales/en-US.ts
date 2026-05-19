@@ -1,0 +1,36 @@
+export default {
+  common: {
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    submit: 'Submit',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    create: 'Create',
+    search: 'Search',
+    reset: 'Reset',
+    back: 'Back',
+    logout: 'Logout',
+    settings: 'Settings',
+  },
+  login: {
+    title: 'Login',
+    username: 'Username',
+    password: 'Password',
+    tenant: 'Tenant',
+    loginBtn: 'Sign In',
+    selectTenant: 'Select Tenant',
+  },
+  menu: {
+    dashboard: 'Dashboard',
+    tenantManagement: 'Tenant Management',
+    userManagement: 'User Management',
+    roleManagement: 'Role Management',
+    settings: 'Settings',
+  },
+  error: {
+    forbidden: 'Access Forbidden',
+    notFound: 'Page Not Found',
+    subscriptionExpired: 'Tenant subscription expired, please contact admin',
+  },
+}

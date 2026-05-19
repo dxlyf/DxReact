@@ -2,10 +2,12 @@
 import MainLayout from 'src/views/example/tdesign/components/Layouts/MainLayout.vue';
 import Table from 'src/views/example/tdesign/components/FTable/index.vue';
 import FTagList from 'src/views/example/tdesign/components/FTagList/index.vue';
+import { SearchForm, type SearchField } from 'src/views/example/tdesign/components/FSearchForm';
 import type { TableProps } from 'tdesign-vue-next';
 import { DialogPlugin } from 'tdesign-vue-next';
 import { useTable } from '../../hooks/useTable';
 import { useRouter } from 'vue-router';
+import { computed, ref } from 'vue';
 
 const router = useRouter();
 
@@ -36,6 +38,11 @@ const mockData: KeyFeatureCategory[] = Array.from({ length: 68 }, (_, i) => ({
 
 const [tableProps, tableInst] = useTable({
   manualRequest: true,
+  tableProps: {
+    //tableLayout: 'fixed',
+    //tableContentWidth: '2000px',
+    maxHeight: 240,
+  },
   request: async (params) => {
     const { current, pageSize, ...rest } = params
     let filtered = mockData
@@ -53,7 +60,44 @@ const [tableProps, tableInst] = useTable({
   }
 })
 
+const selectedRowKeys = ref<Array<string | number>>([])
+
+const handleSelectChange: TableProps['onSelectChange'] = (keys) => {
+  selectedRowKeys.value = keys
+}
+
+const searchColumns = computed<SearchField[]>(() => [
+  {
+    name: 'title',
+    type: 't-input',
+    defaultValue: '',
+    props: {
+      placeholder: '请输入分类名称',
+      clearable: true
+    }
+  },
+  {
+    name: 'slug',
+    type: 't-input',
+    defaultValue: '',
+    props: {
+      placeholder: '请输入分类标识',
+      clearable: true
+    }
+  }
+])
+
+const handleSearch = (params: Record<string, any>) => {
+  selectedRowKeys.value = []
+  tableInst.query(params)
+}
+
 const columns: TableProps['columns'] = [
+  {
+    type: 'multiple' as any,
+    colKey:'',
+    width: 60
+  },
   {
     title: '#',
     colKey: 'serial-number',
@@ -74,10 +118,19 @@ const columns: TableProps['columns'] = [
   {
     title: '包含特性',
     colKey: 'feature',
+    minWidth: 200,
+    ellipsis: true
+  },
+    {
+    title: '创建时间',
+    colKey: 'createdAt',
+    width: 200,
+    ellipsis: true
   },
   {
     title: '操作',
     colKey: 'actions',
+    fixed:'right',
     width: 160
   }
 ]
@@ -104,6 +157,22 @@ const handleDelete = (row: KeyFeatureCategory) => {
   })
 }
 
+const handleBatchDelete = () => {
+  DialogPlugin.confirm({
+    theme: 'danger',
+    header: '确认批量删除',
+    body: `确定删除已选中的 ${selectedRowKeys.value.length} 个关键特性分类吗？此操作不可撤销。`,
+    onConfirm: () => {
+      console.log('批量删除关键特性分类', selectedRowKeys.value)
+      selectedRowKeys.value = []
+      tableInst.refresh()
+    },
+    onCancel: () => {
+      console.log('取消批量删除')
+    }
+  })
+}
+
 tableInst.query()
 </script>
 
@@ -111,10 +180,30 @@ tableInst.query()
   <MainLayout :breadcrumbOptions="breadcrumbOptions" title="关键特性分类列表" layout="list" :showLang="true">
     <template #operation>
       <t-space>
+        <!-- <t-button theme="danger" :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete">批量删除</t-button> -->
         <t-button theme="primary" @click="handleCreate">新增</t-button>
       </t-space>
     </template>
-    <Table v-bind="tableProps" :columns="columns">
+
+    <div class="flex">
+      <div class="flex-1">
+        <SearchForm :defaultColumns="3" :columns="searchColumns"  @change="handleSearch" >
+      </SearchForm>
+      </div>
+      <div class="flex-none">
+       <t-space>
+                <t-button :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete" theme="danger" >批量删除</t-button>
+       </t-space>
+      </div>
+    </div>
+        <Table v-bind="tableProps" :columns="columns" :selectedRowKeys="selectedRowKeys" @select-change="handleSelectChange">
+      <!-- <template #topContent>
+       <div class="mb-2 flex justify-end">
+         <t-space>
+          <t-button theme="primary" @click="handleCreate">新增</t-button>
+        </t-space>
+       </div>
+      </template> -->
       <template #title="{ row }">
         <t-link theme="primary">{{ row.title || '-' }}</t-link>
       </template>
@@ -132,5 +221,7 @@ tableInst.query()
         </t-space>
       </template>
     </Table>
+
+
   </MainLayout>
 </template>
