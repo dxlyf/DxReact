@@ -7,7 +7,7 @@ const router = createRouter({
   routes: constantRoutes,
 })
 
-setupRouterGuard(router)
+//setupRouterGuard(router)
 
 export function resetRouter(): void {
   const newRouter = createRouter({

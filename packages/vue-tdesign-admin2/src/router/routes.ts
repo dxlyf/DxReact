@@ -1,61 +1,66 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-export const constantRoutes: RouteRecordRaw[] = [
+export const publicRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
-    name: 'Login',
+    name:"Login",
     component: () => import('@/views/login/LoginPage.vue'),
-    meta: { public: true },
-  },
-  {
-    path: '/select-tenant',
-    name: 'SelectTenant',
-    component: () => import('@/views/login/SelectTenant.vue'),
-    meta: { public: true },
-  },
+    meta: { public:true },
+  }
+]
+
+const excludePaths = new Set<string>([
+  '../views/login/index.vue'
+])
+
+const pageModules = import.meta.glob(
+  ['../views/**/*.vue', '!../views/**/components/**', '!../views/**/_*.vue'],
+  { eager: false },
+)
+
+function kebabCase(str: string): string {
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')
+}
+
+const autoChildren: RouteRecordRaw[] = []
+
+for (const [filePath, loader] of Object.entries(pageModules)) {
+  if (excludePaths.has(filePath)) continue
+
+  const normalized = filePath.replace(/\\/g, '/')
+  const match = normalized.match(/\.\.\/views\/(.+)\.vue$/)
+  if (!match) continue
+
+  const relative = match[1]
+  const segments = relative.split('/')
+  const fileName = segments[segments.length - 1]
+  if (fileName.toLowerCase() === 'index') {
+    const parentDir = segments[segments.length - 2]
+    if (!parentDir) continue
+    autoChildren.push({
+      path:segments.slice(0,-1).join('/'),
+    //  name: parentDir,
+      component: loader as () => Promise<any>,
+    })
+  } else {
+    const dirPrefix = segments.slice(0, -1).map(s => s.toLowerCase()).join('/')
+    const fileKebab = kebabCase(fileName)
+    const childPath = dirPrefix ? `${dirPrefix}/${fileKebab}` : fileKebab
+    autoChildren.push({
+      path: childPath,
+     // name: fileName,
+      component: loader as () => Promise<any>,
+    })
+  }
+}
+
+export const constantRoutes: RouteRecordRaw[] = [
+  ...publicRoutes,
   {
     path: '/',
-    component: () => import('@/components/layout/AppLayout.vue'),
-    meta: { requiresAuth: true, requiresTenant: true },
+    component: () => import('@/layouts/DefaultLayout.vue'),
     redirect: '/dashboard',
-    children: [
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/dashboard/Index.vue'),
-        meta: { title: '仪表盘', icon: 'dashboard' },
-      },
-    ],
-  },
-  {
-    path: '/admin',
-    component: () => import('@/components/layout/AppLayout.vue'),
-    meta: { requiresAuth: true, requiresSuperAdmin: true },
-    children: [
-      {
-        path: 'tenants',
-        name: 'TenantManagement',
-        component: () => import('@/views/tenant/TenantList.vue'),
-        meta: { title: '租户管理' },
-      },
-    ],
-  },
-  {
-    path: '/forbidden',
-    name: 'Forbidden',
-    component: () => import('@/views/error/Forbidden.vue'),
-    meta: { public: true },
-  },
-  {
-    path: '/subscription-expired',
-    name: 'SubscriptionExpired',
-    component: () => import('@/views/error/SubscriptionExpired.vue'),
-    meta: { public: true },
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: () => import('@/views/error/NotFound.vue'),
-    meta: { public: true },
+    meta: { requiresAuth: true },
+    children: autoChildren,
   },
 ]

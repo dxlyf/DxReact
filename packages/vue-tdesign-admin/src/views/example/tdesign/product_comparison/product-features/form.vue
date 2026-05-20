@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import MainLayout from 'src/views/example/tdesign/components/Layouts/MainLayout.vue';
-import { computed, reactive, ref, watch, onMounted } from 'vue';
+import { computed, reactive, ref, watch, onMounted, shallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useRequest } from 'src/hooks/useRequest';
-import FeatureList from './FeatureList.vue';
+import FeatureTable from './FeatureTable.vue';
 import type { FeatureItem } from './FeatureList.vue';
+import { MessagePlugin, type UploadFile } from 'tdesign-vue-next';
+import { useDialog } from '@/hooks/useDialog';
+import { usePolling } from '@/hooks/usePolling';
 
 type Props = {
     type: 'create' | 'edit' | 'copy'
@@ -41,6 +44,7 @@ const productOptions = [
 const slugOptions = productOptions.map(p => ({ label: p.label, value: p.slug }))
 
 const categoryOptions = [
+    { label: '请选择关联分类', value: '' },
     { label: '关键特性分类一', value: '关键特性分类一' },
     { label: '关键特性分类二', value: '关键特性分类二' },
     { label: '关键特性分类三', value: '关键特性分类三' },
@@ -108,11 +112,11 @@ const formData = reactive<FormData>({
 })
 
 const rules = {
-    slug: [{ required: true, message: '请选择产品Slug' }],
-    category: [{ required: true, message: '请选择关联分类' }]
+    slug: [{ required: true, message: '请选择产品Slug' }]
 }
 
 const submitLoading = ref(false)
+const formRef = ref()
 const collapseRef = ref()
 const expandedPanel = ref(['basic', 'category', 'features'])
 const isInitializing = ref(false)
@@ -129,6 +133,101 @@ watch(() => formData.category, (val) => {
     } else {
         formData.features = []
     }
+})
+
+const importFile = shallowRef<UploadFile[]>([])
+const importLoading = ref(false)
+
+const confirmLoading = computed(() => importLoading.value || pollingState.value === 'polling')
+
+const mockImportApi = async (): Promise<{ code: number; data: { jobId: number } }> => {
+  await new Promise((resolve) => setTimeout(resolve, 2000))
+  return { code: 0, data: { jobId: Date.now() } }
+}
+
+const mockPollJobApi = async (jobId: number) => {
+  await new Promise((resolve) => setTimeout(resolve, 500))
+  return {
+    jobId,
+    status: 'importing',
+    message: '导入中...',
+    slug: `product-feature-${jobId}`
+  }
+}
+
+const {
+  pollingState,
+  pollingCount,
+  lastResult,
+  start: startPolling,
+  stop: stopPolling,
+  resetPollingState
+} = usePolling(async (jobId: number) => {
+  if (pollingCount.value >= 5) {
+    stopPolling()
+    return {
+      jobId,
+      status: 'finished',
+      message: '导入完成',
+      slug: `product-feature-${jobId}`
+    }
+  }
+  return mockPollJobApi(jobId)
+}, {
+  interval: 2000,
+  maxRetries: 10,
+  onError: (err) => {
+    MessagePlugin.error(err.message)
+  }
+})
+
+const [dialogProps, dialogInst] = useDialog(() => ({
+  header: '导入数据',
+  autoHeight: true,
+  width: 520,
+  confirmBtn: { loading: importLoading.value, theme: 'primary' as const, content: '确定导入' },
+  onConfirm: handleImportConfirm,
+  onClose: () => {
+    importFile.value = []
+    stopPolling()
+    resetPollingState()
+  }
+}))
+
+const handleImport = async () => {
+  const validateResult = await formRef.value?.validate()
+  if (validateResult !== true) {
+    return
+  }
+  importFile.value = []
+  dialogInst.open()
+}
+
+async function handleImportConfirm() {
+  if (!importFile.value.length) {
+    MessagePlugin.warning('请选择要上传的文件')
+    return
+  }
+  try {
+    importLoading.value = true
+    const res = await mockImportApi()
+    if (res.code === 0) {
+      startPolling(res.data.jobId)
+    }
+  } catch {
+    MessagePlugin.error('导入请求失败')
+  } finally {
+    importLoading.value = false
+  }
+}
+
+watch(pollingState, (state) => {
+  if (state === 'stopped') {
+    if (lastResult.value?.status === 'finished') {
+      MessagePlugin.success('导入成功')
+      dialogInst.close()
+    }
+  }
 })
 
 const [detail, detailInst] = useRequest({
@@ -174,9 +273,13 @@ const handleSubmit = async (e: any) => {
 <template>
     <MainLayout layout="edit" :loading="detail.loading" :show-not-found="!!detail.error" :title="pageInfo.title" :breadcrumb-options="breadcrumbOptions">
         <template #operation>
-            <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>
+            <t-space>
+                <t-button theme="default" @click="handleImport">导入</t-button>
+                <t-button theme="default">导出</t-button>
+                <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>
+            </t-space>
         </template>
-        <t-form  :data="formData" :label-width="140" @submit="handleSubmit" class="w-full" label-align="top">
+        <t-form ref="formRef" :data="formData" :label-width="140" @submit="handleSubmit" class="w-full" label-align="top">
             <t-collapse ref="collapseRef" v-model="expandedPanel" :expand-mutex="false" :expand-on-row-click="false"
                 expand-icon-placement="right" borderless>
                 <t-collapse-panel value="basic">
@@ -199,8 +302,8 @@ const handleSubmit = async (e: any) => {
                     <template #header>
                         <div class="border-l-4 border-l-blue-600 pl-2 leading-none">关联关键特性分类</div>
                     </template>
-                    <t-form-item label="选择分类" name="category" :rules="rules.category">
-                        <t-select v-model="formData.category" :options="categoryOptions" placeholder="请选择关键特性分类" filterable clearable />
+                    <t-form-item label="选择分类" name="category">
+                        <t-select v-model="formData.category" :options="categoryOptions" placeholder="请选择关联分类" filterable clearable />
                     </t-form-item>
                     <t-form-item  name="features">
                         <template #label>
@@ -213,11 +316,10 @@ const handleSubmit = async (e: any) => {
                             请从上方下拉列表中选择一个关键特性分类，选择后将自动加载该分类下的所有特性数据
                         </div>
                         <div v-else class="w-full">
-                            <FeatureList
+                            <FeatureTable
                                 v-model="formData.features"
                                 :show-header="false"
                                 :disabled-title="true"
-                                :disabled-type="true"
                             />
                         </div>
                     </t-form-item>
@@ -232,11 +334,64 @@ const handleSubmit = async (e: any) => {
         </t-form>
 
     </MainLayout>
+    <t-dialog v-bind="dialogProps">
+      <t-form :data="{ file: importFile }" label-align="top" label-width="80">
+        <t-form-item label="上传文件" name="file" :rules="[{ required: true, message: '请选择文件' }]">
+          <t-upload v-model="importFile" theme="file" action="/api/import" :size-limit="{ size: 10, unit: 'MB' }" accept=".xlsx,.xls,.csv" :auto-upload="false" :disabled="pollingState === 'polling'" />
+        </t-form-item>
+        <div v-if="pollingState === 'polling' || lastResult" class="mt-4">
+          <table class="job-table">
+            <thead>
+              <tr>
+                <th>Slug</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="lastResult && lastResult.status === 'finished'">
+                <td>{{ lastResult.slug }}</td>
+                <td>
+                  <t-tag theme="success" variant="light">导入完成</t-tag>
+                </td>
+              </tr>
+              <tr v-else-if="lastResult">
+                <td>{{ lastResult.slug }}</td>
+                <td>
+                  <t-loading size="small" :text="lastResult.message || '导入中...'" />
+                </td>
+              </tr>
+              <tr v-else>
+                <td colspan="2" class="text-center">
+                  <t-loading size="small" text="正在提交导入请求..." />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div></div>
+      </t-form>
+    </t-dialog>
 </template>
 
 <style scoped>
 :deep(.t-collapse-panel__content),
 :deep(.t-collapse-panel__header) {
     background: #fff;
+}
+.job-table{
+    width: 100%;
+    border-collapse: collapse;
+}
+.job-table :deep(:where(td,th)){
+    border: solid 1px rgba(0,0,0,0.2);
+    text-align: center;
+}
+.job-table :deep(thead th){
+    font-weight: 700;
+    padding: 4px 0;
+    background-color: rgba(0,0,0,0.1);
+}
+.job-table :deep(tbody td){
+    padding: 8px 0;
 }
 </style>

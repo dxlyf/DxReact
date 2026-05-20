@@ -8,17 +8,12 @@ const appStore = useAppStore()
 const { initialized } = storeToRefs(appStore)
 
 onMounted(() => {
-  appStore.initApp()
+ // appStore.initApp()
 })
 </script>
 
 <template>
-  <AppLoading v-if="!initialized" />
-  <router-view v-else v-slot="{ Component }">
-    <Transition name="fade" mode="out-in">
-      <component :is="Component" />
-    </Transition>
-  </router-view>
+  <router-view></router-view>
 </template>
 
 <style>

@@ -386,8 +386,8 @@ const testDirectoryPickerIndexedDB = async () => {
         indexedStorage.setItem('dirHandle', dirHandle)
         log(1, '目录:', dirHandle.name)
         // 模拟业务场景:并发写入多个文件
-        const fileCount = 20;
-        const files = Array.from({ length: fileCount }, (v, i) => `__test_concurrent_${i}.ts`)
+        const fileCount = 1;
+        const files = Array.from({ length: fileCount }, (v, i) => `__test_concurrent_${i}.txt`)
         log(2, `准备并发写入${fileCount}个文件`)
         const errors = []
         await Promise.all(files.map(async (file) => {
@@ -504,8 +504,8 @@ const testDirectoryPicker = async () => {
     // 主逻辑
     //------------------------------------------------
     try {
-        /**@type {FileSystemHandle} */
-        const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'test' })
+        /**@type {FileSystemDirectoryHandle} */
+        let dirHandle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'test' })
      
             //  检查是否可以请求持久化权限
         if (navigator.storage&&navigator.storage.persist) {
@@ -516,20 +516,21 @@ const testDirectoryPicker = async () => {
             console.log('目录未持久化授权')
         }
         // 使用前调用
-        const hasPermission = await verifyPermission(dirHandle, true)
-        if (!hasPermission) {
-            throw new Error('目录权限被拒绝')
-        } else {
-            console.log('目录权限已授权')
-        }
+        // const hasPermission = await verifyPermission(dirHandle, true)
+        // if (!hasPermission) {
+        //     throw new Error('目录权限被拒绝')
+        // } else {
+        //     console.log('目录权限已授权')
+        // }
         log(1, '目录:', dirHandle.name)
         // 模拟业务场景:并发写入多个文件
-        const fileCount = 20;
-        const files = Array.from({ length: fileCount }, (v, i) => `__test_concurrent_${i}.tmp`)
+        const fileCount = 1;
+        const files = Array.from({ length: fileCount }, (v, i) => `test${i}.ts`)
         const filesLastModified=[]
         log(2, `准备并发写入${fileCount}个文件`)
         const errors = []
         await Promise.all(files.map(async (file,index) => {
+            let w;
             try {
                 console.log(`(${index})并发写入文件 ${file}`)
                 /**@type {FileSystemFileHandle} */
@@ -537,13 +538,17 @@ const testDirectoryPicker = async () => {
                 // const fileBefore=await fileHandle.getFile()
                 // const mtimeBefore=fileBefore.lastModified
                 // console.log(`文件 ${file} 写入前的时间戳: ${mtimeBefore}`)
-                const w = await fileHandle.createWritable()
+                w = await fileHandle.createWritable()
                 await w.write(`// test file concurrent ${file}\n export const value=${Date.now()};\n`)
                 await w.close()
-                const fileInfo=await fileHandle.getFile()
-                filesLastModified.push(fileInfo.lastModified)
+
+               // const fileInfo=await fileHandle.getFile()
+               // filesLastModified[index]=fileInfo.lastModified
                 // console.log(`✅ 并发写入文件 ${file} 写入成功`)
             } catch (e) {
+                if(w){
+                    await w.abort()
+                }
                 errors.push({ file: file, error: e.message })
                 log('ERR', `并发写入文件 ${file} 写入失败:`, e.name, e.message)
             }
@@ -557,32 +562,46 @@ const testDirectoryPicker = async () => {
         }
         // 第二轮：串行写入文件
         log(5, `准备串行写入${fileCount}个文件`)
-        await delay(10000)
         // 使用前调用
-        const hasPermission2 = await verifyPermission(dirHandle, true)
-        if (!hasPermission2) {
-            throw new Error('目录权限被拒绝')
-        } else {
-            console.log('目录权限已授权')
-        }
+        // const hasPermission2 = await verifyPermission(dirHandle, true)
+        // if (!hasPermission2) {
+        //     throw new Error('目录权限被拒绝')
+        // } else {
+        //     console.log('目录权限已授权')
+        // }
+        await delay(5000)
         const errors2 = []
         for (const [i, name] of files.entries()) {
+            let w;
             try {
                 console.log(`(${i})串行写入文件 ${name}`)
+                
                 /**@type {FileSystemFileHandle} */
                 const fh = await getFileHandleWithTimeout(dirHandle, name, { create: true })
-                const fileInfo=await fh.getFile()
-                const mtimeAfter=fileInfo.lastModified
-                if(mtimeAfter!==filesLastModified[i]){
-                    console.log(`文件 ${i}-${name} 写入后的时间戳与并发写入前的时间戳不一致`)
-                }
-                const w = await fh.createWritable()
+               // const fileInfo=await fh.getFile()
+               // const mtimeAfter=fileInfo.lastModified
+            //    if(mtimeAfter!==filesLastModified[i]){
+                //    console.log(`文件 ${i}-${name} 写入后的时间戳与并发写入前的时间戳不一致`)
+              //  }
+                /**
+                 * keepExistingData: false,如果为true如果文件存在，将现有数据复制到临时文件
+                 * mode:'siloed' 可以同时打开多个写入器
+                 * mode:'exclusive' 只能打开一个写入器
+                */
+               //{mode:'siloed',keepExistingData:false}
+                w = await fh.createWritable()
+                console.log('wlocked',w.locked)
+              //  await w.seek(0)
                 await w.write(`// test file serial ${name}\n export const value=${Date.now()};\n`)
                 await w.close()
                 // console.log(`✅ 串行写入文件 ${name} 写入成功`)
             } catch (e) {
+                if(w){
+                    await w.abort()
+                }
                 errors2.push({ file: name, error: e.message })
                 log('ERR', `串行写入文件 ${name} 写入失败:`, e.name, e.message)
+           
             }
         }
         if (errors2.length > 0) {

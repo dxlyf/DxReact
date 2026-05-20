@@ -166,7 +166,7 @@ const [dialogProps, dialogInst] = useDialog(() => ({
   header: '导入数据',
   autoHeight: true,
   width: 520,
-  confirmBtn: { loading: confirmLoading.value, disabled: confirmLoading.value, theme: 'primary' as const, content: '确定导入' },
+  confirmBtn: { loading: importLoading.value, theme: 'primary' as const, content: '确定导入' },
   onConfirm: handleImportConfirm,
   onClose: () => {
     importFile.value = []
