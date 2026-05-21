@@ -84,7 +84,7 @@ export class IndexDB {
                 resolve(request.result)
             })
             request.addEventListener('error', () => {
-                console.log('获取失败',request.error)DB
+                console.log('获取失败',request.error)
                 reject(null)
             })
         })

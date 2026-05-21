@@ -1,10 +1,11 @@
-import { computed, createApp,h,defineComponent,getCurrentInstance,createRenderer,nodeOps,type VNode} from 'vue'
+import { computed, createApp, h, defineComponent, getCurrentInstance, createRenderer, nodeOps, type VNode } from 'vue'
 import App from './App.vue'
 import router from './router'
+import {router as PageRouter} from './router/pageRouter'
 import pinia from './stores'
 import Antd from 'ant-design-vue';
 import 'ant-design-vue/dist/reset.css';
-import {DatePicker} from 'tdesign-vue-next'
+import { DatePicker } from 'tdesign-vue-next'
 import TDesign from 'tdesign-vue-next/esm'
 // import 'tdesign-vue-next/esm/style/index.js'
 //import 'tdesign-vue-next/es/style/index.css'
@@ -25,15 +26,45 @@ import '@tdesign-vue-next/chat/es/style/index.css';
 //         el[propName]=value
 //     }
 // }).createApp(App)
-const app = createApp(App)
-app.use(i18n)
-app.use(router)
-app.use(pinia)
-app.use(TDesign)
-app.use(Antd)
-app.use(TDesignChat)
+function setupApp() {
+    const params=new URLSearchParams(window.location.search)
+    const app = createApp(App)
+    app.use(i18n)
+    const currentSystem=params.get('system')||'router'
+    if(currentSystem==='page'){
+        app.use(PageRouter)
+    }else{
+        app.use(router)
+    }
+    app.use(pinia)
+    app.use(TDesign)
+    app.use(Antd)
+    app.use(TDesignChat)
 
-app.mount('#app')
+    app.mount('#app')
+
+    const div=document.createElement('div')
+    div.style.cssText=`
+        position:fixed;
+        left:10px;
+        bottom:10px;
+        background-color:#fff;
+        z-index:9999
+    `
+    div.innerHTML=`
+    <select id="router-select" >
+        <option value="page">页面</option>
+        <option value="router">路由</option>
+    </select>
+    `
+    document.body.appendChild(div)
+    const select=document.getElementById('router-select') as HTMLSelectElement
+    select.value=currentSystem
+    select.addEventListener('change',()=>{
+         window.location.href=`${window.location.origin}?system=${select.value}`
+    })
+   }
+setupApp()
 // app.component('TDatePicker',defineComponent({
 //         name:'TDatePicker',
 //         setup(props,{attrs}){

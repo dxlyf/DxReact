@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
     import {defineComponent,type PropType,ref} from 'vue'
-    import TinymceEditor from '@tinymce/tinymce-vue'
+   // import TinymceEditor from '@tinymce/tinymce-vue'
     const value=ref('')
    const initialOptions={
 

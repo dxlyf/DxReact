@@ -2,7 +2,7 @@
 import { onMounted, watch, computed, ref, h, defineComponent } from 'vue'
 import { useRoute } from 'vue-router'
 const route = useRoute()
-const params = route.params
+
 /**
  * 完整的导航解析流程
 导航被触发。
