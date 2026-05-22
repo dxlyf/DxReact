@@ -62,17 +62,18 @@ function onLogout() {
 
 <style scoped>
 .layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .layout-side {
-  flex-shrink: 0;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
   width: 232px;
   transition: width 0.2s;
-  overflow: hidden;
   background: #fff;
+  z-index: 100;
 }
 
 .layout-side.is-fold {
@@ -80,16 +81,35 @@ function onLogout() {
 }
 
 .layout-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  margin-left: 232px;
+  min-height: 100vh;
   background: #f5f6f8;
+  transition: margin-left 0.2s;
+}
+
+.layout-side.is-fold ~ .layout-main {
+  margin-left: 64px;
 }
 
 .layout-content {
-  flex: 1;
   padding: 20px;
-  overflow: auto;
+  padding-top: 76px;
+}
+
+.layout-main :deep(.navbar) {
+  position: fixed;
+  top: 0;
+  left: 232px;
+  right: 0;
+  z-index: 99;
+  transition: left 0.2s;
+}
+
+.layout-side.is-fold ~ .layout-main :deep(.navbar) {
+  left: 64px;
+}
+
+.layout-content :deep(> *) {
+  min-height: 0;
 }
 </style>

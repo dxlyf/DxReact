@@ -2,7 +2,8 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 
 const props = withDefaults(defineProps<{
-    items: string[]
+    items: ({ text: string } & Record<string, any>)[]
+    textKey?: string
     max?: number
     maxLines?: number
     lineThreshold?: number
@@ -10,8 +11,13 @@ const props = withDefaults(defineProps<{
 }>(), {
     theme:'primary',
     maxLines: 2,
-    lineThreshold: 5
+    lineThreshold: 5,
+    textKey: 'text'
 })
+
+const emit = defineEmits<{
+    'item-click': [payload: { item: any; index: number; event: MouseEvent }]
+}>()
 
 const expanded = ref(false)
 const containerRef = ref<HTMLElement>()
@@ -24,6 +30,8 @@ const toggleExpand = () => {
     expanded.value = !expanded.value
 }
 
+const textItems = computed(() => props.items.map(item => typeof item === 'string' ? item : item[props.textKey]))
+
 const isMaxMode = computed(() => props.max !== undefined)
 
 const visibleItems = computed(() => {
@@ -33,9 +41,20 @@ const visibleItems = computed(() => {
     return props.items
 })
 
+const visibleTextItems = computed(() => {
+    if (expanded.value) return textItems.value
+    if (isMaxMode.value) return textItems.value.slice(0, props.max)
+    if (lineCutoff.value !== null) return textItems.value.slice(0, lineCutoff.value)
+    return textItems.value
+})
+
 const hasMore = computed(() => {
     return visibleItems.value.length < props.items.length
 })
+
+function handleItemClick(item: any, index: number, event: MouseEvent) {
+    emit('item-click', { item, index, event })
+}
 
 const calcLineCutoff = () => {
     const el = containerRef.value
@@ -92,8 +111,17 @@ onUnmounted(() => {
 <template>
     <div class="tag-wrapper">
         <div ref="containerRef" class="tag-container">
-            <t-tag v-for="(item, i) in visibleItems" :key="i"
-                variant="light" :theme="theme ?? 'default'" size="small">{{ item }}</t-tag>
+            <template v-for="(item, i) in visibleItems" :key="i">
+                <slot name="item" :item="item" :index="i" :text="visibleTextItems[i]">
+                    <t-tag
+                        variant="light" :theme="theme ?? 'default'" size="small"
+                        @click="handleItemClick(item, i, $event)"
+                        style="cursor: pointer"
+                    >
+                        {{ visibleTextItems[i] }}
+                    </t-tag>
+                </slot>
+            </template>
             <div v-if="!expanded && hasMore" class="tag-actions" @click.stop="toggleExpand">
                 <t-tag theme="primary" variant="light" size="small" style="cursor: pointer">+{{ items.length - visibleItems.length }}</t-tag>
                 <t-link theme="primary" size="small">展开</t-link>
@@ -101,6 +129,7 @@ onUnmounted(() => {
             <div v-else-if="expanded" class="tag-actions" @click="toggleExpand">
                 <t-link theme="primary" size="small">收起</t-link>
             </div>
+            <slot name="after" />
         </div>
     </div>
 </template>

@@ -33,6 +33,20 @@ function setupApp() {
     const currentSystem=params.get('system')||'router'
     if(currentSystem==='page'){
         app.use(PageRouter)
+        PageRouter.beforeEach((to,from,next)=>{
+            if(from.query.system&&from.query.system!==to.query.system){
+               
+                return next({
+                    ...to,
+                    query:{
+                        ...to.query,
+                        system:from.query.system
+                    },
+                    replace:true
+                })
+            }
+             next()
+        })
     }else{
         app.use(router)
     }

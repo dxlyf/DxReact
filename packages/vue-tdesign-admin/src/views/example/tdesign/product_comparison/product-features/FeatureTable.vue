@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
     disabledTitle?: boolean
     disabledType?: boolean
     emptyText?: string
+    removeItem?: (item: any) => Promise<void>
 }>(), {
     showHeader: true,
     showDelete: true,
@@ -59,8 +60,17 @@ const openEditFeature = (index: number) => {
     drawerInst.open()
 }
 
-const handleDelete = (index: number) => {
+const handleDelete = async (index: number) => {
     const item = features.value[index]
+
+    if (props.removeItem) {
+        try {
+            await props.removeItem(item)
+        } catch {
+            return
+        }
+    }
+
     DialogPlugin.confirm({
         theme: 'danger',
         header: '确认删除',
@@ -74,6 +84,7 @@ const handleDelete = (index: number) => {
     })
 }
 const columns=[
+                { colKey: 'drag', title: '', width: 40 },
                 { colKey: 'serial-number', title: '#', width: 60 },
                 { colKey: 'title', title: '特性名称', width: 150, ellipsis: true },
                 { colKey: 'prefix', title: '参数前缀', width: 120, ellipsis: true },
@@ -83,6 +94,12 @@ const columns=[
                 { colKey: 'image', title: '参数图片', width: 120 },
                 { colKey: 'actions', title: '操作', width: 120, fixed: 'right' }
             ]
+
+function onDragSort({ currentIndex, targetIndex }: { currentIndex: number; targetIndex: number }) {
+  const item = features.value.splice(currentIndex, 1)[0]
+  features.value.splice(targetIndex, 0, item)
+  
+}
 </script>
 
 <template>
@@ -99,7 +116,12 @@ const columns=[
             bordered
             hover
             size="small"
+            drag-sort="row-handler"
+            @drag-sort="onDragSort"
         >
+            <template #drag>
+                <t-icon name="move" style="cursor: grab; color: #999;" />
+            </template>
             <template #title="{ row }">
                 <t-link theme="primary" @click="openEditFeature(features.indexOf(row))">{{ row.title || '-' }}</t-link>
             </template>

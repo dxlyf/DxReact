@@ -2,6 +2,7 @@
 import MainLayout from 'src/views/example/tdesign/components/Layouts/MainLayout.vue';
 import Table from 'src/views/example/tdesign/components/FTable/index.vue';
 import FTagList from 'src/views/example/tdesign/components/FTagList/index.vue';
+import { formatDate } from '@/utils/formatDate'
 import { SearchForm, type SearchField } from 'src/views/example/tdesign/components/FSearchForm';
 import type { TableProps } from 'tdesign-vue-next';
 import { DialogPlugin } from 'tdesign-vue-next';
@@ -32,6 +33,7 @@ type ProductFeature = {
   slug: string;
   category: string;
   features: string[];
+  createdAt: string;
 }
 
 const mockData: ProductFeature[] = Array.from({ length: 68 }, (_, i) => {
@@ -41,7 +43,8 @@ const mockData: ProductFeature[] = Array.from({ length: 68 }, (_, i) => {
     title: `产品特性${i + 1}`,
     slug: `product-feature-${i + 1}`,
     category: categoryNames[i % categoryNames.length],
-    features: assignedFeatures.length ? assignedFeatures : [featureNames[i % featureNames.length]]
+    features: assignedFeatures.length ? assignedFeatures : [featureNames[i % featureNames.length]],
+    createdAt: new Date(Date.now() - i * 86400000 * Math.random()).toISOString()
   }
 })
 
@@ -147,6 +150,11 @@ const columns: TableProps['columns'] = [
     minWidth:300
   },
   {
+    title: '创建时间',
+    colKey: 'createdAt',
+    width: 180
+  },
+  {
     title: '操作',
     colKey: 'actions',
     width: 160
@@ -203,11 +211,11 @@ tableInst.query()
     </template>
 
     <div class="flex">
-      <div class="flex-1">
+      <div class="flex-auto">
         <SearchForm :defaultColumns="3" :columns="searchColumns" @change="handleSearch">
         </SearchForm>
       </div>
-      <div class="flex-none">
+      <div class="flex-none w-[120px]">
         <t-space>
           <t-button :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete" theme="danger">批量删除{{ selectedRowKeys.length ? ` (${selectedRowKeys.length})` : '' }}</t-button>
         </t-space>
@@ -230,6 +238,9 @@ tableInst.query()
       <template #features="{ row }">
         <FTagList v-if="row.features && row.features.length" :items="row.features" theme="primary" />
         <span v-else>-</span>
+      </template>
+      <template #createdAt="{ row }">
+        {{ formatDate(row.createdAt) }}
       </template>
       <template #actions="{ row }">
         <t-space>

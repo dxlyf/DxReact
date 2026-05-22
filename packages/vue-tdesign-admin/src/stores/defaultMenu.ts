@@ -13,66 +13,16 @@ export interface MenuItem {
 
 const defaultMenus: MenuItem[] = [
   {
-    path: '/new/system',
-    menuKey: '/system',
-    menuName: '系统管理',
+
+    menuKey: 'downloadcenter',
+    menuName: '下载中心',
     icon: 'setting',
-    children: [
+    children:[
       {
-        path: '/new/system/user',
-        menuKey: '/new/system/user',
-        menuName: '用户管理',
-        icon: 'user',
-        permission: ['system:user:list']
-      },
-      {
-        path: '/new/system/role',
-        menuKey: '/new/system/role',
-        menuName: '角色管理',
-        icon: 'user-group',
-        permission: ['system:role:list']
-      },
-      {
-        path: '/new/system/menu',
-        menuKey: '/new/system/menu',
-        menuName: '菜单管理',
-        icon: 'menu',
-        permission: ['system:menu:list']
-      },
-      {
-        path: '/new/system/button',
-        menuKey: '/new/system/button',
-        menuName: '按钮权限',
-        icon: 'lock',
-        permission: ['system:button:list']
-      },
-      {
-        path: '/new/system/api',
-        menuKey: '/new/system/api',
-        menuName: 'API权限',
-        icon: 'link',
-        permission: ['system:api:list']
-      },
-      {
-        path: '/new/system/dept',
-        menuKey: '/new/system/dept',
-        menuName: '部门管理',
-        icon: 'organization',
-        permission: ['system:dept:list']
-      },
-      {
-        path: '/new/system/dict',
-        menuKey: '/new/system/dict',
-        menuName: '字典管理',
-        icon: 'books',
-        permission: ['system:dict:list']
-      },
-      {
-        path: '/new/system/log',
-        menuKey: '/new/system/log',
-        menuName: '日志管理',
-        icon: 'text',
-        permission: ['system:log:list']
+        menuKey:'app',
+        menuName:'应用',
+        icon:'app',
+        path:'/example/tdesign/download/apps'
       }
     ]
   }

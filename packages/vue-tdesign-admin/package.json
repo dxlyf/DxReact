@@ -20,6 +20,7 @@
     "mitt": "^3.0.1",
     "pinia": "^3.0.4",
     "quill": "^2.0.3",
+    "sortablejs": "^1.15.7",
     "tailwindcss": "^4.1.18",
     "tdesign-icons-vue-next": "^0.4.2",
     "tdesign-vue-next": "^1.18.0",

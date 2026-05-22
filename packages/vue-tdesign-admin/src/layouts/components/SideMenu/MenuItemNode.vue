@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { hasPermission } from '@/directives/permission'
 import type { MenuItem } from './types'
-
+import {useRouter,useRoute} from 'vue-router'
 defineOptions({
   name: 'MenuItemNode'
 })
@@ -10,6 +10,20 @@ defineOptions({
 const props = defineProps<{
   items: MenuItem[]
 }>()
+
+const router = useRouter()
+
+function handleNav(item: MenuItem) {
+  if (item.path) {
+    router.push({
+      path: item.path,
+      query:{
+       // ...item.query
+      }
+    })
+  }
+}
+
 
 
 </script>
@@ -32,6 +46,8 @@ const props = defineProps<{
       v-else
       :value="item.menuKey || item.path || ''"
       :to="item.path"
+      :router="router"
+      @click="handleNav(item)"
     >
       <template #icon>
         <t-icon v-if="item.icon" :name="item.icon" />

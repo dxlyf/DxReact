@@ -45,28 +45,32 @@ function toggle() {
 
 <template>
   <div
-    class="side"
+    class="side-menu-container"
     @mouseenter="showCollapse = true"
     @mouseleave="showCollapse = false"
-    :class="{ 'is-collapsed': collapsed }"
   >
-    <div class="side-logo">
-      <slot name="logo">
-        <span class="side-logo-text">后台管理</span>
-      </slot>
-    </div>
+    <div
+      class="side"
+      :class="{ 'is-collapsed': collapsed }"
+    >
+      <div class="side-logo">
+        <slot name="logo">
+          <span class="side-logo-text">后台管理</span>
+        </slot>
+      </div>
 
-    <div class="side-menu-wrap">
-      <t-menu
-        :value="value"
-        :expanded="expanded"
-        :collapsed="collapsed"
-        theme="light"
-        @change="onChange"
-        @expand="onExpand"
-      >
-        <MenuItemNode :items="items" />
-      </t-menu>
+      <div class="side-menu-wrap">
+        <t-menu
+          :value="value"
+          :expanded="expanded"
+          :collapsed="collapsed"
+          theme="light"
+          @change="onChange"
+          @expand="onExpand"
+        >
+          <MenuItemNode :items="items" />
+        </t-menu>
+      </div>
     </div>
 
     <div
@@ -81,15 +85,20 @@ function toggle() {
 </template>
 
 <style scoped>
-.side {
+.side-menu-container {
   position: relative;
+  height: 100%;
+  overflow: visible;
+}
+
+.side {
   height: 100%;
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-right: 1px solid #ebedf0;
   transition: width 0.2s;
   width: 232px;
+  overflow: hidden;
 }
 
 .side.is-collapsed {
@@ -132,7 +141,7 @@ function toggle() {
 
 .side-collapse-zone {
   position: absolute;
-  right: 0;
+  left: 100%;
   top: 50%;
   transform: translateY(-50%);
   z-index: 20;
