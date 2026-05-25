@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { MenuItem } from './types'
 import MenuItemNode from './MenuItemNode.vue'
 
@@ -27,15 +27,84 @@ const emit = defineEmits<{
 }>()
 
 const showCollapse = ref(false)
+const searchKeyword = ref('')
 
 const collapsed = computed(() => props.collapsed)
 
+function filterMenuItems(items: MenuItem[], keyword: string): MenuItem[] {
+  if (!keyword) return items
+  const lowerKeyword = keyword.toLowerCase()
+  return items.reduce<MenuItem[]>((result, item) => {
+    const matchName = item.menuName?.toLowerCase().includes(lowerKeyword)
+    if (item.children && item.children.length) {
+      const filteredChildren = filterMenuItems(item.children, keyword)
+      if (matchName || filteredChildren.length) {
+        result.push({
+          ...item,
+          children: filteredChildren.length ? filteredChildren : item.children
+        })
+      }
+    } else if (matchName) {
+      result.push(item)
+    }
+    return result
+  }, [])
+}
+
+const filteredItems = computed(() => filterMenuItems(props.items, searchKeyword.value))
+
+function collectExpandKeys(items: MenuItem[]): string[] {
+  return items.reduce<string[]>((keys, item) => {
+    if (item.children && item.children.length) {
+      keys.push(item.menuKey || item.path || '')
+      keys.push(...collectExpandKeys(item.children))
+    }
+    return keys
+  }, [])
+}
+
+const localExpanded = ref<string[]>([])
+
+watch(() => props.expanded, (val) => {
+  localExpanded.value = [...val]
+}, { immediate: true })
+
+function collectParentKeys(items: MenuItem[], targetKey: string, parents: string[] = []): string[] | null {
+  for (const item of items) {
+    const currentKey = item.menuKey || item.path || ''
+    if (currentKey === targetKey) {
+      return parents
+    }
+    if (item.children?.length) {
+      const result = collectParentKeys(item.children, targetKey, [...parents, currentKey])
+      if (result) return result
+    }
+  }
+  return null
+}
+
+const activeExpanded = computed(() => {
+  if (searchKeyword.value) {
+    return collectExpandKeys(filteredItems.value)
+  }
+  return localExpanded.value
+})
+
 function onChange(val: string | number) {
-  emit('change', String(val))
+  const strVal = String(val)
+  const parentKeys = collectParentKeys(props.items, strVal)
+  if (parentKeys) {
+    localExpanded.value = [...new Set([...localExpanded.value, ...parentKeys])]
+  }
+  emit('change', strVal)
 }
 
 function onExpand(val: (string | number)[]) {
-  emit('expand', val.map(String))
+  const strVals = val.map(String)
+  if (!searchKeyword.value) {
+    localExpanded.value = strVals
+  }
+  emit('expand', strVals)
 }
 
 function toggle() {
@@ -59,16 +128,36 @@ function toggle() {
         </slot>
       </div>
 
+      <div class="side-search" :class="{ 'is-hidden': collapsed }">
+        <t-input
+          v-model="searchKeyword"
+          placeholder="搜索菜单"
+          clearable
+          :style="{ width: '100%' }"
+        >
+          <template #prefix-icon>
+            <t-icon name="search" />
+          </template>
+        </t-input>
+      </div>
+
       <div class="side-menu-wrap">
         <t-menu
           :value="value"
-          :expanded="expanded"
+          :expanded="activeExpanded"
           :collapsed="collapsed"
+          :expand-mutex="false"
           theme="light"
           @change="onChange"
           @expand="onExpand"
         >
-          <MenuItemNode :items="items" />
+          <MenuItemNode :items="filteredItems" />
+
+           <template #operations>
+        <t-button variant="text" shape="square" @click="toggle">
+          <template #icon><t-icon name="view-list" /></template>
+        </t-button>
+      </template>
         </t-menu>
       </div>
     </div>
@@ -126,6 +215,20 @@ function toggle() {
 
 .is-collapsed .side-logo-text {
   font-size: 14px;
+}
+
+.side-search {
+  padding: 8px 12px;
+  border-bottom: 1px solid #ebedf0;
+  flex-shrink: 0;
+}
+
+.side-search.is-hidden {
+  visibility: hidden;
+  height: 0;
+  padding: 0 12px;
+  border-bottom: none;
+  overflow: hidden;
 }
 
 .side-menu-wrap {

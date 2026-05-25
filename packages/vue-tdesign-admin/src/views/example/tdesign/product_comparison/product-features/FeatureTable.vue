@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { DialogPlugin } from 'tdesign-vue-next';
+import { DialogPlugin, TableProps } from 'tdesign-vue-next';
 import { useDrawer } from 'src/hooks/useDrawer';
 import FUploadImage from 'src/views/example/tdesign/components/FUpload/FUploadImage.vue';
 import type { FeatureItem } from './FeatureList.vue';
@@ -95,10 +95,10 @@ const columns=[
                 { colKey: 'actions', title: '操作', width: 120, fixed: 'right' }
             ]
 
-function onDragSort({ currentIndex, targetIndex }: { currentIndex: number; targetIndex: number }) {
+const onDragSort:TableProps['onDragSort'] = ({ currentIndex, targetIndex,newData,currentData}) => {
   const item = features.value.splice(currentIndex, 1)[0]
-  features.value.splice(targetIndex, 0, item)
-  
+ // features.value.splice(targetIndex, 0, item)
+  features.value = newData
 }
 </script>
 

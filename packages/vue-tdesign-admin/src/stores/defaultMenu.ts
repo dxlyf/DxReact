@@ -25,6 +25,18 @@ const defaultMenus: MenuItem[] = [
         path:'/example/tdesign/download/apps'
       }
     ]
+  },{
+     menuKey: 'product',
+    menuName: '产品',
+    icon: 'setting',
+    children:[
+      {
+        menuKey:'product-features',
+        menuName:'产品特性',
+        icon:'app',
+        path:'/example/tdesign/product_comparison/product-features'
+      }
+    ]
   }
 ]
 

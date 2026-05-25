@@ -60,7 +60,7 @@ function setupApp() {
     const div=document.createElement('div')
     div.style.cssText=`
         position:fixed;
-        left:10px;
+        right:10px;
         bottom:10px;
         background-color:#fff;
         z-index:9999
