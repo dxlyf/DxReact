@@ -44,7 +44,7 @@ type DownloadAPPDTO={
 }
 const data=Array.from({length:100},(v,i)=>({
     id:i+1,
-    slug:'slug'+(i+1),
+    slug:'slugfffffffffffffffffffffffffffffffffffffasdfads'+(i+1),
     name:'name'+(i+1),
     publishAt:'2023-01-01',
     status:'Publish',
@@ -94,7 +94,12 @@ const columns: TableProps['columns'] = [
         title: '标题',
         colKey: 'slug',
         width: 160,
-        ellipsis: true
+        ellipsis:(h,props)=>{
+          //  console.log('ellipsis',props.row.slug)
+            return h('t-tooltip',{
+                //content:props.row.slug
+            },props.row.slug)
+        }
     }, {
         title: '名称',
         colKey: 'name',
@@ -215,7 +220,6 @@ const handleDelete=(row)=>{
             <template #slug="{ row }">
                 <t-link theme="primary">{{ row.slug }}</t-link>
             </template>
-
             <template #status="{ row }">
                 <t-tag variant="light" :theme="row.status === 'Publish' ? 'success' : 'warning'">{{ row.status }}</t-tag>
             </template>

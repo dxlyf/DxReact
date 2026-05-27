@@ -4,6 +4,7 @@ import { DialogPlugin, TableProps } from 'tdesign-vue-next';
 import { useDrawer } from 'src/hooks/useDrawer';
 import FUploadImage from 'src/views/example/tdesign/components/FUpload/FUploadImage.vue';
 import type { FeatureItem } from './FeatureList.vue';
+import { ceil } from 'lodash-es';
 
 const features = defineModel<FeatureItem[]>({ required: true })
 
@@ -83,14 +84,16 @@ const handleDelete = async (index: number) => {
         }
     })
 }
-const columns=[
+const columns:TableProps['columns']=[
                 { colKey: 'drag', title: '', width: 40 },
                 { colKey: 'serial-number', title: '#', width: 60 },
-                { colKey: 'title', title: '特性名称', width: 150, ellipsis: true },
+                { colKey: 'title', title: '特性名称', width: 150, ellipsis: {attach:'body'} },
                 { colKey: 'prefix', title: '参数前缀', width: 120, ellipsis: true },
                 { colKey: 'content', title: '参数文案', width: 150, ellipsis: true },
                 { colKey: 'description', title: '参数描述', width: 180, ellipsis: true },
-                { colKey: 'floatComment', title: '浮动注释', width: 150, ellipsis: true },
+                { colKey: 'floatComment', title: '浮动注释', width: 150,ellipsis:true, cell:(h,props)=>{
+                    return props.row.floatComment || '-'
+                }},
                 { colKey: 'image', title: '参数图片', width: 120 },
                 { colKey: 'actions', title: '操作', width: 120, fixed: 'right' }
             ]
@@ -134,7 +137,7 @@ const onDragSort:TableProps['onDragSort'] = ({ currentIndex, targetIndex,newData
             <template #description="{ row }">
                 {{ row.description || '-' }}
             </template>
-            <template #floatComment="{ row }">
+            <template #:floatComment="{ row }" >
                 {{ row.floatComment || '-' }}
             </template>
             <template #image="{ row }">
@@ -203,7 +206,7 @@ const onDragSort:TableProps['onDragSort'] = ({ currentIndex, targetIndex,newData
                 <t-input v-model.trim="editingFeatureCopy.description" placeholder="请输入参数描述" :maxlength="40" show-limit-number />
             </t-form-item>
             <t-form-item label="浮动注释">
-                <t-input v-model.trim="editingFeatureCopy.floatComment" placeholder="请输入浮动注释" />
+                <t-input :maxlength="5000" show-limit-number v-model.trim="editingFeatureCopy.floatComment" placeholder="请输入浮动注释" />
             </t-form-item>
         </t-form>
     </t-drawer>

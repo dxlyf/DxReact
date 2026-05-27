@@ -229,7 +229,14 @@ const beforeUpload: TdUploadProps['beforeUpload'] = async (file) => {
             // resolve(false)
             // return 
         }
-        const img = await loadImage(await fileToBase64(file.raw) as string) as HTMLImageElement
+        let img:HTMLImageElement
+        try{
+            img = await loadImage(await fileToBase64(file.raw) as string) as HTMLImageElement
+        }catch(err){
+            state.error = err.message||err
+            resolve(false)
+            return
+        }
         const width = props.limit.width
         const height = props.limit.height
         if (limit.value.type === 'before' && Number.isFinite(width) && Number.isFinite(height) && (img.naturalWidth !== width || img.naturalHeight !== height)) {

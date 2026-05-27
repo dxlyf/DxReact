@@ -319,7 +319,7 @@ const handleSubmit = async (e: any) => {
                             <FeatureTable
                                 v-model="formData.features"
                                 :show-header="false"
-                                :disabled-title="true"
+                                :disabled-title="false"
                             />
                         </div>
                     </t-form-item>

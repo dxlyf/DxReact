@@ -35,7 +35,7 @@ for(const [filePath,component] of Object.entries(pages)){
 export const routes:RouteRecordRaw[]=[
     {
         path:'/',
-        component:()=>import('@/layouts/DetaultLayout.vue'),
+        component:()=>import('@/layouts/AdminLayout3/index.vue'),
         children:pageRoutes
     }
 ]
