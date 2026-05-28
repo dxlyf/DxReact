@@ -17,11 +17,11 @@ const appStore = useAppStore()
         </template>
       </t-input>
     </div>
-    <div class="flex-1 min-h-0">
+    <t-loading :loading="appStore.menuLoading" text="加载菜单数据" show-overlay class="flex-1 min-h-0">
       <t-menu theme="light" :collapsed="appStore.menuCollapsed" @change="appStore.onMenuChange" @expand="appStore.onMenuExpandChange" :expanded="appStore.expandedKeys" :value="appStore.activeMenuKey">
       <SideSubMenu :items="appStore.finalMenuData" />
     </t-menu>
-    </div>
+  </t-loading>
     <div class="f3-collapse" >
         <div class="f3-collapse-btn" @click="appStore.menuCollapsed = !appStore.menuCollapsed">
             <t-icon :name="appStore.menuCollapsed?'caret-right-small':'caret-left-small'"></t-icon>

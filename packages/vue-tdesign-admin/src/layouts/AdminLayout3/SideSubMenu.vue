@@ -25,13 +25,13 @@ const handleMenuNav = (item: MenuItem) => {
 </script>
 <template>
      <template v-for="item in props.items" :key="item.menuKey">
-        <t-submenu v-if="Array.isArray(item.children)" :value="item.menuKey">
-            <template #icon v-if="item.icon">
+        <t-submenu v-if="!item.isLeaf" :value="item.menuKey">
+            <template #icon >
                 <img v-if="item.webIcon" :src="item.webIcon" class="size-[16px]"/>
                 <t-icon v-else :name="item.icon||'app'"  size="16" />
             </template>
             <template #title>{{ item.name }}</template>
-            <SideSubMenu :items="item.children" />
+            <SideSubMenu v-if="Array.isArray(item.children)" :items="item.children" />
         </t-submenu>
         <t-menu-item v-else :value="item.menuKey"  @click="handleMenuNav(item)">
             <template #icon v-if="item.icon">

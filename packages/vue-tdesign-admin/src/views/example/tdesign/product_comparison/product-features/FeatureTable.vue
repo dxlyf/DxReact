@@ -206,7 +206,7 @@ const onDragSort:TableProps['onDragSort'] = ({ currentIndex, targetIndex,newData
                 <t-input v-model.trim="editingFeatureCopy.description" placeholder="请输入参数描述" :maxlength="40" show-limit-number />
             </t-form-item>
             <t-form-item label="浮动注释">
-                <t-input :maxlength="5000" show-limit-number v-model.trim="editingFeatureCopy.floatComment" placeholder="请输入浮动注释" />
+                <t-textarea :maxlength="5000" show-limit-number v-model.trim="editingFeatureCopy.floatComment" placeholder="请输入浮动注释" />
             </t-form-item>
         </t-form>
     </t-drawer>

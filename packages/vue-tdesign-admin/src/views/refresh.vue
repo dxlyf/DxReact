@@ -12,7 +12,9 @@
     export default defineComponent({
         name:'Refresh',
         beforeRouteEnter (to, from, next) {
+            console.log('to',from.fullPath)
             next(vm => {
+                console.log('form',from.fullPath)
               //  console.log('refresh',from)
                 // 通过 `vm` 访问组件实例
                 vm.$router.replace(from.path)

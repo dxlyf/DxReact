@@ -22,11 +22,11 @@ function onUserClick(opt: DropdownOption) {
 </script>
 <template>
     <header class="f3-header">
-            <div class="flex-none h-full flex items-center gap-4">
+            <div class="flex-none h-full flex items-center gap-4 w-[208px]">
                  <img src="/vite.svg" class="size-8">
                  <span class="text-xl">管理后台</span>
             </div>
-            <div class="flex-1 ml-[50px] flex">
+            <div class="flex-1 flex">
                 <div>
                     <t-select  @change="appStore.onAppSlugChange" :value="appStore.currentAppSlug" :borderless="true" :auto-width="true" :options="appStore.tenantData">
                     </t-select>

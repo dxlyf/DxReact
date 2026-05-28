@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import {ref,watch,onMounted,onUnmounted,computed,shallowRef,reactive} from 'vue'
-import {useRoute} from 'vue-router'
+import { SelectOption } from 'tdesign-vue-next'
+import {ref,watch,onMounted,onUnmounted,computed,shallowRef,reactive, nextTick} from 'vue'
+import {useRouter} from 'vue-router'
 export type MenuItem = {
   isLeaf?: boolean
   menuKey: string
@@ -74,8 +75,9 @@ const searchMenuData=(list:MenuItem[],keyWord:string)=>{
 export const SYSTEM_TENANT_APPSLUG='system_tenant_appslug'
 export const useAppStore=defineStore('appstore2',()=>{
 
-    const route=useRoute()
+    const router=useRouter()
     const loading=shallowRef(false)
+    const menuLoading=shallowRef(false)
     const error=shallowRef<AppError|null>({code:0,message:''})
     const userInfo=shallowRef<UserInfo>({username:'',avatar:'',isSuperAdmin:false}) // 用户信息
     const tenantData=shallowRef<any>([]) // 租户数据
@@ -131,11 +133,15 @@ export const useAppStore=defineStore('appstore2',()=>{
         if(userInfo.value.isSuperAdmin){
             tenantList=[{
                 value:'superadmin',
-                label:'超级管理'
+                label:'超级管理',
+                content:(h)=>{
+                    return h('div',{class:'flex gap-2'},h('t-icon',{name:'setting'}),h('span','超级管理'))
+                }
+                
             },{
                 group:'租户',
                 children:data
-            }]
+            }] as SelectOption[]
         }
         let currentItem:TenantOption|null=null
         tenantList.some(d=>{
@@ -156,6 +162,8 @@ export const useAppStore=defineStore('appstore2',()=>{
         sessionStorage.setItem(SYSTEM_TENANT_APPSLUG, currentAppSlug.value)
     }
     const fetchMenuData=async ()=>{
+        menuLoading.value=true
+        await new Promise(resolve=>setTimeout(resolve,3000))
         const data=Array.from({length:30},(v,index)=>{
             return {
                 menuKey:`app-do-${index}`,
@@ -176,6 +184,7 @@ export const useAppStore=defineStore('appstore2',()=>{
                 parentKeys:parents?parents.map(p=>p.menuKey):[]
              }
          })
+         menuLoading.value=false
     }
     // 菜单展开切换
     const onMenuExpandChange=(keys:string[])=>{
@@ -185,20 +194,29 @@ export const useAppStore=defineStore('appstore2',()=>{
     const onMenuChange=(key:string)=>{
         const item=flatMenuData.value.find(item=>item.menuKey===key)
         if(item){
+            activeMenuKey.value=key
             localExpandedMenuKeys.value=Array.from(new Set(localExpandedMenuKeys.value.concat(item.parentKeys||[])))
         }
-        activeMenuKey.value=key
+  
     }
     // 租户切换
     const onAppSlugChange=(slug:string)=>{
         currentAppSlug.value=slug
         sessionStorage.setItem(SYSTEM_TENANT_APPSLUG,slug)
-        window.location.reload()
+       // window.location.reload()
+        menuData.value=[]
+        fetchMenuData().then(()=>{
+            nextTick(()=>{
+                onMenuChange(activeMenuKey.value)
+            })
+        })
+        router.replace('/')
+       
     }
 
     const syncActiveMenu=()=>{
-        const path=route.path
-        const item=flatMenuData.value.find(item=>item.path===path)
+        const path=router.currentRoute.value.path
+        const item=flatMenuData.value.find(item=>item.isLeaf&&item.path===path)
         if(item){
             activeMenuKey.value=item.menuKey
             localExpandedMenuKeys.value=item.parentKeys||[]
@@ -222,13 +240,14 @@ export const useAppStore=defineStore('appstore2',()=>{
             loading.value=false
         }
     }
-    watch(()=>activeMenuKey.value,()=>{
-        if(activeMenuKey.value){
-            onMenuChange(activeMenuKey.value)
-        }
-    })
+    // watch(()=>activeMenuKey.value,(newVal,oldVal)=>{
+    //     if(newVal){
+    //         onMenuChange(newVal)
+    //     }
+    // })
     initAppData()
     return {
+        menuLoading,
         loading,
         error,
         userInfo,

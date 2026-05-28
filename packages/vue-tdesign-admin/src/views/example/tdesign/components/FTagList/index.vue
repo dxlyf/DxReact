@@ -63,6 +63,7 @@ const calcLineCutoff = () => {
     const lines = props.maxLines ?? 2
     let currentLine = 0
     let lastTop = -1
+    let newCutoff = children.length
     for (let i = 0; i < children.length; i++) {
         const top = children[i].offsetTop
         if (Math.abs(top - lastTop) > props.lineThreshold) {
@@ -70,16 +71,17 @@ const calcLineCutoff = () => {
             lastTop = top
         }
         if (currentLine > lines) {
-            lineCutoff.value = i
-            return
+            newCutoff = i
+            break
         }
     }
-    lineCutoff.value = children.length
+    if (newCutoff !== lineCutoff.value) {
+        lineCutoff.value = newCutoff
+    }
 }
 
 const scheduleRecalc = () => {
     if (rafId !== null) return
-    lineCutoff.value = null
     rafId = requestAnimationFrame(() => {
         rafId = null
         calcLineCutoff()
