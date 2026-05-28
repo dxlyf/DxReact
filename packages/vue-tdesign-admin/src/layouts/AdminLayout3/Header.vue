@@ -36,7 +36,7 @@ function onUserClick(opt: DropdownOption) {
                 <t-dropdown @click="onUserClick" :options="userOpts" placement="bottom-right" trigger="hover">
                     <div class="flex items-center gap-2 cursor-pointer hover:text-blue-500">
                         <t-avatar shape="circle"/>
-                        <span class="text-base">admin</span>
+                        <span class="text-base">{{ appStore.userInfo.username }}</span>
                         <t-icon name="chevron-down" size="14"></t-icon>
                     </div>
                 </t-dropdown>

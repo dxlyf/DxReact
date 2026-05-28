@@ -12,7 +12,7 @@ const appStore = useAppStore()
 <template>
   <!-- 顶部导航栏 -->
  <div v-if="appStore.loading" class="absolute inset-0 flex items-center justify-center overflow-hidden">
-  <t-loading :loading="true" text="初始化加载系统数据中...">
+  <t-loading :loading="true" text="加载系统初始化数据中...">
   </t-loading>
 </div>
   <div class="f3-layout" v-else>

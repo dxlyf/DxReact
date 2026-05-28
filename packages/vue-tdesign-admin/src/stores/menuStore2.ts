@@ -71,6 +71,7 @@ const searchMenuData=(list:MenuItem[],keyWord:string)=>{
     }
     return result
 }
+export const SYSTEM_TENANT_APPSLUG='system_tenant_appslug'
 export const useAppStore=defineStore('appstore2',()=>{
 
     const route=useRoute()
@@ -78,7 +79,7 @@ export const useAppStore=defineStore('appstore2',()=>{
     const error=shallowRef<AppError|null>({code:0,message:''})
     const userInfo=shallowRef<UserInfo>({username:'',avatar:'',isSuperAdmin:false}) // 用户信息
     const tenantData=shallowRef<any>([]) // 租户数据
-    const currentAppSlug=shallowRef('') // 当前租户
+    const currentAppSlug=shallowRef(sessionStorage.getItem(SYSTEM_TENANT_APPSLUG) || '')  // 当前租户
     const menuData=ref<MenuItem[]>([]) // 菜单数据
     const searchMenuKeyWord=shallowRef('') // 搜索菜单关键词
     const activeMenuKey=shallowRef('') // 当前选中的菜单键值
@@ -97,6 +98,7 @@ export const useAppStore=defineStore('appstore2',()=>{
         }
         return menuData.value
     })
+    // 展开的菜单键值
     const expandedKeys=computed(()=>{
         if(searchMenuKeyWord.value){
             const keys:string[]=[]
@@ -113,6 +115,8 @@ export const useAppStore=defineStore('appstore2',()=>{
         // const data=await fetch('/api/user/info')
         // const userInfo=await data.json()
        // currentTenant.value=userInfo.tenantId
+       userInfo.value.isSuperAdmin=true
+       userInfo.value.username='admin'
     }
     const fetchTenantData=async ()=>{
         const data:any[]=[{
@@ -126,17 +130,30 @@ export const useAppStore=defineStore('appstore2',()=>{
 
         if(userInfo.value.isSuperAdmin){
             tenantList=[{
-                value:'prevAppSlug',
-                label:'默认租户'
+                value:'superadmin',
+                label:'超级管理'
             },{
                 group:'租户',
                 children:data
             }]
         }
-        const prevAppSlug=''
-        const currentItem=tenantList.find(d=>d.value===prevAppSlug)
+        let currentItem:TenantOption|null=null
+        tenantList.some(d=>{
+            if(d.children){
+               const found=d.children?.find(c=>c.value===currentAppSlug.value)
+               if(found){
+                   currentItem=found
+                   return true
+               }
+            }
+            else if(d.value===currentAppSlug.value){
+                currentItem=d;
+                return true
+            }
+        })
         currentAppSlug.value=currentItem?currentItem.value:tenantList[0].value
         tenantData.value=tenantList
+        sessionStorage.setItem(SYSTEM_TENANT_APPSLUG, currentAppSlug.value)
     }
     const fetchMenuData=async ()=>{
         const data=Array.from({length:30},(v,index)=>{
@@ -175,6 +192,8 @@ export const useAppStore=defineStore('appstore2',()=>{
     // 租户切换
     const onAppSlugChange=(slug:string)=>{
         currentAppSlug.value=slug
+        sessionStorage.setItem(SYSTEM_TENANT_APPSLUG,slug)
+        window.location.reload()
     }
 
     const syncActiveMenu=()=>{
@@ -191,7 +210,7 @@ export const useAppStore=defineStore('appstore2',()=>{
     const initAppData=async ()=>{
         loading.value=true
         try{
-        await new Promise(resolve=>setTimeout(resolve,30000))
+        await new Promise(resolve=>setTimeout(resolve,3000))
         await fetchUserInfo()
         await fetchTenantData()
         await fetchMenuData()
@@ -212,6 +231,7 @@ export const useAppStore=defineStore('appstore2',()=>{
     return {
         loading,
         error,
+        userInfo,
         finalMenuData,
         flatMenuData,
         menuData,

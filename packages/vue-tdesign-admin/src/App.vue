@@ -1,6 +1,6 @@
 <template>
    <t-config-provider :global-config="globalConfig">
-    <router-view v-slot="{Component,route}">
+    <router-view v-slot="{Component,route}" v-if="isRouterAlive">
         <component :is="Component" />
     </router-view>
     </t-config-provider>
@@ -17,13 +17,22 @@
 </style>
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import {provide, shallowReactive, shallowRef,h, defineComponent} from 'vue'
+import {provide, shallowReactive, shallowRef,h, defineComponent,nextTick} from 'vue'
 import dayjs from 'dayjs'
 import {DatePicker} from 'tdesign-vue-next'
 const router = useRouter()
 const langKey='lang'
 const langRef=shallowRef([])
 provide(langKey,langRef)
+const isRouterAlive=shallowRef(true)
+
+const reload=()=>{
+  isRouterAlive.value=false
+  nextTick().then(()=>{
+    isRouterAlive.value=true
+  })
+}
+provide('reload',reload)
 const globalConfig=shallowReactive({
   datePicker:{
      defaultTime:dayjs().format('HH:mm:ss')
