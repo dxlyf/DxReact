@@ -41,6 +41,8 @@
       <!-- 功能按钮 -->
       <div class="action-buttons">
         <t-button type="primary" @click="handleAdd">新增用户</t-button>
+         <t-button type="primary" @click="()=>{throw new Error('故意的')}">抛出错</t-button>
+      
         <t-button @click="handleExport">导出</t-button>
       </div>
 

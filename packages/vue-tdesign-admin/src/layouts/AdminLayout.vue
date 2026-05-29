@@ -38,12 +38,17 @@
             </t-head-menu>
         </t-header>
         <t-content class="px-5 py-4 min-h-0">
-             <!-- <router-view v-slot="{Component,route}">
-                 <keep-alive >
-                    <component :is="Component" :key="route.path"/>
-                 </keep-alive>
-            </router-view> -->
-            <router-view></router-view>
+            <template v-if="!caughtError">
+                <router-view></router-view>
+            </template>
+            <template v-else>
+                <div class="flex flex-col items-center justify-center py-20">
+                    <t-icon name="error-circle" size="64" class="text-red-400 mb-4" />
+                    <h2 class="text-lg font-medium text-gray-700 mb-2">页面渲染异常</h2>
+                    <p class="text-sm text-gray-400 mb-6">抱歉，页面渲染时发生了意外错误</p>
+                    <t-button theme="primary" @click="handleRetry">重新加载</t-button>
+                </div>
+            </template>
         </t-content>
         <t-footer v-if="false">
         </t-footer>
@@ -52,16 +57,28 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch,computed,ref,h } from 'vue'
-import { useMenu,type MenuDataItem } from 'src/hooks/useMenu'
+import { ref, h, onErrorCaptured } from 'vue'
+import { useMenu } from 'src/hooks/useMenu'
 import { type DropdownOption } from 'tdesign-vue-next';
 import { useI18n } from 'vue-i18n'
 const {locale}=useI18n()
 
-import { DiscountIcon,LocationIcon,ChineseCabbageIcon } from 'tdesign-icons-vue-next';
+import { DiscountIcon } from 'tdesign-icons-vue-next';
 import SideSubmenu from './components/SideSubmenu.vue'
 const [menuProps,menuState]=useMenu()
-const asideCallapse=ref(false)
+
+const caughtError = ref(false)
+
+onErrorCaptured((err, instance, info) => {
+    caughtError.value = true
+    console.error('[AdminLayout Error Boundary]:', err, info)
+    return false
+})
+
+const handleRetry = () => {
+    caughtError.value = false
+}
+
 const handleChangeLocale=(e:DropdownOption)=>{
     locale.value=e.value as any
     localStorage.setItem('lang',e.value as string)

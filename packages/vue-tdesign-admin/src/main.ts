@@ -34,9 +34,9 @@ function setupApp() {
     if(currentSystem==='page'){
         app.use(PageRouter)
         PageRouter.beforeEach((to,from,next)=>{
-            if(from.query.system&&from.query.system!==to.query.system){
-               
-                return next({
+          //  console.log('路由守卫222', to.fullPath,from.fullPath)
+            if(!to.query.system&&from.query.system!==to.query.system){  
+                 next({
                     ...to,
                     query:{
                         ...to.query,
@@ -44,8 +44,9 @@ function setupApp() {
                     },
                     replace:true
                 })
+                return
             }
-             next()
+            next()
         })
     }else{
         app.use(router)

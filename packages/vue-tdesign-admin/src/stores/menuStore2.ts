@@ -225,7 +225,14 @@ export const useAppStore=defineStore('appstore2',()=>{
             activeMenuKey.value=''
         }
     }
+    let initedStatus=0
     const initAppData=async ()=>{
+        if(initedStatus!==0){
+            console.log('初始化应用数据222222222')
+            return
+        }
+        console.log('初始化应用数据')
+        initedStatus=1
         loading.value=true
         try{
         await new Promise(resolve=>setTimeout(resolve,3000))
@@ -238,15 +245,31 @@ export const useAppStore=defineStore('appstore2',()=>{
         }
         finally{
             loading.value=false
+            initedStatus=2
         }
+        
     }
+    router.beforeEach(async (to, from, next) => {
+        console.log('路由守卫', to.path,from.path)
+       //  const appStore=useAppStore()
+        // await appStore.initAppData()
+        await initAppData()
+        // if(to.path!==from.path){
+        //     next(to)
+        //     return true
+        // }
+        // return false
+         next()
+    })
     // watch(()=>activeMenuKey.value,(newVal,oldVal)=>{
     //     if(newVal){
     //         onMenuChange(newVal)
     //     }
     // })
     initAppData()
+
     return {
+        initAppData,
         menuLoading,
         loading,
         error,
