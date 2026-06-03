@@ -353,6 +353,32 @@ const defaultRoutes: RouteRecordRaw[] = [
                   }
                 ]
               },{
+                path: 'media',
+                meta: {
+                  title: '媒体',
+                  menuName: '媒体',
+                  icon: 'table'
+                },
+                children: [
+                  {
+                    path: 'news_navs',
+                    component: () => import('../views/example/tdesign/media/news_navs/index.vue'),
+                    meta: {
+                      title: '二级导航',
+                      menuName: '二级导航',
+                      icon: 'table'
+                    }
+                  },
+                  {
+                    path: 'news_navs/new',
+                    component: () => import('../views/example/tdesign/media/news_navs/new.vue'),
+                  },
+                  {
+                    path: 'news_navs/edit',
+                    component: () => import('../views/example/tdesign/media/news_navs/edit.vue'),
+                  }
+                ]
+              },{
                 path: 'basicform',
                 component: () => import('../views/example/tdesign/basicform/index.vue'),
                 meta: {

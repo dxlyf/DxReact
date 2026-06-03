@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<{
     ellipsis?: boolean
     maxTagWidth?: string | number
 }>(), {
-    theme:'primary',
+   // theme:'primary',
     maxLines: 2,
     lineThreshold: 5,
     textKey: 'text',
@@ -138,7 +138,6 @@ onUnmounted(() => {
                     <t-tag :title="visibleTextItems[i]"
                         variant="light" :theme="theme ?? 'default'" size="small"
                         @click="handleItemClick(item, i, $event)"
-                        style="cursor: pointer"
                         :class="{ 'tag-ellipsis': ellipsis }"
                     >
                         {{ visibleTextItems[i] }}
