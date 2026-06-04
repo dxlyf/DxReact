@@ -1,66 +1,57 @@
-import type { RouteRecordRaw } from 'vue-router'
+import { type RouteRecordRaw } from 'vue-router'
+import { type Component } from 'vue'
+const modules = import.meta.glob(['../views/**/*.vue'], {
+    eager: false
+    // import:''
+})
+const configs: Record<string, {
+    meta: RouteMeta
+}> = import.meta.glob(['../views/**/*.config.ts'], {
+    eager: true
+    // import:''
+})
+const getFileName = (path: string) => {
+    return path.split('/').pop()
+    // return fileName.split('.')[0]
+}
+const getBasePath = (path: string) => {
+    return path.split('/').slice(0, -1).join('/')
+}
+const getRoutesFromModules = (modules: Record<string, {
+    default: Component
+    meta: RouteMeta
+}>, isFlat: boolean = false) => {
+    const routes: RouteRecordRaw[] = []
+    const dirMap = new Map<string, RouteRecordRaw>()
+    for (const [dir, Component] of Object.entries(modules)) {
+        let fullPath = dir.replace('../views', '')
+        let paths = fullPath.split('/')
+        let fileName = paths[paths.length - 1]
+        let fileNameNoExt = fileName.split('.')[0]
+        let basePath = paths.slice(0, -1).join('/')
+        
+        const isIndex=fileNameNoExt==='index'
+        let path = isIndex?(basePath===''?'/':basePath):basePath+'/'+fileNameNoExt
+        let configPath='../views'+(isIndex?path+'/index.config.ts':path+'.config.ts')
 
-export const publicRoutes: RouteRecordRaw[] = [
-  {
-    path: '/login',
-    name:"Login",
-    component: () => import('@/views/login/LoginPage.vue'),
-    meta: { public:true },
-  }
-]
-
-const excludePaths = new Set<string>([
-  '../views/login/index.vue'
-])
-
-const pageModules = import.meta.glob(
-  ['../views/**/*.vue', '!../views/**/components/**', '!../views/**/_*.vue'],
-  { eager: false },
-)
-
-function kebabCase(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')
+        let config=configs[configPath]||{}
+        
+        let meta= Object.assign({
+           // configPath:configPath
+        }, config.meta||{})
+        const routeItem = {
+            path: path,
+            component: Component,
+            meta: meta
+        }
+        routes.push(routeItem)
+    }
+    console.log('routes',routes)
+    return routes
 }
 
-const autoChildren: RouteRecordRaw[] = []
+let routes: RouteRecordRaw[] = getRoutesFromModules(modules)
 
-for (const [filePath, loader] of Object.entries(pageModules)) {
-  if (excludePaths.has(filePath)) continue
-
-  const normalized = filePath.replace(/\\/g, '/')
-  const match = normalized.match(/\.\.\/views\/(.+)\.vue$/)
-  if (!match) continue
-
-  const relative = match[1]
-  const segments = relative.split('/')
-  const fileName = segments[segments.length - 1]
-  if (fileName.toLowerCase() === 'index') {
-    const parentDir = segments[segments.length - 2]
-    if (!parentDir) continue
-    autoChildren.push({
-      path:segments.slice(0,-1).join('/'),
-    //  name: parentDir,
-      component: loader as () => Promise<any>,
-    })
-  } else {
-    const dirPrefix = segments.slice(0, -1).map(s => s.toLowerCase()).join('/')
-    const fileKebab = kebabCase(fileName)
-    const childPath = dirPrefix ? `${dirPrefix}/${fileKebab}` : fileKebab
-    autoChildren.push({
-      path: childPath,
-     // name: fileName,
-      component: loader as () => Promise<any>,
-    })
-  }
+export {
+    routes
 }
-
-export const constantRoutes: RouteRecordRaw[] = [
-  ...publicRoutes,
-  {
-    path: '/',
-    component: () => import('@/layouts/DefaultLayout.vue'),
-    redirect: '/dashboard',
-    meta: { requiresAuth: true },
-    children: autoChildren,
-  },
-]

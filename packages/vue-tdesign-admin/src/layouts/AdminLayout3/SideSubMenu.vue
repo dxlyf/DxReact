@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { type MenuItem} from '@/stores/menuStore2'
-import { inject } from 'vue';
-import {useRouter} from 'vue-router'
 
 const props = defineProps<{
   items: MenuItem[]
@@ -9,18 +7,9 @@ const props = defineProps<{
 defineOptions({
     name: 'SideSubMenu',
 })
-const router=useRouter()
-const reload = inject('reload')
+const emit=defineEmits(['click'])
 const handleMenuNav = (item: MenuItem) => {
-    if (item.path===router.currentRoute.value.path) {
-       // router.push(item.path)
-        console.log('点击了菜单',item.path)
-       // reload()
-        //router.
-        router.replace({path:'/refresh'})
-    }else{
-        router.replace(item.path)
-    }
+    emit('click',item)
 }
 </script>
 <template>
@@ -31,13 +20,13 @@ const handleMenuNav = (item: MenuItem) => {
                 <t-icon v-else :name="item.icon||'app'"  size="16" />
             </template>
             <template #title>{{ item.name }}</template>
-            <SideSubMenu v-if="Array.isArray(item.children)" :items="item.children" />
+            <SideSubMenu @click="handleMenuNav" v-if="Array.isArray(item.children)" :items="item.children" />
         </t-submenu>
         <t-menu-item v-else :value="item.menuKey"  @click="handleMenuNav(item)">
-            <template #icon v-if="item.icon">
+            <!-- <template #icon v-if="item.icon">
                 <img v-if="item.webIcon" :src="item.webIcon" class="size-[16px]"/>
                 <t-icon v-else :name="item.icon||'app'" size="16" />
-            </template>
+            </template> -->
             {{ item.name }}
         </t-menu-item>
     </template>

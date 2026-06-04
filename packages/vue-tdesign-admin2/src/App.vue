@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useAppStore } from '@/store/app'
-import AppLoading from '@/components/AppLoading.vue'
 
-const appStore = useAppStore()
-const { initialized } = storeToRefs(appStore)
 
-onMounted(() => {
- // appStore.initApp()
-})
 </script>
 
 <template>

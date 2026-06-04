@@ -3,6 +3,7 @@ import MainLayout from 'src/views/example/tdesign/components/Layouts/MainLayout.
 import { computed, reactive, ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useRequest } from 'src/hooks/useRequest2';
+import { FormProps } from 'tdesign-vue-next';
 
 type Props = {
     type: 'create' | 'edit' | 'copy'
@@ -119,7 +120,7 @@ const linkRules = computed(() => {
     ]
 })
 
-const rules = computed(() => ({
+const rules = computed<FormProps['rules']>(() => ({
     name: [{ required: true, whitespace: true, message: '请输入名称' }],
     link: linkRules.value,
     sort: [
@@ -127,6 +128,16 @@ const rules = computed(() => ({
        // { pattern: /^\d+$/, message: '只能输入整数' },
         { validator: (val: number) => val >= 0, message: '值必须大于或等于0'},
         { validator: (val: number) => val <= 100 , message: '值必须小于等于100' },
+        { validator: (val: number) => {
+             if(Number.isInteger(val)){
+                return true
+             }else{
+                return {
+                    result:false,
+                    message:`请输入有效值。两个最接近的有效值分别为${Math.floor(val)}和${Math.ceil(val)}`
+                }
+             }
+        } },
     ],
 }))
 
@@ -228,13 +239,13 @@ const submitText = computed(() => {
         </template>
         <t-form :data="formData" :rules="rules" class="w-full" label-align="top" @submit="handleSubmit">
             <t-form-item label="名称" name="name">
-                <t-input v-model.trim="formData.name" placeholder="请输入名称" :maxlength="255" />
+                <t-input autocomplete="on" v-model.trim="formData.name" placeholder="请输入名称" :maxlength="255" />
             </t-form-item>
             <t-form-item label="国家" name="country">
                 <t-select v-model="formData.country" :options="countryOptions" placeholder="请选择国家" multiple clearable />
             </t-form-item>
             <t-form-item label="排序" name="sort">
-                <t-input-number v-model="formData.sort" :min="0" :max="100" theme="column" />
+                <t-input-number  :step="1" v-model="formData.sort" :min="0" :max="100" theme="column" />
                 <template #tips>
                     显示范围0-100，数字越大显示越靠前
                 </template>

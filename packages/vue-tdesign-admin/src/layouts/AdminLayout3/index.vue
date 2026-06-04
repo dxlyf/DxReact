@@ -16,11 +16,11 @@ const appStore = useAppStore()
   </t-loading>
 </div>
   <div class="f3-layout" v-else>
-       <Header v-cloak />
+       <Header  />
        <main class="f3-main">
-            <SideMenu v-cloak />
+            <SideMenu  />
             <div class="f3-main-conent">
-                <router-view />
+                <slot></slot>
             </div>
        </main>
   </div>

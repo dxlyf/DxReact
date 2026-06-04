@@ -1,7 +1,9 @@
 
 import { createRouter, createWebHashHistory, createWebHistory, createMemoryHistory, type RouteRecordRaw } from 'vue-router'
-import { S } from 'vue-router/dist/router-CWoNjPRp.mjs'
 import { useAppStore } from '@/stores/menuStore2'
+import Wrap from '@/layouts/AdminLayout3/Wrap.vue'
+import { h,defineAsyncComponent  } from 'vue'
+
 const pages = import.meta.glob([
     '/src/views/**/*.vue',
     '!/src/views/**/_*.vue',
@@ -26,13 +28,34 @@ for (const [filePath, component] of Object.entries(pages)) {
     const isIndex = fileName.toLowerCase() === 'index'
     const dirPath = segments.slice(0, -1).join('/')
     const routePath = isIndex ? dirPath : `${dirPath ? dirPath + '/' : ''}${toSnakeCase(fileName)}`
-
+    
+    const AsyncComponent = defineAsyncComponent({
+        loader:component,
+        loadingComponent:{
+            template:'<div>加载中...</div>'
+        },
+        
+    })
+  
     pageRoutes.push({
-        path: routePath,
-        component: component.default || component,
+        path: '/'+routePath,
+        component:component.default || component,
+        // component:routePath==='refresh'?component :((Comp)=>{
+        //         return {
+        //             mounted(){
+        //                 //console.log('mounted',Comp)
+        //             },
+        //             render(){
+        //                 return h(Wrap,{},{
+        //                     default:()=>h(Comp)
+        //                 })
+        //             }
+        //     }
+        // })(AsyncComponent),
 
     })
 }
+
 export const routes: RouteRecordRaw[] = [
     {
         path: '/',
@@ -40,10 +63,30 @@ export const routes: RouteRecordRaw[] = [
         children: pageRoutes
     }
 ]
+// pageRoutes.concat([{
+//     path:'/',
+//     component:{
+//         render(){
+//             return h(Wrap,{},h('div',{},'dd'))
+//         }
+//     }
+// }])
+
+
+const keepScrollPaths = [
+    '/example/tdesign/download/apps',
+]
 
 export const router = createRouter({
     history: createWebHistory(),
-    routes: routes
+    routes: routes,
+    // scrollBehavior: (to, from, savedPosition) => {
+    //     console.log('scrollBehavior', to.path, from.path, savedPosition)
+    //     if (savedPosition && keepScrollPaths.some(p => to.path.startsWith(p))) {
+    //         return savedPosition
+    //     }
+    //     return { top: 0 }
+    // }
 })
 
 // router.beforeEach(async (to, from, next) => {

@@ -1,15 +1,50 @@
 <script setup lang="ts">
-import { watch, ref, toRaw } from 'vue'
+import { watch, ref, toRaw, onMounted, onUnmounted, inject } from 'vue'
 import SideSubMenu from './SideSubMenu.vue'
 import {storeToRefs} from 'pinia'
 import { type MenuItem, useAppStore } from '@/stores/menuStore2'
-
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const appStore = useAppStore()
 
+const handleScroll = (e: Event) => {
+   // const target = e.currentTarget.querySelector('.t-menu--scroll') as HTMLElement
+    // if (target.scrollTop > 0) {
+    //     target.scrollTop = 0
+    // }
+    appStore.menuScrollTop = e.currentTarget.scrollTop
+   // console.log('scroll',e.currentTarget.scrollTop)
+//    sessionStorage.setItem('scrollPosition', e.currentTarget.scrollTop)
+}
+const asideRef = ref<HTMLDivElement>()
+onMounted(() => {
+    if(appStore.menuScrollTop>0){
+       asideRef.value.querySelector('.t-menu--scroll').scrollTop =appStore.menuScrollTop
+       appStore.menuScrollTop=0
+    }
+    asideRef.value?.querySelector('.t-menu--scroll')?.addEventListener('scroll', handleScroll)
+})
+onUnmounted(() => {
+    asideRef.value?.querySelector('.t-menu--scroll')?.removeEventListener('scroll', handleScroll)
+})
+const reload=inject('reload')
+const handleMenuNav = (item: MenuItem) => {
+   if(appStore.activeMenuKey===item.menuKey){
+      router.push({
+        path:'/refresh'
+      })
+     // reload()
+   }else{
+      appStore.onMenuChange(item.menuKey)
+      router.replace({path:item.path})
+     // sessionStorage.setItem('scrollPosition', appStore.menuScrollTop)
+   }
+    
+}
 </script>
 
 <template>
-  <aside class="f3-aside flex flex-col" :class="{'f3-aside-collapsed': appStore.menuCollapsed}">
+  <aside ref="asideRef" class="f3-aside flex flex-col" :class="{'f3-aside-collapsed': appStore.menuCollapsed}">
     <div class="p-3 flex-none">
       <t-input v-show="!appStore.menuCollapsed" placeholder="搜索" v-model.trim="appStore.searchMenuKeyWord">
         <template #prefix-icon>
@@ -18,8 +53,8 @@ const appStore = useAppStore()
       </t-input>
     </div>
     <t-loading :loading="appStore.menuLoading" text="加载菜单数据" show-overlay class="flex-1 min-h-0">
-      <t-menu theme="light" :collapsed="appStore.menuCollapsed" @change="appStore.onMenuChange" @expand="appStore.onMenuExpandChange" :expanded="appStore.expandedKeys" :value="appStore.activeMenuKey">
-      <SideSubMenu :items="appStore.finalMenuData" />
+      <t-menu  theme="light" :collapsed="appStore.menuCollapsed"  @expand="appStore.onMenuExpandChange" :expanded="appStore.expandedKeys" :value="appStore.activeMenuKey">
+        <SideSubMenu @click="handleMenuNav" :items="appStore.finalMenuData" />
     </t-menu>
   </t-loading>
     <div class="f3-collapse" >

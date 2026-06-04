@@ -75,6 +75,8 @@ const searchMenuData=(list:MenuItem[],keyWord:string)=>{
 export const SYSTEM_TENANT_APPSLUG='system_tenant_appslug'
 export const useAppStore=defineStore('appstore2',()=>{
 
+    const menuScrollTop=shallowRef(0) // 菜单滚动位置
+
     const router=useRouter()
     const loading=shallowRef(false)
     const menuLoading=shallowRef(false)
@@ -163,7 +165,7 @@ export const useAppStore=defineStore('appstore2',()=>{
     }
     const fetchMenuData=async ()=>{
         menuLoading.value=true
-        await new Promise(resolve=>setTimeout(resolve,3000))
+      //  await new Promise(resolve=>setTimeout(resolve,3000))
         const data=Array.from({length:30},(v,index)=>{
             return {
                 menuKey:`app-do-${index}`,
@@ -235,7 +237,7 @@ export const useAppStore=defineStore('appstore2',()=>{
         initedStatus=1
         loading.value=true
         try{
-        await new Promise(resolve=>setTimeout(resolve,3000))
+       // await new Promise(resolve=>setTimeout(resolve,3000))
         await fetchUserInfo()
         await fetchTenantData()
         await fetchMenuData()
@@ -270,6 +272,7 @@ export const useAppStore=defineStore('appstore2',()=>{
 
     return {
         initAppData,
+        menuScrollTop,
         menuLoading,
         loading,
         error,
