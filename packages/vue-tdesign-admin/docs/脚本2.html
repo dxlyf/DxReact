@@ -1,0 +1,746 @@
+<style>
+ .f3-layout {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: #f5f5f5;
+    }
+
+    .f3-layout .f3-header {
+        display: flex;
+        align-items: center;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        z-index: 10;
+        position: relative;
+        flex: none;
+        height: 56px;
+        background-color: #fff;
+        padding: 0 24px;
+    }
+
+    .f3-layout .f3-main {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        box-sizing: border-box;
+    }
+
+    .f3-layout .f3-main .f3-main-conent {
+        flex: 1;
+        height: 100%;
+        padding: 16px 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    .f3-menu-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+
+    .f3-aside {
+        position: relative;
+        flex: none;
+        height: 100%;
+        box-sizing: border-box;
+        border-right: 1px solid #e5e5e5;
+        background-color: #fff;
+        transition: width 0.3s cubic-bezier(0, 1, 0, 1);
+    }
+
+    .f3-aside:not(.f3-aside-collapsed) {
+        width: 232px;
+    }
+
+    .f3-aside.f3-aside-collapsed {
+        width: 64px;
+    }
+
+    .f3-collapse {
+        position: absolute;
+        top: 0;
+        right: -10px;
+        bottom: 0;
+        z-index: 100;
+        width: 10px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .f3-aside:hover .f3-collapse {
+        opacity: 1;
+    }
+
+    .f3-collapse-btn {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        height: 30px;
+        background-color: #ddd;
+        display: flex;
+        align-items: center;
+    }
+
+    .f3-collapse-btn:hover {
+        background-color: rgba(0, 120, 255, 1);
+        color: #fff;
+    }
+
+    .f3-aside .t-default-menu {
+        width: 100% !important;
+    }
+
+    .f3-aside .t-menu--scroll {
+        padding: 8px 16px;
+    }
+
+    /* .f3-aside .t-menu--scroll::-webkit-scrollbar-track{
+  background: #f1f1f1; 
+  border-radius: 4px;   
+}
+.f3-aside .t-menu--scroll::-webkit-scrollbar-thumb{
+  background: #888;      
+  border-radius: 4px;   
+  
+}
+.f3-aside .t-menu--scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+} */
+    .f3-aside .t-menu--scroll::-webkit-scrollbar {
+        width: 4px;
+
+    }
+</style>
+<script>
+    (function () {
+
+        const getSuperAdminMenuData = () => {
+            const menuData = [
+                {
+                    menuKey: 'sys_admin_manage',
+                    name: '权限管理',
+                    icon: 'system-marked',
+                    isLeaf: false,
+                    children: [
+                        {
+                            menuKey: 'roles_tenants',
+                            name: '租户管理',
+                            isLeaf: true,
+                            path: '/roles/tenants'
+                        }, {
+                            menuKey: 'roles_users',
+                            name: '用户管理',
+                            isLeaf: true,
+                            path: '/roles/users'
+                        }, {
+                            menuKey: 'roles_roles',
+                            name: '角色管理',
+                            isLeaf: true,
+                            path: '/roles/roles'
+                        }, {
+                            menuKey: 'roles_menus',
+                            name: '菜单管理',
+                            isLeaf: true,
+                            path: '/roles/menus'
+                        }, {
+                            menuKey: 'roles_paths',
+                            name: '菜单路径',
+                            isLeaf: true,
+                            path: '/roles/paths'
+                        },
+                        {
+                            menuKey: 'rolesApis',
+                            name: 'API管理',
+                            isLeaf: true,
+                            path: '/roles/apis'
+                        }
+                    ]
+                }
+            ].map(d => {
+                if (d.children) {
+                    d.children = d.children.map(c => {
+                        if (c.isLeaf) {
+                            c.parentKeys = [d.menuKey]
+                        }
+                        return c
+                    })
+                }
+                return d
+            })
+            return menuData
+        }
+        // 菜单数据遍历
+        const walkMenu = (list, callbck) => {
+            for (const item of list) {
+                callbck(item)
+                if (item.children && Array.isArray(item.children)) {
+                    walkMenu(item.children, callbck)
+                }
+            }
+        }
+        // 菜单数据转换
+        const transformMenuData = (data, parents = []) => {
+            const result = []
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    const newItem = {
+                        isLeaf: item.menuType == 2,
+                        menuType: item.menuType,
+                        menuKey: item.id,
+                        name: item.menuName,
+                        path: item.menuPath,
+                        webIcon: item.menuIcon,
+                        parentKeys: parents.slice()
+                    }
+                    if (item.menuList) {
+                        newItem.children = transformMenuData(item.menuList, parents.concat(newItem.menuKey))
+                    }
+                    result.push(newItem)
+                })
+            }
+            return result
+        }
+        // 菜单数据搜索
+        const searchMenuData = (list, keyWord) => {
+            const result = []
+            for (const item of list) {
+
+                if (item.name.includes(keyWord)) {
+                    const newItem = { ...item }
+                    if (newItem.children && Array.isArray(newItem.children)) {
+                        newItem.children = searchMenuData(newItem.children, keyWord)
+                    }
+                    result.push(newItem)
+                }
+                else if (item.children && Array.isArray(item.children)) {
+                    const newItem = { ...item }
+                    const children = searchMenuData(item.children, keyWord)
+                    if (children.length) {
+                        newItem.children = children
+                        result.push(newItem)
+                    }
+                }
+            }
+            return result
+        }
+        let initedStore = false
+        function initStore() {
+            if (initedStore) {
+                return
+            }
+            initedStore = true
+            const store = xy_vue_instance.$store
+            // 动态注册一个新模块
+            store.registerModule('appStore', {
+                namespaced: true,
+                state: {
+                    currentAppSlug: 'official',
+                    cmsAdminApplug: 'system_super_amdin',
+                    loading: false,
+                    userInfo:null,
+                    menuLoading: false,
+                    menuCollapsed: false,
+                    menuScrollTop: 0,
+                    activeMenuKey: '',
+                    localExpandedMenuKeys: [],
+                    projectInfo: {
+                        logo: '',
+                        name: ''
+                    },
+                    tenantData: [],
+                    menuData: [],
+                    searchMenuKeyWord: '',
+                    error: { code: 0, msg: '' },
+                    reload: false
+                },
+                getters: {
+                    tenantDataOriginal(state, getters) {
+                        if (state.userInfo.isSuperAdmin) {
+                            return state.tenantData[1].children
+                        }
+                        return state.tenantData
+                    },
+                    currentAppSlugName(state, getters) {
+                        let appName = ''
+                        let appSlug = state.currentAppSlug
+                        let tenantData = state.tenantData
+                        tenantData.some(item => {
+                            if (item.children) {
+                                const cItem = item.children.find(child => child.value === appSlug)
+                                if (cItem) {
+                                    appName = cItem.label
+                                    return true
+                                }
+                            } else if (item.value === appSlug) {
+                                appName = item.label
+                                return true
+                            }
+                        })
+                        return appName
+                    },
+                    flatMenuData(state, getters) {
+                        const result = []
+                        walkMenu(state.menuData, item => result.push(item))
+                        return result
+                    },
+                    finalMenuData(state, getters) {
+                        if (state.searchMenuKeyWord) {
+                            return searchMenuData(state.menuData, state.searchMenuKeyWord)
+                        }
+                        return state.menuData
+                    },
+                    expandedKeys(state, getters) {
+                        if (state.searchMenuKeyWord) {
+                            const keys = []
+                            walkMenu(getters.finalMenuData, item => {
+                                if (!item.isLeaf) {
+                                    keys.push(item.menuKey)
+                                }
+                            })
+                            return keys
+                        }
+                        return state.localExpandedMenuKeys
+                    },
+                    isCmsAdminTenant(state, getters) {
+                        return state.currentAppSlug === state.cmsAdminApplug
+                    }
+                },
+                mutations: {
+                    SET_ERROR(state, payload) {
+                        state.error = payload
+                    },
+                    SET_RELOAD(state, payload) {
+                        state.reload = payload
+                    },
+                    SET_USER_INFO(state, payload) {
+                        state.userInfo = payload
+                    },
+                    SET_LOADING(state, payload) {
+                        state.loading = payload
+                    },
+                    SET_MENU_LOADING(state, payload) {
+                        state.menuLoading = payload
+                    },
+                    SET_MENU_COLLAPSED(state, payload) {
+                        state.menuCollapsed = payload
+                    },
+                    SET_MENU_SCROLL_TOP(state, payload) {
+                        state.menuScrollTop = payload
+                    },
+                    SET_PROJECT_INFO(state, payload) {
+                        state.projectInfo = payload
+                    },
+                    SET_CURRENT_APP_SLUG(state, payload) {
+                        state.currentAppSlug = payload
+                        localStorage.setItem('official_cms_frontend/nav-widget/top-switch', JSON.stringify({
+                            app_slug: payload
+                        }))
+                    },
+                    SET_SEARCH_MENU_KEY_WORD(state, payload) {
+                        state.searchMenuKeyWord = payload
+                    },
+                    SET_ACTIVE_MENU_KEY(state, payload) {
+                        state.activeMenuKey = payload
+                    },
+                    SET_LOCAL_EXPANDED_MENU_KEYS(state, payload) {
+                        state.localExpandedMenuKeys = payload
+                    },
+                    SET_MENU_DATA(state, payload) {
+                        state.menuData = payload
+                    },
+                    SET_TENANT_DATA(state, payload) {
+                        state.tenantData = payload
+                    }
+                },
+                actions: {
+                    async fetchUserInfo({commit,state}) {
+                        const res = await w.requestCgi('getCmsCurrentUser', 'request', {
+                            query: {},
+                            body: {}
+                        })
+                        if (res.body.code == 200) {
+                            commit('SET_USER_INFO', {
+                                username: res.body.value.ad,
+                                isSuperAdmin: res.body.value.isSuperAdmin,
+                                avatar: w.user.avatar
+                            })
+                        } else {
+                            throw new Error('获取用户信息失败')
+                        }
+                    },
+                    async fetchTenantData({commit,state}) {
+                        const res = await w.requestCgi('getSystemTenant', 'request', {
+                            query: {},
+                            body: {}
+                        })
+                        let data = []
+                        if (res.body.code == 200) {
+                            data = (res.body.value || []).map(item => ({
+                                value: item.slug,
+                                label: item.name,
+                            }))
+                        } else {
+                            throw new Error('获取租户数据失败')
+                        }
+                        let tenantList = data
+
+                        if (state.userInfo.isSuperAdmin) {
+                            tenantList = [{
+                                value: state.cmsAdminApplug,
+                                label: 'CMS管理'
+                            }, {
+                                group: '业务租户',
+                                children: data
+                            }]
+                        }
+                        let currentItem = null
+                        tenantList.some(d => {
+                            if (d.children) {
+                                const found = d.children?.find(c => c.value === state.currentAppSlug)
+                                if (found) {
+                                    currentItem = found
+                                    return true
+                                }
+                            }
+                            else if (d.value === state.currentAppSlug) {
+                                currentItem = d;
+                                return true
+                            }
+                        })
+                        commit('SET_TENANT_DATA', tenantList)
+                        // 如果没找到当前租户，就设置为第一个租户，并且需要重载页面
+                        if (!currentItem) {
+                            commit('SET_CURRENT_APP_SLUG', tenantList[0].value)
+                        }
+                    },
+                    async fetchMenuData({ dispatch, commit, state }) {
+                        commit('SET_MENU_LOADING', true)
+                        const userInfo = state.userInfo
+                        try {
+                            // 超级管理员且当前租户为系统管理租户时，显示系统管理菜单
+                            if (userInfo.isSuperAdmin && state.currentAppSlug === state.cmsAdminApplug) {
+                                commit('SET_MENU_DATA', getSuperAdminMenuData())
+                            } else {
+                                const res = await w.requestCgi('getSystemMenuData', 'request', {
+                                    query: {
+                                        appSlug: state.currentAppSlug
+                                    },
+                                    body: {}
+                                })
+                                if (res.body.code == 200) {
+                                    const data = res.body.value || [];
+                                    commit('SET_MENU_DATA', transformMenuData(data))
+                                } else {
+                                    throw new Error('获取菜单数据失败')
+                                }
+                            }
+                        } catch (err) {
+                            throw err
+                        }
+                        finally {
+                            commit('SET_MENU_LOADING', false)
+                        }
+                    },
+                    onMenuChange({ commit, state, getters }, key) {
+                        const item = getters.flatMenuData.find(item => item.menuKey === key)
+                        if (item) {
+                            commit('SET_ACTIVE_MENU_KEY', key)
+                            commit('SET_LOCAL_EXPANDED_MENU_KEYS', Array.from(new Set(state.localExpandedMenuKeys.concat(item.parentKeys || []))))
+                        } else {
+                            commit('SET_ACTIVE_MENU_KEY', '')
+                            commit('SET_LOCAL_EXPANDED_MENU_KEYS', [])
+                        }
+                    },
+                    onAppSlugChange({ commit, dispatch, state, getters }, appSlug) {
+                        commit('SET_CURRENT_APP_SLUG', appSlug)
+                        commit('SET_MENU_DATA', [])
+                        dispatch('fetchMenuData').then(() => {
+                            dispatch('onMenuChange', state.activeMenuKey)
+                        })
+
+                    },
+                    syncActiveMenu({ commit, state, getters }) {
+                        const path = xy_runtime_router.currentRoute.path
+                        const item = getters.flatMenuData.find(item => item.isLeaf && item.path === path)
+                        if (item) {
+                            commit('SET_ACTIVE_MENU_KEY', item.menuKey)
+                            commit('SET_LOCAL_EXPANDED_MENU_KEYS', item.parentKeys || [])
+                        }
+                        else {
+                            commit('SET_ACTIVE_MENU_KEY', '')
+                        }
+                    },
+                    async initAppData({ dispatch, commit, state }) {
+                        try {
+                            commit('SET_PROJECT_INFO', {
+                                logo: window.w.projectInfo?.logo || '', name: window.w.projectInfo?.name || ''
+                            })
+                            commit('SET_ERROR', {
+                                code: 0,
+                                msg: ''
+                            })
+                            commit('SET_LOADING', true)
+                            const appSlugData = localStorage.getItem('official_cms_frontend/nav-widget/top-switch')
+                            if (appSlugData) {
+                                try {
+                                    const data = JSON.parse(appSlugData)
+                                    commit('SET_CURRENT_APP_SLUG', data.app_slug || 'official')
+                                } catch (err) {
+                                    commit('SET_CURRENT_APP_SLUG', 'official')
+                                    // console.error('解析应用数据失败', err)
+                                }
+                            }
+                            await dispatch('fetchUserInfo')
+                            await dispatch('fetchTenantData')
+                            await dispatch('fetchMenuData')
+                            dispatch('syncActiveMenu')
+                        } catch (err) {
+                            commit('SET_ERROR', {
+                                code: 500,
+                                msg: err.message || '初始化应用数据失败'
+                            })
+
+                        } finally {
+
+                            commit('SET_LOADING', false)
+                        }
+                    },
+                }
+            })
+        }
+        let initedApp = false
+        function initApp() {
+            if (initedApp) {
+                return
+            }
+            initedApp = true
+
+            const Header = {
+                template: `<header class="f3-header">
+            <div class="flex-none h-full flex items-center gap-4 w-[208px]">
+                 <img :src="appStore.projectInfo.logo" style="height: 32px;width:32px">
+                 <span class="text-xl">{{ appStore.projectInfo.name }}</span>
+            </div>
+            <div class="flex-1 flex">
+                <div>
+                    <t-select  @change="onAppSlugChange" :value="appStore.currentAppSlug" :borderless="true" :auto-width="true" :options="appStore.tenantData">
+                    </t-select>
+                </div>
+            </div>
+            <div class="flex-none">
+                <t-dropdown @click="onUserClick" :options="userOpts" placement="bottom-right" trigger="hover">
+                    <div class="flex items-center gap-2 cursor-pointer hover:text-blue-500">
+                        <t-avatar shape="circle" :image="appStore.userInfo.avatar" />
+                        <span class="text-base">{{ appStore.userInfo.username }}</span>
+                        <t-icon name="chevron-down" size="14"></t-icon>
+                    </div>
+                </t-dropdown>
+            </div>
+       </header>`,
+                data() {
+                    return {
+                        userOpts: [{ content: '退出登录', value: 'logout' }]
+                    }
+                },
+                computed: {
+                    appStore() {
+                        return this.$store.state.appStore
+                    }
+                },
+                methods: {
+                    onAppSlugChange(val) {
+                        this.$store.dispatch('appStore/onAppSlugChange', val)
+                    },
+                    onUserClick(opt) {
+                        if (opt.value === 'logout') {
+                            window.djiApp.userInfo.logout()
+                        }
+                    },
+
+                }
+            }
+            const SideSubMenu = {
+                name: 'SideSubMenu',
+                props: {
+                    items: {
+                        type: Array,
+                        default: () => []
+                    }
+                },
+                template: `<div><template v-for="item in items" :key="item.menuKey">
+        <t-submenu v-if="Array.isArray(item.children)" :value="item.menuKey">
+            <template #icon >
+                <img v-if="item.webIcon" :src="item.webIcon" class="f3-menu-icon"/>
+                <t-icon v-else :name="item.icon||'app'"  size="16" />
+            </template>
+            <template #title>{{ item.name }}</template>
+            <SideSubMenu v-if="Array.isArray(item.children)" :items="item.children" />
+        </t-submenu>
+        <t-menu-item v-else :value="item.menuKey"  @click="handleMenuNav(item)">
+            <template #icon v-if="item.icon">
+                <img v-if="item.webIcon" :src="item.webIcon" class="f3-menu-icon"/>
+                <t-icon v-else :name="item.icon||'app'" size="16" />
+            </template>
+            {{ item.name }}
+        </t-menu-item>
+    </template></div>
+        `,
+                methods: {
+                    handleMenuNav(item) {
+                        if (item.path === this.$router.currentRoute.path) {
+                            w.emitter.emit('refresh-view')                            
+                        } else {
+                            this.$router.replace(item.path)
+                        }
+                    }
+                },
+                mounted() {
+      
+                }
+            }
+            const SideMenu = {
+                name: 'SideMenu',
+                template: `<aside class="f3-aside flex flex-col" :class="{'f3-aside-collapsed': appStore.menuCollapsed}">
+    <div class="p-3 flex-none">
+      <t-input v-show="!appStore.menuCollapsed" placeholder="搜索" v-model.trim="searchMenuKeyWord">
+        <template #prefix-icon>
+          <t-icon name="search" size="14"></t-icon>
+        </template>
+      </t-input>
+    </div>
+    <t-loading :loading="appStore.menuLoading" text="加载菜单数据" show-overlay class="flex-1 min-h-0">
+      <t-menu theme="light" :collapsed="appStore.menuCollapsed" @change="onMenuChange" @expand="onMenuExpandChange" :expanded="expandedKeys" :value="appStore.activeMenuKey">
+      <SideSubMenu :items="finalMenuData" />
+    </t-menu>
+  </t-loading>
+    <div class="f3-collapse" >
+        <div class="f3-collapse-btn" @click="onMenuCollapseChange">
+            <t-icon :name="appStore.menuCollapsed?'caret-right-small':'caret-left-small'"></t-icon>
+        </div>
+    </div>
+  </aside>`,
+                components: {
+                    SideSubMenu: SideSubMenu
+                },
+                data() {
+                    return {
+                        searchMenuKeyWord: ''
+                    }
+                },
+
+                watch: {
+                    searchMenuKeyWord(val) {
+                        this.$store.commit('appStore/SET_SEARCH_MENU_KEY_WORD', val)
+                    }
+                },
+                computed: {
+                    expandedKeys() {
+                        return this.$store.getters['appStore/expandedKeys']
+                    },
+                    finalMenuData() {
+                        return this.$store.getters['appStore/finalMenuData']
+                    },
+                    appStore() {
+                        return this.$store.state.appStore
+                    }
+                },
+                methods: {
+                    onMenuChange(val) {
+                        this.$store.dispatch('appStore/onMenuChange', val)
+                    },
+                    onMenuExpandChange(val) {
+                        this.$store.commit('appStore/SET_LOCAL_EXPANDED_MENU_KEYS', val)
+                    },
+                    onMenuCollapseChange(val) {
+                        this.$store.commit('appStore/SET_MENU_COLLAPSED', !this.appStore.menuCollapsed)
+                    }
+                }
+            }
+            const NewLayout = {
+                template: ` <!-- 顶部导航栏 -->
+ <div v-if="appStore.error.code===0&&(appStore.loading||!appStore.userInfo)" class="absolute inset-0 flex items-center justify-center overflow-hidden">
+  <t-loading :loading="true" text="加载系统初始化数据中...">
+  </t-loading>
+</div>
+<div v-else-if="appStore.error.code!==0">
+        <t-alert type="error" :message="appStore.error.msg" show-icon />
+    </div>
+  <div class="f3-layout" v-else>
+       <Header />
+       <main class="f3-main">
+            <SideMenu />
+            <div class="f3-main-conent">
+                <router-view v-if="!currentReload"/>
+            </div>
+       </main>
+  </div>`,
+                components: {
+                    Header: Header,
+                    SideMenu: SideMenu
+                },
+                data() {
+                    return {
+                    }
+                },
+                computed: {
+                    appStore() {
+                        return this.$store.state.appStore
+                    },
+                    currentReload() {
+                        return this.$store.state.appStore.reload
+                    }
+                },
+                methods: {
+                    refreshView() {
+                        this.$store.commit('appStore/SET_RELOAD', true)
+                        this.$nextTick(() => {
+                            this.$store.commit('appStore/SET_RELOAD', false)
+                        })
+                    }
+                },
+                beforeCreate() {
+                    initStore()
+                    
+                },
+                mounted() {
+                    this.$store.dispatch('appStore/initAppData')
+                    w.emitter.on('refresh-view', this.refreshView)
+                },
+                beforeDestroy() {
+                    w.emitter.off('refresh-view')
+                }
+            }
+
+
+            const router = window.xy_runtime_router
+            const routes = router.options.routes
+            // 保存原有的所有路由配置
+            const oldRoutes = [...routes]
+
+            // 找到根路由并替换
+            const newRoutes = oldRoutes.map(route => {
+                if (route.path === '/') {
+                    return {
+                        ...route,
+                        children: [{
+                            path: '/',
+                            component: NewLayout,
+                            children: [...route.children]
+                        }]
+                    }
+                }
+                return route
+            })
+
+            router.matcher = new router.constructor({
+                routes: newRoutes
+            }).matcher
+        }
+        document.addEventListener('wuji:beforeReady', () => {
+            initApp()
+        })
+    })();
+</script>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>创意全屏加载动效 | 流光粒子 + 几何幻影</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0f1e;
+            font-family: 'Segoe UI', 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 实际页面内容样式 — 现代炫光科技风 */
+        .real-content {
+            min-height: 100vh;
+            background: radial-gradient(circle at 10% 20%, rgba(10, 15, 30, 0.95), rgba(2, 5, 15, 0.98));
+            color: #eef5ff;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 2rem 4rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #A0E9FF, #6C63FF, #FF6584);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            margin-bottom: 1rem;
+            animation: titlePulse 3s infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            0% { opacity: 0.85; text-shadow: 0 0 5px rgba(108,99,255,0.3);}
+            100% { opacity: 1; text-shadow: 0 0 20px rgba(108,99,255,0.6);}
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #b9c7d9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            padding: 3rem 2rem;
+        }
+
+        .creative-card {
+            background: rgba(20, 28, 45, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 1.8rem;
+            width: 280px;
+            border: 1px solid rgba(108, 99, 255, 0.4);
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .creative-card:hover {
+            transform: translateY(-8px);
+            border-color: #ff6584;
+            box-shadow: 0 20px 30px -8px rgba(255,101,132,0.2);
+        }
+
+        .creative-card .emoji-big {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .creative-card h3 {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(120deg, #f0f3ff, #cbd5ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .creative-card p {
+            font-size: 0.9rem;
+            color: #b0c4de;
+            line-height: 1.4;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid rgba(108,99,255,0.3);
+            font-size: 0.85rem;
+            color: #7e8aa8;
+        }
+
+        /* ========== j7-mask 创意加载蒙层 (粒子流光+动态几何) ========== */
+        .j7-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0a0f2c, #020617);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(0px);
+            transition: opacity 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow: hidden;
+        }
+
+        /* 创意核心容器 */
+        .j7-mask .j7-creative-loader {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* 几何旋转核心组 */
+        .j7-geo-core {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            animation: j7-float-core 2.2s ease-in-out infinite;
+        }
+
+        /* 多重动态环与粒子合成 */
+        .j7-ring {
+            position: absolute;
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            box-sizing: border-box;
+        }
+
+        .j7-ring-1 {
+            border-top: 4px solid #ff6584;
+            border-right: 4px solid rgba(255,101,132,0.3);
+            border-bottom: 4px solid rgba(255,101,132,0.1);
+            border-left: 4px solid rgba(255,101,132,0.6);
+            animation: j7-spin 1.2s linear infinite;
+            filter: drop-shadow(0 0 6px #ff6584);
+        }
+
+        .j7-ring-2 {
+            border-top: 3px solid #6c63ff;
+            border-left: 3px solid #6c63ff;
+            border-right: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            width: 85%;
+            height: 85%;
+            top: 7.5%;
+            left: 7.5%;
+            animation: j7-spin-reverse 1.6s linear infinite;
+            filter: drop-shadow(0 0 5px #6c63ff);
+        }
+
+        .j7-ring-3 {
+            border: 2px dashed rgba(160, 233, 255, 0.7);
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            animation: j7-pulse-ring 2s ease-in-out infinite;
+            box-shadow: 0 0 8px #A0E9FF;
+        }
+
+        /* 中央核心光球 */
+        .j7-core-glow {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle, #ffffff, #a0e9ff);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 25px 8px rgba(108,99,255,0.8);
+            animation: j7-corePulse 1.3s alternate infinite ease-in-out;
+        }
+
+        /* 流动粒子流 (canvas 增强版动态粒子背景) 使用canvas 绘制创意粒子带+波纹 */
+        .j7-particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 文本区域创新 */
+        .j7-mask .j7-text-creative {
+            margin-top: 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 12;
+            position: relative;
+        }
+
+        .j7-mask .j7-loading-word {
+            color: #eef5ff;
+            font-size: 1.4rem;
+            font-weight: 500;
+            letter-spacing: 4px;
+            background: linear-gradient(120deg, #FFD6E8, #C0F0FF);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(108,99,255,0.5);
+            animation: j7-flicker 2s infinite;
+        }
+
+        .j7-mask .j7-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .j7-mask .j7-dots span {
+            width: 8px;
+            height: 8px;
+            background: #ffb3c6;
+            border-radius: 50%;
+            display: inline-block;
+            animation: j7-bounce 1.4s infinite ease-in-out;
+        }
+
+        .j7-mask .j7-dots span:nth-child(1) { animation-delay: 0s; background: #ff6584; }
+        .j7-mask .j7-dots span:nth-child(2) { animation-delay: 0.2s; background: #6c63ff; }
+        .j7-mask .j7-dots span:nth-child(3) { animation-delay: 0.4s; background: #A0E9FF; }
+
+        /* 动画关键帧 */
+        @keyframes j7-spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+        @keyframes j7-spin-reverse {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(-360deg);}
+        }
+        @keyframes j7-pulse-ring {
+            0% { opacity: 0.4; transform: scale(1); border-width: 2px;}
+            50% { opacity: 1; transform: scale(1.08); border-width: 3px;}
+            100% { opacity: 0.4; transform: scale(1); border-width: 2px;}
+        }
+        @keyframes j7-float-core {
+            0% { transform: translateY(0px);}
+            50% { transform: translateY(-8px);}
+            100% { transform: translateY(0px);}
+        }
+        @keyframes j7-corePulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; box-shadow: 0 0 10px 2px #6c63ff;}
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; box-shadow: 0 0 35px 14px #ff6584;}
+        }
+        @keyframes j7-flicker {
+            0% { opacity: 0.7; letter-spacing: 2px;}
+            50% { opacity: 1; letter-spacing: 5px; text-shadow: 0 0 12px cyan;}
+            100% { opacity: 0.7; letter-spacing: 2px;}
+        }
+        @keyframes j7-bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.3;}
+            40% { transform: scale(1.2); opacity: 1;}
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 550px) {
+            .j7-mask .j7-creative-loader { transform: scale(0.8);}
+            .j7-mask .j7-loading-word { font-size: 1.1rem; letter-spacing: 2px;}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 创意全屏蒙层 前缀 j7-mask，包含了动态canvas粒子背景、几何旋转组合、流动光效等 -->
+    <div id="creativeMask" class="j7-mask">
+        <!-- Canvas 动态粒子流背景 (创意流体粒子线条) -->
+        <canvas id="particleCanvas" class="j7-particle-canvas"></canvas>
+        
+        <div class="j7-creative-loader">
+            <div class="j7-geo-core">
+                <div class="j7-ring j7-ring-1"></div>
+                <div class="j7-ring j7-ring-2"></div>
+                <div class="j7-ring j7-ring-3"></div>
+                <div class="j7-core-glow"></div>
+            </div>
+            <div class="j7-text-creative">
+                <div class="j7-loading-word">资源加载中</div>
+                <div class="j7-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px;">✨ 创意流光矩阵 ✨</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实际页面内容，科技感卡片组 -->
+    <div class="real-content">
+        <div class="hero">
+            <h1>✦ 流光幻影 ✦</h1>
+            <p>创意全屏加载动效 | 粒子流线 + 动态几何核心，每一次加载都是视觉盛宴</p>
+        </div>
+        <div class="card-section">
+            <div class="creative-card">
+                <div class="emoji-big">🌀</div>
+                <h3>粒子浪潮</h3>
+                <p>Canvas动态粒子流，随加载时间流动，未来感十足。</p>
+            </div>
+            <div class="creative-card">
+                <div class="emoji-big">⚡</div>
+                <h3>幻彩核心</h3>
+                <p>多环交错旋转，光晕脉冲，呈现科技几何美学。</p>
+            </div>
+            <div class="creative-card">
+                <div class="emoji-big">💎</div>
+                <h3>沉浸过渡</h3>
+                <p>优雅淡出蒙层，资源加载完毕平滑过渡到主体内容。</p>
+            </div>
+        </div>
+        <footer>
+            🌟 加载蒙层使用 j7-mask 前缀 + 粒子动画 | 创意加载效果满足全屏居中、动态旋转、文本显示
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // 获取蒙层元素
+            const mask = document.getElementById('creativeMask');
+            const canvas = document.getElementById('particleCanvas');
+            let ctx = null;
+            let animationId = null;
+            let particles = [];
+            let mouseX = 0, mouseY = 0;
+            
+            // 创意粒子系统 (带轨迹拖尾效果)
+            function initParticles() {
+                if (!canvas) return;
+                ctx = canvas.getContext('2d');
+                resizeCanvas();
+                const PARTICLE_COUNT = 90;
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.6,
+                        vy: (Math.random() - 0.5) * 0.6,
+                        size: Math.random() * 3 + 1.2,
+                        alpha: Math.random() * 0.5 + 0.2,
+                        color: `hsl(${Math.random() * 60 + 280}, 80%, 65%)`, // 紫红青蓝色域
+                        pulseSpeed: Math.random() * 0.02 + 0.01,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+                // 增加鼠标互动效果
+                window.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                });
+                drawParticles();
+            }
+            
+            function resizeCanvas() {
+                if (canvas) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+            }
+            
+            function drawParticles() {
+                if (!ctx || !canvas) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // 绘制背景流光渐变 (径向透明，加重星空感)
+                const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 20, canvas.width/2, canvas.height/2, canvas.width/1.8);
+                grad.addColorStop(0, 'rgba(20, 30, 70, 0.2)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 更新并绘制粒子 (连线效果)
+                for (let i = 0; i < particles.length; i++) {
+                    let p = particles[i];
+                    // 根据鼠标轻微排斥/吸引 增加灵动性
+                    const dx = mouseX - p.x;
+                    const dy = mouseY - p.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 120 && dist > 5) {
+                        const angle = Math.atan2(dy, dx);
+                        const force = (120 - dist) / 800;
+                        p.vx -= Math.cos(angle) * force * 0.3;
+                        p.vy -= Math.sin(angle) * force * 0.3;
+                    }
+                    // 边界反弹加阻尼
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0) { p.x = 0; p.vx *= -0.96; }
+                    if (p.x > canvas.width) { p.x = canvas.width; p.vx *= -0.96; }
+                    if (p.y < 0) { p.y = 0; p.vy *= -0.96; }
+                    if (p.y > canvas.height) { p.y = canvas.height; p.vy *= -0.96; }
+                    
+                    // 随机速度微调
+                    p.vx += (Math.random() - 0.5) * 0.03;
+                    p.vy += (Math.random() - 0.5) * 0.03;
+                    let maxSpeed = 1.2;
+                    if (Math.abs(p.vx) > maxSpeed) p.vx = p.vx > 0 ? maxSpeed : -maxSpeed;
+                    if (Math.abs(p.vy) > maxSpeed) p.vy = p.vy > 0 ? maxSpeed : -maxSpeed;
+                    
+                    // 动态透明度呼吸
+                    let pulseAlpha = p.alpha + Math.sin(Date.now() * p.pulseSpeed + p.phase) * 0.15;
+                    pulseAlpha = Math.min(0.9, Math.max(0.2, pulseAlpha));
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = "#a06eff";
+                    ctx.globalAlpha = pulseAlpha;
+                    ctx.fill();
+                }
+                
+                // 绘制粒子间连线 (创意光网)
+                ctx.beginPath();
+                ctx.globalAlpha = 0.25;
+                ctx.lineWidth = 0.8;
+                ctx.strokeStyle = "#b77eff";
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        if (distance < 85) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(148, 112, 255, ${0.18 * (1 - distance/85)})`;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                ctx.shadowBlur = 0;
+                
+                // 增加额外流动光晕 (浮动光斑)
+                ctx.globalAlpha = 0.5;
+                for (let i = 0; i < 12; i++) {
+                    let t = Date.now() * 0.001 + i;
+                    let xOff = canvas.width/2 + Math.sin(t) * 120;
+                    let yOff = canvas.height/2 + Math.cos(t * 0.7) * 80;
+                    ctx.beginPath();
+                    ctx.arc(xOff, yOff, 6, 0, Math.PI*2);
+                    ctx.fillStyle = `hsla(${280 + Math.sin(t)*30}, 80%, 70%, 0.3)`;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                animationId = requestAnimationFrame(drawParticles);
+            }
+            
+            // 隐藏蒙层，并停止canvas动画避免资源浪费
+            function hideMaskWithCreative() {
+                if (!mask) return;
+                mask.style.opacity = '0';
+                // 等待过渡结束后彻底移除蒙层以及停止动画
+                const onTransitionFinish = () => {
+                    if (mask && mask.parentNode) {
+                        mask.remove();
+                    }
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                        animationId = null;
+                    }
+                    if (canvas) {
+                        // 清理canvas防止内存
+                        canvas.remove();
+                    }
+                };
+                mask.addEventListener('transitionend', onTransitionFinish, { once: true });
+                // 后备移除
+                setTimeout(() => {
+                    if (mask && mask.parentNode) {
+                        mask.remove();
+                        if (animationId) cancelAnimationFrame(animationId);
+                    }
+                }, 1000);
+            }
+            
+            // 模拟资源加载（等待api/图片/数据）+ 创意延迟，保证动画播放不少于1.8秒
+            const START_TIME = Date.now();
+            const MIN_DISPLAY = 200000; // 创意加载效果至少展示2秒，让用户沉浸粒子效果
+            
+            // 模拟一个资源加载任务 (例如数据请求，或者图片预加载)
+            function mockResourceLoading() {
+                return new Promise((resolve) => {
+                    // 模拟1.6~2.2秒的动态加载时间
+                    const loadTime = 1800; // 1.8s
+                    setTimeout(() => {
+                        console.log('[创意加载] 资源加载完成 (数据/组件已就绪)');
+                        resolve();
+                    }, loadTime);
+                });
+            }
+            
+            async function startLoadingFlow() {
+                // 初始化粒子动画 (必须在canvas加载后)
+                initParticles();
+                window.addEventListener('resize', () => {
+                    if (canvas) {
+                        resizeCanvas();
+                        // 重置粒子边界避免越界
+                        if(particles.length){
+                            for(let p of particles){
+                                if(p.x > canvas.width) p.x = canvas.width-5;
+                                if(p.y > canvas.height) p.y = canvas.height-5;
+                            }
+                        }
+                    }
+                });
+                // 等待资源加载
+                await mockResourceLoading();
+                const elapsed = Date.now() - START_TIME;
+                const remaining = MIN_DISPLAY - elapsed;
+                if (remaining > 0) {
+                    setTimeout(() => {
+                        hideMaskWithCreative();
+                    }, remaining);
+                } else {
+                    hideMaskWithCreative();
+                }
+            }
+            
+            // 启动创意加载流程，确保页面一进入就全屏展示
+            startLoadingFlow();
+            
+            // 附加安全自动清理（超时保险 最多8秒强制移除并停止动画）
+            // setTimeout(() => {
+            //     if (mask && mask.parentNode && mask.style.opacity !== '0') {
+            //         console.log('安全模式: 强制关闭加载蒙层');
+            //         if (animationId) cancelAnimationFrame(animationId);
+            //         mask.style.opacity = '0';
+            //         setTimeout(() => {
+            //             if (mask && mask.parentNode) mask.remove();
+            //         }, 400);
+            //     }
+            // }, 7000);
+        })();
+    </script>
+</body>
+</html>
