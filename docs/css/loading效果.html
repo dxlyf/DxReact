@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>纯CSS Loading效果集合 | 优雅加载动画库</title>
+    <title>纯CSS Loading 效果大全 | 18种创意加载动画</title>
     <style>
         * {
             margin: 0;
@@ -12,103 +12,100 @@
         }
 
         body {
-            background: linear-gradient(145deg, #f5f7fc 0%, #eef2f5 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f9 100%);
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
             padding: 2rem 1.5rem;
+            min-height: 100vh;
         }
 
-        /* 主容器 */
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
         }
 
-        /* 标题区 */
         .header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
         }
 
         .header h1 {
-            font-size: 2.4rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #1a2a3a, #2c5364);
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #1e293b, #2d4a6e);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.5px;
         }
 
         .header p {
-            color: #5b6e8c;
+            color: #4a627a;
             margin-top: 0.5rem;
-            font-weight: 400;
-            font-size: 1rem;
+            font-weight: 450;
         }
 
-        /* 卡片网格 - 响应式布局 */
+        /* 网格布局，自适应 */
         .loader-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 1.8rem;
         }
 
-        /* 每个loading卡片 */
         .loader-card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(2px);
-            border-radius: 2rem;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.02);
-            padding: 2rem 1.5rem 1.8rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            border-radius: 1.8rem;
+            box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.02);
+            padding: 1.6rem 1.2rem 1.4rem;
             transition: all 0.25s ease;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.7);
         }
 
         .loader-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 28px 40px -18px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 25px 40px -16px rgba(0, 0, 0, 0.15);
         }
 
         .loader-title {
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 600;
-            margin-bottom: 1.25rem;
-            color: #1e2f3e;
+            margin-bottom: 1rem;
+            color: #0f2b3d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             border-left: 4px solid #3b82f6;
-            padding-left: 0.75rem;
-            text-align: left;
+            padding-left: 12px;
         }
 
-        /* 展示区域，垂直居中 */
         .loader-demo {
             min-height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fefefe;
-            border-radius: 1.5rem;
-            margin: 1rem 0;
+            background: #ffffffcc;
+            border-radius: 1.4rem;
+            margin: 0.7rem 0;
             transition: all 0.2s;
-            border: 1px solid #e9edf2;
-            box-shadow: inset 0 1px 3px #00000008, 0 2px 4px #ffffff;
+            border: 1px solid #eef2f8;
+            box-shadow: inset 0 1px 2px #00000004, 0 2px 5px rgba(0,0,0,0.02);
         }
 
-        /* 描述文字 */
         .loader-desc {
-            font-size: 0.8rem;
-            color: #5a6e8a;
-            margin-top: 1rem;
-            background: #f0f4f9;
+            font-size: 0.75rem;
+            color: #4c6a86;
+            margin-top: 0.8rem;
+            background: #eef3fc;
             display: inline-block;
-            padding: 0.25rem 0.9rem;
-            border-radius: 30px;
-            font-weight: 450;
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
         }
 
-        /* ---------- 1. 经典旋转圆圈 (Spinner) ---------- */
+        /* ========= 已有的10个经典效果 (保持原样但确保无冲突) ========= */
+        /* 1 经典旋转圆圈 */
         .spinner-classic {
             width: 48px;
             height: 48px;
@@ -117,396 +114,307 @@
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* ---------- 2. 跳跃点 (Bouncing Dots) ---------- */
-        .bouncing-dots {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            justify-content: center;
-        }
-
+        /* 2 跳跃点 */
+        .bouncing-dots { display: flex; gap: 12px; }
         .bouncing-dots span {
-            width: 14px;
-            height: 14px;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            animation: bounce 0.6s infinite alternate ease-in-out;
+            width: 14px; height: 14px; background: #3b82f6; border-radius: 50%;
+            animation: bounce 0.6s infinite alternate;
         }
+        .bouncing-dots span:nth-child(2) { animation-delay: 0.2s; background: #60a5fa; }
+        .bouncing-dots span:nth-child(3) { animation-delay: 0.4s; background: #93c5fd; }
+        @keyframes bounce { 100% { transform: translateY(-18px); } }
 
-        .bouncing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-            background-color: #60a5fa;
+        /* 3 脉冲波纹 */
+        .pulse-rings { position: relative; width: 60px; height: 60px; }
+        .pulse-rings::before, .pulse-rings::after {
+            content: ''; position: absolute; inset: 0; border-radius: 50%;
+            border: 2px solid #3b82f6; animation: pulse-ring 1.5s infinite ease-out;
         }
-        .bouncing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-            background-color: #93c5fd;
-        }
+        .pulse-rings::after { animation-delay: 0.75s; }
+        @keyframes pulse-ring { 100% { transform: scale(1.5); opacity: 0; } }
 
-        @keyframes bounce {
-            0% {
-                transform: translateY(0px);
-            }
-            100% {
-                transform: translateY(-18px);
-            }
-        }
-
-        /* ---------- 3. 脉冲波纹圈 (Pulse Rings) ---------- */
-        .pulse-rings {
-            position: relative;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .pulse-rings::before,
-        .pulse-rings::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid #3b82f6;
-            opacity: 0.7;
-            animation: pulse-ring 1.5s infinite ease-out;
-        }
-        .pulse-rings::after {
-            animation-delay: 0.75s;
-        }
-        @keyframes pulse-ring {
-            0% {
-                transform: scale(0.5);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1.4);
-                opacity: 0;
-            }
-        }
-
-        /* ---------- 4. 旋转三色饼图 (Multi-color Loader) ---------- */
+        /* 4 彩环 pie */
         .pie-loader {
-            width: 54px;
-            height: 54px;
+            width: 54px; height: 54px;
             background: conic-gradient(from 0deg, #f97316, #8b5cf6, #06b6d4, #f97316);
             border-radius: 50%;
-            animation: spin 1s infinite cubic-bezier(0.5, 0.1, 0.5, 0.9);
+            animation: spin 1s infinite cubic-bezier(0.5,0.1,0.5,0.9);
             mask: radial-gradient(circle, transparent 58%, black 60%);
-            -webkit-mask: radial-gradient(circle, transparent 58%, black 60%);
         }
 
-        /* ---------- 5. 方块翻转 (Cube Grid) ---------- */
-        .cube-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            width: 60px;
-            height: 60px;
-        }
-        .cube-grid div {
-            background-color: #3b82f6;
-            border-radius: 6px;
-            animation: cube-scale 1.2s infinite ease-in-out;
-        }
-        .cube-grid div:nth-child(1) { animation-delay: 0.0s; }
-        .cube-grid div:nth-child(2) { animation-delay: 0.1s; }
-        .cube-grid div:nth-child(3) { animation-delay: 0.2s; }
-        .cube-grid div:nth-child(4) { animation-delay: 0.3s; }
-        .cube-grid div:nth-child(5) { animation-delay: 0.4s; }
-        .cube-grid div:nth-child(6) { animation-delay: 0.5s; }
-        .cube-grid div:nth-child(7) { animation-delay: 0.6s; }
-        .cube-grid div:nth-child(8) { animation-delay: 0.7s; }
-        .cube-grid div:nth-child(9) { animation-delay: 0.8s; }
-        @keyframes cube-scale {
-            0%, 100% { transform: scale(1); opacity: 0.6; }
-            50% { transform: scale(0.4); opacity: 0.2; background-color: #60a5fa; }
-        }
+        /* 5 方格网格 */
+        .cube-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; width: 60px; height: 60px; }
+        .cube-grid div { background: #3b82f6; border-radius: 6px; animation: cube-scale 1.2s infinite; }
+        .cube-grid div:nth-child(1) { animation-delay:0s; } .cube-grid div:nth-child(2){animation-delay:0.1s;}
+        .cube-grid div:nth-child(3){animation-delay:0.2s;} .cube-grid div:nth-child(4){animation-delay:0.3s;}
+        .cube-grid div:nth-child(5){animation-delay:0.4s;} .cube-grid div:nth-child(6){animation-delay:0.5s;}
+        .cube-grid div:nth-child(7){animation-delay:0.6s;} .cube-grid div:nth-child(8){animation-delay:0.7s;}
+        .cube-grid div:nth-child(9){animation-delay:0.8s;}
+        @keyframes cube-scale { 50% { transform: scale(0.4); opacity: 0.3; background: #60a5fa; } }
 
-        /* ---------- 6. 波浪进度条 (Wave Bar) ---------- */
-        .wave-bars {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            height: 50px;
-        }
-        .wave-bars span {
-            width: 8px;
-            height: 28px;
-            background: linear-gradient(135deg, #3b82f6, #1e3a8a);
-            border-radius: 20px;
-            animation: wave-stretch 1.2s infinite ease-in-out;
-        }
-        .wave-bars span:nth-child(1) { animation-delay: 0.0s; }
-        .wave-bars span:nth-child(2) { animation-delay: 0.1s; }
-        .wave-bars span:nth-child(3) { animation-delay: 0.2s; }
-        .wave-bars span:nth-child(4) { animation-delay: 0.3s; }
-        .wave-bars span:nth-child(5) { animation-delay: 0.4s; }
-        .wave-bars span:nth-child(6) { animation-delay: 0.5s; }
-        @keyframes wave-stretch {
-            0%, 100% { transform: scaleY(1); opacity: 0.5; height: 28px; }
-            50% { transform: scaleY(1.6); opacity: 1; height: 44px; background: #3b82f6; }
-        }
+        /* 6 波浪条 */
+        .wave-bars { display: flex; gap: 6px; align-items: center; height: 50px; }
+        .wave-bars span { width: 8px; height: 28px; background: linear-gradient(#3b82f6, #1e3a8a); border-radius: 20px; animation: wave-stretch 1.2s infinite; }
+        .wave-bars span:nth-child(1){animation-delay:0s;} .wave-bars span:nth-child(2){animation-delay:0.1s;}
+        .wave-bars span:nth-child(3){animation-delay:0.2s;} .wave-bars span:nth-child(4){animation-delay:0.3s;}
+        .wave-bars span:nth-child(5){animation-delay:0.4s;} .wave-bars span:nth-child(6){animation-delay:0.5s;}
+        @keyframes wave-stretch { 50% { transform: scaleY(1.6); height: 44px; background: #3b82f6; } }
 
-        /* ---------- 7. 渐隐轮回 (Fade Circles) ---------- */
-        .fade-circles {
-            display: flex;
-            gap: 10px;
-        }
-        .fade-circles span {
-            width: 14px;
-            height: 14px;
-            background-color: #06b6d4;
-            border-radius: 50%;
-            animation: fade-flash 1.2s infinite;
-        }
-        .fade-circles span:nth-child(2) { animation-delay: 0.2s; background-color: #3b82f6; }
-        .fade-circles span:nth-child(3) { animation-delay: 0.4s; background-color: #8b5cf6; }
-        .fade-circles span:nth-child(4) { animation-delay: 0.6s; background-color: #ec489a; }
-        @keyframes fade-flash {
-            0%, 100% { opacity: 0.2; transform: scale(0.8);}
-            50% { opacity: 1; transform: scale(1.2);}
-        }
+        /* 7 渐隐彩点 */
+        .fade-circles { display: flex; gap: 10px; }
+        .fade-circles span { width: 14px; height: 14px; background: #06b6d4; border-radius: 50%; animation: fade-flash 1.2s infinite; }
+        .fade-circles span:nth-child(2){animation-delay:0.2s; background:#3b82f6;}
+        .fade-circles span:nth-child(3){animation-delay:0.4s; background:#8b5cf6;}
+        .fade-circles span:nth-child(4){animation-delay:0.6s; background:#ec489a;}
+        @keyframes fade-flash { 50% { opacity: 0.2; transform: scale(0.7);} }
 
-        /* ---------- 8. 旋转圆环群 (Ring Cluster) ---------- */
-        .ring-cluster {
-            position: relative;
-            width: 56px;
-            height: 56px;
-        }
-        .ring-cluster div {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            border-top-color: #f43f5e;
-            border-right-color: #f97316;
-            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-        }
-        .ring-cluster div:nth-child(2) {
-            width: 70%;
-            height: 70%;
-            top: 15%;
-            left: 15%;
-            border-top-color: #06b6d4;
-            border-right-color: #10b981;
-            animation-direction: reverse;
-            animation-duration: 1s;
-        }
-        .ring-cluster div:nth-child(3) {
-            width: 40%;
-            height: 40%;
-            top: 30%;
-            left: 30%;
-            border-top-color: #8b5cf6;
-            border-right-color: #ec489a;
-            animation-duration: 0.8s;
-        }
+        /* 8 圆环群 */
+        .ring-cluster { position: relative; width: 56px; height: 56px; }
+        .ring-cluster div { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid transparent; border-top-color: #f43f5e; border-right-color: #f97316; animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; }
+        .ring-cluster div:nth-child(2) { width: 70%; height: 70%; top: 15%; left: 15%; border-top-color: #06b6d4; border-right-color: #10b981; animation-direction: reverse; animation-duration: 1s; }
+        .ring-cluster div:nth-child(3) { width: 40%; height: 40%; top: 30%; left: 30%; border-top-color: #8b5cf6; border-right-color: #ec489a; animation-duration: 0.8s; }
 
-        /* ---------- 9. 弹性旋转缩放 (Morph) ---------- */
+        /* 9 液态变形 */
         .morph-loader {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             background: linear-gradient(145deg, #3b82f6, #9333ea);
             border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
             animation: morphing 2s infinite ease-in-out, spin 3s infinite linear;
         }
         @keyframes morphing {
             0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; background: #3b82f6; }
-            25% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; background: #8b5cf6; }
             50% { border-radius: 50% 50% 50% 50% / 60% 50% 50% 40%; background: #ec489a; }
-            75% { border-radius: 30% 70% 40% 60% / 30% 60% 40% 70%; background: #f97316; }
             100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; background: #3b82f6; }
         }
 
-        /* ---------- 10. 时钟滴答 (Tick Dots Clock) ---------- */
-        .tick-loader {
-            position: relative;
-            width: 60px;
-            height: 60px;
+        /* 10 时钟指针 */
+        .tick-loader { position: relative; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 70%); }
+        .tick-loader::before, .tick-loader::after { content: ''; position: absolute; left: 50%; background: #3b82f6; border-radius: 20px; transform-origin: 50% 100%; }
+        .tick-loader::before { width: 6px; height: 24px; top: 8px; animation: tick-rotate 2s infinite linear; }
+        .tick-loader::after { width: 4px; height: 18px; top: 12px; background: #60a5fa; transform: rotate(60deg); animation: tick-rotate 2s infinite linear; animation-delay: 0.05s; }
+        @keyframes tick-rotate { 100% { transform: rotate(360deg); } }
+
+        /* ========= 全新扩展: 11~18 新颖效果 ========= */
+        
+        /* 11. 双色对峙竞速环 (Dual Runner) */
+        .dual-runner {
+            width: 54px;
+            height: 54px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 70%);
+            background: conic-gradient(from 0deg, #f97316, #3b82f6, #f97316, #3b82f6);
+            mask: radial-gradient(circle, transparent 62%, black 64%);
+            animation: spin 0.9s infinite linear;
+            position: relative;
         }
-        .tick-loader::before {
+        .dual-runner::after {
             content: '';
             position: absolute;
-            width: 6px;
-            height: 24px;
-            background: #3b82f6;
-            left: 50%;
-            top: 8px;
-            transform-origin: 50% 100%;
-            border-radius: 20px;
-            animation: tick-rotate 2s infinite linear;
-        }
-        .tick-loader::after {
-            content: '';
-            position: absolute;
-            width: 4px;
-            height: 18px;
-            background: #60a5fa;
-            left: 50%;
-            top: 12px;
-            transform-origin: 50% 100%;
-            border-radius: 20px;
-            animation: tick-rotate 2s infinite linear;
-            animation-delay: 0.05s;
-            transform: rotate(60deg);
-        }
-        @keyframes tick-rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            inset: 6px;
+            border-radius: 50%;
+            background: conic-gradient(from 180deg, #ec489a, #06b6d4, #ec489a, #06b6d4);
+            mask: radial-gradient(circle, transparent 70%, black 72%);
+            animation: spin 0.6s infinite reverse linear;
         }
 
-        /* 增加footer说明 */
+        /* 12. 伸缩挤压条 (Piston Bars) */
+        .piston-bars {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+        }
+        .piston-bars span {
+            width: 10px;
+            height: 40px;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            border-radius: 12px;
+            animation: piston 1s infinite ease-in-out;
+            transform-origin: center;
+        }
+        .piston-bars span:nth-child(1) { animation-delay: 0.0s; }
+        .piston-bars span:nth-child(2) { animation-delay: 0.15s; }
+        .piston-bars span:nth-child(3) { animation-delay: 0.3s; }
+        .piston-bars span:nth-child(4) { animation-delay: 0.45s; }
+        @keyframes piston {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+            50% { transform: scaleY(1.2); opacity: 1; background: #2563eb; }
+        }
+
+        /* 13. 旋转3D立方体 (简易透视) */
+        .cube-3d {
+            width: 50px;
+            height: 50px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate3d 1.8s infinite cubic-bezier(0.55, 0.15, 0.45, 0.85);
+        }
+        .cube-3d div {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(59,130,246,0.7);
+            border: 2px solid rgba(255,255,240,0.5);
+            box-shadow: 0 0 8px rgba(59,130,246,0.5);
+        }
+        .cube-3d .front { transform: translateZ(25px); background: #3b82f6; }
+        .cube-3d .back { transform: rotateY(180deg) translateZ(25px); background: #8b5cf6; }
+        .cube-3d .right { transform: rotateY(90deg) translateZ(25px); background: #06b6d4; }
+        .cube-3d .left { transform: rotateY(-90deg) translateZ(25px); background: #f97316; }
+        .cube-3d .top { transform: rotateX(90deg) translateZ(25px); background: #10b981; }
+        .cube-3d .bottom { transform: rotateX(-90deg) translateZ(25px); background: #ec489a; }
+        @keyframes rotate3d {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        /* 14. 跳动方块 (弹跳盒子) */
+        .jump-cube {
+            width: 48px;
+            height: 48px;
+            background: #f97316;
+            border-radius: 12px;
+            animation: jumpBox 0.8s infinite alternate ease-in-out;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        @keyframes jumpBox {
+            0% { transform: translateY(0px) rotate(0deg); border-radius: 12px; background: #f97316; }
+            100% { transform: translateY(-35px) rotate(8deg); border-radius: 30% 70% 50% 50% / 30% 40% 60% 70%; background: #ff8c42; }
+        }
+
+        /* 15. 交叉旋转线条 (Cross Spinner) */
+        .cross-spinner {
+            position: relative;
+            width: 52px;
+            height: 52px;
+        }
+        .cross-spinner::before, .cross-spinner::after {
+            content: '';
+            position: absolute;
+            background: #3b82f6;
+            border-radius: 12px;
+            animation: crossRotate 1.2s infinite linear;
+        }
+        .cross-spinner::before {
+            width: 52px;
+            height: 6px;
+            top: 23px;
+            left: 0;
+        }
+        .cross-spinner::after {
+            width: 6px;
+            height: 52px;
+            left: 23px;
+            top: 0;
+        }
+        @keyframes crossRotate {
+            0% { transform: rotate(0deg); background: #3b82f6; }
+            50% { transform: rotate(180deg); background: #ec489a; }
+            100% { transform: rotate(360deg); background: #3b82f6; }
+        }
+
+        /* 16. 涟漪点阵 (Ripple Dots) */
+        .ripple-dots {
+            display: flex;
+            gap: 12px;
+        }
+        .ripple-dots span {
+            width: 12px;
+            height: 12px;
+            background: #06b6d4;
+            border-radius: 50%;
+            animation: ripple 1.2s infinite;
+        }
+        .ripple-dots span:nth-child(1) { animation-delay: 0s; }
+        .ripple-dots span:nth-child(2) { animation-delay: 0.3s; background: #3b82f6; }
+        .ripple-dots span:nth-child(3) { animation-delay: 0.6s; background: #8b5cf6; }
+        @keyframes ripple {
+            0%, 100% { transform: scale(0.6); opacity: 0.4; box-shadow: 0 0 0 0 rgba(6,182,212,0.3); }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 0 8px rgba(6,182,212,0); }
+        }
+
+        /* 17. 螺旋四叶 (Clover) */
+        .clover-spin {
+            width: 54px;
+            height: 54px;
+            position: relative;
+            animation: spin 2s infinite linear;
+        }
+        .clover-spin div {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #f43f5e;
+            border-radius: 50% 50% 0 50%;
+            transform-origin: 50% 50%;
+        }
+        .clover-spin div:nth-child(1) { top: 0; left: 0; background: #f97316; animation: cloverPulse 1s infinite alternate; }
+        .clover-spin div:nth-child(2) { top: 0; right: 0; background: #06b6d4; transform: rotate(90deg); animation: cloverPulse 1s infinite alternate 0.25s; }
+        .clover-spin div:nth-child(3) { bottom: 0; right: 0; background: #8b5cf6; transform: rotate(180deg); animation: cloverPulse 1s infinite alternate 0.5s; }
+        .clover-spin div:nth-child(4) { bottom: 0; left: 0; background: #10b981; transform: rotate(270deg); animation: cloverPulse 1s infinite alternate 0.75s; }
+        @keyframes cloverPulse { 100% { transform: scale(0.6); opacity: 0.5; background: #3b82f6; } }
+
+        /* 18. 呼吸光晕 (Breathing Glow) */
+        .breathing-glow {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #3b82f6, #1e3a8a);
+            border-radius: 50%;
+            animation: breathGlow 1.4s infinite alternate ease-in-out;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+        @keyframes breathGlow {
+            0% { transform: scale(0.7); opacity: 0.5; box-shadow: 0 0 0px #3b82f6; background: #1e40af; }
+            100% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 20px 6px #60a5fa; background: #2563eb; }
+        }
+
+        /* 附加一个极简指示器 让整体布局更丰富 */
         .footer-note {
             text-align: center;
-            margin-top: 3rem;
+            margin-top: 3.2rem;
             font-size: 0.85rem;
-            color: #6c7f99;
-            border-top: 1px solid #dce3ec;
-            padding-top: 2rem;
+            color: #5d7a9a;
+            border-top: 1px solid #d4e0ec;
+            padding-top: 1.8rem;
             font-weight: 450;
         }
-
-        /* 移动端微调 */
-        @media (max-width: 680px) {
-            .loader-grid {
-                gap: 1.2rem;
-            }
-            .loader-card {
-                padding: 1.2rem;
-            }
-            .loader-title {
-                font-size: 1.2rem;
-            }
-            .loader-demo {
-                min-height: 150px;
-            }
+        @media (max-width: 700px) {
+            .loader-grid { gap: 1rem; }
+            .loader-demo { min-height: 160px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>⚡ 纯CSS Loading 动画集</h1>
-        <p>精致现代 · 轻量无依赖 · 即取即用</p>
+        <h1>✨ 纯CSS Loading 灵感库</h1>
+        <p>18款现代加载动画 · 零JS · 即插即用 · 满足各种设计偏好</p>
     </div>
-
     <div class="loader-grid">
-        <!-- 卡片 1 : 经典旋转圆圈 -->
-        <div class="loader-card">
-            <div class="loader-title">🌀 经典 Spinner</div>
-            <div class="loader-demo">
-                <div class="spinner-classic"></div>
-            </div>
-            <div class="loader-desc">极简旋转圈 · 通用可靠</div>
-        </div>
+        <!-- 原有10个 -->
+        <div class="loader-card"><div class="loader-title">🌀 经典旋转</div><div class="loader-demo"><div class="spinner-classic"></div></div><div class="loader-desc">万能基础款 · 兼容性最佳</div></div>
+        <div class="loader-card"><div class="loader-title">⚫ 跳跃三点</div><div class="loader-demo"><div class="bouncing-dots"><span></span><span></span><span></span></div></div><div class="loader-desc">轻快弹性，活泼氛围</div></div>
+        <div class="loader-card"><div class="loader-title">📡 脉冲波纹</div><div class="loader-demo"><div class="pulse-rings"></div></div><div class="loader-desc">雷达扩散 · 聚焦感强</div></div>
+        <div class="loader-card"><div class="loader-title">🌈 渐隐彩环</div><div class="loader-demo"><div class="pie-loader"></div></div><div class="loader-desc">conic渐变 · 绚烂流动</div></div>
+        <div class="loader-card"><div class="loader-title">🧩 灵动方格</div><div class="loader-demo"><div class="cube-grid"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div><div class="loader-desc">交错节奏，科技感网格</div></div>
+        <div class="loader-card"><div class="loader-title">🌊 波浪律动</div><div class="loader-demo"><div class="wave-bars"><span></span><span></span><span></span><span></span><span></span><span></span></div></div><div class="loader-desc">模仿音频波形，动感十足</div></div>
+        <div class="loader-card"><div class="loader-title">✨ 闪烁星辰</div><div class="loader-demo"><div class="fade-circles"><span></span><span></span><span></span><span></span></div></div><div class="loader-desc">柔光渐隐，适合夜间模式</div></div>
+        <div class="loader-card"><div class="loader-title">🎡 同心轨迹</div><div class="loader-demo"><div class="ring-cluster"><div></div><div></div><div></div></div></div><div class="loader-desc">多层反向环，精致有序</div></div>
+        <div class="loader-card"><div class="loader-title">💧 液态变形</div><div class="loader-demo"><div class="morph-loader"></div></div><div class="loader-desc">拟态流体，有机变化</div></div>
+        <div class="loader-card"><div class="loader-title">⏱️ 指针走位</div><div class="loader-demo"><div class="tick-loader"></div></div><div class="loader-desc">表盘意象，极简优雅</div></div>
 
-        <!-- 卡片 2 : 跳跃点 -->
-        <div class="loader-card">
-            <div class="loader-title">⚫ 跳跃三点</div>
-            <div class="loader-demo">
-                <div class="bouncing-dots">
-                    <span></span><span></span><span></span>
-                </div>
-            </div>
-            <div class="loader-desc">灵动起伏，适合轻快场景</div>
-        </div>
-
-        <!-- 卡片 3 : 脉冲波纹圈 -->
-        <div class="loader-card">
-            <div class="loader-title">📡 脉冲波纹</div>
-            <div class="loader-demo">
-                <div class="pulse-rings"></div>
-            </div>
-            <div class="loader-desc">雷达式扩散 · 科技感</div>
-        </div>
-
-        <!-- 卡片 4 : 三色饼图旋转 -->
-        <div class="loader-card">
-            <div class="loader-title">🌈 渐隐彩环</div>
-            <div class="loader-demo">
-                <div class="pie-loader"></div>
-            </div>
-            <div class="loader-desc">conic-gradient 多彩流转</div>
-        </div>
-
-        <!-- 卡片 5 : 方块翻转网格 -->
-        <div class="loader-card">
-            <div class="loader-title">🧩 灵动方格</div>
-            <div class="loader-demo">
-                <div class="cube-grid">
-                    <div></div><div></div><div></div>
-                    <div></div><div></div><div></div>
-                    <div></div><div></div><div></div>
-                </div>
-            </div>
-            <div class="loader-desc">3x3 交错缩放 · 趣味性强</div>
-        </div>
-
-        <!-- 卡片 6 : 波浪进度条 -->
-        <div class="loader-card">
-            <div class="loader-title">🌊 波浪律动</div>
-            <div class="loader-demo">
-                <div class="wave-bars">
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
-                </div>
-            </div>
-            <div class="loader-desc">仿音波动画 · 下载/加载氛围</div>
-        </div>
-
-        <!-- 卡片 7 : 渐隐轮回彩点 -->
-        <div class="loader-card">
-            <div class="loader-title">✨ 闪烁星辰</div>
-            <div class="loader-demo">
-                <div class="fade-circles">
-                    <span></span><span></span><span></span><span></span>
-                </div>
-            </div>
-            <div class="loader-desc">错落渐隐，柔和呼吸感</div>
-        </div>
-
-        <!-- 卡片 8 : 旋转圆环群 -->
-        <div class="loader-card">
-            <div class="loader-title">🎡 同心轨迹</div>
-            <div class="loader-demo">
-                <div class="ring-cluster">
-                    <div></div><div></div><div></div>
-                </div>
-            </div>
-            <div class="loader-desc">多层环反向旋转，精致有序</div>
-        </div>
-
-        <!-- 卡片 9 : 弹性形变 -->
-        <div class="loader-card">
-            <div class="loader-title">🌀 液态变形</div>
-            <div class="loader-demo">
-                <div class="morph-loader"></div>
-            </div>
-            <div class="loader-desc">border-radius + 渐变 + 旋转</div>
-        </div>
-
-        <!-- 卡片 10 : 时钟指针 -->
-        <div class="loader-card">
-            <div class="loader-title">⏱️ 指针走位</div>
-            <div class="loader-demo">
-                <div class="tick-loader"></div>
-            </div>
-            <div class="loader-desc">仿表盘转动，简雅独特</div>
-        </div>
+        <!-- 全新扩展 8个新颖效果 -->
+        <div class="loader-card"><div class="loader-title">🏁 双色竞速环</div><div class="loader-demo"><div class="dual-runner"></div></div><div class="loader-desc">内外双圈追逐 · 高能警报感</div></div>
+        <div class="loader-card"><div class="loader-title">📌 伸缩活塞</div><div class="loader-demo"><div class="piston-bars"><span></span><span></span><span></span><span></span></div></div><div class="loader-desc">竖向伸缩，力量感加载</div></div>
+        <div class="loader-card"><div class="loader-title">🧊 3D 旋转立方</div><div class="loader-demo"><div class="cube-3d"><div class="front"></div><div class="back"></div><div class="right"></div><div class="left"></div><div class="top"></div><div class="bottom"></div></div></div><div class="loader-desc">真实3D透视，立体视觉冲击</div></div>
+        <div class="loader-card"><div class="loader-title">🎯 弹跳方块</div><div class="loader-demo"><div class="jump-cube"></div></div><div class="loader-desc">活泼上下弹跳，趣味十足</div></div>
+        <div class="loader-card"><div class="loader-title">❌ 交叉旋转线</div><div class="loader-demo"><div class="cross-spinner"></div></div><div class="loader-desc">十字架旋转，几何简约之美</div></div>
+        <div class="loader-card"><div class="loader-title">💧 涟漪点阵</div><div class="loader-demo"><div class="ripple-dots"><span></span><span></span><span></span></div></div><div class="loader-desc">波动光圈，水漾质感</div></div>
+        <div class="loader-card"><div class="loader-title">🍀 四叶螺旋</div><div class="loader-demo"><div class="clover-spin"><div></div><div></div><div></div><div></div></div></div><div class="loader-desc">四叶草形状，旋转祝福感</div></div>
+        <div class="loader-card"><div class="loader-title">💠 呼吸光晕</div><div class="loader-demo"><div class="breathing-glow"></div></div><div class="loader-desc">柔和膨胀/收缩，舒缓神经</div></div>
     </div>
-
     <div class="footer-note">
-        🎨 完全由 CSS 驱动 | 无需 JavaScript | 适用于 loading 占位、异步加载等场景<br>
-        💡 支持深色/浅色背景自适应，仅调整容器背景即可完美融入项目
+        🎨 纯CSS实现，兼容现代浏览器 | 可自由调整颜色、尺寸 | 无额外依赖，适合后台、H5、WebApp加载占位
     </div>
 </div>
 </body>

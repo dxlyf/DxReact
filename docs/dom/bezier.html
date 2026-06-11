@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@dxyl/math@1.2.5/dist/index.umd.js"></script>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const viewport={
+            x:0,
+            y:0,
+            width:canvas.width,
+            height:canvas.height, 
+        }
+        function mapScreenToCanvas(x, y) {
+            return {
+                x: viewport.x,
+                y: y - canvas.offsetTop
+            }
+        }
+    </script>
+</body>
+</html>

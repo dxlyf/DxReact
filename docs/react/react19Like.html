@@ -4,17 +4,1243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Mini React - Select Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 80px 40px;
+            color: #333;
+        }
+        .app-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 48px;
+            color: #1a1a1a;
+        }
+        .app-desc {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+        .demo-wrapper {
+            max-width: 420px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .demo-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .demo-section h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        /* antd-like Select */
+        .select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: all 0.2s;
+            outline: none;
+            user-select: none;
+        }
+        .select-trigger:hover {
+            border-color: #4096ff;
+        }
+        .select-trigger.open {
+            border-color: #4096ff;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+        }
+        .select-trigger .placeholder {
+            color: #bfbfbf;
+        }
+        .select-trigger .arrow {
+            font-size: 10px;
+            color: #999;
+            transition: transform 0.2s;
+            margin-left: 8px;
+        }
+        .select-trigger.open .arrow {
+            transform: rotate(180deg);
+        }
+        .select-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            z-index: 1000;
+            max-height: 256px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .select-dropdown .option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s;
+            color: #333;
+        }
+        .select-dropdown .option:hover {
+            background: #f5f5f5;
+        }
+        .select-dropdown .option.selected {
+            color: #1677ff;
+            background: #e6f4ff;
+            font-weight: 500;
+        }
+        .select-dropdown .option .check {
+            margin-left: auto;
+            color: #1677ff;
+            font-weight: 700;
+        }
+
+        /* Multiple Select Tags */
+        .select-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 1;
+            min-width: 0;
+        }
+        .select-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 8px;
+            height: 26px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #333;
+            border: 1px solid #e8e8e8;
+        }
+        .select-tag .tag-remove {
+            cursor: pointer;
+            color: #999;
+            font-size: 14px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 2px;
+        }
+        .select-tag .tag-remove:hover {
+            color: #ff4d4f;
+        }
+    </style>
 </head>
 
 <body>
     <div id="root"></div>
 
-    <script src="./lib/react19/scheduler.production.js"></script>
     <script src="./lib/babel/babel.min.js"></script>
     <script type="text/babel" data-presets="env,react">
         /** @jsx createElement */
-        /** @jsxFrag FiberTags.Fragment */
+        /** @jsxFrag Fragment */
+
+        // ============================================================
+        // 1. Fiber Tags
+        // ============================================================
+        const HostRoot = 0
+        const HostComponent = 1
+        const FunctionComponent = 2
+        const Fragment = 3
+        const HostText = 4
+
+        const NoFlags = 0b0000000
+        const Placement = 0b0000001
+        const Update = 0b0000010
+        const Deletion = 0b0000100
+        const Passive = 0b0001000
+
+        // ============================================================
+        // 2. createElement (JSX factory)
+        // ============================================================
+        function createElement(type, config, ...children) {
+            let key = null
+            let ref = null
+            const props = {}
+            if (config) {
+                for (const name in config) {
+                    if (name === 'key') {
+                        key = '' + config[name]
+                    } else if (name === 'ref') {
+                        ref = config[name]
+                    } else {
+                        props[name] = config[name]
+                    }
+                }
+            }
+            if (children.length === 1) {
+                props.children = children[0]
+            } else if (children.length > 1) {
+                props.children = children
+            }
+            return { $typeof: Symbol.for('react.element'), type, key, ref, props }
+        }
+
+        // ============================================================
+        // 3. Fiber creation
+        // ============================================================
+        function createFiber(tag, pendingProps, key) {
+            return {
+                tag,
+                key: key || null,
+                type: null,
+                stateNode: null,
+                ref: null,
+                return: null,
+                sibling: null,
+                child: null,
+                index: 0,
+                pendingProps,
+                memoizedProps: null,
+                memoizedState: null,
+                updateQueue: null,
+                flags: NoFlags,
+                subtreeFlags: NoFlags,
+                deletions: null,
+                nextEffect: null,
+                firstEffect: null,
+                lastEffect: null,
+                alternate: null,
+            }
+        }
+
+        function createWorkInProgress(current, pendingProps) {
+            let wip = current.alternate
+            if (wip === null) {
+                wip = createFiber(current.tag, pendingProps, current.key)
+                wip.type = current.type
+                wip.stateNode = current.stateNode
+                wip.alternate = current
+                current.alternate = wip
+            } else {
+                wip.pendingProps = pendingProps
+                wip.flags = NoFlags
+                wip.subtreeFlags = NoFlags
+                wip.deletions = null
+                wip.nextEffect = null
+                wip.firstEffect = null
+                wip.lastEffect = null
+            }
+            wip.child = null
+            wip.sibling = null
+            wip.index = 0
+            wip.memoizedProps = current.memoizedProps
+            wip.memoizedState = current.memoizedState
+            wip.updateQueue = current.updateQueue
+            return wip
+        }
+
+        // ============================================================
+        // 4. Scheduler
+        // ============================================================
+        let nextUnitOfWork = null
+        let workInProgressRoot = null
+        let currentRoot = null
+        let workInProgress = null
+        let rootContainer = null
+        let deletions = null
+        let rootElement = null     // store root element for re-renders
+
+        let pendingEffects = []
+        let pendingLayoutEffects = []
+
+        // Simple microtask-based scheduler
+        let scheduledWork = false
+        function scheduleCallback(fn) {
+            if (scheduledWork) return
+            scheduledWork = true
+            Promise.resolve().then(() => {
+                scheduledWork = false
+                fn({ timeRemaining: () => 50 })
+            })
+        }
+
+        // ============================================================
+        // 5. Hooks
+        // ============================================================
+        let currentlyRenderingFiber = null
+        let workInProgressHook = null
+        let currentHookNode = null  // traverse current fiber's hook chain independently
+        let hookIndex = 0
+
+        function createHook() {
+            return {
+                memoizedState: null,
+                baseState: null,
+                baseQueue: null,
+                queue: null,
+                next: null,
+            }
+        }
+
+        function mountWorkInProgressHook() {
+            const hook = createHook()
+            if (workInProgressHook === null) {
+                currentlyRenderingFiber.memoizedState = hook
+            } else {
+                workInProgressHook.next = hook
+            }
+            workInProgressHook = hook
+            hookIndex++
+            return hook
+        }
+
+        function updateWorkInProgressHook() {
+            // Walk current fiber's hook chain with its own pointer
+            if (currentHookNode === null) {
+                currentHookNode = currentlyRenderingFiber.alternate.memoizedState
+            } else {
+                currentHookNode = currentHookNode.next
+            }
+            const newHook = createHook()
+            newHook.memoizedState = currentHookNode.memoizedState
+            newHook.queue = currentHookNode.queue
+            newHook.baseState = currentHookNode.baseState
+            newHook.baseQueue = currentHookNode.baseQueue
+            if (workInProgressHook === null) {
+                currentlyRenderingFiber.memoizedState = newHook
+            } else {
+                workInProgressHook.next = newHook
+            }
+            workInProgressHook = newHook
+            hookIndex++
+            return newHook
+        }
+
+        function useState(initialState) {
+            const isMount = currentlyRenderingFiber.alternate === null
+            const hook = isMount ? mountWorkInProgressHook() : updateWorkInProgressHook()
+
+            if (isMount) {
+                if (typeof initialState === 'function') {
+                    initialState = initialState()
+                }
+                hook.memoizedState = initialState
+                hook.baseState = initialState
+                hook.queue = {
+                    pending: null,
+                    dispatch: null,
+                    lastRenderedReducer: basicStateReducer,
+                    lastRenderedState: initialState,
+                }
+            }
+
+            const queue = hook.queue
+
+            // Process pending updates from dispatchAction
+            if (queue.pending) {
+                const first = queue.pending
+                const last = first.next
+
+                // Unlink the circular list
+                first.next = null
+                queue.pending = null
+
+                // Start from baseState, apply all updates
+                let newState = hook.baseState
+                let update = first
+                while (update) {
+                    const action = update.action
+                    newState = basicStateReducer(newState, action)
+                    update = update.next
+                }
+
+                hook.memoizedState = newState
+                hook.baseState = newState
+                hook.baseQueue = null
+                queue.lastRenderedState = newState
+            }
+
+            const dispatch = queue.dispatch || dispatchAction.bind(null, currentlyRenderingFiber, queue)
+            queue.dispatch = dispatch
+
+            return [hook.memoizedState, dispatch]
+        }
+
+        function basicStateReducer(state, action) {
+            return typeof action === 'function' ? action(state) : action
+        }
+
+        function dispatchAction(fiber, queue, action) {
+            const update = {
+                action,
+                next: null,
+            }
+            const pending = queue.pending
+            if (pending === null) {
+                update.next = update
+            } else {
+                update.next = pending.next
+                pending.next = update
+            }
+            queue.pending = update
+
+            // Walk up to find root
+            let node = fiber
+            let root = null
+            while (node !== null) {
+                if (node.tag === HostRoot) {
+                    root = node.stateNode
+                    break
+                }
+                node = node.return
+            }
+            if (root) {
+                scheduleUpdateOnFiber(root)
+            }
+        }
+
+        function useEffect(create, deps) {
+            const hook = currentlyRenderingFiber.alternate === null
+                ? mountWorkInProgressHook()
+                : updateWorkInProgressHook()
+
+            const nextDeps = deps === undefined ? null : deps
+            let prevDeps = hook.memoizedState ? hook.memoizedState.deps : null
+
+            if (prevDeps !== null && nextDeps !== null) {
+                let hasChanged = false
+                for (let i = 0; i < Math.max(prevDeps.length, nextDeps.length); i++) {
+                    if (prevDeps[i] !== nextDeps[i]) {
+                        hasChanged = true
+                        break
+                    }
+                }
+                if (!hasChanged) {
+                    return
+                }
+            }
+
+            hook.memoizedState = { create, deps: nextDeps }
+            currentlyRenderingFiber.flags |= Passive
+        }
+
+        // ============================================================
+        // 6. Reconciler
+        // ============================================================
+        function reconcileChildren(wip, children) {
+            if (children === null || children === undefined || typeof children === 'boolean') {
+                return null
+            }
+
+            if (!Array.isArray(children)) {
+                children = [children]
+            }
+
+            const flat = flatten(children)
+            let oldFiber = wip.alternate ? wip.alternate.child : null
+            let prevChildFiber = null
+            let firstChildFiber = null
+            let lastPlacedIndex = 0
+
+            // Build map for keyed children
+            const existingByKey = new Map()
+            const existingWithoutKey = []
+            if (oldFiber !== null) {
+                let ptr = oldFiber
+                while (ptr !== null) {
+                    if (ptr.key !== null) {
+                        existingByKey.set(ptr.key, ptr)
+                    } else {
+                        existingWithoutKey.push(ptr)
+                    }
+                    ptr = ptr.sibling
+                }
+            }
+
+            let usedWithoutKey = 0
+
+            for (let i = 0; i < flat.length; i++) {
+                const child = flat[i]
+                let childFiber
+
+                // Handle string/number primitives -> HostText
+                if (typeof child === 'string' || typeof child === 'number') {
+                    const text = '' + child
+                    let matched = null
+                    if (oldFiber) {
+                        let ptr = oldFiber
+                        while (ptr) {
+                            if (ptr.tag === HostText && ptr.memoizedProps === text && ptr.key === null) {
+                                matched = ptr
+                                break
+                            }
+                            ptr = ptr.sibling
+                        }
+                    }
+                    if (matched) {
+                        childFiber = useFiber(matched, text, null)
+                    } else {
+                        childFiber = createFiber(HostText, text, null)
+                        childFiber.flags |= Placement
+                    }
+                    childFiber.index = i
+                } else if (child !== null && child !== undefined && typeof child !== 'boolean') {
+                    const key = child.key || null
+                    let matchedFiber
+
+                    if (key !== null) {
+                        matchedFiber = existingByKey.get(key)
+                        if (matchedFiber) {
+                            existingByKey.delete(key)
+                        }
+                    } else if (usedWithoutKey < existingWithoutKey.length) {
+                        matchedFiber = existingWithoutKey[usedWithoutKey++]
+                        let check = oldFiber
+                        let found = false
+                        while (check) {
+                            if (check === matchedFiber) {
+                                found = true
+                                break
+                            }
+                            check = check.sibling
+                        }
+                        if (!found) matchedFiber = null
+                    }
+
+                    if (matchedFiber) {
+                        childFiber = useFiber(matchedFiber, child.props, key)
+                        childFiber.index = i
+                    } else {
+                        childFiber = createFiberFromElement(child, key)
+                        childFiber.index = i
+                        childFiber.flags |= Placement
+                    }
+
+                    if (typeof child.type === 'function') {
+                        childFiber.tag = FunctionComponent
+                    }
+                } else {
+                    // null/undefined/boolean children
+                    if (oldFiber) {
+                        let ptr = oldFiber
+                        let found = null
+                        while (ptr) {
+                            if (ptr.tag === HostText && ptr.memoizedProps === '' && ptr.key === null) {
+                                found = ptr
+                                break
+                            }
+                            ptr = ptr.sibling
+                        }
+                        if (found) {
+                            childFiber = useFiber(found, '', null)
+                            childFiber.index = i
+                        }
+                    }
+                    if (!childFiber) {
+                        childFiber = createFiber(HostText, '', null)
+                        childFiber.index = i
+                        childFiber.flags |= Placement
+                    }
+                }
+
+                if (childFiber) {
+                    childFiber.return = wip
+                    if (prevChildFiber === null) {
+                        firstChildFiber = childFiber
+                    } else {
+                        prevChildFiber.sibling = childFiber
+                    }
+                    prevChildFiber = childFiber
+                }
+            }
+
+            // Mark remaining old fibers as deletion
+            existingByKey.forEach(fiber => {
+                fiber.flags |= Deletion
+                if (deletions === null) deletions = []
+                deletions.push(fiber)
+            })
+            for (let j = usedWithoutKey; j < existingWithoutKey.length; j++) {
+                const fiber = existingWithoutKey[j]
+                fiber.flags |= Deletion
+                if (deletions === null) deletions = []
+                deletions.push(fiber)
+            }
+
+            wip.child = firstChildFiber
+            return firstChildFiber
+        }
+
+        function flatten(arr) {
+            const result = []
+            for (let i = 0; i < arr.length; i++) {
+                const item = arr[i]
+                if (Array.isArray(item)) {
+                    result.push(...flatten(item))
+                } else if (item && item.type === Fragment) {
+                    result.push(...flatten(item.props.children))
+                } else {
+                    result.push(item)
+                }
+            }
+            return result
+        }
+
+        function useFiber(fiber, pendingProps, key) {
+            const clone = createFiber(fiber.tag, pendingProps, key)
+            clone.type = fiber.type
+            clone.stateNode = fiber.stateNode
+            clone.alternate = fiber
+            fiber.alternate = clone
+            return clone
+        }
+
+        function createFiberFromElement(element, key) {
+            const type = element.type
+            const props = element.props || {}
+            if (typeof type === 'function') {
+                const fiber = createFiber(FunctionComponent, props, key)
+                fiber.type = type
+                return fiber
+            }
+            if (type === Fragment) {
+                const fiber = createFiber(Fragment, props, key)
+                fiber.type = Fragment
+                return fiber
+            }
+            const fiber = createFiber(HostComponent, props, key)
+            fiber.type = type
+            return fiber
+        }
+
+        // ============================================================
+        // 7. beginWork / completeWork
+        // ============================================================
+        function beginWork(wip) {
+            if (wip.tag === FunctionComponent) {
+                return beginFunctionComponent(wip)
+            }
+            if (wip.tag === HostComponent) {
+                return beginHostComponent(wip)
+            }
+            if (wip.tag === Fragment) {
+                return beginFragment(wip)
+            }
+            if (wip.tag === HostText) {
+                return null
+            }
+            return null
+        }
+
+        function beginFunctionComponent(wip) {
+            const Component = wip.type
+            const props = wip.pendingProps
+
+            currentlyRenderingFiber = wip
+            workInProgressHook = null
+            currentHookNode = null
+            hookIndex = 0
+
+            let children
+            try {
+                children = Component(props)
+            } finally {
+                currentlyRenderingFiber = null
+            }
+
+            return reconcileChildren(wip, children)
+        }
+
+        function beginHostComponent(wip) {
+            const props = wip.pendingProps
+            if (!wip.stateNode) {
+                const dom = document.createElement(wip.type)
+                wip.stateNode = dom
+            }
+            return reconcileChildren(wip, props.children)
+        }
+
+        function beginFragment(wip) {
+            const props = wip.pendingProps
+            return reconcileChildren(wip, props && props.children)
+        }
+
+        function completeWork(wip) {
+            if (wip.tag === HostComponent) {
+                const dom = wip.stateNode
+                const newProps = wip.pendingProps
+                const oldProps = wip.alternate ? wip.alternate.memoizedProps : null
+
+                if (oldProps) {
+                    updateDOMProperties(dom, oldProps, newProps)
+                } else {
+                    setDOMProperties(dom, newProps)
+                }
+                wip.memoizedProps = newProps
+            }
+            if (wip.tag === HostText) {
+                if (!wip.stateNode) {
+                    wip.stateNode = document.createTextNode(wip.pendingProps || '')
+                } else {
+                    const text = wip.pendingProps || ''
+                    if (wip.stateNode.nodeValue !== text) {
+                        wip.stateNode.nodeValue = text
+                    }
+                }
+                wip.memoizedProps = wip.pendingProps
+            }
+            if (wip.tag === Fragment) {
+                wip.memoizedProps = wip.pendingProps
+            }
+            if (wip.tag === FunctionComponent) {
+                wip.memoizedProps = wip.pendingProps
+                wip.memoizedState = wip.memoizedState || null
+            }
+        }
+
+        function setDOMProperties(dom, props) {
+            for (const key in props) {
+                if (key === 'children') continue
+                if (key === 'key') continue
+                if (key === 'ref') continue
+                if (key.startsWith('on')) {
+                    const eventType = key.slice(2).toLowerCase()
+                    addEventListenerToRoot(dom, eventType, props[key])
+                } else if (key === 'className') {
+                    dom.setAttribute('class', props[key])
+                } else if (key === 'style') {
+                    const style = props[key]
+                    for (const sk in style) {
+                        dom.style[sk] = style[sk]
+                    }
+                } else if (key === 'htmlFor') {
+                    dom.setAttribute('for', props[key])
+                } else if (key.startsWith('data-') || key.startsWith('aria-')) {
+                    dom.setAttribute(key, props[key])
+                } else if (key === 'dangerouslySetInnerHTML') {
+                    dom.innerHTML = props[key].__html
+                } else if (key === 'value') {
+                    dom.value = props[key]
+                } else if (key === 'checked') {
+                    dom.checked = props[key]
+                } else if (['true', 'false'].includes(props[key])) {
+                    dom.setAttribute(key, props[key])
+                } else {
+                    dom.setAttribute(key, props[key])
+                }
+            }
+        }
+
+        function updateDOMProperties(dom, oldProps, newProps) {
+            const allKeys = new Set([...Object.keys(oldProps), ...Object.keys(newProps)])
+            allKeys.delete('children')
+            allKeys.delete('key')
+            allKeys.delete('ref')
+
+            for (const key of allKeys) {
+                if (oldProps[key] === newProps[key]) continue
+                if (key.startsWith('on')) {
+                    const eventType = key.slice(2).toLowerCase()
+                    addEventListenerToRoot(dom, eventType, newProps[key])
+                } else if (key === 'className') {
+                    if (newProps[key] === undefined || newProps[key] === null) {
+                        dom.removeAttribute('class')
+                    } else {
+                        dom.setAttribute('class', newProps[key])
+                    }
+                } else if (key === 'style') {
+                    const newStyle = newProps[key] || {}
+                    const oldStyle = oldProps[key] || {}
+                    for (const sk in oldStyle) {
+                        if (!(sk in newStyle)) dom.style[sk] = ''
+                    }
+                    for (const sk in newStyle) {
+                        dom.style[sk] = newStyle[sk]
+                    }
+                } else if (key === 'htmlFor') {
+                    if (newProps[key]) dom.setAttribute('for', newProps[key])
+                    else dom.removeAttribute('for')
+                } else if (key === 'dangerouslySetInnerHTML') {
+                    dom.innerHTML = newProps[key].__html
+                } else if (key === 'value') {
+                    dom.value = newProps[key]
+                } else if (key === 'checked') {
+                    dom.checked = newProps[key]
+                } else {
+                    if (newProps[key] === undefined || newProps[key] === null || newProps[key] === false) {
+                        dom.removeAttribute(key)
+                    } else {
+                        dom.setAttribute(key, newProps[key])
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 8. Event system (delegation on root)
+        // ============================================================
+        const rootEventListeners = new Map()
+
+        function addEventListenerToRoot(dom, eventType, handler) {
+            if (!rootContainer) return
+            const key = eventType
+            if (!rootEventListeners.has(key)) {
+                rootEventListeners.set(key, [])
+                rootContainer.addEventListener(eventType, handleRootEvent, { passive: false })
+            }
+            rootEventListeners.get(key).push({ dom, handler })
+        }
+
+        function handleRootEvent(e) {
+            let target = e.target
+            const type = e.type
+            const listeners = rootEventListeners.get(type)
+            if (!listeners) return
+
+            const matched = []
+            let el = target
+            while (el && el !== rootContainer.parentNode) {
+                for (const item of listeners) {
+                    if (item.dom === el) {
+                        matched.push(item.handler)
+                    }
+                }
+                el = el.parentNode
+            }
+            for (const handler of matched.reverse()) {
+                handler(e)
+            }
+        }
+
+        // ============================================================
+        // 9. Commit phase
+        // ============================================================
+        function commitRoot(root) {
+            const finishedWork = root.current.alternate
+            if (finishedWork === null) return
+
+            const effectList = []
+            collectEffects(finishedWork, effectList)
+
+            for (const fiber of effectList) {
+                if (fiber.flags & Placement) {
+                    commitPlacement(fiber)
+                    fiber.flags &= ~Placement
+                }
+                if (fiber.flags & Update) {
+                    commitUpdate(fiber)
+                    fiber.flags &= ~Update
+                }
+            }
+
+            // Deletions
+            if (deletions) {
+                for (const fiber of deletions) {
+                    commitDeletion(fiber)
+                }
+                deletions = null
+            }
+
+            // Effects
+            for (const fiber of pendingLayoutEffects) {
+                const hook = fiber.memoizedState
+                let h = hook
+                while (h) {
+                    if (h.memoizedState && h.memoizedState.create) {
+                        if (h.memoizedState.destroy) {
+                            h.memoizedState.destroy()
+                        }
+                        const destroy = h.memoizedState.create()
+                        h.memoizedState.destroy = destroy
+                    }
+                    h = h.next
+                }
+            }
+            pendingLayoutEffects = []
+
+            // Switch current tree
+            root.current = finishedWork
+
+            // Schedule passive effects (useEffect)
+            if (pendingEffects.length > 0) {
+                setTimeout(() => {
+                    for (const fiber of pendingEffects) {
+                        const hook = fiber.memoizedState
+                        let h = hook
+                        while (h) {
+                            if (h.memoizedState && h.memoizedState.create) {
+                                if (h.memoizedState.destroy) {
+                                    h.memoizedState.destroy()
+                                }
+                                const destroy = h.memoizedState.create()
+                                h.memoizedState.destroy = destroy
+                            }
+                            h = h.next
+                        }
+                    }
+                    pendingEffects = []
+                }, 0)
+            }
+        }
+
+        function collectEffects(fiber, list) {
+            if (fiber.flags & (Placement | Update)) {
+                list.push(fiber)
+            }
+            let child = fiber.child
+            while (child) {
+                collectEffects(child, list)
+                child = child.sibling
+            }
+        }
+
+        function commitPlacement(fiber) {
+            const parent = getParentDOM(fiber)
+            const node = getStateNode(fiber)
+            if (parent && node) {
+                parent.appendChild(node)
+            }
+        }
+
+        function commitUpdate(fiber) {
+            // Already handled in completeWork
+        }
+
+        function commitDeletion(fiber) {
+            const node = getStateNode(fiber)
+            if (node && node.parentNode) {
+                node.parentNode.removeChild(node)
+            }
+        }
+
+        function getParentDOM(fiber) {
+            let node = fiber.return
+            while (node) {
+                if (node.tag === HostComponent) return node.stateNode
+                if (node.tag === HostRoot) return rootContainer
+                node = node.return
+            }
+            return null
+        }
+
+        function getStateNode(fiber) {
+            if (fiber.tag === HostComponent || fiber.tag === HostText) {
+                return fiber.stateNode
+            }
+            let child = fiber.child
+            while (child) {
+                const node = getStateNode(child)
+                if (node) return node
+                child = child.sibling
+            }
+            return null
+        }
+
+        function findBeforeChild(fiber) {
+            let node = fiber.sibling
+            while (node) {
+                const dom = getStateNode(node)
+                if (dom) return dom
+                node = node.sibling
+            }
+            return null
+        }
+
+        // ============================================================
+        // 10. Work loop
+        // ============================================================
+        function workLoop(deadline) {
+            let shouldYield = false
+            while (nextUnitOfWork !== null && !shouldYield) {
+                nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
+                shouldYield = deadline.timeRemaining() < 1
+            }
+
+            if (nextUnitOfWork === null && workInProgressRoot !== null) {
+                commitRoot(workInProgressRoot)
+                workInProgressRoot = null
+            }
+
+            if (nextUnitOfWork !== null) {
+                scheduleCallback(workLoop)
+            }
+        }
+
+        function performUnitOfWork(fiber) {
+            const next = beginWork(fiber)
+            if (next !== null) {
+                return next
+            }
+
+            let node = fiber
+            while (node !== null) {
+                completeWork(node)
+
+                if (node.flags & Passive) {
+                    pendingEffects.push(node)
+                }
+                if (node.flags & (Placement | Update)) {
+                    // keep flag for commit
+                }
+
+                if (node.sibling !== null) {
+                    return node.sibling
+                }
+                node = node.return
+            }
+            return null
+        }
+
+        // ============================================================
+        // 11. Schedule update
+        // ============================================================
+        function scheduleUpdateOnFiber(root) {
+            if (!root || root === workInProgressRoot) return
+
+            const current = root.current
+            const wip = createWorkInProgress(current, current.pendingProps)
+            workInProgressRoot = root
+            workInProgress = wip
+            nextUnitOfWork = wip
+
+            scheduleCallback(workLoop)
+        }
+
+        // ============================================================
+        // 12. render (entry point)
+        // ============================================================
+        function render(element, container) {
+            rootContainer = container
+            rootElement = element
+
+            const fiberRoot = {
+                containerInfo: container,
+                current: null,
+                finishedWork: null,
+                nextScheduledRoot: null,
+            }
+
+            const uninitializedFiber = createFiber(HostRoot, null, null)
+            uninitializedFiber.stateNode = fiberRoot
+            fiberRoot.current = uninitializedFiber
+
+            scheduleUpdateOnFiber(fiberRoot)
+        }
+
+        // Patch: beginWork for HostRoot
+        const _beginWork = beginWork
+        beginWork = function (wip) {
+            if (wip.tag === HostRoot) {
+                if (rootElement) {
+                    return reconcileChildren(wip, rootElement)
+                }
+                return reconcileChildren(wip, null)
+            }
+            return _beginWork(wip)
+        }
+
+        const _completeWork = completeWork
+        completeWork = function (wip) {
+            if (wip.tag === HostRoot) {
+                wip.memoizedProps = wip.pendingProps
+                return
+            }
+            _completeWork(wip)
+        }
+
+        // ============================================================
+        // 13. Demo: antd-like Select Component
+        // ============================================================
+
+        const OPTIONS = [
+            { label: '🔥 火焰蓝', value: 'blue' },
+            { label: '💜 渐变紫', value: 'purple' },
+            { label: '💗 蜜桃粉', value: 'pink' },
+            { label: '💚 抹茶绿', value: 'green' },
+            { label: '🧡 落日橙', value: 'orange' },
+            { label: '🩵 冰川蓝', value: 'ice' },
+            { label: '🤍 月光白', value: 'white' },
+            { label: '🖤 暗夜黑', value: 'black' },
+        ]
+
+        function Select() {
+            const [open, setOpen] = useState(false)
+            const [value, setValue] = useState(null)
+            const selected = OPTIONS.find(o => o.value === value)
+
+            function handleToggle() {
+                setOpen(v => !v)
+            }
+
+            function handleSelect(val) {
+                setValue(val)
+                setOpen(false)
+            }
+
+            function handleBlur(e) {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setOpen(false)
+                }
+            }
+
+            useEffect(() => {
+                function closeOnEsc(e) {
+                    if (e.key === 'Escape') setOpen(false)
+                }
+                document.addEventListener('keydown', closeOnEsc)
+                return () => document.removeEventListener('keydown', closeOnEsc)
+            }, [open])
+
+            return (
+                <div className="select-wrapper" tabIndex="0" onBlur={handleBlur}>
+                    <div
+                        className={'select-trigger' + (open ? ' open' : '')}
+                        onClick={handleToggle}
+                    >
+                        {selected ? (
+                            <span>{selected.label}</span>
+                        ) : (
+                            <span className="placeholder">请选择一个主题</span>
+                        )}
+                        <span className="arrow">▼</span>
+                    </div>
+                    {open && (
+                        <div className="select-dropdown">
+                            {OPTIONS.map(opt => (
+                                <div
+                                    className={'option' + (opt.value === value ? ' selected' : '')}
+                                    onClick={() => handleSelect(opt.value)}
+                                    key={opt.value}
+                                >
+                                    <span>{opt.label}</span>
+                                    {opt.value === value && <span className="check">✓</span>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )
+        }
+
+        function MultiSelect() {
+            const [open, setOpen] = useState(false)
+            const [values, setValues] = useState([])
+
+            function handleToggle() {
+                setOpen(v => !v)
+            }
+
+            function handleSelect(val) {
+                if (values.includes(val)) {
+                    setValues(values.filter(v => v !== val))
+                } else {
+                    setValues([...values, val])
+                }
+            }
+
+            function handleRemove(val) {
+                setValues(values.filter(v => v !== val))
+            }
+
+            function handleBlur(e) {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setOpen(false)
+                }
+            }
+
+            const selectedLabels = values.map(v => OPTIONS.find(o => o.value === v)).filter(Boolean)
+
+            return (
+                <div className="select-wrapper" tabIndex="0" onBlur={handleBlur}>
+                    <div
+                        className={'select-trigger' + (open ? ' open' : '')}
+                        onClick={handleToggle}
+                    >
+                        {selectedLabels.length > 0 ? (
+                            <div className="select-tags">
+                                {selectedLabels.map(item => (
+                                    <span className="select-tag" key={item.value}>
+                                        {item.label}
+                                        <span
+                                            className="tag-remove"
+                                            onClick={(e) => { e.stopPropagation(); handleRemove(item.value) }}
+                                        >×</span>
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <span className="placeholder">请选择多个主题</span>
+                        )}
+                        <span className="arrow">▼</span>
+                    </div>
+                    {open && (
+                        <div className="select-dropdown">
+                            {OPTIONS.map(opt => (
+                                <div
+                                    className={'option' + (values.includes(opt.value) ? ' selected' : '')}
+                                    onClick={() => handleSelect(opt.value)}
+                                    key={opt.value}
+                                >
+                                    <span>{opt.label}</span>
+                                    {values.includes(opt.value) && <span className="check">✓</span>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )
+        }
+
+        function Demo() {
+            return (
+                <div>
+                    <h1 className="app-title">🔥 Mini React 实现</h1>
+                    <p className="app-desc">从零实现 createElement / Fiber / useState / useEffect / 事件委托 · 仿 antd Select 组件</p>
+                    <div className="demo-wrapper">
+                        <div className="demo-section">
+                            <h3>单选 Select</h3>
+                            <Select />
+                        </div>
+                        <div className="demo-section">
+                            <h3>多选 Select</h3>
+                            <MultiSelect />
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        // ============================================================
+        // 14. Bootstrap
+        // ============================================================
+        render(<Demo />, document.getElementById('root'))
 
     </script>
 </body>
