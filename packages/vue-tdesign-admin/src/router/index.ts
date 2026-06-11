@@ -18,6 +18,19 @@ declare module 'vue-router' {
 }
 const defaultRoutes: RouteRecordRaw[] = [
   {
+    path:'/canvas',
+    component: () => import('../layouts/BlankLayout.vue'),
+    children: [
+      {
+        path: 'path',
+        component: () => import('../views/example/canvas/path.vue'),
+        meta: {
+          menuName: 'path',
+          icon: 'canvas'
+        }
+      }
+    ]
+  },{
     path:'/new',
     component: () => import('../layouts/NewAdminLayout.vue'),
     children: [ {
