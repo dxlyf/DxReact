@@ -579,6 +579,32 @@ function windLine(x: number, y: number, x0: number, y0: number, x1: number, y1: 
     }
     return 0
 }
+
+function normalizeAngles(startAngle: number, endAngle: number, ccw: boolean = false) {
+    const tau = Math.PI * 2
+    let newStartAngle = startAngle % tau;
+    if (newStartAngle <= 0) {
+        newStartAngle += tau;
+    }
+    let delta = newStartAngle - startAngle;
+    startAngle = newStartAngle;
+    endAngle += delta;
+
+    if (!ccw && (endAngle - startAngle) >= tau) {
+        endAngle = startAngle + tau;
+    }
+    else if (ccw && (startAngle - endAngle) >= tau) {
+        endAngle = startAngle - tau;
+    }
+    else if (!ccw && startAngle > endAngle) {
+        endAngle = startAngle + (tau - (startAngle - endAngle) % tau);
+    }
+    else if (ccw && startAngle < endAngle) {
+        endAngle = startAngle - (tau - (endAngle - startAngle) % tau);
+    }
+    return { startAngle, endAngle }
+}
+
 export class Path2D {
     verbs: PathVerb[]
     points: IPoint[]
@@ -678,23 +704,15 @@ export class Path2D {
      * @param counterclockwise - 是否逆时针（默认顺时针）
      */
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise = false): void {
-        const PI2 = Math.PI * 2
-        let delta = endAngle - startAngle
-
-        // 标准化角度差：顺时针为正、逆时针为负
-        if (!counterclockwise && delta < 0) {
-            delta += PI2
-        } else if (counterclockwise && delta > 0) {
-            delta -= PI2
-        }
-
-        if (Math.abs(delta) < 1e-10) return // 无实际弧段
+        const {startAngle:startNorm,endAngle:endNorm}=normalizeAngles(startAngle,endAngle,counterclockwise)
+    
+        const delta = endNorm - startNorm
 
         // 每段最多 90°，保证贝塞尔近似精度
         const segments = Math.max(1, Math.ceil(Math.abs(delta) / (Math.PI / 2)))
         const segAngle = delta / segments
 
-        let currentAngle = startAngle
+        let currentAngle = startNorm
         for (let i = 0; i < segments; i++) {
             const segStart = currentAngle
             const segEnd = currentAngle + segAngle
@@ -753,24 +771,17 @@ export class Path2D {
         startAngle: number, endAngle: number,
         counterclockwise = false,
     ): void {
-        const PI2 = Math.PI * 2
-        let delta = endAngle - startAngle
 
-        if (!counterclockwise && delta < 0) {
-            delta += PI2
-        } else if (counterclockwise && delta > 0) {
-            delta -= PI2
-        }
-
-        if (Math.abs(delta) < 1e-10) return
-
+        const {startAngle:startNorm,endAngle:endNorm}=normalizeAngles(startAngle,endAngle,counterclockwise)
+       
+        const delta = endNorm - startNorm
         const segments = Math.max(1, Math.ceil(Math.abs(delta) / (Math.PI / 2)))
         const segAngle = delta / segments
 
         const cosRot = Math.cos(rotation)
         const sinRot = Math.sin(rotation)
 
-        let currentAngle = startAngle
+        let currentAngle = startNorm
         for (let i = 0; i < segments; i++) {
             const segStart = currentAngle
             const segEnd = currentAngle + segAngle

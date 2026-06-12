@@ -1,589 +1,509 @@
 <script setup lang="ts">
-import { onMounted, ref, shallowRef } from 'vue'
+import { onMounted, ref, shallowRef, reactive, watch, computed } from 'vue'
 import { Path2D } from './lib/Path2D'
-import { PathStroke } from './lib/PathStroke'
 
 function degToRad(deg: number) { return deg * Math.PI / 180 }
 
 const canvas = shallowRef<HTMLCanvasElement>()
-const activeTest = ref('ellipseSvgArc')
-const hitInfo = ref('')
-let currentHitCallback: ((x: number, y: number) => string) | null = null
 
-// ── 测试用例 ──
+// ── 测试用例定义 ──
 
-function testEllipseSvgArc(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击弧线区域查看命中'
-    const tests0 = [
-        { label: '小弧/顺', x1: 50, y1: 100, x2: 200, y2: 50, rx: 120, ry: 80, rotDeg: 0, large: false, sweep: true, color: '#e74c3c' },
-        { label: '小弧/逆', x1: 50, y1: 220, x2: 200, y2: 170, rx: 120, ry: 80, rotDeg: 0, large: false, sweep: false, color: '#3498db' },
-        { label: '大弧/顺', x1: 50, y1: 340, x2: 200, y2: 290, rx: 120, ry: 80, rotDeg: 0, large: true, sweep: true, color: '#2ecc71' },
-        { label: '大弧/逆', x1: 50, y1: 460, x2: 200, y2: 410, rx: 120, ry: 80, rotDeg: 0, large: true, sweep: false, color: '#f39c12' },
-    ]
-    ctx.font = 'bold 14px sans-serif'
-    ctx.fillStyle = '#000'
-    ctx.fillText('SVG Arc A vs Path2D.ellipseSvgArc（实线=原生, 虚线=Path2D）', 20, 30)
-
-    for (const t of tests0) {
-        const svgStr = `M ${t.x1},${t.y1} A ${t.rx},${t.ry} ${t.rotDeg} ${t.large ? 1 : 0} ${t.sweep ? 1 : 0} ${t.x2},${t.y2}`
-        ctx.strokeStyle = t.color
-        ctx.lineWidth = 2
-        ctx.stroke(new window.Path2D(svgStr))
-
-        const ourPath = new Path2D()
-        ourPath.moveTo(t.x1, t.y1)
-        ourPath.ellipseSvgArc(t.x1, t.y1, t.x2, t.y2, t.rx, t.ry, degToRad(t.rotDeg), t.large, t.sweep)
-        ctx.strokeStyle = '#000'
-        ctx.setLineDash([6, 4])
-        ctx.stroke(ourPath.toCanvasPath2D())
-        ctx.setLineDash([])
-
-        ctx.fillStyle = '#333'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(t.label, t.x1 - 5, t.y1 - 10)
-    }
-    ctx.font = '11px sans-serif'
-    ctx.fillStyle = '#e74c3c'
-    ctx.fillText('■实线=原生SVG', 250, 35)
-    ctx.fillStyle = '#000'
-    ctx.fillText('---虚线=Path2D', 430, 35)
-
-    currentHitCallback = null
+interface TestCase {
+  key: string
+  label: string
+  params: Record<string, ParamDef>
+  draw: (ctx: CanvasRenderingContext2D, p: Record<string, any>) => void
 }
 
-function testArcRotated(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击弧线区域查看命中'
-    const tests = [
-        { rotDeg: 30, large: false, sweep: true, color: '#e74c3c', label: '旋转30°' },
-        { rotDeg: -30, large: false, sweep: true, color: '#3498db', label: '旋转-30°' },
-        { rotDeg: 45, large: false, sweep: false, color: '#2ecc71', label: '旋转45°' },
-        { rotDeg: 60, large: true, sweep: true, color: '#9b59b6', label: '旋转60°/大弧' },
-    ]
-    ctx.font = 'bold 14px sans-serif'
-    ctx.fillStyle = '#000'
-    ctx.fillText('带旋转的 SVG Arc 对比（实线=原生, 虚线=Path2D）', 20, 30)
+interface ParamDef {
+  label: string
+  type: 'number' | 'boolean' | 'select'
+  default: any
+  min?: number
+  max?: number
+  step?: number
+  options?: { label: string; value: any }[]
+}
 
-    let baseX = 20
-    for (const t of tests) {
-        const x1 = baseX, y1 = 120, x2 = baseX + 140, y2 = 80, rx = 100, ry = 55
-        const svgStr = `M ${x1},${y1} A ${rx},${ry} ${t.rotDeg} ${t.large ? 1 : 0} ${t.sweep ? 1 : 0} ${x2},${y2}`
-        ctx.strokeStyle = t.color
-        ctx.lineWidth = 2
-        ctx.stroke(new window.Path2D(svgStr))
+function defineTest(key: string, label: string, params: Record<string, ParamDef>, draw: TestCase['draw']): TestCase {
+  return { key, label, params, draw }
+}
 
-        const ourPath = new Path2D()
-        ourPath.moveTo(x1, y1)
-        ourPath.ellipseSvgArc(x1, y1, x2, y2, rx, ry, degToRad(t.rotDeg), t.large, t.sweep)
-        ctx.strokeStyle = '#000'
-        ctx.setLineDash([6, 4])
-        ctx.stroke(ourPath.toCanvasPath2D())
-        ctx.setLineDash([])
+const tests: TestCase[] = [
+  defineTest('arc', 'arc 圆弧', {
+    cx: { label: '圆心 X', type: 'number', default: 300, min: 0, max: 800, step: 1 },
+    cy: { label: '圆心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    radius: { label: '半径', type: 'number', default: 150, min: 10, max: 300, step: 1 },
+    startAngle: { label: '起始角度°', type: 'number', default: 0, min: -360, max: 360, step: 1 },
+    endAngle: { label: '结束角度°', type: 'number', default: 270, min: -360, max: 360, step: 1 },
+    counterclockwise: { label: '逆时针', type: 'boolean', default: false },
+    showFull: { label: '显示完整参考圆', type: 'boolean', default: true },
+  }, (ctx, p) => {
+    const cx = p.cx, cy = p.cy, r = p.radius
+    const sa = degToRad(p.startAngle), ea = degToRad(p.endAngle), ccw = p.counterclockwise
 
-        ctx.fillStyle = '#333'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(t.label, x1 - 5, y1 - 15)
-        ctx.fillStyle = t.color
-        ctx.beginPath(); ctx.arc(x1, y1, 3, 0, Math.PI * 2); ctx.fill()
-        ctx.beginPath(); ctx.arc(x2, y2, 3, 0, Math.PI * 2); ctx.fill()
-        baseX += 190
+    // 参考完整圆
+    if (p.showFull) {
+      ctx.beginPath()
+      ctx.arc(cx, cy, r, 0, Math.PI * 2)
+      ctx.strokeStyle = '#ddd'
+      ctx.lineWidth = 1
+      ctx.setLineDash([4, 4])
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = '#999'
+      ctx.font = '11px sans-serif'
+      ctx.fillText('参考圆', cx + r + 5, cy)
     }
-    ctx.fillStyle = '#666'
-    ctx.font = '11px sans-serif'
-    ctx.fillText('小圆点=起点/终点', 20, 75)
 
-    // 参考椭圆
-    ctx.font = 'bold 14px sans-serif'
-    ctx.fillStyle = '#000'
-    ctx.fillText('椭圆弧与完整椭圆', 580, 30)
-    const ex = 660, ey = 200, erx = 120, ery = 70, erot = degToRad(25)
-    const full = new Path2D()
-    full.ellipse(ex, ey, erx, ery, erot, 0, Math.PI * 2, false)
-    ctx.strokeStyle = '#ccc'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.stroke(full.toCanvasPath2D())
-    ctx.setLineDash([])
-
-    const a1 = 0.3, a2 = 2.2
-    const cr = Math.cos(erot), sr = Math.sin(erot)
-    const px1 = ex + cr * erx * Math.cos(a1) - sr * ery * Math.sin(a1)
-    const py1 = ey + sr * erx * Math.cos(a1) + cr * ery * Math.sin(a1)
-    const px2 = ex + cr * erx * Math.cos(a2) - sr * ery * Math.sin(a2)
-    const py2 = ey + sr * erx * Math.cos(a2) + cr * ery * Math.sin(a2)
-    const arcP = new Path2D()
-    arcP.moveTo(px1, py1)
-    arcP.ellipseSvgArc(px1, py1, px2, py2, erx, ery, erot, (a2 - a1) > Math.PI, false)
+    // 原生 Path2D
+    const nativePath = new window.Path2D()
+    nativePath.arc(cx, cy, r, sa, ea, ccw)
     ctx.strokeStyle = '#e74c3c'
     ctx.lineWidth = 3
-    ctx.stroke(arcP.toCanvasPath2D())
-    ctx.fillStyle = '#e74c3c'
-    ctx.beginPath(); ctx.arc(px1, py1, 4, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.arc(px2, py2, 4, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#666'
-    ctx.font = '11px sans-serif'
-    ctx.fillText('灰色虚线: 完整椭圆(旋转25°)', 580, 60)
-    ctx.fillStyle = '#e74c3c'
-    ctx.fillText('红色: ellipseSvgArc弧段', 580, 75)
+    ctx.stroke(nativePath)
 
-    currentHitCallback = null
-}
-
-function testBezierPaths(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击路径区域查看填充命中'
-    const path = new Path2D()
-    path.moveTo(100, 150)
-    path.quadraticCurveTo(200, 50, 300, 150)
-    path.bezierCurveTo(400, 50, 500, 250, 600, 150)
-    path.lineTo(600, 400)
-    path.lineTo(100, 400)
-    path.close()
-
-    ctx.strokeStyle = '#e74c3c'
-    ctx.lineWidth = 2
-    ctx.stroke(path.toCanvasPath2D())
-    ctx.fillStyle = 'rgba(231,76,60,0.1)'
-    ctx.fill(path.toCanvasPath2D())
-
-    // 绘制控制点
-    ctx.fillStyle = '#999'
-    ctx.font = '11px sans-serif'
-    ctx.fillText('Q: (200,50)', 205, 55)
-    ctx.beginPath(); ctx.arc(200, 50, 3, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#999'
-    ctx.fillText('C: (400,50)(500,250)', 405, 55)
-    ctx.beginPath(); ctx.arc(400, 50, 3, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.arc(500, 250, 3, 0, Math.PI * 2); ctx.fill()
-
-    // 包围盒
-    const bounds = path.getBounds()
-    if (bounds) {
-        ctx.strokeStyle = '#3498db'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.strokeRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY)
-        ctx.setLineDash([])
-        ctx.fillStyle = '#3498db'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(`包围盒: (${bounds.minX},${bounds.minY})-(${bounds.maxX},${bounds.maxY})`, bounds.minX, bounds.minY - 10)
-    }
-
-    currentHitCallback = (x, y) => {
-        const hit = path.contains(x, y)
-        return hit ? `命中填充区域 (${x},${y})` : `未命中 (${x},${y})`
-    }
-}
-
-function testStrokeHit(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击描边区域测试 stroke 命中'
-    const path = new Path2D()
-    path.moveTo(100, 100)
-    path.lineTo(300, 200)
-    path.bezierCurveTo(400, 50, 500, 150, 600, 100)
-    path.lineTo(700, 300)
-
-    const strokeOpts = { strokeWidth: 16, lineCap: 'round' as const, lineJoin: 'round' as const }
-    const stroke = new PathStroke(path, strokeOpts)
-
-    // 绘制描边路径
-    ctx.strokeStyle = '#e74c3c'
-    ctx.lineWidth = 16
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    ctx.stroke(path.toCanvasPath2D())
-
-    // 绘制描边轮廓
-    const fillPath = stroke.toFillPath()
-    ctx.strokeStyle = 'rgba(52,152,219,0.4)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.stroke(fillPath.toCanvasPath2D())
-    ctx.setLineDash([])
-
-    ctx.fillStyle = '#333'
-    ctx.font = '12px sans-serif'
-    ctx.fillText('红色=描边（width=16, round, round）', 100, 380)
-    ctx.fillStyle = '#3498db'
-    ctx.fillText('蓝色虚线=PathStroke偏移轮廓', 100, 398)
-
-    currentHitCallback = (x, y) => {
-        const byFlatten = stroke.containsByFlatten(x, y)
-        const byCurve = stroke.containsByCurve(x, y)
-        const byOffset = stroke.containsByOffset(x, y)
-        return `Flatten:${byFlatten ? '✓' : '✗'} Curve:${byCurve ? '✓' : '✗'} Offset:${byOffset ? '✓' : '✗'}`
-    }
-}
-
-function testLineJoinCap(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击描边区域测试 lineJoin/lineCap 命中'
-
-    const drawTest = (x: number, y: number, label: string, path: Path2D, cap: string, join: string, sw: number) => {
-        const opts = {
-            strokeWidth: sw,
-            lineCap: cap as any,
-            lineJoin: join as any,
-            miterLimit: 10,
-        }
-        const stroke = new PathStroke(path, opts)
-        ctx.strokeStyle = '#e74c3c'
-        ctx.lineWidth = sw
-        ctx.lineCap = cap as any
-        ctx.lineJoin = join as any
-        ctx.stroke(path.toCanvasPath2D())
-
-        const fillPath = stroke.toFillPath()
-        ctx.strokeStyle = 'rgba(52,152,219,0.3)'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.stroke(fillPath.toCanvasPath2D())
-        ctx.setLineDash([])
-
-        ctx.fillStyle = '#333'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(label, x, y + sw + 15)
-    }
-
-    // 拐角对比
-    const makePath = (pts: [number, number][]) => {
-        const p = new Path2D()
-        p.moveTo(pts[0][0], pts[0][1])
-        for (let i = 1; i < pts.length; i++) p.lineTo(pts[i][0], pts[i][1])
-        return p
-    }
-
-    drawTest(100, 60, 'miter (default)', makePath([[100, 60], [160, 10], [220, 60]]), 'butt', 'miter', 14)
-    drawTest(100, 160, 'bevel', makePath([[100, 160], [160, 110], [220, 160]]), 'butt', 'bevel', 14)
-    drawTest(100, 260, 'round', makePath([[100, 260], [160, 210], [220, 260]]), 'butt', 'round', 14)
-
-    // cap 对比（开放路径）
-    const capPath = (x: number, y: number) => {
-        const p = new Path2D()
-        p.moveTo(x, y)
-        p.lineTo(x + 80, y + 40)
-        return p
-    }
-    drawTest(350, 60, 'lineCap:butt', capPath(350, 60), 'butt', 'miter', 16)
-    drawTest(350, 130, 'lineCap:round', capPath(350, 130), 'round', 'miter', 16)
-    drawTest(350, 200, 'lineCap:square', capPath(350, 200), 'square', 'miter', 16)
-
-    // miterLimit 对比
-    const miters = [
-        { limit: 1.5, y: 300, label: 'miterLimit=1.5(→bevel)' },
-        { limit: 4, y: 370, label: 'miterLimit=4' },
-        { limit: 10, y: 440, label: 'miterLimit=10(默认)' },
-    ]
-    for (const m of miters) {
-        const mp = makePath([[500, m.y], [620, m.y - 70], [740, m.y]])
-        ctx.lineWidth = 18
-        ctx.lineCap = 'butt'
-        ctx.lineJoin = 'miter'
-        ctx.miterLimit = m.limit
-        ctx.strokeStyle = '#e74c3c'
-        ctx.stroke(mp.toCanvasPath2D())
-
-        const stroke = new PathStroke(mp, { strokeWidth: 18, lineCap: 'butt', lineJoin: 'miter', miterLimit: m.limit })
-        const fp = stroke.toFillPath()
-        ctx.strokeStyle = 'rgba(52,152,219,0.3)'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.stroke(fp.toCanvasPath2D())
-        ctx.setLineDash([])
-        ctx.fillStyle = '#333'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(m.label, 500, m.y + 25)
-    }
-
-    currentHitCallback = null
-}
-
-function testArcEllipse(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击路径区域测试填充/描边命中'
-    const path = new Path2D()
-    // 组合：rect + arc + ellipse
-    path.rect(100, 50, 200, 150)
-    path.arc(400, 125, 80, 0, Math.PI * 1.5, false)
-    path.close()
-    path.ellipse(600, 125, 100, 50, degToRad(30), 0, Math.PI * 2, false)
-
-    ctx.strokeStyle = '#e74c3c'
-    ctx.lineWidth = 2
-    ctx.stroke(path.toCanvasPath2D())
-    ctx.fillStyle = 'rgba(231,76,60,0.08)'
-    ctx.fill(path.toCanvasPath2D())
-
-    // 包围盒
-    const bounds = path.getBounds()
-    if (bounds) {
-        ctx.strokeStyle = '#3498db'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.strokeRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY)
-        ctx.setLineDash([])
-        ctx.fillStyle = '#3498db'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(`Bounds:(${bounds.minX | 0},${bounds.minY | 0})-(${bounds.maxX | 0},${bounds.maxY | 0})`, bounds.minX, bounds.minY - 8)
-    }
-
-    // 描边命中测试
-    const strokePath = new PathStroke(path, { strokeWidth: 8, lineJoin: 'round' })
-    const fillPath = strokePath.toFillPath()
-    ctx.strokeStyle = 'rgba(52,152,219,0.3)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.stroke(fillPath.toCanvasPath2D())
-    ctx.setLineDash([])
-
-    ctx.fillStyle = '#333'
-    ctx.font = '12px sans-serif'
-    ctx.fillText('rect + arc(270°) + ellipse(旋转30°)', 100, 310)
-    ctx.fillStyle = '#3498db'
-    ctx.fillText('蓝色虚线=描边偏移轮廓(width=8)', 100, 328)
-    ctx.fillStyle = '#666'
-    ctx.fillText('填充:半透明粉色    描边:红色实线', 100, 346)
-
-    currentHitCallback = (x, y) => {
-        const fillHit = path.contains(x, y)
-        const strokeHit = strokePath.contains(x, y)
-        let msg = `填充:${fillHit ? '✓' : '✗'}`
-        if (strokeHit) msg += ` 描边:✓(f=${strokePath.containsByFlatten(x, y) ? '1' : '0'} o=${strokePath.containsByOffset(x, y) ? '1' : '0'})`
-        else msg += ' 描边:✗'
-        return msg
-    }
-}
-
-function testComplexPath(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击路径区域测试复杂图形命中'
-    // 构建复杂路径
-    const path = new Path2D()
-    // 五角星大致形状（贝塞尔模拟）
-    path.moveTo(200, 50)
-    path.bezierCurveTo(220, 50, 240, 60, 250, 80)
-    path.quadraticCurveTo(260, 60, 280, 50)
-    path.lineTo(300, 100)
-    path.quadraticCurveTo(320, 80, 350, 90)
-    path.lineTo(320, 140)
-    path.arcTo(340, 160, 320, 180, 20)
-    path.lineTo(280, 180)
-    path.quadraticCurveTo(250, 220, 220, 180)
-    path.lineTo(180, 190)
-    path.arcTo(160, 180, 150, 160, 15)
-    path.lineTo(150, 130)
-    path.quadraticCurveTo(120, 120, 100, 150)
-    path.lineTo(130, 100)
-    path.arcTo(150, 80, 170, 70, 12)
-    path.close()
-
-    // fill + stroke
-    ctx.fillStyle = 'rgba(46,204,113,0.08)'
-    ctx.fill(path.toCanvasPath2D())
-    ctx.strokeStyle = '#2ecc71'
-    ctx.lineWidth = 2
-    ctx.stroke(path.toCanvasPath2D())
-
-    // 包围盒
-    const bounds = path.getBounds()
-    if (bounds) {
-        ctx.strokeStyle = '#3498db'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.strokeRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY)
-        ctx.setLineDash([])
-        ctx.fillStyle = '#3498db'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(`Bounds:(${bounds.minX | 0},${bounds.minY | 0})-(${bounds.maxX | 0},${bounds.maxY | 0})`, bounds.minX, bounds.minY - 8)
-    }
-
-    // 描边命中
-    const strokePath = new PathStroke(path, { strokeWidth: 10, lineCap: 'round', lineJoin: 'round' })
-    const fillPath = strokePath.toFillPath()
-    ctx.strokeStyle = 'rgba(155,89,182,0.3)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.stroke(fillPath.toCanvasPath2D())
-    ctx.setLineDash([])
-
-    ctx.fillStyle = '#333'
-    ctx.font = '12px sans-serif'
-    ctx.fillText('复杂路径: quadraticCurveTo/bezierCurveTo/arcTo/lineTo 组合', 100, 300)
-    ctx.fillStyle = '#2ecc71'
-    ctx.fillText('绿色=描边  淡绿色=填充', 100, 318)
-    ctx.fillStyle = '#9b59b6'
-    ctx.fillText('紫色虚线=描边偏移轮廓(width=10)', 100, 336)
-
-    // hit test 点标记（绘制一些预设点）
-    const hitPoints = [
-        { x: 200, y: 100, label: '内部' },
-        { x: 250, y: 150, label: '内部' },
-        { x: 150, y: 80, label: '外部' },
-        { x: 250, y: 80, label: '描边?', onStroke: true },
-    ]
-    for (const p of hitPoints) {
-        if (p.onStroke) {
-            ctx.fillStyle = '#f39c12'
-        } else {
-            ctx.fillStyle = path.contains(p.x, p.y) ? '#2ecc71' : '#ccc'
-        }
-        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill()
-        ctx.fillStyle = '#333'
-        ctx.font = '10px sans-serif'
-        ctx.fillText(p.label, p.x + 6, p.y + 3)
-    }
-
-    currentHitCallback = (x, y) => {
-        const fillHit = path.contains(x, y)
-        const strokeHit = strokePath.contains(x, y)
-        return `填充:${fillHit ? '✓' : '✗'}  描边:${strokeHit ? '✓' : '✗'}`
-    }
-}
-
-function testRoundRect(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击测试 roundRect 填充/描边'
-    const path = new Path2D()
-    path.roundRect(100, 60, 250, 180, [20, 40, 60, 80])
-    path.roundRect(420, 60, 200, 200, 30)
-    path.roundRect(680, 60, 150, 200, [0, 50, 0, 50])
-
-    ctx.fillStyle = 'rgba(52,152,219,0.08)'
-    ctx.fill(path.toCanvasPath2D())
+    // 我们的 Path2D
+    const ourPath = new Path2D()
+    ourPath.arc(cx, cy, r, sa, ea, ccw)
     ctx.strokeStyle = '#3498db'
-    ctx.lineWidth = 2
-    ctx.stroke(path.toCanvasPath2D())
-
-    const bounds = path.getBounds()
-    if (bounds) {
-        ctx.strokeStyle = '#e74c3c'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.strokeRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY)
-        ctx.setLineDash([])
-        ctx.fillStyle = '#e74c3c'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(`Bounds:(${bounds.minX | 0},${bounds.minY | 0})-(${bounds.maxX | 0},${bounds.maxY | 0})`, bounds.minX, bounds.minY - 8)
-    }
-
-    // 描边
-    const strokePath = new PathStroke(path, { strokeWidth: 8, lineCap: 'round', lineJoin: 'round' })
-    ctx.strokeStyle = 'rgba(231,76,60,0.3)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.stroke(strokePath.toFillPath().toCanvasPath2D())
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(ourPath.toCanvasPath2D())
     ctx.setLineDash([])
 
+    ctx.fillStyle = '#e74c3c'
     ctx.font = '12px sans-serif'
-    ctx.fillStyle = '#333'
-    ctx.fillText('roundRect([20,40,60,80])', 100, 310)
-    ctx.fillText('roundRect(30)', 420, 310)
-    ctx.fillText('roundRect([0,50,0,50])', 680, 310)
+    ctx.fillText('原生 arc', cx + r + 5, cy + 20)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D arc (虚线)', cx + r + 5, cy + 38)
+  }),
 
-    currentHitCallback = (x, y) => {
-        return `填充:${path.contains(x, y) ? '✓' : '✗'}  描边:${strokePath.contains(x, y) ? '✓' : '✗'}`
-    }
-}
+  defineTest('ellipse', 'ellipse 椭圆', {
+    cx: { label: '中心 X', type: 'number', default: 350, min: 0, max: 800, step: 1 },
+    cy: { label: '中心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    rx: { label: 'X 半径', type: 'number', default: 180, min: 10, max: 350, step: 1 },
+    ry: { label: 'Y 半径', type: 'number', default: 100, min: 10, max: 350, step: 1 },
+    rotation: { label: '旋转°', type: 'number', default: 30, min: -180, max: 180, step: 1 },
+    startAngle: { label: '起始角度°', type: 'number', default: 0, min: -360, max: 360, step: 1 },
+    endAngle: { label: '结束角度°', type: 'number', default: 300, min: -360, max: 360, step: 1 },
+    counterclockwise: { label: '逆时针', type: 'boolean', default: false },
+  }, (ctx, p) => {
+    const cx = p.cx, cy = p.cy, rx = p.rx, ry = p.ry
+    const rot = degToRad(p.rotation), sa = degToRad(p.startAngle), ea = degToRad(p.endAngle), ccw = p.counterclockwise
 
-function testArcToConnections(ctx: CanvasRenderingContext2D) {
-    hitInfo.value = '点击测试 arcTo 圆角连接'
-    const path = new Path2D()
-    path.moveTo(80, 100)
-    path.arcTo(200, 100, 200, 250, 60)
-    path.arcTo(200, 400, 80, 400, 40)
-    path.arcTo(80, 250, 200, 250, 30)
+    // 参考完整椭圆
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2)
+    ctx.strokeStyle = '#ddd'
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.stroke()
+    ctx.setLineDash([])
 
-    ctx.fillStyle = 'rgba(155,89,182,0.08)'
-    ctx.fill(path.toCanvasPath2D())
-    ctx.strokeStyle = '#9b59b6'
-    ctx.lineWidth = 2
-    ctx.stroke(path.toCanvasPath2D())
+    // 原生
+    const native = new window.Path2D()
+    native.ellipse(cx, cy, rx, ry, rot, sa, ea, ccw)
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = 3
+  //    ctx.setLineDash([6, 4])
+    ctx.stroke(native)
 
-    // 标注 arcTo 控制点
+    // 我们的
+    const our = new Path2D()
+    our.ellipse(cx, cy, rx, ry, rot, sa, ea, ccw)
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(our.toCanvasPath2D())
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e74c3c'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('原生 ellipse', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D ellipse (虚线)', 20, 48)
+  }),
+
+  defineTest('arcTo', 'arcTo 圆角连接', {
+    x0: { label: '起点 X', type: 'number', default: 100, min: 0, max: 800, step: 1 },
+    y0: { label: '起点 Y', type: 'number', default: 300, min: 0, max: 600, step: 1 },
+    x1: { label: '控制点1 X', type: 'number', default: 300, min: 0, max: 800, step: 1 },
+    y1: { label: '控制点1 Y', type: 'number', default: 100, min: 0, max: 600, step: 1 },
+    x2: { label: '控制点2 X', type: 'number', default: 500, min: 0, max: 800, step: 1 },
+    y2: { label: '控制点2 Y', type: 'number', default: 300, min: 0, max: 600, step: 1 },
+    radius: { label: '半径', type: 'number', default: 80, min: 1, max: 300, step: 1 },
+  }, (ctx, p) => {
+    const { x0, y0, x1, y1, x2, y2, radius } = p
+
+    // 绘制控制线（半透明）
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
+    ctx.setLineDash([])
     ctx.fillStyle = '#999'
     ctx.font = '11px sans-serif'
-    const pts = [[80, 100], [200, 100], [200, 250], [200, 400], [80, 400], [80, 250], [200, 250]]
-    for (let i = 0; i < pts.length; i++) {
-        ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], 3, 0, Math.PI * 2); ctx.fill()
-        if (i === 0) ctx.fillText('起点', pts[i][0] + 6, pts[i][1] + 3)
-        else ctx.fillText(`P${i}`, pts[i][0] + 6, pts[i][1] + 3)
-    }
+    ctx.fillText(`P0(${x0},${y0})`, x0 + 5, y0 - 5)
+    ctx.fillText(`P1(${x1},${y1})`, x1 + 5, y1 - 5)
+    ctx.fillText(`P2(${x2},${y2})`, x2 + 5, y2 - 5)
+    ctx.beginPath(); ctx.arc(x0, y0, 3, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(x1, y1, 3, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(x2, y2, 3, 0, Math.PI * 2); ctx.fill()
 
-    // 包围盒
-    const bounds = path.getBounds()
-    if (bounds) {
-        ctx.strokeStyle = '#e74c3c'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.strokeRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY)
-        ctx.setLineDash([])
-        ctx.fillStyle = '#e74c3c'
-        ctx.font = '11px sans-serif'
-        ctx.fillText(`Bounds:(${bounds.minX | 0},${bounds.minY | 0})-(${bounds.maxX | 0},${bounds.maxY | 0})`, bounds.minX, bounds.minY - 8)
-    }
+    // 原生
+    const native = new window.Path2D()
+    native.moveTo(x0, y0)
+    native.arcTo(x1, y1, x2, y2, radius)
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = 3
+    ctx.stroke(native)
 
-    // 描边
-    const strokePath = new PathStroke(path, { strokeWidth: 10, lineCap: 'round', lineJoin: 'round' })
-    ctx.strokeStyle = 'rgba(231,76,60,0.3)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.stroke(strokePath.toFillPath().toCanvasPath2D())
+    // 我们的
+    const our = new Path2D()
+    our.moveTo(x0, y0)
+    our.arcTo(x1, y1, x2, y2, radius)
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(our.toCanvasPath2D())
     ctx.setLineDash([])
 
+    ctx.fillStyle = '#e74c3c'
     ctx.font = '12px sans-serif'
-    ctx.fillStyle = '#333'
-    ctx.fillText('arcTo 连续圆角连接 + stroke offset', 80, 480)
+    ctx.fillText('原生 arcTo', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D arcTo (虚线)', 20, 48)
+  }),
 
-    currentHitCallback = (x, y) => {
-        const fillHit = path.contains(x, y)
-        const strokeHit = strokePath.contains(x, y)
-        return `填充:${fillHit ? '✓' : '✗'}  描边:${strokeHit ? '✓' : '✗'}`
+  defineTest('roundRect', 'roundRect 圆角矩形', {
+    x: { label: 'X', type: 'number', default: 100, min: 0, max: 800, step: 1 },
+    y: { label: 'Y', type: 'number', default: 150, min: 0, max: 600, step: 1 },
+    w: { label: '宽度', type: 'number', default: 400, min: 10, max: 800, step: 1 },
+    h: { label: '高度', type: 'number', default: 250, min: 10, max: 600, step: 1 },
+    radiusTL: { label: '左上圆角', type: 'number', default: 40, min: 0, max: 200, step: 1 },
+    radiusTR: { label: '右上圆角', type: 'number', default: 60, min: 0, max: 200, step: 1 },
+    radiusBR: { label: '右下圆角', type: 'number', default: 80, min: 0, max: 200, step: 1 },
+    radiusBL: { label: '左下圆角', type: 'number', default: 20, min: 0, max: 200, step: 1 },
+  }, (ctx, p) => {
+    const radii = [p.radiusTL, p.radiusTR, p.radiusBR, p.radiusBL]
+
+    // 原生 roundRect（Chrome 99+）
+    const native = new window.Path2D()
+    native.roundRect(p.x, p.y, p.w, p.h, radii)
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = 3
+    ctx.stroke(native)
+
+    // 我们的
+    const our = new Path2D()
+    our.roundRect(p.x, p.y, p.w, p.h, radii)
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(our.toCanvasPath2D())
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e74c3c'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('原生 roundRect', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D roundRect (虚线)', 20, 48)
+  }),
+
+  defineTest('bezier', 'bezierCurveTo 三次贝塞尔', {
+    x0: { label: '起点 X', type: 'number', default: 100, min: 0, max: 800, step: 1 },
+    y0: { label: '起点 Y', type: 'number', default: 300, min: 0, max: 600, step: 1 },
+    cp1x: { label: '控制点1 X', type: 'number', default: 200, min: 0, max: 800, step: 1 },
+    cp1y: { label: '控制点1 Y', type: 'number', default: 50, min: 0, max: 600, step: 1 },
+    cp2x: { label: '控制点2 X', type: 'number', default: 500, min: 0, max: 800, step: 1 },
+    cp2y: { label: '控制点2 Y', type: 'number', default: 500, min: 0, max: 600, step: 1 },
+    x: { label: '终点 X', type: 'number', default: 600, min: 0, max: 800, step: 1 },
+    y: { label: '终点 Y', type: 'number', default: 300, min: 0, max: 600, step: 1 },
+    showControls: { label: '显示控制点', type: 'boolean', default: true },
+  }, (ctx, p) => {
+    // 控制多边形
+    if (p.showControls) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)'
+      ctx.lineWidth = 1
+      ctx.setLineDash([4, 4])
+      ctx.beginPath(); ctx.moveTo(p.x0, p.y0); ctx.lineTo(p.cp1x, p.cp1y); ctx.lineTo(p.cp2x, p.cp2y); ctx.lineTo(p.x, p.y); ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = '#999'
+      ;[[p.x0, p.y0, 'P0'],[p.cp1x, p.cp1y, 'CP1'],[p.cp2x, p.cp2y, 'CP2'],[p.x, p.y, 'P3']].forEach(([x, y, l]) => {
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+        ctx.fillText(l as string, (x as number) + 5, (y as number) - 8)
+      })
     }
-}
 
-// ── 测试用例注册 ──
-interface TestCase { key: string; label: string; fn: (ctx: CanvasRenderingContext2D) => void }
-const allTests: TestCase[] = [
-    { key: 'ellipseSvgArc', label: 'SVG Arc 对比（旋转=0）', fn: testEllipseSvgArc },
-    { key: 'arcRotated', label: 'SVG Arc 对比（带旋转）', fn: testArcRotated },
-    { key: 'bezierPaths', label: '贝塞尔路径 + 包围盒 + 填充命中', fn: testBezierPaths },
-    { key: 'strokeHit', label: '描边命中测试（三种方案）', fn: testStrokeHit },
-    { key: 'lineJoinCap', label: 'lineJoin/lineCap/miterLimit', fn: testLineJoinCap },
-    { key: 'arcEllipse', label: 'rect+arc+ellipse 综合', fn: testArcEllipse },
-    { key: 'complexPath', label: '复杂路径（贝塞尔/arcTo混合）', fn: testComplexPath },
-    { key: 'roundRect', label: 'roundRect 圆角矩形', fn: testRoundRect },
-    { key: 'arcToConnections', label: 'arcTo 圆角连接', fn: testArcToConnections },
+    const native = new window.Path2D()
+    native.moveTo(p.x0, p.y0)
+    native.bezierCurveTo(p.cp1x, p.cp1y, p.cp2x, p.cp2y, p.x, p.y)
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = 3
+    ctx.stroke(native)
+
+    const our = new Path2D()
+    our.moveTo(p.x0, p.y0)
+    our.bezierCurveTo(p.cp1x, p.cp1y, p.cp2x, p.cp2y, p.x, p.y)
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(our.toCanvasPath2D())
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e74c3c'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('原生 bezierCurveTo', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D bezierCurveTo (虚线)', 20, 48)
+  }),
+
+  defineTest('quadratic', 'quadraticCurveTo 二次贝塞尔', {
+    x0: { label: '起点 X', type: 'number', default: 100, min: 0, max: 800, step: 1 },
+    y0: { label: '起点 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    cpx: { label: '控制点 X', type: 'number', default: 350, min: 0, max: 800, step: 1 },
+    cpy: { label: '控制点 Y', type: 'number', default: 50, min: 0, max: 600, step: 1 },
+    x: { label: '终点 X', type: 'number', default: 600, min: 0, max: 800, step: 1 },
+    y: { label: '终点 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    showControls: { label: '显示控制点', type: 'boolean', default: true },
+  }, (ctx, p) => {
+    if (p.showControls) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)'
+      ctx.lineWidth = 1
+      ctx.setLineDash([4, 4])
+      ctx.beginPath(); ctx.moveTo(p.x0, p.y0); ctx.lineTo(p.cpx, p.cpy); ctx.lineTo(p.x, p.y); ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = '#999'
+      ;[[p.x0, p.y0, 'P0'],[p.cpx, p.cpy, 'CP'],[p.x, p.y, 'P2']].forEach(([x, y, l]) => {
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+        ctx.fillText(l as string, (x as number) + 5, (y as number) - 8)
+      })
+    }
+
+    const native = new window.Path2D()
+    native.moveTo(p.x0, p.y0)
+    native.quadraticCurveTo(p.cpx, p.cpy, p.x, p.y)
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = 3
+    ctx.stroke(native)
+
+    const our = new Path2D()
+    our.moveTo(p.x0, p.y0)
+    our.quadraticCurveTo(p.cpx, p.cpy, p.x, p.y)
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(our.toCanvasPath2D())
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e74c3c'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('原生 quadraticCurveTo', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D quadraticCurveTo (虚线)', 20, 48)
+  }),
+
+  defineTest('ellipseSvgArc', 'ellipseSvgArc SVG弧转换', {
+    x1: { label: '起点 X', type: 'number', default: 100, min: 0, max: 800, step: 1 },
+    y1: { label: '起点 Y', type: 'number', default: 300, min: 0, max: 600, step: 1 },
+    x2: { label: '终点 X', type: 'number', default: 500, min: 0, max: 800, step: 1 },
+    y2: { label: '终点 Y', type: 'number', default: 150, min: 0, max: 600, step: 1 },
+    rx: { label: 'X 半径', type: 'number', default: 200, min: 10, max: 400, step: 1 },
+    ry: { label: 'Y 半径', type: 'number', default: 120, min: 10, max: 400, step: 1 },
+    rotation: { label: '旋转°', type: 'number', default: 0, min: -180, max: 180, step: 1 },
+    largeArc: { label: '大弧', type: 'boolean', default: false },
+    sweep: { label: '顺时针', type: 'boolean', default: true },
+  }, (ctx, p) => {
+    const rotDeg = p.rotation
+    const { x1, y1, x2, y2, rx, ry, largeArc, sweep } = p
+
+    // 参考椭圆
+    ctx.strokeStyle = '#ddd'
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.beginPath()
+    ctx.ellipse((x1 + x2) / 2, (y1 + y2) / 2, rx, ry, degToRad(rotDeg), 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = '#999'
+    ctx.font = '11px sans-serif'
+    ctx.fillText('参考椭圆', (x1 + x2) / 2 + rx + 5, (y1 + y2) / 2)
+
+    ctx.fillStyle = '#999'
+    ctx.beginPath(); ctx.arc(x1, y1, 4, 0, Math.PI * 2); ctx.fill()
+    ctx.fillText('起点', x1 + 6, y1 + 4)
+    ctx.beginPath(); ctx.arc(x2, y2, 4, 0, Math.PI * 2); ctx.fill()
+    ctx.fillText('终点', x2 + 6, y2 + 4)
+
+    // SVG 原生
+    const svgStr = `M ${x1},${y1} A ${rx},${ry} ${rotDeg} ${largeArc ? 1 : 0} ${sweep ? 1 : 0} ${x2},${y2}`
+    const native = new window.Path2D(svgStr)
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = 3
+    ctx.stroke(native)
+
+    // 我们的
+    const our = new Path2D()
+    our.moveTo(x1, y1)
+    our.ellipseSvgArc(x1, y1, x2, y2, rx, ry, degToRad(rotDeg), largeArc, sweep)
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = 3
+    ctx.setLineDash([6, 4])
+    ctx.stroke(our.toCanvasPath2D())
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e74c3c'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('原生 SVG Path A', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D.ellipseSvgArc (虚线)', 20, 48)
+  }),
+
+  defineTest('complex', '复杂路径组合', {
+    strokeW: { label: '描边宽度', type: 'number', default: 2, min: 1, max: 10, step: 0.5 },
+    showFill: { label: '显示填充', type: 'boolean', default: true },
+  }, (ctx, p) => {
+    // 构建复杂路径
+    const buildPath = (): Path2D => {
+      const path = new Path2D()
+      path.moveTo(200, 100)
+      path.bezierCurveTo(250, 50, 300, 80, 350, 100)
+      path.quadraticCurveTo(400, 120, 450, 80)
+      path.arcTo(500, 50, 550, 100, 30)
+      path.lineTo(600, 200)
+      path.arc(600, 250, 50, -Math.PI / 2, Math.PI / 2, false)
+      path.lineTo(550, 350)
+      path.ellipse(400, 380, 100, 60, 0.3, 0, Math.PI, false)
+      path.lineTo(250, 350)
+      path.quadraticCurveTo(200, 300, 150, 320)
+      path.arcTo(100, 330, 100, 250, 40)
+      path.lineTo(120, 180)
+      path.close()
+      return path
+    }
+
+    const ourPath = buildPath()
+
+    // 用 native 重建
+    const native = new window.Path2D()
+    native.moveTo(200, 100)
+    native.bezierCurveTo(250, 50, 300, 80, 350, 100)
+    native.quadraticCurveTo(400, 120, 450, 80)
+    native.arcTo(500, 50, 550, 100, 30)
+    native.lineTo(600, 200)
+    native.arc(600, 250, 50, -Math.PI / 2, Math.PI / 2, false)
+    native.lineTo(550, 350)
+    native.ellipse(400, 380, 100, 60, 0.3, 0, Math.PI, false)
+    native.lineTo(250, 350)
+    native.quadraticCurveTo(200, 300, 150, 320)
+    native.arcTo(100, 330, 100, 250, 40)
+    native.lineTo(120, 180)
+    native.closePath()
+
+    if (p.showFill) {
+      ctx.fillStyle = 'rgba(231,76,60,0.08)'
+      ctx.fill(native)
+      ctx.fillStyle = 'rgba(52,152,219,0.08)'
+      ctx.fill(ourPath.toCanvasPath2D())
+    }
+
+    ctx.strokeStyle = '#e74c3c'
+    ctx.lineWidth = p.strokeW
+    ctx.stroke(native)
+
+    ctx.strokeStyle = '#3498db'
+    ctx.lineWidth = p.strokeW
+    ctx.setLineDash([6, 4])
+    ctx.stroke(ourPath.toCanvasPath2D())
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e74c3c'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('原生组合路径', 20, 30)
+    ctx.fillStyle = '#3498db'
+    ctx.fillText('Path2D 组合路径 (虚线)', 20, 48)
+  }),
 ]
 
-onMounted(() => {
-    const ctx = canvas.value!.getContext('2d')!
-    runTest(ctx)
+// ── 当前状态 ──
 
-    canvas.value!.addEventListener('mousedown', (e) => {
-        const rect = canvas.value!.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const y = e.clientY - rect.top
-        const dpr = canvas.value!.width / rect.width
-        if (currentHitCallback) {
-            hitInfo.value = currentHitCallback(x * dpr, y * dpr)
-        }
-    })
+const activeKey = ref(tests[0].key)
+const currentTest = computed(() => tests.find(t => t.key === activeKey.value) || tests[0])
+
+// 构建响应式参数
+function buildParams(test: TestCase): Record<string, any> {
+  const p: Record<string, any> = {}
+  for (const [k, def] of Object.entries(test.params)) {
+    p[k] = def.default
+  }
+  return p
+}
+
+const params = reactive(buildParams(currentTest.value))
+
+// 切换测试时重置参数
+watch(activeKey, (key) => {
+  const test = tests.find(t => t.key === key) || tests[0]
+  const newParams = buildParams(test)
+  Object.assign(params, newParams)
 })
 
-function runTest(ctx: CanvasRenderingContext2D) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    currentHitCallback = null
-    hitInfo.value = '点击画布查看命中信息'
-    const test = allTests.find(t => t.key === activeTest.value)
-    if (test) test.fn(ctx)
+function draw() {
+  const ctx = canvas.value?.getContext('2d')
+  if (!ctx) return
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  currentTest.value.draw(ctx, { ...params })
 }
+
+onMounted(() => {
+  draw()
+})
 </script>
 
 <template>
-    <div style="padding:10px;font-family:sans-serif">
-        <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <label style="font-weight:bold">选择测试:</label>
-            <select v-model="activeTest" @change="canvas && runTest(canvas.getContext('2d')!)"
-                style="padding:4px 8px;font-size:14px;min-width:260px">
-                <option v-for="t in allTests" :key="t.key" :value="t.key">{{ t.label }}</option>
-            </select>
-            <span style="font-size:13px;color:#e74c3c">{{ hitInfo }}</span>
-        </div>
-        <canvas ref="canvas" width="1200" height="700"
-            style="border:1px solid #ddd;width:100%;max-width:1200px;cursor:crosshair"></canvas>
+  <div style="padding:12px;font-family:'Segoe UI','PingFang SC',sans-serif;max-width:1400px">
+    <!-- 顶部控制栏 -->
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <label style="font-weight:600;font-size:14px">测试用例:</label>
+      <select v-model="activeKey" @change="draw"
+        style="padding:4px 10px;font-size:14px;border:1px solid #ccc;border-radius:4px;min-width:200px">
+        <option v-for="t in tests" :key="t.key" :value="t.key">{{ t.label }}</option>
+      </select>
+      <span style="font-size:12px;color:#e74c3c;margin-left:8px">红色实线 = 原生 Path2D</span>
+      <span style="font-size:12px;color:#3498db">蓝色虚线 = 我们的 Path2D</span>
     </div>
+
+    <!-- 参数面板 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px;max-width:320px">
+        <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:12px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#495057">参数控制</div>
+          <div v-for="(def, key) in currentTest.params" :key="key" style="margin-bottom:8px">
+            <template v-if="def.type === 'number'">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#666">
+                <label :for="'p_'+key">{{ def.label }}</label>
+                <span>{{ params[key] }}</span>
+              </div>
+              <input :id="'p_'+key" type="range"
+                :min="def.min ?? 0" :max="def.max ?? 100" :step="def.step ?? 1"
+                v-model.number="params[key]" @input="draw"
+                style="width:100%;margin:2px 0" />
+            </template>
+            <template v-else-if="def.type === 'boolean'">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer">
+                <input type="checkbox" v-model="params[key]" @change="draw" />
+                {{ def.label }}
+              </label>
+            </template>
+          </div>
+        </div>
+      </div>
+      <!-- 画布 -->
+      <div style="flex:1;min-width:500px">
+        <canvas ref="canvas" width="900" height="500"
+          style="border:1px solid #dee2e6;border-radius:6px;width:100%"></canvas>
+      </div>
+    </div>
+  </div>
 </template>
