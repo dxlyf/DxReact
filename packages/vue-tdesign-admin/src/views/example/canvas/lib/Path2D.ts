@@ -572,8 +572,8 @@ function windLine(x: number, y: number, x0: number, y0: number, x1: number, y1: 
     // 半开区间 [min, max)：射线穿过顶点时只被一端计入，避免重复计数
     if (y < Math.min(y0, y1) || y >= Math.max(y0, y1)) return 0
 
-    // 计算线段在 y 处的交点 x 坐标，若交点在射线右侧则计数
-    if (x >= x0 + (x1 - x0) * (y - y0) / (y1 - y0)) {
+    // 计算线段在 y 处的交点 x 坐标，若交点在射线左侧则计数
+    if (x <= x0 + (x1 - x0) * (y - y0) / (y1 - y0)) {
         // 从下往上穿 → +1，从上往下穿 → -1
         return y1 > y0 ? 1 : -1
     }
@@ -1192,6 +1192,7 @@ export class Path2D {
             },
             close: (lastX, lastY) => {
                 if (lastX !== this.lastMovePoint.x || lastY !== this.lastMovePoint.y) {
+
                     wind += windLine(px, py, lastX, lastY, this.lastMovePoint.x, this.lastMovePoint.y)
                 }
             },

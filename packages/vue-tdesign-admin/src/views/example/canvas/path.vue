@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, shallowRef, reactive, watch, computed } from 'vue'
 import { Path2D } from './lib/Path2D'
+import { PathStroke } from './lib/PathStroke'
 
 function degToRad(deg: number) { return deg * Math.PI / 180 }
 
@@ -29,7 +30,40 @@ function defineTest(key: string, label: string, params: Record<string, ParamDef>
   return { key, label, params, draw }
 }
 
-const tests: TestCase[] = [
+const tests: TestCase[] = [defineTest('PathStroke', 'PathStroke', {
+  }, (ctx, p) => {
+      
+    const path=new Path2D()
+    // path.moveTo(100,100)f 
+    // path.bezierCurveTo(200,50,200,50,300,200)
+    // path.close()
+    path.arc(300,250,150,0,Math.PI*2)
+    path.close()
+
+    const strokeBounds=()=>{
+        const bounds=path.getBounds()
+        ctx.beginPath()
+        ctx.strokeStyle='#0000ff'
+        ctx.lineWidth=1
+        ctx.strokeRect(bounds.minX,bounds.minY,bounds.maxX-bounds.minX,bounds.maxY-bounds.minY)
+        ctx.stroke()
+    }
+
+    ctx.stroke(path.toCanvasPath2D())
+    strokeBounds()
+    ctx.canvas.addEventListener('mousedown',e=>{
+        const rect=ctx.canvas.getBoundingClientRect()
+        const sx=ctx.canvas.width/rect.width
+        const sy=ctx.canvas.height/rect.height
+        const x=(e.clientX-rect.left)*sx
+        const y=(e.clientY-rect.top)*sy
+        if(path.contains(x,y)){
+            console.log('点击了路径内')
+        }
+    })
+    
+
+  }),
   defineTest('arc', 'arc 圆弧', {
     cx: { label: '圆心 X', type: 'number', default: 300, min: 0, max: 800, step: 1 },
     cy: { label: '圆心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
