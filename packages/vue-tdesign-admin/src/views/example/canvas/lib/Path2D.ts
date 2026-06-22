@@ -128,8 +128,8 @@ export class QuadraticBezier {
     windPoint(px: number, py: number): number {
         const { p0, p1, p2 } = this
 
-        const minY = Math.min(p0.y, p2.y)
-        const maxY = Math.max(p0.y, p2.y)
+        const minY = Math.min(p0.y,p1.y, p2.y)
+        const maxY = Math.max(p0.y,p1.y, p2.y)
         if (py < minY || py > maxY) return 0
 
         // y(t) = (1-t)²·y0 + 2t(1-t)·y1 + t²·y2
@@ -359,8 +359,8 @@ export class CubicBezier {
     windPoint(px: number, py: number): number {
         const { p0, p1, p2, p3 } = this
 
-        const minY = Math.min(p0.y, p3.y)
-        const maxY = Math.max(p0.y, p3.y)
+        const minY = Math.min(p0.y, p1.y, p2.y, p3.y)
+        const maxY = Math.max(p0.y, p1.y, p2.y, p3.y)
         if (py < minY || py > maxY) return 0
 
         // y(t) = (1-t)³·y0 + 3t(1-t)²·y1 + 3t²(1-t)·y2 + t³·y3
@@ -579,6 +579,11 @@ function windLine(x: number, y: number, x0: number, y0: number, x1: number, y1: 
     }
     return 0
 }
+function normalizeAngle(angle: number): number {
+    angle = angle % (2 * Math.PI);
+    if (angle < 0) angle += 2 * Math.PI;
+    return angle;
+}
 
 function normalizeAngles(startAngle: number, endAngle: number, ccw: boolean = false) {
     const tau = Math.PI * 2
@@ -635,10 +640,10 @@ export class Path2D {
     get isEmpty() {
         return this.verbs.length === 0
     }
-    ensureMove() {
+    ensureMove(x:number=0,y:number=0) {
         if (this.needMoveTo) {
             if (this.isEmpty) {
-                this.moveTo(0, 0)
+                this.moveTo(x, y)
             } else {
                 this.moveTo(this.lastPoint.x, this.lastPoint.y)
             }

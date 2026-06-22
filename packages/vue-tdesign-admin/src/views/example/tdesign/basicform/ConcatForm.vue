@@ -7,6 +7,7 @@ import { reactive, ref, shallowRef, toRaw ,watch} from 'vue'
 
 const formData = reactive<{
   slug:string
+  color:string
   linkType:string
   linkUrl:string
   concatType:string
@@ -18,7 +19,8 @@ const formData = reactive<{
   linkUrl:'',
   concatType:'1',
   enableEnable:'1',
-  currentDateTime:''
+  currentDateTime:'',
+  color:''
 })
 
 const formRef=shallowRef<FormInstanceFunctions>()
@@ -84,6 +86,17 @@ watch(()=>formData.linkType,(val)=>{
              <div class="flex-1"> <t-input v-model="formData.slug" /></div>
             <div class="flex-none">       <t-button theme="primary">提交</t-button></div>
           </div>
+        </t-form-item>
+           <t-form-item label="color" name="color" :rules="[{
+               required:true,
+               message:'请选择颜色'
+            },{
+               validator:(val)=>{
+                 return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(val) || /^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*(0|1|0?\.\d+)\s*)?\)$/.test(val)
+               },
+               message:'支持#fff、#ffffff、rgb(r,g,b)、rgba(r,g,b,a)格式的颜色'
+            }]"  >
+            <t-color-picker :enable-alpha="true" :show-primary-color-preview="true" :color-modes="['monochrome']" v-model="formData.color" />
         </t-form-item>
        <div class="flex">
           <t-form-item label="链接类型" name="linkType" class="flex-1">

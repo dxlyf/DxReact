@@ -8,7 +8,7 @@ const instance=axios.create({
     baseURL: '',
     timeout: 10000,
 })
-type ResposeData<T>={
+type ResposeData<T=any>={
     code:number,
     message:string,
     data:T

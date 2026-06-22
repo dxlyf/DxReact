@@ -18,4 +18,17 @@ export class Vector2 extends Float32Array{
     constructor(x: number, y: number) {
         super([x, y])
     }
+    get x(){
+        return this[0]
+    }
+    get y(){
+        return this[1]
+    }
+    set x(value: number) {
+        this[0] = value
+    }
+    set y(value: number) {
+        this[1] = value
+    }
+    
 }

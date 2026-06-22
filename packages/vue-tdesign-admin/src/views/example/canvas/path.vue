@@ -30,40 +30,7 @@ function defineTest(key: string, label: string, params: Record<string, ParamDef>
   return { key, label, params, draw }
 }
 
-const tests: TestCase[] = [defineTest('PathStroke', 'PathStroke', {
-  }, (ctx, p) => {
-      
-    const path=new Path2D()
-    // path.moveTo(100,100)f 
-    // path.bezierCurveTo(200,50,200,50,300,200)
-    // path.close()
-    path.arc(300,250,150,0,Math.PI*2)
-    path.close()
-
-    const strokeBounds=()=>{
-        const bounds=path.getBounds()
-        ctx.beginPath()
-        ctx.strokeStyle='#0000ff'
-        ctx.lineWidth=1
-        ctx.strokeRect(bounds.minX,bounds.minY,bounds.maxX-bounds.minX,bounds.maxY-bounds.minY)
-        ctx.stroke()
-    }
-
-    ctx.stroke(path.toCanvasPath2D())
-    strokeBounds()
-    ctx.canvas.addEventListener('mousedown',e=>{
-        const rect=ctx.canvas.getBoundingClientRect()
-        const sx=ctx.canvas.width/rect.width
-        const sy=ctx.canvas.height/rect.height
-        const x=(e.clientX-rect.left)*sx
-        const y=(e.clientY-rect.top)*sy
-        if(path.contains(x,y)){
-            console.log('点击了路径内')
-        }
-    })
-    
-
-  }),
+const tests: TestCase[] = [
   defineTest('arc', 'arc 圆弧', {
     cx: { label: '圆心 X', type: 'number', default: 300, min: 0, max: 800, step: 1 },
     cy: { label: '圆心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
@@ -457,6 +424,17 @@ const tests: TestCase[] = [defineTest('PathStroke', 'PathStroke', {
     ctx.fillText('原生组合路径', 20, 30)
     ctx.fillStyle = '#3498db'
     ctx.fillText('Path2D 组合路径 (虚线)', 20, 48)
+
+    ctx.canvas.addEventListener('mousedown',e=>{
+        const rect=ctx.canvas.getBoundingClientRect()
+        const sx=ctx.canvas.width/rect.width
+        const sy=ctx.canvas.height/rect.height
+        const x=(e.clientX-rect.left)*sx
+        const y=(e.clientY-rect.top)*sy
+        if(ourPath.contains(x,y)){
+            console.log('点击了路径内')
+        }
+    })
   }),
 ]
 

@@ -6,6 +6,9 @@ import svgLoader from 'vite-svg-loader';
 import { viteMockServe } from 'vite-plugin-mock';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import AutoImport from 'unplugin-auto-import/vite';
+import Components from 'unplugin-vue-components/vite';
+import { TDesignResolver } from '@tdesign-vue-next/auto-import-resolver';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -27,10 +30,14 @@ export default defineConfig({
     //   }
     // }
   },
-  plugins: [vue(), vueJsx(),viteMockServe({
+  plugins: [
+vue(), vueJsx(),viteMockServe({
         mockPath: 'mock',
         enable: true,
-      }),svgLoader(), tailwindcss()],
+      }),svgLoader(), tailwindcss(),    Components({
+    resolvers: [TDesignResolver({library:'vue-next'})],
+    dts:'src/components.d.ts',
+  })],
   dev:{
     
   },
