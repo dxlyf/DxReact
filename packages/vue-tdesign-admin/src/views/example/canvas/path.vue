@@ -2,7 +2,7 @@
 import { onMounted, ref, shallowRef, reactive, watch, computed } from 'vue'
 import { Path2D } from './lib/Path2D'
 import { PathStroke } from './lib/PathStroke'
-
+import { arcToCubic, arcToOval, ellipseToCubics, normalizeAngles } from './lib/Arc'
 function degToRad(deg: number) { return deg * Math.PI / 180 }
 
 const canvas = shallowRef<HTMLCanvasElement>()
@@ -31,6 +31,75 @@ function defineTest(key: string, label: string, params: Record<string, ParamDef>
 }
 
 const tests: TestCase[] = [
+  defineTest('aa', 'svg arc', {
+    x1: { label: '中心 X', type: 'number', default: 350, min: 0, max: 800, step: 1 },
+    y1: { label: '中心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    x2: { label: '中心 X', type: 'number', default: 350, min: 0, max: 800, step: 1 },
+    y2: { label: '中心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    rx: { label: 'X 半径', type: 'number', default: 180, min: 10, max: 350, step: 1 },
+    ry: { label: 'Y 半径', type: 'number', default: 100, min: 10, max: 350, step: 1 },
+    rotation: { label: '旋转°', type: 'number', default: 0, min: -180, max: 180, step: 1 },
+    largeArcFlag: { label: '是否走大弧（> 180°）', type: 'boolean', default: false },
+    sweepFlag: { label: '是否逆时针方向', type: 'boolean', default: false },
+  }, (ctx, p) => {
+    const path = new window.Path2D(`M${p.x1} ${p.y1}A${p.rx} ${p.ry} deg${p.rotation} ${p.largeArcFlag?'1':'0'} ${p.sweepFlag?'1':'0'} ${p.x2} ${p.y2}`)
+
+    ctx.beginPath()
+    ctx.strokeStyle = 'black'
+  
+    ctx.stroke(path)
+    const oval = arcToOval({
+      x1: p.x1,
+      y1: p.y1,
+      x2: p.x2,
+      y2: p.y2,
+      rx: p.rx,
+      ry: p.ry,
+      largeArcFlag: p.largeArcFlag,
+      sweepFlag: p.sweepFlag,
+      xAxisRotation: degToRad(p.rotation),
+    })
+    const cubic = ellipseToCubics(oval.cx, oval.cy, oval.rx, oval.ry, oval.xAxisRotation,oval.startAngle,oval.endAngle,oval.counterclockwise)
+    ctx.beginPath()
+    ctx.strokeStyle = 'blue'
+    cubic.forEach((item, i) => {
+      if (i === 0) {
+        ctx.moveTo(item.p1.x, item.p1.y)
+      }
+      ctx.bezierCurveTo(item.cp1.x, item.cp1.y, item.cp2.x, item.cp2.y, item.p2.x, item.p2.y)
+    })
+    ctx.stroke()
+  }),
+  defineTest('arc draw', 'ellipse 圆弧', {
+    cx: { label: '中心 X', type: 'number', default: 350, min: 0, max: 800, step: 1 },
+    cy: { label: '中心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
+    rx: { label: 'X 半径', type: 'number', default: 180, min: 10, max: 350, step: 1 },
+    ry: { label: 'Y 半径', type: 'number', default: 100, min: 10, max: 350, step: 1 },
+    rotation: { label: '旋转°', type: 'number', default: 0, min: -180, max: 180, step: 1 },
+    startAngle: { label: '起始角度°', type: 'number', default: 0, min: -360, max: 360, step: 1 },
+    endAngle: { label: '结束角度°', type: 'number', default: 300, min: -360, max: 360, step: 1 },
+    counterclockwise: { label: '逆时针', type: 'boolean', default: false },
+  }, (ctx, p) => {
+    const path = new window.Path2D()
+
+    ctx.beginPath()
+    ctx.strokeStyle = 'black'
+    path.ellipse(p.cx, p.cy, p.rx, p.ry, degToRad(p.rotation), degToRad(p.startAngle), degToRad(p.endAngle), p.counterclockwise)
+
+    ctx.stroke(path)
+
+
+    const cubic = ellipseToCubics(p.cx, p.cy, p.rx, p.ry, degToRad(p.rotation), degToRad(p.startAngle), degToRad(p.endAngle), p.counterclockwise)
+    ctx.beginPath()
+    ctx.strokeStyle = 'blue'
+    cubic.forEach((item, i) => {
+      if (i === 0) {
+        ctx.moveTo(item.p1.x, item.p1.y)
+      }
+      ctx.bezierCurveTo(item.cp1.x, item.cp1.y, item.cp2.x, item.cp2.y, item.p2.x, item.p2.y)
+    })
+    ctx.stroke()
+  }),
   defineTest('arc', 'arc 圆弧', {
     cx: { label: '圆心 X', type: 'number', default: 300, min: 0, max: 800, step: 1 },
     cy: { label: '圆心 Y', type: 'number', default: 250, min: 0, max: 600, step: 1 },
@@ -107,7 +176,7 @@ const tests: TestCase[] = [
     native.ellipse(cx, cy, rx, ry, rot, sa, ea, ccw)
     ctx.strokeStyle = '#e74c3c'
     ctx.lineWidth = 3
-  //    ctx.setLineDash([6, 4])
+    //    ctx.setLineDash([6, 4])
     ctx.stroke(native)
 
     // 我们的
@@ -231,10 +300,10 @@ const tests: TestCase[] = [
       ctx.beginPath(); ctx.moveTo(p.x0, p.y0); ctx.lineTo(p.cp1x, p.cp1y); ctx.lineTo(p.cp2x, p.cp2y); ctx.lineTo(p.x, p.y); ctx.stroke()
       ctx.setLineDash([])
       ctx.fillStyle = '#999'
-      ;[[p.x0, p.y0, 'P0'],[p.cp1x, p.cp1y, 'CP1'],[p.cp2x, p.cp2y, 'CP2'],[p.x, p.y, 'P3']].forEach(([x, y, l]) => {
-        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
-        ctx.fillText(l as string, (x as number) + 5, (y as number) - 8)
-      })
+        ;[[p.x0, p.y0, 'P0'], [p.cp1x, p.cp1y, 'CP1'], [p.cp2x, p.cp2y, 'CP2'], [p.x, p.y, 'P3']].forEach(([x, y, l]) => {
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+          ctx.fillText(l as string, (x as number) + 5, (y as number) - 8)
+        })
     }
 
     const native = new window.Path2D()
@@ -276,10 +345,10 @@ const tests: TestCase[] = [
       ctx.beginPath(); ctx.moveTo(p.x0, p.y0); ctx.lineTo(p.cpx, p.cpy); ctx.lineTo(p.x, p.y); ctx.stroke()
       ctx.setLineDash([])
       ctx.fillStyle = '#999'
-      ;[[p.x0, p.y0, 'P0'],[p.cpx, p.cpy, 'CP'],[p.x, p.y, 'P2']].forEach(([x, y, l]) => {
-        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
-        ctx.fillText(l as string, (x as number) + 5, (y as number) - 8)
-      })
+        ;[[p.x0, p.y0, 'P0'], [p.cpx, p.cpy, 'CP'], [p.x, p.y, 'P2']].forEach(([x, y, l]) => {
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill()
+          ctx.fillText(l as string, (x as number) + 5, (y as number) - 8)
+        })
     }
 
     const native = new window.Path2D()
@@ -425,15 +494,15 @@ const tests: TestCase[] = [
     ctx.fillStyle = '#3498db'
     ctx.fillText('Path2D 组合路径 (虚线)', 20, 48)
 
-    ctx.canvas.addEventListener('mousedown',e=>{
-        const rect=ctx.canvas.getBoundingClientRect()
-        const sx=ctx.canvas.width/rect.width
-        const sy=ctx.canvas.height/rect.height
-        const x=(e.clientX-rect.left)*sx
-        const y=(e.clientY-rect.top)*sy
-        if(ourPath.contains(x,y)){
-            console.log('点击了路径内')
-        }
+    ctx.canvas.addEventListener('mousedown', e => {
+      const rect = ctx.canvas.getBoundingClientRect()
+      const sx = ctx.canvas.width / rect.width
+      const sy = ctx.canvas.height / rect.height
+      const x = (e.clientX - rect.left) * sx
+      const y = (e.clientY - rect.top) * sy
+      if (ourPath.contains(x, y)) {
+        console.log('点击了路径内')
+      }
     })
   }),
 ]
@@ -494,13 +563,11 @@ onMounted(() => {
           <div v-for="(def, key) in currentTest.params" :key="key" style="margin-bottom:8px">
             <template v-if="def.type === 'number'">
               <div style="display:flex;justify-content:space-between;font-size:12px;color:#666">
-                <label :for="'p_'+key">{{ def.label }}</label>
+                <label :for="'p_' + key">{{ def.label }}</label>
                 <span>{{ params[key] }}</span>
               </div>
-              <input :id="'p_'+key" type="range"
-                :min="def.min ?? 0" :max="def.max ?? 100" :step="def.step ?? 1"
-                v-model.number="params[key]" @input="draw"
-                style="width:100%;margin:2px 0" />
+              <input :id="'p_' + key" type="range" :min="def.min ?? 0" :max="def.max ?? 100" :step="def.step ?? 1"
+                v-model.number="params[key]" @input="draw" style="width:100%;margin:2px 0" />
             </template>
             <template v-else-if="def.type === 'boolean'">
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer">

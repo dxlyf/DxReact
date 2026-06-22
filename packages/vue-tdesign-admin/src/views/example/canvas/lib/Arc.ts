@@ -249,18 +249,18 @@ export interface CubicBezier {
  * @param cy        椭圆中心 y
  * @param rx        椭圆 x 半轴
  * @param ry        椭圆 y 半轴
+ * @param xAxisRotation x 轴旋转角（弧度）
  * @param startAngle 起始角（弧度）
  * @param deltaAngle 角度跨度（弧度），正值逆时针
- * @param xAxisRotation x 轴旋转角（弧度）
  */
 export function arcToCubic(
   cx: number,
   cy: number,
   rx: number,
   ry: number,
-  startAngle: number,
-  deltaAngle: number,
   xAxisRotation: number,
+  startAngle: number,
+  deltaAngle: number
 ): CubicBezier {
   const sinRot = Math.sin(xAxisRotation)
   const cosRot = Math.cos(xAxisRotation)
@@ -319,10 +319,10 @@ export function arcToCubic(
  * @param cy        椭圆中心 y
  * @param rx        椭圆 x 半轴
  * @param ry        椭圆 y 半轴
+ * @param xAxisRotation x 轴旋转角（弧度）
  * @param startAngle 起始角（弧度）
  * @param endAngle   结束角（弧度）
  * @param counterclockwise 是否逆时针，默认 false（顺时针）
- * @param xAxisRotation x 轴旋转角（弧度）
  * @param segmentAngle 每段最大角度（弧度），默认 π/2（90°）
  */
 export function ellipseToCubics(
@@ -330,35 +330,36 @@ export function ellipseToCubics(
   cy: number,
   rx: number,
   ry: number,
+  xAxisRotation: number = 0,
   startAngle: number,
   endAngle: number,
   counterclockwise: boolean = false,
-  xAxisRotation: number = 0,
   segmentAngle: number = Math.PI / 2,
 ): CubicBezier[] {
   const result: CubicBezier[] = []
 
-  // 根据方向计算扫描角
-  // Canvas 坐标系 y 向下，数学正角 = 视觉顺时针
-  // counterclockwise=false → 视觉顺时针 → sweepAngle 为正
-  // counterclockwise=true  → 视觉逆时针 → sweepAngle 为负
-  let sweepAngle: number = endAngle - startAngle
-  if (!counterclockwise && sweepAngle < 0) {
-    sweepAngle += 2 * Math.PI
-  } else if (counterclockwise && sweepAngle > 0) {
-    sweepAngle -= 2 * Math.PI
-  }
-
-  if (Math.abs(sweepAngle) < 1e-15) return result
-
+//   // 根据方向计算扫描角
+//   // Canvas 坐标系 y 向下，数学正角 = 视觉顺时针
+//   // counterclockwise=false → 视觉顺时针 → sweepAngle 为正
+//   // counterclockwise=true  → 视觉逆时针 → sweepAngle 为负
+//   let sweepAngle: number = endAngle - startAngle
+//   if (!counterclockwise && sweepAngle < 0) {
+//     sweepAngle += 2 * Math.PI
+//   } else if (counterclockwise && sweepAngle > 0) {
+//     sweepAngle -= 2 * Math.PI
+//   }
+ const {startAngle:newStartAngle,endAngle:newEndAngle}=normalizeAngles(startAngle,endAngle,counterclockwise)
+//  if (Math.abs(sweepAngle) < 1e-15) return result
+  const sweepAngle=newEndAngle-newStartAngle
   const totalAngle = Math.abs(sweepAngle)
   // 计算分段数，保证每段不超过 segmentAngle
+  
   const count = Math.max(1, Math.ceil(totalAngle / segmentAngle))
   const delta = sweepAngle / count
 
-  let angle = startAngle
+  let angle = newStartAngle
   for (let i = 0; i < count; i++) {
-    const seg = arcToCubic(cx, cy, rx, ry, angle, delta, xAxisRotation)
+    const seg = arcToCubic(cx, cy, rx, ry,xAxisRotation, angle, delta)
     result.push(seg)
     angle += delta
   }
