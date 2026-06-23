@@ -4,12 +4,17 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
- import { viteMockServe } from 'vite-plugin-mock'
+import { viteMockServe } from 'vite-plugin-mock'
+import VueRouter from 'vue-router/vite'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export default defineConfig(({ command }) => {
   const plugins: any[] = [
+    VueRouter({
+      /* options */
+    }),
     vue(),
     vueJsx(),
     AutoImport({
