@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite';
+import { TDesignResolver } from '@tdesign-vue-next/auto-import-resolver';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { viteMockServe } from 'vite-plugin-mock'
@@ -18,13 +20,23 @@ export default defineConfig(({ command }) => {
     vue(),
     vueJsx(),
     AutoImport({
+      resolvers: [TDesignResolver({
+        library: 'vue-next'
+      })],
       imports: ['vue', 'vue-router', 'pinia'],
       dts: 'src/auto-imports.d.ts',
+    }),
+    Components({
+    //  dirs: ['src/pages','src/components'],
+      resolvers: [TDesignResolver({
+        library:'vue-next'  
+      })],
+      dts: 'src/components.d.ts',
     }),
   ]
 
   if (command === 'serve') {
-  
+
     plugins.push(
       viteMockServe({
         mockPath: 'mock',

@@ -1,18 +1,13 @@
 import { defineStore } from 'pinia'
 
+export const useAppStore = defineStore('app',()=>{
 
-export const useAppStore = defineStore('app', {
-    state: () => ({
-        initialized: false,
-    }),
-    getters: {
-        getInitialized(state){
-            return state.initialized
+    const initialized=ref(false)
+    const initialize=async()=>{
+        if(initialized.value){
+            return
         }
-    },
-    actions: {
-        async initialize(){
-            this.initialized = true
-        }
+        initialized.value=true
     }
+    return {initialized,initialize}
 })

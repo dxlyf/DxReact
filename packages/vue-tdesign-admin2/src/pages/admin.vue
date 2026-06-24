@@ -1,9 +1,11 @@
 <script setup lang="ts">
+    import {useUserStore} from '@/store/userStore'
+    const userStore=useUserStore()
 
+    onMounted(()=>{
+         userStore.getCurrentUserInfo()
+    })
 </script>
 <template>
-    <div>
-        管理员
-        <router-view></router-view>
-    </div>
+   <t-layout></t-layout>
 </template>

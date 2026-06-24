@@ -1,33 +1,27 @@
 
 import { defineStore } from 'pinia'
+import { login, getCurrentUserInfo, type UserInfo } from '@/api/user'
 
-type UserInfo = {
-    username: string
-    avatar: string
-    isSuperAdmin: boolean
-}
-type UserStore={
+type UserStore = {
     userInfo: UserInfo | null
 }
-export const useUserStore = defineStore<'user', UserStore>('user', {
+export const useUserStore = defineStore('user', {
     state: () => ({
-         userInfo: null
-    }),
+        userInfo: null
+    } as UserStore),
     getters: {
-     
+
     },
     actions: {
-      async getCurrentUserInfo(){
-        return {
-            username:'admin',
-            avatar:'',
-            isSuperAdmin: true
-        } as UserInfo
-      },
-      async login(username:string, password:string){
-           if(username === 'admin' && password === '123456'){
-                
-           }
-      }
+        async getCurrentUserInfo() {
+            const res = await getCurrentUserInfo()
+            this.userInfo = res.data
+        },
+        async login(username: string, password: string) {
+            const res = await login(username, password)
+            if (res) {
+                 await this.getCurrentUserInfo()
+            }
+        }
     }
 })
