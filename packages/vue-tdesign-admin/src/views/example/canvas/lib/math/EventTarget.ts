@@ -1,6 +1,6 @@
 export type EventHandle<D = any> = (data: D) => void
 export type EventHandles = Record<string, any>
-export class Event<T, D> {
+export class Event<T=string, D=any> {
     target: EventTarget = null
     currentTarget: EventTarget = null
     type: T
@@ -54,7 +54,7 @@ export class EventTarget<T extends EventHandles = any> {
                 }
             }
         }
-        if (!event.stopPropagation && this.parent) {
+        if (!event.stopped && this.parent) {
             this.parent.dispatchEvent(event)
         }
     }
