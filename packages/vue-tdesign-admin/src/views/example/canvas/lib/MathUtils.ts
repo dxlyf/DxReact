@@ -44,8 +44,67 @@ export const smoothStep = (t: number) => {
 export const mix=(value:number,start:number, end:number)=>{
     return clamp((value-start)/(end-start),0,1)
 }
+const factorialCache: number[] = [1, 1]
 
+/**
+ * 计算阶乘，使用缓存优化性能
+ */
+export const factorial = (n: number): number => {
+    if (n < 0) return NaN
+    if (n === 0 || n === 1) return 1
+    
+    // 如果缓存中已有，直接返回
+    if (factorialCache[n] !== undefined) {
+        return factorialCache[n]
+    }
+    
+    // 从已缓存的最大值开始计算
+    let result = factorialCache[factorialCache.length - 1]
+    for (let i = factorialCache.length; i <= n; i++) {
+        result *= i
+        factorialCache[i] = result
+    }
+    
+    return result
+}
 
+/**
+ * 计算组合数 C(n,k) = n! / (k! * (n-k)!)
+ * 使用递推公式优化，避免大数溢出
+ */
+export const nCr = (n: number, k: number): number => {
+    if (k < 0 || k > n) return 0
+    if (k === 0 || k === n) return 1
+    
+    // 利用对称性减少计算
+    if (k > n - k) {
+        k = n - k
+    }
+    
+    // 使用递推公式 C(n,k) = C(n,k-1) * (n-k+1) / k
+    let result = 1
+    for (let i = 1; i <= k; i++) {
+        result = result * (n - i + 1) / i
+    }
+    
+    return result
+}
+
+/**
+ * 计算排列数 P(n,k) = n! / (n-k)!
+ */
+export const nPr = (n: number, k: number): number => {
+    if (k < 0 || k > n) return 0
+    if (k === 0) return 1
+    
+    // 直接连乘，避免计算完整阶乘
+    let result = 1
+    for (let i = 0; i < k; i++) {
+        result *= n - i
+    }
+    
+    return result
+}
 
 /**
  * 求解一元二次方程 ax² + bx + c = 0（a ≠ 0）

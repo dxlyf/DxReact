@@ -96,7 +96,7 @@ watch(()=>formData.linkType,(val)=>{
                },
                message:'支持#fff、#ffffff、rgb(r,g,b)、rgba(r,g,b,a)格式的颜色'
             }]"  >
-            <t-color-picker :enable-alpha="true" :show-primary-color-preview="true" :color-modes="['monochrome']" v-model="formData.color" />
+            <t-color-picker :enable-alpha="true" format="RGBA" :recentColors="true" :swatch-colors="null" :show-primary-color-preview="true" :color-modes="['monochrome']" v-model="formData.color" />
         </t-form-item>
        <div class="flex">
           <t-form-item label="链接类型" name="linkType" class="flex-1">

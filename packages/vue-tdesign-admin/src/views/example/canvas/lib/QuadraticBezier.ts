@@ -1,6 +1,8 @@
+import { solveCubicByCardano, solveQuadratic } from './MathUtils'
+import {Vector2,type Vector2Like} from './Vector2'
 export class QuadraticBezier {
-    points: IPoint[]
-    constructor(points: IPoint[]) {
+    points: Vector2Like[]
+    constructor(points: Vector2Like[]) {
         this.points = points
     }
     get p0() {
@@ -14,7 +16,7 @@ export class QuadraticBezier {
     }
     // 计算贝塞尔曲线上的点
     evaluate(t: number) {
-        return new Point(
+        return Vector2.create(
             this.p0.x * (1 - t) * (1 - t) + this.p1.x * t * (1 - t) + this.p2.x * t * t,
             this.p0.y * (1 - t) * (1 - t) + this.p1.y * t * (1 - t) + this.p2.y * t * t
         )
@@ -51,7 +53,7 @@ export class QuadraticBezier {
     // 获取边界框
     getBounds(): { minX: number; minY: number; maxX: number; maxY: number } {
         const extrema = this.getExtremaRoots();
-        const points: IPoint[] = [this.p0, this.p2];
+        const points: Vector2Like[] = [this.p0, this.p2];
 
         // 添加极值点
         for (const t of extrema) {
@@ -135,12 +137,12 @@ export class QuadraticBezier {
     /**
      * 将二次贝塞尔曲线扁平化为线段序列
      * @param epsilon - 近似误差容限（默认 0.5）
-     * @returns IPoint[] 点序列（包含起点和终点）
+     * @returns Vector2Like[] 点序列（包含起点和终点）
      */
-    flatten(epsilon = 0.5): IPoint[] {
-        const points: IPoint[] = [this.p0]
+    flatten(epsilon = 0.5): Vector2Like[] {
+        const points: Vector2Like[] = [this.p0]
 
-        const recursive = (p0: IPoint, p1: IPoint, p2: IPoint) => {
+        const recursive = (p0: Vector2Like, p1: Vector2Like, p2: Vector2Like) => {
             // 判断曲线是否足够平坦：控制点到弦的距离 < epsilon
             const vx = p2.x - p0.x
             const vy = p2.y - p0.y

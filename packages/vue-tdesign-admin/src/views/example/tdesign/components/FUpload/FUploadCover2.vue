@@ -32,6 +32,9 @@ type Props={
   subtitle?:string
   skipLoadCheck?:boolean
   autoUpload?:boolean
+  containerWidth?:number
+  containerHeight?:number
+  contaienrStyle?:Object
 }
 
 const props=withDefaults(defineProps<Props>(),{
@@ -42,9 +45,18 @@ const props=withDefaults(defineProps<Props>(),{
   extension:()=>['png','jpg','jpeg','gif','svg'],
   subtitle:'支持jpg、png、gif、svg格式',
   tip:'',
-  autoUpload:true
+  autoUpload:true,
+  containerWidth:550,
+  containerHeight:60,
+  contaienrStyle:()=>({width:'560px',height:'63px'})
  // skipLoadCheck:false
 })
+// const containerStyle=computed(()=>{
+//   return {
+//     width:props.containerWidth+'px',
+//     height:props.containerHeight+'px',
+//   }
+// })
 const limit = computed(() => {
     return {
         size: 2,
@@ -306,25 +318,24 @@ const headers=customRef((track,trigger)=>{
         </div>
       </template>
       </t-upload>
-      <div class="w-[300px] h-[225px] relative group" v-if="!showUpload">
+      <div :style="contaienrStyle" class="relative group" v-if="!showUpload">
         <div v-if="state.showProgress" class="border border-gray-300 bg-gray-200 rounded-xs absolute top-0 w-full h-full z-10 flex flex-col justify-center items-center" >
           <!-- <t-progress theme="circle"  color="#00ff00" :percentage="state.progress" :laebl="false"></t-progress> -->
           <t-loading />
           <div class="mt-4">上传中{{state.progress}}%</div>
         </div>
          <template v-if="showImage">
-          <t-image   class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
-         <t-image-viewer  @close="state.showPreview=false" :images="[imageUrl]" :visible="state.showPreview"></t-image-viewer>
+          <t-image  class="w-full h-full" :src="imageUrl||state.thumbnailUrl"></t-image>
+         <t-image-viewer  @close="state.showPreview=false" :images="[imageUrl||state.thumbnailUrl]" :visible="state.showPreview"></t-image-viewer>
          <div  class="absolute inset-0 z-2 bg-[rgba(0,0,0,0.5)]  opacity-0 flex flex-col group-hover:opacity-100 duration-300 transition-all items-center justify-center">
             <div class="flex justify-center text-white gap-4">
               <t-icon name="browse" size="20" class="cursor-pointer" @click="state.showPreview=true"></t-icon>     
               <t-icon name="delete" size="20"  :class="[disabled?'text-gray-400 cursor-not-allowed':'cursor-pointer']" :disabled="disabled" @click="handleDelete"></t-icon>
-      
             </div>
-            <div class="text-white mt-4">{{ fileName }}</div>
          </div>
          </template>
       </div>
+       <div class="text-white mt-4">{{ fileName }}</div>
       <div class="text-gray-500 text-xs mt-1" v-if="tips!==''||$slots.tips">
         <slot name="tips">{{tips}}</slot>
       </div>

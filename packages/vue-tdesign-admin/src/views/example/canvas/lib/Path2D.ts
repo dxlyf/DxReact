@@ -1,4 +1,8 @@
-
+import {normalizeAngles,arcToCubic} from './Arc'
+import { CubicBezier } from './CubicBezier'
+import { QuadraticBezier } from './QuadraticBezier'
+import { BoundingRect } from './BoundingRect'
+import { Matrix2DLike } from './Matrix2D'
 export type IPoint = {
     x: number
     y: number
@@ -17,34 +21,7 @@ export const PathVerbCount = {
     [PathVerb.CubicTo]: 3,
     [PathVerb.Close]: 0,
 }
-export class Point {
-    static create(x: number, y: number) {
-        return new Point(x, y)
-    }
-    x: number
-    y: number
-    constructor(x: number, y: number) {
-        this.x = x
-        this.y = y
-    }
-    dot(p: Point) {
-        return this.x * p.x + this.y * p.y
-    }
-    // 计算点之间的角度
-    angleTo(p: Point) {
-        return Math.atan2(this.y - p.y, this.x - p.x)
-    }
-    cross(p: Point) {
-        return this.x * p.y - this.y * p.x
-    }
-    length() {
-        return Math.sqrt(this.x ** 2 + this.y ** 2)
-    }
-    // 计算点之间的距离
-    distanceTo(p: Point) {
-        return Math.sqrt((this.x - p.x) ** 2) + ((this.y - p.y) * (this.y - p.y))
-    }
-}
+
 
 function windLine(x: number, y: number, x0: number, y0: number, x1: number, y1: number): number {
     // 水平线段：射线与线段平行，不贡献绕数
@@ -60,51 +37,29 @@ function windLine(x: number, y: number, x0: number, y0: number, x1: number, y1: 
     }
     return 0
 }
-function normalizeAngle(angle: number): number {
-    angle = angle % (2 * Math.PI);
-    if (angle < 0) angle += 2 * Math.PI;
-    return angle;
-}
 
-function normalizeAngles(startAngle: number, endAngle: number, ccw: boolean = false) {
-    const tau = Math.PI * 2
-    let newStartAngle = startAngle % tau;
-    if (newStartAngle <= 0) {
-        newStartAngle += tau;
-    }
-    let delta = newStartAngle - startAngle;
-    startAngle = newStartAngle;
-    endAngle += delta;
-
-    if (!ccw && (endAngle - startAngle) >= tau) {
-        endAngle = startAngle + tau;
-    }
-    else if (ccw && (startAngle - endAngle) >= tau) {
-        endAngle = startAngle - tau;
-    }
-    else if (!ccw && startAngle > endAngle) {
-        endAngle = startAngle + (tau - (startAngle - endAngle) % tau);
-    }
-    else if (ccw && startAngle < endAngle) {
-        endAngle = startAngle - (tau - (endAngle - startAngle) % tau);
-    }
-    return { startAngle, endAngle }
-}
 
 export class Path2D {
     verbs: PathVerb[]
     points: IPoint[]
     lastMoveIndex: number = -1
     needMoveTo: boolean = true
+    private _bounds: BoundingRect | null = null
+    private _boundsDirty: boolean = true
     constructor() {
         this.verbs = []
         this.points = []
+    }
+    private _markDirty() {
+        this._boundsDirty = true
     }
     reset() {
         this.verbs = []
         this.points = []
         this.lastMoveIndex = -1
         this.needMoveTo = true
+        this._bounds = null
+        this._boundsDirty = true
     }
     get lastVerb() {
         return this.verbs[this.verbs.length - 1]
@@ -140,17 +95,20 @@ export class Path2D {
         }
         this.lastMoveIndex = this.points.length - 1
         this.needMoveTo = false
+        this._markDirty()
     }
     lineTo(x: number, y: number) {
         this.ensureMove()
         this.verbs.push(PathVerb.LineTo)
         this.points.push({ x, y })
+        this._markDirty()
     }
     quadraticCurveTo(cpX: number, cpY: number, x: number, y: number) {
         this.ensureMove()
         this.verbs.push(PathVerb.QuadraticTo)
         this.points.push({ x: cpX, y: cpY })
         this.points.push({ x, y })
+        this._markDirty()
     }
     bezierCurveTo(cpX1: number, cpY1: number, cpX2: number, cpY2: number, x: number, y: number) {
         this.ensureMove()
@@ -158,6 +116,7 @@ export class Path2D {
         this.points.push({ x: cpX1, y: cpY1 })
         this.points.push({ x: cpX2, y: cpY2 })
         this.points.push({ x, y })
+        this._markDirty()
     }
     conicTo(cpX: number, cpY: number, x: number, y: number, weight: number) {
         const k = (4 * weight) / (3 * (weight + 1))
@@ -257,7 +216,6 @@ export class Path2D {
         startAngle: number, endAngle: number,
         counterclockwise = false,
     ): void {
-
         const {startAngle:startNorm,endAngle:endNorm}=normalizeAngles(startAngle,endAngle,counterclockwise)
        
         const delta = endNorm - startNorm
@@ -563,7 +521,7 @@ export class Path2D {
         this.lineTo(x, y + r)
         if (r > 0) this.arcTo(x, y, x + r, y, r)
 
-        this.close()
+        this.closePath()
     }
 
     /**
@@ -647,15 +605,21 @@ export class Path2D {
         this.ellipse(cx, cy, rx, ry, rotation, startAngle, endAngle, !sweepFlag)
     }
 
-    close() {
+    closePath() {
         if (!this.isEmpty) {
             if (this.lastVerb !== PathVerb.Close) {
                 this.verbs.push(PathVerb.Close)
             }
             this.needMoveTo = true
         }
+        this._markDirty()
     }
-    contains(px: number, py: number): boolean {
+    transform(matrix: Matrix2DLike) {
+        
+    }
+    isPointInPath(px: number, py: number, fillRule: 'nonzero' | 'evenodd' = 'nonzero'): boolean {
+        const bounds = this.getBounds()
+        if (!bounds.containsPoint(px, py)) return false
         let wind = 0
         this.visit({
             lineTo: (lastX, lastY, x, y) => {
@@ -678,12 +642,11 @@ export class Path2D {
             },
             close: (lastX, lastY) => {
                 if (lastX !== this.lastMovePoint.x || lastY !== this.lastMovePoint.y) {
-
                     wind += windLine(px, py, lastX, lastY, this.lastMovePoint.x, this.lastMovePoint.y)
                 }
             },
         })
-        return wind !== 0
+        return fillRule === 'evenodd' ? (wind & 1) !== 0 : wind !== 0
     }
     forEach(callback: (verb: PathVerb, index: number, points: IPoint[]) => void) {
         let start = 0, end = 0
@@ -749,7 +712,10 @@ export class Path2D {
      * 计算路径的包围盒
      * @returns { minX, minY, maxX, maxY } 包围盒，路径为空时返回 null
      */
-    getBounds(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    getBounds(): BoundingRect {
+        if (!this._boundsDirty) {
+            return this._bounds
+        }
         let minX = Infinity
         let minY = Infinity
         let maxX = -Infinity
@@ -784,7 +750,15 @@ export class Path2D {
             },
             close: (lastX, lastY) => update(lastX, lastY),
         })
-
-        return hasPoints ? { minX, minY, maxX, maxY } : null
+        if(!this._bounds){
+            this._bounds = new BoundingRect()
+        }
+        if(hasPoints){
+            this._bounds.set(minX, minY, maxX, maxY)
+        }else{
+            this._bounds.empty()
+        }
+        this._boundsDirty = false
+        return this._bounds
     }
 }

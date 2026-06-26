@@ -259,7 +259,7 @@ const handleSubmit: TdFormProps['onSubmit'] = async (e) => {
                         </template>
                     </t-form-item>
                      <t-form-item label="图片"  name="cover">
-                        <FUploadCover2 :autoUpload="true"  :limit="{width:200,height:200}" v-model="formData.cover" v-model:rawfile="formData.coverFile" />
+                        <FUploadCover2 :autoUpload="false"  :limit="{width:200,height:200}" v-model="formData.cover" v-model:rawfile="formData.coverFile" />
                     </t-form-item>
                     <t-form-item label="Icon" name="iconUrl">
                         <UploadImage :limit="{width:200,height:200}" v-model="formData.iconUrl" v-model:rawfile="formData.iconFile" />
