@@ -145,17 +145,36 @@ const onDragSort:TableProps['onDragSort'] = ({ currentIndex, targetIndex,newData
                 {{ row.floatComment || '-' }}
             </template>
             <template #image="{ row }">
-                <template v-if="row.type === 'image' && row.imageUrl">
-                    <t-image-viewer attach="body" :images="[row.imageUrl]" :z-index="1000">
-                        <template #trigger="{ open }">
-                            <t-image
-                                style="width: 50px; height: 50px; cursor: pointer; border-radius: 4px;"
-                                :src="row.imageUrl"
-                                fit="cover"
-                                @click="open"
-                            />
-                        </template>
-                    </t-image-viewer>
+                <template v-if="row.type === 'image'">
+                    <div class="flex gap-2">
+                        <div v-if="row.imageUrlDark" class="flex flex-col items-center">
+                            <t-image-viewer attach="body" :images="[row.imageUrlDark]" :z-index="1000">
+                                <template #trigger="{ open }">
+                                    <t-image
+                                        style="width: 50px; height: 50px; cursor: pointer; border-radius: 4px;"
+                                        :src="row.imageUrlDark"
+                                        fit="cover"
+                                        @click="open"
+                                    />
+                                </template>
+                            </t-image-viewer>
+                            <span class="text-xs text-gray-400 mt-0.5">黑底</span>
+                        </div>
+                        <div v-if="row.imageUrlLight" class="flex flex-col items-center">
+                            <t-image-viewer attach="body" :images="[row.imageUrlLight]" :z-index="1000">
+                                <template #trigger="{ open }">
+                                    <t-image
+                                        style="width: 50px; height: 50px; cursor: pointer; border-radius: 4px; border: 1px solid #eee;"
+                                        :src="row.imageUrlLight"
+                                        fit="cover"
+                                        @click="open"
+                                    />
+                                </template>
+                            </t-image-viewer>
+                            <span class="text-xs text-gray-400 mt-0.5">白底</span>
+                        </div>
+                        <span v-if="!row.imageUrlDark && !row.imageUrlLight" class="text-gray-400">-</span>
+                    </div>
                 </template>
                 <span v-else>-</span>
             </template>
@@ -198,7 +217,16 @@ const onDragSort:TableProps['onDragSort'] = ({ currentIndex, targetIndex,newData
                 <template #label>
                     参数图片 <span class="text-xs text-gray-400">(全局)</span>
                 </template>
-                <FUploadImage v-model="editingFeatureCopy.imageUrl" />
+                <div class="flex gap-4 w-full">
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="text-xs text-center mb-1">黑底</div>
+                        <FUploadImage v-model="editingFeatureCopy.imageUrlDark" />
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="text-xs text-center mb-1">白底</div>
+                        <FUploadImage v-model="editingFeatureCopy.imageUrlLight" />
+                    </div>
+                </div>
             </t-form-item>
             <t-form-item label="参数文案" key="text" v-if="editingFeatureCopy.type === 'text'">
                 <t-input v-model.trim="editingFeatureCopy.content" placeholder="请输入参数文案" :maxlength="10" show-limit-number />

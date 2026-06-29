@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
+import vueDevtools from 'vite-plugin-vue-devtools'
 import { TDesignResolver } from '@tdesign-vue-next/auto-import-resolver';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +32,7 @@ export default defineConfig({
     // }
   },
   plugins: [
-vue(), vueJsx(),viteMockServe({
+vue(), vueJsx(),vueDevtools(),viteMockServe({
         mockPath: 'mock',
         enable: true,
       }),svgLoader(), tailwindcss(),    Components({

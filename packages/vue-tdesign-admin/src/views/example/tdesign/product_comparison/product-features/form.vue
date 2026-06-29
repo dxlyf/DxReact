@@ -8,6 +8,7 @@ import type { FeatureItem } from './FeatureList.vue';
 import { MessagePlugin, type UploadFile } from 'tdesign-vue-next';
 import { useDialog } from '@/hooks/useDialog';
 import { usePolling } from '@/hooks/usePolling';
+import * as XLSX from 'xlsx';
 
 type Props = {
     type: 'create' | 'edit' | 'copy'
@@ -268,12 +269,45 @@ const handleSubmit = async (e: any) => {
         submitLoading.value = false
     }
 }
+
+const handleDownloadTemplate = () => {
+    if (!formData.category || !formData.features.length) {
+        MessagePlugin.warning('请先选择关联关键特性分类')
+        return
+    }
+
+    const productNames = productOptions.map(p => p.label)
+    const featureTitles = formData.features.map(f => f.title)
+
+    // Header row: 产品名称 + 各特性标题
+    const header = ['产品名称', ...featureTitles]
+    const data = [header]
+
+    // Data rows: one row per product
+    productNames.forEach(name => {
+        const row = [name, ...featureTitles.map(() => '')]
+        data.push(row)
+    })
+
+    const ws = XLSX.utils.aoa_to_sheet(data)
+
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 15 }, // 产品名称
+        ...featureTitles.map(() => ({ wch: 20 }))
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, '导入模板')
+    XLSX.writeFile(wb, '产品特性分类模板.xlsx')
+}
 </script>
 
 <template>
     <MainLayout layout="edit" :loading="detail.loading" :show-not-found="!!detail.error" :title="pageInfo.title" :breadcrumb-options="breadcrumbOptions">
         <template #operation>
             <t-space>
+                <t-button theme="default" @click="handleDownloadTemplate">下载导入模板</t-button>
                 <t-button theme="default" @click="handleImport">导入</t-button>
                 <t-button theme="default">导出</t-button>
                 <t-button theme="default" :disabled="submitLoading" @click="handleReturn">返回</t-button>

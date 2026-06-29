@@ -54,6 +54,7 @@ declare module 'vue' {
     TContent: typeof import('tdesign-vue-next')['Content']
     TDatePicker: typeof import('tdesign-vue-next')['DatePicker']
     TDialog: typeof import('tdesign-vue-next')['Dialog']
+    TDrawer: typeof import('tdesign-vue-next')['Drawer']
     TDropdown: typeof import('tdesign-vue-next')['Dropdown']
     TFooter: typeof import('tdesign-vue-next')['Footer']
     TForm: typeof import('tdesign-vue-next')['Form']
@@ -81,6 +82,7 @@ declare module 'vue' {
     TTabs: typeof import('tdesign-vue-next')['Tabs']
     TTag: typeof import('tdesign-vue-next')['Tag']
     TTextarea: typeof import('tdesign-vue-next')['Textarea']
+    TTooltip: typeof import('tdesign-vue-next')['Tooltip']
     TTypographyParagraph: typeof import('tdesign-vue-next')['Paragraph']
     TUpload: typeof import('tdesign-vue-next')['Upload']
   }
@@ -130,6 +132,7 @@ declare global {
   const TContent: typeof import('tdesign-vue-next')['Content']
   const TDatePicker: typeof import('tdesign-vue-next')['DatePicker']
   const TDialog: typeof import('tdesign-vue-next')['Dialog']
+  const TDrawer: typeof import('tdesign-vue-next')['Drawer']
   const TDropdown: typeof import('tdesign-vue-next')['Dropdown']
   const TFooter: typeof import('tdesign-vue-next')['Footer']
   const TForm: typeof import('tdesign-vue-next')['Form']
@@ -157,6 +160,7 @@ declare global {
   const TTabs: typeof import('tdesign-vue-next')['Tabs']
   const TTag: typeof import('tdesign-vue-next')['Tag']
   const TTextarea: typeof import('tdesign-vue-next')['Textarea']
+  const TTooltip: typeof import('tdesign-vue-next')['Tooltip']
   const TTypographyParagraph: typeof import('tdesign-vue-next')['Paragraph']
   const TUpload: typeof import('tdesign-vue-next')['Upload']
 }

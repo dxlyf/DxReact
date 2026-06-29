@@ -9,6 +9,8 @@ export interface FeatureItem {
     title: string
     type: 'text' | 'image'
     imageUrl?: string
+    imageUrlDark?: string
+    imageUrlLight?: string
     content?: string
     prefix?: string
     description?: string
