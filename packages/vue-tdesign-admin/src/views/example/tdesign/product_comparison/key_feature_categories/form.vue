@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import MainLayout from 'src/views/example/tdesign/components/Layouts/MainLayout.vue';
-import { computed, reactive, ref, shallowRef, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRequest } from 'src/hooks/useRequest2';
 import FeatureList from './FeatureList.vue';
 import type { FeatureItem } from './FeatureList.vue';
-import { MessagePlugin, type UploadFile } from 'tdesign-vue-next';
-import { useDialog } from '@/hooks/useDialog';
-import { usePolling } from '@/hooks/usePolling';
+import ImportDialog from './ImportDialog.vue';
 
 type Props = {
     id?: string
@@ -112,104 +110,14 @@ watch(() => formData.productGroupId, (val, oldVal) => {
 
 
 const formRef = ref()
+const importDialogRef = ref()
 const submitLoading = ref(false)
 const collapseRef = ref()
 const expandedPanel = ref(['basic', 'features'])
 
-const importFile = shallowRef<UploadFile[]>([])
-const importLoading = ref(false)
-
-const confirmLoading = computed(() => importLoading.value || pollingState.value === 'polling')
-
-const mockImportApi = async (): Promise<{ code: number; data: { jobId: number } }> => {
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  return { code: 0, data: { jobId: Date.now() } }
-}
-
-const mockPollJobApi = async (jobId: number) => {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return {
-    jobId,
-    status: 'importing',
-    message: '导入中...',
-    slug: `key-feature-category-${jobId}`
-  }
-}
-
-const {
-  pollingState,
-  pollingCount,
-  lastResult,
-  start: startPolling,
-  stop: stopPolling,
-  resetPollingState
-} = usePolling(async (jobId: number) => {
-  if (pollingCount.value >= 5) {
-    stopPolling()
-    return {
-      jobId,
-      status: 'finished',
-      message: '导入完成',
-      slug: `key-feature-category-${jobId}`
-    }
-  }
-  return mockPollJobApi(jobId)
-}, {
-  interval: 2000,
-  maxRetries: 10,
-  onError: (err) => {
-    MessagePlugin.error(err.message)
-  }
-})
-
-const [dialogProps, dialogInst] = useDialog(() => ({
-  header: '导入数据',
-  autoHeight: true,
-  width: 520,
-  confirmBtn: { loading: importLoading.value, theme: 'primary' as const, content: '确定导入' },
-  onConfirm: handleImportConfirm,
-  onClose: () => {
-    importFile.value = []
-    stopPolling()
-    resetPollingState()
-  }
-}))
-
 const handleImport = async () => {
-  const validateResult = await formRef.value?.validate()
-  if (validateResult !== true) {
-    return
-  }
-  importFile.value = []
-  dialogInst.open()
+  importDialogRef.value?.open(props.type === 'edit' ? props.id : undefined)
 }
-
-async function handleImportConfirm() {
-  if (!importFile.value.length) {
-    MessagePlugin.warning('请选择要上传的文件')
-    return
-  }
-  try {
-    importLoading.value = true
-    const res = await mockImportApi()
-    if (res.code === 0) {
-      startPolling(res.data.jobId)
-    }
-  } catch {
-    MessagePlugin.error('导入请求失败')
-  } finally {
-    importLoading.value = false
-  }
-}
-
-watch(pollingState, (state) => {
-  if (state === 'stopped') {
-    if (lastResult.value?.status === 'finished') {
-      MessagePlugin.success('导入成功')
-      dialogInst.close()
-    }
-  }
-})
 
 const handleFeatureAdd = () => {
     if (!expandedPanel.value.includes('features')) {
@@ -286,64 +194,12 @@ const handleReturn = () => {
             </div>
         </t-form>
     </MainLayout>
-    <t-dialog v-bind="dialogProps">
-      <t-form :data="{ file: importFile }" label-align="top" label-width="80">
-        <t-form-item label="上传文件" name="file" :rules="[{ required: true, message: '请选择文件' }]">
-          <t-upload v-model="importFile" theme="file" action="/api/import" :size-limit="{ size: 10, unit: 'MB' }" accept=".xlsx,.xls,.csv" :auto-upload="false" :disabled="pollingState === 'polling'" />
-        </t-form-item>
-        <div v-if="pollingState === 'polling' || lastResult" class="mt-4">
-          <table class="job-table">
-            <thead>
-              <tr>
-                <th>Slug</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="lastResult && lastResult.status === 'finished'">
-                <td>{{ lastResult.slug }}</td>
-                <td>
-                  <t-tag theme="success" variant="light">导入完成</t-tag>
-                </td>
-              </tr>
-              <tr v-else-if="lastResult">
-                <td>{{ lastResult.slug }}</td>
-                <td>
-                  <t-loading size="small" :text="lastResult.message || '导入中...'" />
-                </td>
-              </tr>
-              <tr v-else>
-                <td colspan="2" class="text-center">
-                  <t-loading size="small" text="正在提交导入请求..." />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div></div>
-      </t-form>
-    </t-dialog>
+    <ImportDialog ref="importDialogRef" slug-prefix="key-feature-category" :mode="props.type === 'edit' ? 'edit' : 'create'" />
 </template>
 
 <style scoped>
 :deep(.t-collapse-panel__content),
 :deep(.t-collapse-panel__header) {
     background: #fff;
-}
-.job-table{
-    width: 100%;
-    border-collapse: collapse;
-}
-.job-table :deep(:where(td,th)){
-    border: solid 1px rgba(0,0,0,0.2);
-    text-align: center;
-}
-.job-table :deep(thead th){
-    font-weight: 700;
-    padding: 4px 0;
-    background-color: rgba(0,0,0,0.1);
-}
-.job-table :deep(tbody td){
-    padding: 8px 0;
 }
 </style>

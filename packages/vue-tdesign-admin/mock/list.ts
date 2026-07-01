@@ -316,6 +316,27 @@ export default [
       res.statusCode = 200
       res.end(`hello, ${reqbody}`)
     },
+  }, {
+        url: '/api/timeout',
+        method:'post',
+        rawResponse(req,res){
+        
+        }
+  },
+  {
+        url: '/api/401',
+        statusCode:401,
+        method:'post'
+  },
+    {
+        url: '/api/500',
+        statusCode:500,
+        method:'post'
+  },
+    {
+        url: '/api/403',
+        statusCode:403,
+        method:'post'
   },
 ] as MockMethod[]
 
