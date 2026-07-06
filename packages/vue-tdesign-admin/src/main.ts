@@ -1,6 +1,6 @@
 import { computed, createApp, h, defineComponent, getCurrentInstance, createRenderer, nodeOps, type VNode } from 'vue'
 import App from './App.vue'
-import router from './router'
+import router from './router/new.ts'
 import {router as PageRouter} from './router/pageRouter'
 import pinia from './stores'
 import Antd from 'ant-design-vue';

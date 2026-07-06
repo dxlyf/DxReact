@@ -1,6 +1,6 @@
 
 import { defineStore } from 'pinia'
-import { login, getCurrentUserInfo, type UserInfo } from '@/api/user'
+import { login, getCurrentUserInfo, type UserInfo } from '@/api/modules/user'
 
 type UserStore = {
     userInfo: UserInfo | null
@@ -20,8 +20,9 @@ export const useUserStore = defineStore('user', {
         async login(username: string, password: string) {
             const res = await login(username, password)
             if (res) {
-                 await this.getCurrentUserInfo()
+                 return true
             }
+            return false
         }
     }
 })

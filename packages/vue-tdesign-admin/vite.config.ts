@@ -13,12 +13,22 @@ import { TDesignResolver } from '@tdesign-vue-next/auto-import-resolver';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const canvaskitDir = path.resolve(__dirname, 'lib/canvaskit/0.41.1');
+
 // https://vite.dev/config/
 export default defineConfig({
   resolve:{
     alias:{
       'src': path.resolve(__dirname, 'src'),
-      '@': path.resolve(__dirname, 'src')
+      '@': path.resolve(__dirname, 'src'),
+      'zrender':path.resolve(__dirname, 'lib/zrender'),
+      'canvaskit-wasm': canvaskitDir,
+    },
+    
+  },
+  build:{
+    rollupOptions: {
+      external: ['canvaskit-wasm'],
     }
   },
   css:{
@@ -39,9 +49,7 @@ vue(), vueJsx(),vueDevtools(),viteMockServe({
     resolvers: [TDesignResolver({library:'vue-next'})],
     dts:'src/components.d.ts',
   })],
-  dev:{
-    
-  },
+ // assetsInclude: ['**/*.wasm'],
   // server:{
   //   proxy:{
   //     '/api':{

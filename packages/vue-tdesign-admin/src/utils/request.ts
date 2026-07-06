@@ -4,11 +4,11 @@ import mitt from 'mitt'
 import { MessagePlugin } from 'tdesign-vue-next'
 // import app from './app'
 
-const instance = axios.create({
+export const instance = axios.create({
     baseURL: '',
     timeout: 10000,
     skipErrorTip: false
-})
+} as RequestConfig)
 type ResposeData<T = any> = {
     code: number,
     message: string,

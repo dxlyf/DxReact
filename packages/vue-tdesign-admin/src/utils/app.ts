@@ -267,7 +267,7 @@ class App{
         return this.instance
     }
     constructor(){
-        injectionXMLRequestParams()
+       // injectionXMLRequestParams()
     }
     get queryParams(){
         return {app:'sys'}

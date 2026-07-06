@@ -121,6 +121,18 @@ const [dialogProps, dialogInst] = useDialog(() => {
 const handleChange = (name: string, value: any) => {
     formData.value[name] = value
 }
+
+const handleFillFromEnglish = () => {
+    const enValue = formData.value['en-US']
+    if (!enValue && enValue !== 0) {
+        return
+    }
+    allLang.value.forEach((item) => {
+        if (item.value !== 'en-US') {
+            formData.value[item.value] = enValue
+        }
+    })
+}
 </script>
 
 <template>
@@ -128,6 +140,19 @@ const handleChange = (name: string, value: any) => {
         <t-button theme="default" @click="handleOpen">{{ btnText }}</t-button>
     </slot>
     <t-dialog v-bind="dialogProps">
+        <template #header>
+            <div class="flex items-center justify-between">
+                <span>{{ props.title }}</span>
+                <t-button
+                    theme="primary"
+                    variant="text"
+                    size="small"
+                    @click="handleFillFromEnglish"
+                >
+                    用英文填充
+                </t-button>
+            </div>
+        </template>
         <t-form ref="formRef" :data="formData"  class="w-full" label-align="top">
             <t-form-item v-for="(item) in allLang" :key="item.value" :label="item.label" :rules="rules" :name="item.value">
                 <slot :value="formData[item.value]" :change="handleChange.bind(null, item.value)">

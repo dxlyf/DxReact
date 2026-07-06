@@ -1,7 +1,7 @@
 import { ref, toRef, shallowReadonly, isReactive, type ShallowReactive, type MaybeRef, computed, shallowReactive, type MaybeRefOrGetter, unref, toValue } from "vue";
 import type { MenuProps } from 'tdesign-vue-next'
 import { useRoute, matchedRouteKey } from 'vue-router'
-import {type MenuDataItem,menuData as RouteMenuData} from '@/router'
+import {type MenuDataItem,menuData as RouteMenuData} from '@/router/new'
 export type {
   MenuDataItem
 }

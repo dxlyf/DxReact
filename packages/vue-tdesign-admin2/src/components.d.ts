@@ -15,6 +15,7 @@ declare module 'vue' {
     PageContainer: typeof import('./components/PageContainer/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TLayout: typeof import('tdesign-vue-next')['Layout']
   }
 }
 
@@ -23,4 +24,5 @@ declare global {
   const PageContainer: typeof import('./components/PageContainer/index.vue')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
+  const TLayout: typeof import('tdesign-vue-next')['Layout']
 }

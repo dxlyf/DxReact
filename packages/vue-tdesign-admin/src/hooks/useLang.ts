@@ -47,6 +47,30 @@ const getLangList=async ()=>{
             label:'葡萄牙文',
             value:'pt-PT',
         },
+        {
+            label:'俄文',
+            value:'ru-RU',
+        },
+        {
+            label:'阿拉伯文',
+            value:'ar-SA',
+        },
+        {
+            label:'意大利文',
+            value:'it-IT',
+        },
+        {
+            label:'泰文',
+            value:'th-TH',
+        },
+        {
+            label:'越南文',
+            value:'vi-VN',
+        },
+        {
+            label:'荷兰文',
+            value:'nl-NL',
+        },
     ]
 }
 const withResolvers=<T>()=>{
@@ -97,6 +121,30 @@ export const useLang=()=>{
         {
             label:'葡萄牙文',
             value:'pt-PT',
+        },
+        {
+            label:'俄文',
+            value:'ru-RU',
+        },
+        {
+            label:'阿拉伯文',
+            value:'ar-SA',
+        },
+        {
+            label:'意大利文',
+            value:'it-IT',
+        },
+        {
+            label:'泰文',
+            value:'th-TH',
+        },
+        {
+            label:'越南文',
+            value:'vi-VN',
+        },
+        {
+            label:'荷兰文',
+            value:'nl-NL',
         },
     ])
     const allLang=computed<LangItem[]>({

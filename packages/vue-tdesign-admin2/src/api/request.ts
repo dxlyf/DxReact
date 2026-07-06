@@ -59,7 +59,12 @@ instance.interceptors.response.use(undefined, (error) => {
         let errorMsg = ''
 
         if (status === 200 && status <= 300) {
-            errorMsg = '【业务错误】:' + error.message
+            if(errorCode==='401'){
+                errorMsg = '登录过期，请重新登录'
+                router.push('/login')
+            }else{
+                errorMsg = '【业务错误】:' + error.message
+            }
         }
         else if (message === 'Network Error') {
             errorMsg = '网络错误，请检查网络连接'

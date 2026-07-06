@@ -17,7 +17,11 @@
     "verbatimModuleSyntax": false,
     "paths": {
       "src/*":["./src/*"],
-      "@/*":["./src/*"]
+      "@/*":["./src/*"],
+      "canvaskit-wasm":["./lib/canvaskit/0.41.1"],
+      "canvaskit-wasm/*":["./lib/canvaskit/0.41.1/*"],
+      "zrender":["./lib/zrender"],
+      "zrender/*":["./lib/zrender/*"]
     }
   },
   "include": [

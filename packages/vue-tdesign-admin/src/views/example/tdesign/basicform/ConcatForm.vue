@@ -153,7 +153,7 @@ const testAPIOptions = [
       </t-form-item>
     </div>
     <t-form-item label="当前日期时间选择" name="currentDateTime" class="flex-1">
-      <t-date-picker v-model="formData.currentDateTime" enable-time-picker format="YYYY-MM-DD HH:mm:ss" />
+      <t-date-picker :default-time="dayjs().format('HH:mm:ss')" v-model="formData.currentDateTime" enable-time-picker format="YYYY-MM-DD HH:mm:ss" />
     </t-form-item>
     <t-button theme="primary" type="submit">提交</t-button>
   </t-form>

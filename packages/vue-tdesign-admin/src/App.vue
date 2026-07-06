@@ -19,7 +19,7 @@
 import { useRouter } from 'vue-router'
 import {provide, shallowReactive, shallowRef,h, defineComponent,nextTick} from 'vue'
 import dayjs from 'dayjs'
-import {DatePicker} from 'tdesign-vue-next'
+import {DatePicker,type GlobalConfigProvider} from 'tdesign-vue-next'
 const router = useRouter()
 const langKey='lang'
 const langRef=shallowRef([])
@@ -33,9 +33,9 @@ const reload=()=>{
   })
 }
 provide('reload',reload)
-const globalConfig=shallowReactive({
+const globalConfig=shallowReactive<GlobalConfigProvider>({
   datePicker:{
-     defaultTime:dayjs().format('HH:mm:ss')
+    //selectTime:dayjs().format('YYYY-MM-DD HH:mm:ss')
   }
 })
 
