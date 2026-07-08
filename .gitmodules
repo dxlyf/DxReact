@@ -221,3 +221,9 @@
 [submodule "packages/formik"]
 	path = packages/formik
 	url = git@github.com:jaredpalmer/formik.git
+[submodule "packages/RedGPU"]
+	path = packages/RedGPU
+	url = git@github.com:redcamel/RedGPU.git
+[submodule "packages/ripl"]
+	path = packages/ripl
+	url = git@github.com:andrewcourtice/ripl.git
