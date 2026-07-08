@@ -276,7 +276,7 @@ const vvvv=shallowRef({})
                     </FUploadCover>
                 </t-form-item>
                 <t-form-item label="Title(产品名称)" name="title">
-                    <t-input v-model="formData.title" placeholder="请输入产品名称" :maxlength="255" />
+                    <t-input :show-limit-number="true" v-model="formData.title" placeholder="请输入产品名称" :maxlength="255" />
                     <template #help >
                         <Icon name="title"></Icon>
                     </template>

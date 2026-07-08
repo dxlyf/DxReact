@@ -46,9 +46,9 @@ const props=withDefaults(defineProps<Props>(),{
   subtitle:'支持jpg、png、gif、svg格式',
   tip:'',
   autoUpload:true,
-  containerWidth:550,
-  containerHeight:60,
-  contaienrStyle:()=>({width:'560px',height:'63px'})
+  //containerWidth:300,
+  //containerHeight:225,
+  contaienrStyle:()=>({width:'300px',height:'225px'})
  // skipLoadCheck:false
 })
 // const containerStyle=computed(()=>{

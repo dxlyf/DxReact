@@ -58,6 +58,11 @@ git submodule add --depth 1 git@github.com:tusen-ai/naive-ui.git packages/naive-
 git submodule add --depth 1 git@github.com:element-plus/element-plus.git packages/element-plus
 git submodule add --depth 1 git@github.com:vueuse/vueuse.git packages/vueuse
 git submodule add --depth 1 git@github.com:InhiblabCore/vue-hooks-plus.git packages/vue-hooks-plus
+
+
+git submodule add --depth 1 git@github.com:redcamel/RedGPU.git packages/RedGPU
+git submodule add --depth 1 git@github.com:gridaco/grida.git packages/grida
+git submodule add --depth 1 git@github.com:andrewcourtice/ripl.git packages/ripl
 ```
 
 为 `packages` 目录添加 GitHub 开源仓库作为子模块是个好主意，这能方便你管理依赖并同步更新。你想知道具体如何操作，下面我来为你详细说明。

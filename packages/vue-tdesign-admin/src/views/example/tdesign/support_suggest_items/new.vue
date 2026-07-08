@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import MainLayout from '@/views/example/tdesign/components/Layouts/MainLayout.vue';
 import FLanguageInput from '@/views/example/tdesign/components/FLanguageInput/index.vue';
-import { reactive, ref, shallowRef } from 'vue';
+import FLanguagePublishInfo from '@/views/example/tdesign/components/FLanguagePublishInfo/index.vue';
+import { reactive, ref, shallowRef, toRaw } from 'vue';
 import type { FormInstanceFunctions } from 'tdesign-vue-next';
 import { useRouter } from 'vue-router'
 
@@ -26,21 +27,13 @@ type FormData = {
   title: Record<string, string>
   description: Record<string, string>
   linkText: Record<string, string>
-  onlineTime: string
-  offlineTime: string
-  status: string
+  publishInfo: Record<string, { status: string; onlineTime: string; offlineTime: string }>
   isFirstRecommend: boolean
 }
 
 const rules = {
   slug: [
     { required: true, whitespace: true, message: '请输入Slug' },
-  ],
-  onlineTime: [
-    { required: true, message: '请选择上线时间' },
-  ],
-  offlineTime: [
-    { required: true, message: '请选择下线时间' },
   ],
 }
 
@@ -49,9 +42,7 @@ const formData = reactive<FormData>({
   title: {},
   description: {},
   linkText: {},
-  onlineTime: '',
-  offlineTime: '',
-  status: '草稿',
+  publishInfo: {},
   isFirstRecommend: false,
 })
 
@@ -64,7 +55,7 @@ const handleSubmit = async (e: any) => {
   }
   try {
     submitLoading.value = true
-    console.log('提交', { ...formData })
+    console.log('提交', toRaw(formData))
     // await createSupportSuggestItem({ ...formData })
     router.push('/example/tdesign/support_suggest_items')
   } catch (err) {
@@ -108,30 +99,13 @@ const handleReturn = () => {
       <t-form-item label="链接文案">
         <FLanguageInput v-model="formData.linkText" />
       </t-form-item>
-      <t-form-item label="上线时间" name="onlineTime">
-        <t-date-picker
-          v-model="formData.onlineTime"
-          enable-time-picker
-          format="YYYY-MM-DD HH:mm:ss"
-          placeholder="请选择上线时间"
-          clearable
+      <t-form-item label="发布配置">
+        <FLanguagePublishInfo
+          v-model="formData.publishInfo"
+          status-required
+          online-time-required
+          offline-time-required
         />
-      </t-form-item>
-      <t-form-item label="下线时间" name="offlineTime">
-        <t-date-picker
-          v-model="formData.offlineTime"
-          enable-time-picker
-          format="YYYY-MM-DD HH:mm:ss"
-          placeholder="请选择下线时间"
-          clearable
-        />
-      </t-form-item>
-      <t-form-item label="发布状态" name="status">
-        <t-radio-group v-model="formData.status">
-          <t-radio value="草稿">草稿</t-radio>
-          <t-radio value="待审核">待审核</t-radio>
-          <t-radio value="已发布">已发布</t-radio>
-        </t-radio-group>
       </t-form-item>
       <t-form-item label="是否首位推荐" name="isFirstRecommend">
         <t-switch v-model="formData.isFirstRecommend" />
