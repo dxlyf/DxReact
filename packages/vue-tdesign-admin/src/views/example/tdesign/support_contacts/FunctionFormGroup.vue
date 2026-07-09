@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, reactive, nextTick } from 'vue'
-import { useDraggable } from 'vue-draggable-plus'
 import DynamicForm, { type FormFieldConfig } from './DynamicForm.vue'
 
 export type FunctionButtonConfig = {
@@ -11,9 +10,12 @@ export type FunctionButtonConfig = {
 
 type Props = {
   buttons: FunctionButtonConfig[]
+  layout?: 'tabs' | 'vertical'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  layout: 'tabs',
+})
 
 const model = defineModel<Record<string, Record<string, any>[]>>({
   default: () => ({}),
@@ -25,8 +27,10 @@ const activeTab = ref<string>('')
 // 每个按钮类型的卡片展开状态 { buttonKey: { [index]: boolean } }
 const expandStates = reactive<Record<string, Record<number, boolean>>>({})
 
-// 每个按钮类型的可拖拽列表 DOM 引用
-const dragEls = ref<Record<string, HTMLElement>>({})
+// 每个按钮类型下卡片的当前 tab（仅 layout='tabs' 时使用）
+const cardActiveTab = reactive<Record<string, string>>({})
+
+// 每个按钮类型的列表数据（直接供垂直布局拖拽使用）
 const dragLists = ref<Record<string, Record<string, any>[]>>({})
 
 // 收集所有 DynamicForm 实例引用（用于校验）
@@ -78,16 +82,17 @@ const handleAdd = (button: FunctionButtonConfig) => {
   const newEntry = createEmptyEntry(button)
   model.value[button.key] = [...(model.value[button.key] || []), newEntry]
   dragLists.value[button.key] = model.value[button.key]
-  // 新添加的卡片展开
+  // 新添加的卡片展开/选中
   const idx = model.value[button.key].length - 1
   if (!expandStates[button.key]) expandStates[button.key] = {}
   expandStates[button.key][idx] = true
-  // 将其他卡片折叠
   Object.keys(expandStates[button.key]).forEach((k) => {
     if (Number(k) !== idx) {
       expandStates[button.key][Number(k)] = false
     }
   })
+  // 新添加的卡片作为当前 tab
+  cardActiveTab[button.key] = `${idx}`
   nextTick(() => {
     activeTab.value = button.key
   })
@@ -113,11 +118,12 @@ const handleRemove = (buttonKey: string, index: number) => {
     })
     expandStates[buttonKey] = newStates
   }
-}
-
-// 拖拽结束，同步回 model
-const handleDragEnd = (buttonKey: string) => {
-  model.value[buttonKey] = [...(dragLists.value[buttonKey] || [])]
+  // 调整当前 tab
+  if (cardActiveTab[buttonKey] === `${index}`) {
+    cardActiveTab[buttonKey] = list.length > 0 ? '0' : undefined as any
+  } else if (Number(cardActiveTab[buttonKey]) > index) {
+    cardActiveTab[buttonKey] = `${Number(cardActiveTab[buttonKey]) - 1}`
+  }
 }
 
 const handleEntryUpdate = (buttonKey: string, index: number, val: Record<string, any>) => {
@@ -127,10 +133,19 @@ const handleEntryUpdate = (buttonKey: string, index: number, val: Record<string,
   dragLists.value[buttonKey] = list
 }
 
-// 切换卡片折叠
+// 切换卡片折叠（垂直布局）
 const toggleExpand = (buttonKey: string, index: number) => {
   if (!expandStates[buttonKey]) expandStates[buttonKey] = {}
   expandStates[buttonKey][index] = !expandStates[buttonKey][index]
+}
+
+// 卡片 tabs 拖拽排序
+const handleCardTabSort = (btnKey: string, ctx: { currentIndex: number; targetIndex: number }) => {
+  const list = [...(model.value[btnKey] || [])]
+  const [removed] = list.splice(ctx.currentIndex, 1)
+  list.splice(ctx.targetIndex, 0, removed)
+  model.value[btnKey] = list
+  dragLists.value[btnKey] = list
 }
 
 // 是否有任何已添加的条目
@@ -141,21 +156,6 @@ const hasEntries = computed(() => {
 // 初始化第一个有数据的 tab
 if (!activeTab.value && props.buttons.length > 0) {
   activeTab.value = props.buttons[0].key
-}
-
-// 为每个按钮类型设置拖拽
-const setDragEl = (buttonKey: string) => (el: any) => {
-  if (el && !dragEls.value[buttonKey]) {
-    dragEls.value[buttonKey] = el
-    dragLists.value[buttonKey] = model.value[buttonKey] || []
-    useDraggable(el, dragLists.value[buttonKey], {
-      animation: 150,
-      handle: '.drag-handle',
-      onEnd: () => {
-        handleDragEnd(buttonKey)
-      },
-    })
-  }
 }
 
 defineExpose({
@@ -187,9 +187,9 @@ defineExpose({
       <div v-if="!hasEntries" class="text-sm text-[#86909c] self-center ml-2">点击上方按钮添加内容</div>
     </div>
 
-    <!-- 无内容时隐藏 tabs -->
+    <!-- 无内容时隐藏 -->
     <template v-if="hasEntries">
-      <!-- 使用 t-tabs 区分按钮类型 -->
+      <!-- 外层：按钮类型用 t-tabs 切换 -->
       <t-tabs v-model="activeTab" :placement="buttons.length <= 3 ? 'top' : 'left'" size="medium">
         <t-tab-panel
           v-for="btn in buttons"
@@ -198,45 +198,77 @@ defineExpose({
           :label="`${btn.label} (${(model[btn.key] || []).length})`"
           :disabled="!(model[btn.key] || []).length"
         >
-          <!-- 可拖拽排序的卡片列表 -->
-          <div :ref="setDragEl(btn.key)" class="space-y-3">
-            <div
-              v-for="(entry, idx) in dragLists[btn.key] || []"
-              :key="`${btn.key}-${idx}`"
-              class="border border-solid border-[#dfe1e6] rounded-lg overflow-hidden"
+          <!-- ====== 卡片 tabs 布局（可拖拽排序）= ====== -->
+          <template v-if="layout === 'tabs'">
+            <t-tabs
+              v-if="(dragLists[btn.key] || []).length"
+              v-model="cardActiveTab[btn.key]"
+              placement="top"
+              size="small"
+              :default-value="'0'"
+              class="card-tabs"
+              theme="card"
+              :drag-sort="true"
+               @drag-sort="(ctx: any) => handleCardTabSort(btn.key, ctx)"
+              @remove="(ctx: { value: string }) => handleRemove(btn.key, Number(ctx.value))"
             >
-              <!-- 卡片头：拖拽把手 + 标题 + 展开/折叠 + 删除 -->
-              <div
-                class="flex items-center gap-2 px-4 py-2 bg-[#f5f6f8] border-b border-solid border-[#dfe1e6] cursor-pointer select-none"
-                @click="toggleExpand(btn.key, idx)"
+              <t-tab-panel
+                v-for="(entry, idx) in dragLists[btn.key] || []"
+                :key="`${btn.key}-${idx}`"
+                :value="`${idx}`"
+                :label="`${btn.label} #${idx + 1}`"
+                :removable="true"
               >
-                <t-icon name="move" class="drag-handle text-[#86909c] cursor-grab active:cursor-grabbing flex-none" />
-                <span class="text-sm font-medium text-[#4e5969] flex-1">{{ btn.label }} #{{ idx + 1 }}</span>
-                <t-icon
-                  :name="expandStates[btn.key]?.[idx] ? 'chevron-up' : 'chevron-down'"
-                  class="text-[#86909c] flex-none"
-                />
-                <t-button
-                  theme="danger"
-                  variant="text"
-                  size="small"
-                  class="flex-none"
-                  @click.stop="handleRemove(btn.key, idx)"
+                <div class="pt-4">
+                  <DynamicForm
+                    :ref="setFormRef(btn.key, idx)"
+                    :fields="btn.fields"
+                    :model-value="entry"
+                    @update:model-value="handleEntryUpdate(btn.key, idx, $event)"
+                  />
+                </div>
+              </t-tab-panel>
+            </t-tabs>
+          </template>
+
+          <!-- ====== 卡片垂直布局（可折叠）= ====== -->
+          <template v-else>
+            <div class="space-y-3">
+              <div
+                v-for="(entry, idx) in dragLists[btn.key] || []"
+                :key="`${btn.key}-${idx}`"
+                class="border border-solid border-[#dfe1e6] rounded-lg overflow-hidden"
+              >
+                <div
+                  class="flex items-center gap-2 px-4 py-2 bg-[#f5f6f8] border-b border-solid border-[#dfe1e6] cursor-pointer select-none"
+                  @click="toggleExpand(btn.key, idx)"
                 >
-                  删除
-                </t-button>
-              </div>
-              <!-- 卡片内容 -->
-              <div v-show="expandStates[btn.key]?.[idx]" class="p-4">
-                <DynamicForm
-                  :ref="setFormRef(btn.key, idx)"
-                  :fields="btn.fields"
-                  :model-value="entry"
-                  @update:model-value="handleEntryUpdate(btn.key, idx, $event)"
-                />
+                  <span class="text-sm font-medium text-[#4e5969] flex-1">{{ btn.label }} #{{ idx + 1 }}</span>
+                  <t-icon
+                    :name="expandStates[btn.key]?.[idx] ? 'chevron-up' : 'chevron-down'"
+                    class="text-[#86909c] flex-none"
+                  />
+                  <t-button
+                    theme="danger"
+                    variant="text"
+                    size="small"
+                    class="flex-none"
+                    @click.stop="handleRemove(btn.key, idx)"
+                  >
+                    删除
+                  </t-button>
+                </div>
+                <div v-show="expandStates[btn.key]?.[idx]" class="p-4">
+                  <DynamicForm
+                    :ref="setFormRef(btn.key, idx)"
+                    :fields="btn.fields"
+                    :model-value="entry"
+                    @update:model-value="handleEntryUpdate(btn.key, idx, $event)"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </t-tab-panel>
       </t-tabs>
     </template>
@@ -249,5 +281,20 @@ defineExpose({
 }
 .drag-handle {
   touch-action: none;
+}
+.card-tabs {
+  --td-tab-item-active-bg: #f5f6f8;
+}
+.card-tabs :deep(.t-tabs__nav-item) {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  margin-right: 4px;
+}
+.card-tabs :deep(.t-tabs__nav-item.t-is-active) {
+  background: #fff;
+  border-bottom-color: #fff;
+}
+.card-tabs :deep(.t-tabs__nav-wrap) {
+  margin-bottom: 0;
 }
 </style>

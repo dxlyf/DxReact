@@ -73,6 +73,7 @@ const functionButtons: FunctionButtonConfig[] = [
   {
     key: 'contactInfo',
     label: '联系信息',
+    formLayout:'tabs',
     fields: [
       { key: 'personName', label: '联系人姓名', type: 'input', required: true, maxlength: 50, showLimitNumber: true },
       { key: 'phone', label: '联系电话', type: 'input', maxlength: 20 },

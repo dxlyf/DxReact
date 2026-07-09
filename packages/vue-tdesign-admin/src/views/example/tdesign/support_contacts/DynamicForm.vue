@@ -1,18 +1,24 @@
 <script setup lang="ts">
-import { shallowRef } from 'vue'
+import { computed, shallowRef, markRaw, type Component } from 'vue'
 import type { FormInstanceFunctions } from 'tdesign-vue-next'
 import FUploadCover from '@/views/example/tdesign/components/FUpload/FUploadCover2.vue'
 
 export type FormFieldConfig = {
   key: string
   label: string
-  type: 'input' | 'textarea' | 'select' | 'switch' | 'date-picker' | 'radio' | 'upload'
   required?: boolean
+  defaultValue?: any
+  // 内置快捷类型
+  type?: 'input' | 'textarea' | 'select' | 'switch' | 'date-picker' | 'radio' | 'upload'
+  // 内置类型的快捷 props
   maxlength?: number
   showLimitNumber?: boolean
   placeholder?: string
-  defaultValue?: any
   options?: { label: string; value: any }[]
+  // 通用自定义渲染：组件名或组件本身
+  component?: string | Component
+  // 传递给自定义组件的 props（modelValue 和 onUpdate:modelValue 会由组件自动处理）
+  componentProps?: Record<string, any>
 }
 
 type Props = {
@@ -44,6 +50,48 @@ const initField = (field: FormFieldConfig) => {
   }
 }
 
+const defaultRules = (field: FormFieldConfig) =>
+  field.required ? [{ required: true, message: `请输入${field.label}` }] : []
+
+// 内置类型对应的组件映射
+const builtInComponentMap: Record<string, any> = {
+  input: 't-input',
+  textarea: 't-textarea',
+  select: 't-select',
+  switch: 't-switch',
+  'date-picker': 't-date-picker',
+  radio: 't-radio-group',
+  upload: markRaw(FUploadCover),
+}
+
+// 为内置类型生成默认 props
+const builtInDefaultProps = (field: FormFieldConfig): Record<string, any> => {
+  const props: Record<string, any> = {}
+  if (field.maxlength !== undefined) props.maxlength = field.maxlength
+  if (field.showLimitNumber !== undefined) props.showLimitNumber = field.showLimitNumber
+  if (field.placeholder) {
+    props.placeholder = field.placeholder
+  } else if (field.type !== 'switch' && field.type !== 'upload') {
+    props.placeholder = `请输入${field.label}`
+  }
+  if (field.type === 'select' && field.options) {
+    props.options = field.options
+  }
+  return props
+}
+
+// 解析字段的组件和 props
+const resolveFieldComponent = (field: FormFieldConfig) => {
+  if (field.component) {
+    return { comp: field.component, extraProps: field.componentProps || {} }
+  }
+  if (field.type && builtInComponentMap[field.type]) {
+    return { comp: builtInComponentMap[field.type], extraProps: builtInDefaultProps(field) }
+  }
+  // 默认 fallback 为 t-input
+  return { comp: 't-input', extraProps: { placeholder: `请输入${field.label}` } }
+ }
+
 defineExpose({
   async validate() {
     return formRef.value?.validate?.()
@@ -66,111 +114,28 @@ defineExpose({
     >
       <template v-for="field in fields" :key="field.key">
         <t-form-item
-          v-if="field.type === 'input'"
           :label="field.label"
           :name="field.key"
-          :rules="field.required ? [{ required: true, message: `请输入${field.label}` }] : []"
-          :class="column > 1 ? '' : 'col-span-full'"
+          :rules="defaultRules(field)"
+          :class="field.type === 'textarea' || field.type === 'switch' || field.type === 'radio' || field.type === 'upload' || (!field.type && field.component) ? 'col-span-full' : column > 1 ? '' : 'col-span-full'"
         >
-          <t-input
+          <component
+            :is="resolveFieldComponent(field).comp"
             :model-value="model[field.key] ?? ''"
             @update:model-value="initField(field); model[field.key] = $event"
-            :maxlength="field.maxlength"
-            :show-limit-number="field.showLimitNumber"
-            :placeholder="field.placeholder || `请输入${field.label}`"
-          />
-        </t-form-item>
-
-        <t-form-item
-          v-else-if="field.type === 'textarea'"
-          :label="field.label"
-          :name="field.key"
-          :rules="field.required ? [{ required: true, message: `请输入${field.label}` }] : []"
-          class="col-span-full"
-        >
-          <t-textarea
-            :model-value="model[field.key] ?? ''"
-            @update:model-value="initField(field); model[field.key] = $event"
-            :maxlength="field.maxlength"
-            :show-limit-number="field.showLimitNumber"
-            :placeholder="field.placeholder || `请输入${field.label}`"
-          />
-        </t-form-item>
-
-        <t-form-item
-          v-else-if="field.type === 'select'"
-          :label="field.label"
-          :name="field.key"
-          :rules="field.required ? [{ required: true, message: `请选择${field.label}` }] : []"
-        >
-          <t-select
-            :model-value="model[field.key] ?? []"
-            @update:model-value="initField(field); model[field.key] = $event"
-            :options="field.options || []"
-            :placeholder="field.placeholder || `请选择${field.label}`"
-            class="w-full"
-          />
-        </t-form-item>
-
-        <t-form-item
-          v-else-if="field.type === 'switch'"
-          :label="field.label"
-          :name="field.key"
-          class="col-span-full"
-        >
-          <t-switch
-            :model-value="model[field.key] ?? false"
-            @update:model-value="initField(field); model[field.key] = $event"
-          />
-        </t-form-item>
-
-        <t-form-item
-          v-else-if="field.type === 'date-picker'"
-          :label="field.label"
-          :name="field.key"
-          :rules="field.required ? [{ required: true, message: `请选择${field.label}` }] : []"
-        >
-          <t-date-picker
-            :model-value="model[field.key] ?? ''"
-            @update:model-value="initField(field); model[field.key] = $event"
-            enable-time-picker
-            format="YYYY-MM-DD HH:mm:ss"
-            :placeholder="field.placeholder || `请选择${field.label}`"
-            clearable
-          />
-        </t-form-item>
-
-        <t-form-item
-          v-else-if="field.type === 'radio'"
-          :label="field.label"
-          :name="field.key"
-          :rules="field.required ? [{ required: true, message: `请选择${field.label}` }] : []"
-          class="col-span-full"
-        >
-          <t-radio-group
-            :model-value="model[field.key] ?? ''"
-            @update:model-value="initField(field); model[field.key] = $event"
+            v-bind="resolveFieldComponent(field).extraProps"
+            :class="field.type === 'select' || field.type === 'date-picker' ? 'w-full' : ''"
           >
-            <t-radio
-              v-for="opt in field.options || []"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </t-radio>
-          </t-radio-group>
-        </t-form-item>
-
-        <t-form-item
-          v-else-if="field.type === 'upload'"
-          :label="field.label"
-          :name="field.key"
-          class="col-span-full"
-        >
-          <FUploadCover
-            :model-value="model[field.key] ?? ''"
-            @update:model-value="initField(field); model[field.key] = $event"
-          />
+            <template v-if="field.type === 'radio'">
+              <t-radio
+                v-for="opt in field.options || []"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.label }}
+              </t-radio>
+            </template>
+          </component>
         </t-form-item>
       </template>
     </div>
