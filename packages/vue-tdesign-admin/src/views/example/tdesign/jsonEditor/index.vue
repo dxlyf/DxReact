@@ -2,8 +2,9 @@
 import { reactive } from 'vue'
 import JsonForm from './JsonForm.vue'
 import type { FormSchema } from './types'
+import { stripInternalProps } from './utils'
 
-// ====== FAQ 示例 schema（使用 groups 结构）= ======
+// ====== FAQ + Recommend 示例 schema（多 groups）= ======
 const faqSchema: FormSchema = {
   groups: [
     {
@@ -34,39 +35,45 @@ const faqSchema: FormSchema = {
           label: '问答项',
           valueType: 'array',
           arrayConfig: {
-            displayType: 'list',
+            displayType: 'tabs',
             item: {
               valueType: 'object',
               fields: [
-                {
-                  key: 'question',
-                  label: '问题',
-                  valueType: 'string',
-                  placeholder: '请输入问题',
-                },
-                {
-                  key: 'answer',
-                  label: '答案',
-                  valueType: 'string',
-                  placeholder: '请输入答案',
-                  stringConfig: { textarea: true, rows: 3 },
-                },
+                { key: 'question', label: '问题', valueType: 'string', placeholder: '请输入问题' },
+                { key: 'answer', label: '答案', valueType: 'string', placeholder: '请输入答案', stringConfig: { textarea: true, rows: 3 } },
               ],
               extraFieldTemplates: [
                 { label: '排序', key: 'sort', valueType: 'number', defaultValue: 0 },
-                {
-                  label: '状态', key: 'status', valueType: 'string',
-                  options: [
-                    { label: '启用', value: 'enabled' },
-                    { label: '禁用', value: 'disabled' },
-                  ],
-                  defaultValue: 'enabled',
-                },
+                { label: '状态', key: 'status', valueType: 'string', options: [{ label: '启用', value: 'enabled' }, { label: '禁用', value: 'disabled' }], defaultValue: 'enabled' },
                 { label: '备注', key: 'remark', valueType: 'string', stringConfig: { textarea: true, rows: 2 } },
                 { label: '是否置顶', key: 'isTop', valueType: 'boolean', defaultValue: false },
               ],
             },
           },
+        },
+      ],
+    },
+    {
+      label: 'Recommend',
+      key: 'recommend',
+      fields: [
+        {
+          key: 'title',
+          label: '推荐标题',
+          valueType: 'string',
+          placeholder: '请输入推荐标题',
+        },
+        {
+          key: 'url',
+          label: '链接地址',
+          valueType: 'string',
+          placeholder: '请输入链接',
+        },
+        {
+          key: 'enabled',
+          label: '是否启用',
+          valueType: 'boolean',
+          defaultValue: true,
         },
       ],
     },
@@ -78,21 +85,24 @@ const formData = reactive<Record<string, any>>({})
 
 // ====== 手动设置示例数据 ======
 const setExampleData = () => {
-  formData.faq_1734567890000 = {
-    title: '常见问题',
-    slug: 'faq-general',
-    items: [
-      { question: '如何退货？', answer: '请您联系客服申请退货，我们会在 7 个工作日内处理。' },
-      { question: '支付方式有哪些？', answer: '我们支持支付宝、微信支付、银行卡等多种支付方式。' },
-    ],
-  }
-  formData._groupInstances = ['faq_1734567890000']
-  formData.faq_1734567890001 = {
-    title: '售后政策',
-    slug: 'faq-after-sales',
-    items: [],
-  }
-  formData._groupInstances = ['faq_1734567890000', 'faq_1734567890001']
+  formData.faq = [
+    {
+      title: '常见问题',
+      slug: 'faq-general',
+      items: [
+        { question: '如何退货？', answer: '请您联系客服申请退货，我们会在 7 个工作日内处理。' },
+        { question: '支付方式有哪些？', answer: '我们支持支付宝、微信支付、银行卡等多种支付方式。' },
+      ],
+    },
+    {
+      title: '售后政策',
+      slug: 'faq-after-sales',
+      items: [],
+    },
+  ]
+  formData.recommend = [
+    { title: '热门产品', url: 'https://example.com/hot', enabled: true },
+  ]
 }
 
 // ====== 清空数据 ======
@@ -102,7 +112,7 @@ const clearData = () => {
 
 // ====== 提交 ======
 const handleSubmit = () => {
-  alert(JSON.stringify(formData, null, 2))
+  alert(JSON.stringify(stripInternalProps(formData), null, 2))
 }
 </script>
 
@@ -131,7 +141,7 @@ const handleSubmit = () => {
     </t-card>
 
     <t-card title="当前数据 (JSON Preview)">
-      <pre class="text-sm bg-[#f5f6f8] p-4 rounded-lg overflow-auto max-h-96">{{ JSON.stringify(formData, null, 2) }}</pre>
+      <pre class="text-sm bg-[#f5f6f8] p-4 rounded-lg overflow-auto max-h-96">{{ JSON.stringify(stripInternalProps(formData), null, 2) }}</pre>
     </t-card>
   </div>
 </template>

@@ -56,6 +56,7 @@ export type ArrayDisplayType =
   | 'table'        // 表格编辑
   | 'tag-input'    // 标签输入
   | 'list'         // 列表（可增减）
+  | 'tabs'         // 标签页
   | 'multiple-select' // 多选下拉
 
 // ====== 对象类型的展示形态 ======
@@ -222,6 +223,8 @@ export type FormFieldConfig = {
     fields: FormFieldConfig[]
     /** 分组配置（用于 card/tabs/collapse 模式） */
     groups?: ObjectGroupConfig[]
+    /** 允许动态添加的额外字段模板 */
+    extraFieldTemplates?: ExtraFieldTemplate[]
   }
 
   // ====== 自定义组件覆盖 ======
@@ -232,7 +235,7 @@ export type FormFieldConfig = {
 // ====== 表单整体配置 ======
 export type FormSchema = {
   /** 表单字段列表 */
-  fields: FormFieldConfig[]
+  fields?: FormFieldConfig[]
   /** 表单布局：列数 */
   column?: number
   /** 表单标签对齐方式 */
