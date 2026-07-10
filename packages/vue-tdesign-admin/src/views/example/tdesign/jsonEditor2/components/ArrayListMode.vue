@@ -109,9 +109,11 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
 
       <div class="item-body" v-show="!collapsed.has(idx)">
         <FieldRenderer
+          ref="setFieldRef(idx)"
           :field="itemObjectField"
           :model-value="{ [itemObjectField.key || '__item__']: item }"
           :path="[...path, idx]"
+          hide-object-header
         />
       </div>
     </div>

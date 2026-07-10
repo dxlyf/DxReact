@@ -15,10 +15,22 @@ const props = defineProps<{
 const updateValue = inject<UpdateValueFn>(UPDATE_VALUE_KEY)!
 const activeTab = ref('0')
 
-/** 将 items 配置转为 ObjectFieldConfig，用于 ObjectField 渲染 */
 const itemObjectField = computed<ObjectFieldConfig>(() => ({
   ...(props.field.items || { valueType: 'object', key: '__item__' }),
 }))
+
+const canAddField = computed(() => itemObjectField.value.addedProperty !== false)
+
+// FieldRenderer refs per tab
+const fieldRefs = ref<Record<number, InstanceType<typeof FieldRenderer>>>({})
+const setFieldRef = (idx: number) => (el: any) => {
+  if (el) fieldRefs.value[idx] = el
+}
+
+const openAddField = () => {
+  const idx = Number(activeTab.value)
+  fieldRefs.value[idx]?.openObjectAddDialog()
+}
 
 const removeItem = (idx: number) => {
   const newItems = props.items.filter((_, i) => i !== idx)
@@ -51,11 +63,14 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
       size="medium"
       @remove="(ctx) => removeItem(Number(ctx.value))"
     >
-      <template #action v-if="sortable && items.length > 1">
-        <t-button variant="text" size="small" :disabled="Number(activeTab) === 0" @click="moveItem(Number(activeTab), 'up')">
+      <template #action>
+        <t-button v-if="canAddField" variant="text" size="small" @click="openAddField">
+          <t-icon name="add" />
+        </t-button>
+        <t-button v-if="sortable && items.length > 1" variant="text" size="small" :disabled="Number(activeTab) === 0" @click="moveItem(Number(activeTab), 'up')">
           <t-icon name="chevron-up" />
         </t-button>
-        <t-button variant="text" size="small" :disabled="Number(activeTab) === items.length - 1" @click="moveItem(Number(activeTab), 'down')">
+        <t-button v-if="sortable && items.length > 1" variant="text" size="small" :disabled="Number(activeTab) === items.length - 1" @click="moveItem(Number(activeTab), 'down')">
           <t-icon name="chevron-down" />
         </t-button>
       </template>
@@ -68,9 +83,11 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
       >
         <div class="tab-content">
           <FieldRenderer
+            :ref="setFieldRef(idx)"
             :field="itemObjectField"
             :model-value="{ [itemObjectField.key || '__item__']: item }"
             :path="[...path, idx]"
+            hide-object-header
           />
         </div>
       </t-tab-panel>
