@@ -64,15 +64,17 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
       @remove="(ctx) => removeItem(Number(ctx.value))"
     >
       <template #action>
-        <t-button v-if="canAddField" variant="text" size="small" @click="openAddField">
-          <t-icon name="add" />
+        <div class="flex gap-2 items-center pr-2">
+          <t-button v-if="canAddField"  variant="text" size="small" @click="openAddField">
+          <template #icon><t-icon name="add" /></template>
         </t-button>
         <t-button v-if="sortable && items.length > 1" variant="text" size="small" :disabled="Number(activeTab) === 0" @click="moveItem(Number(activeTab), 'up')">
-          <t-icon name="chevron-up" />
+          <template #icon><t-icon name="chevron-up" /></template>
         </t-button>
         <t-button v-if="sortable && items.length > 1" variant="text" size="small" :disabled="Number(activeTab) === items.length - 1" @click="moveItem(Number(activeTab), 'down')">
-          <t-icon name="chevron-down" />
+          <template #icon><t-icon name="chevron-down" /></template>
         </t-button>
+      </div>
       </template>
       <t-tab-panel
         v-for="(item, idx) in items"
@@ -85,9 +87,10 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
           <FieldRenderer
             :ref="setFieldRef(idx)"
             :field="itemObjectField"
-            :model-value="{ [itemObjectField.key || '__item__']: item }"
+            :model-value="item"
             :path="[...path, idx]"
             hide-object-header
+            inline-object
           />
         </div>
       </t-tab-panel>
@@ -104,5 +107,9 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
 }
 .tab-content {
   padding-top: 12px;
+}
+.array-tabs :deep(.t-tabs__operations.t-tabs__operations--right){
+  top:0;
+  bottom:0;
 }
 </style>

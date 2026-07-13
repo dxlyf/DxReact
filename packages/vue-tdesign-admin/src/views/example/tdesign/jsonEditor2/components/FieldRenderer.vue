@@ -12,8 +12,12 @@ const props = defineProps<{
   field: FieldConfig
   modelValue: any
   path: (string | number)[]
-  /** 嵌套对象在数组项内时，可传入以隐藏自带 header */
+  /** 嵌套对象在数组项内时，隐藏自带 header */
   hideObjectHeader?: boolean
+  /** 对象字段内联模式：不额外添加 field.key 到路径（modelValue 即为对象自身） */
+  inlineObject?: boolean
+  /** 数组字段内联模式 */
+  inlineArray?: boolean
 }>()
 
 const objRef = ref<InstanceType<typeof ObjectField>>()
@@ -27,14 +31,24 @@ const visible = computed(() => !isFieldHidden(props.field, props.modelValue || {
     <StringField v-if="field.valueType === 'string'" :field="field" :model-value="modelValue" :path="path" />
     <NumberField v-else-if="field.valueType === 'number'" :field="field" :model-value="modelValue" :path="path" />
     <BooleanField v-else-if="field.valueType === 'boolean'" :field="field" :model-value="modelValue" :path="path" />
+    <div v-else-if="field.valueType === 'object'" class="obj-form-field">
     <ObjectField
-      v-else-if="field.valueType === 'object'"
+      
       ref="objRef"
       :field="field as ObjectFieldConfig"
       :model-value="modelValue"
       :path="path"
+      :inline="inlineObject"
       :hide-add-button="hideObjectHeader"
     />
-    <ArrayField v-else-if="field.valueType === 'array'" :field="field as ArrayFieldConfig" :model-value="modelValue" :path="path" />
+    </div>
+    <div v-else-if="field.valueType === 'array'" class="array-form-field">
+      <ArrayField   :field="field as ArrayFieldConfig" :model-value="modelValue" :path="path" :inline="inlineArray" />  
+  </div>
   </template>
 </template>
+<style scoped>
+.obj-form-field,.array-form-field{
+  margin-bottom: 8px;
+}
+</style>

@@ -10,14 +10,17 @@ const props = defineProps<{
   field: ObjectFieldConfig
   modelValue: any
   path: (string | number)[]
-  /** 隐藏自带的"添加字段"按钮（由外层控制时使用） */
   hideAddButton?: boolean
+  /** 内联模式：modelValue 即为对象自身，不额外添加 field.key 到路径 */
+  inline?: boolean
 }>()
 
 const updateValue = inject<UpdateValueFn>(UPDATE_VALUE_KEY)!
 
 /** 是否是根层级（path 为空，说明当前对象就是 modelValue 自身） */
-const isRoot = computed(() => props.path.length === 0)
+const isRoot = computed(() => props.path.length === 0 || props.inline === true)
+
+const isCardMode = computed(() => (props.field.displayType || 'card') === 'card')
 
 const currentPath = computed(() =>
   isRoot.value ? props.path : [...props.path, props.field.key]
@@ -29,6 +32,7 @@ const obj = computed(() => {
 })
 
 const addDialogVisible = ref(false)
+const collapsed = ref(false)
 const openAddDialog = () => { addDialogVisible.value = true }
 defineExpose({ openAddDialog })
 
@@ -45,10 +49,23 @@ const mergedFields = computed<FieldConfig[]>(() => {
     }
   })
 
-  // 自定义字段（从 _extraFields 读取）
+  // 已注册的自定义字段（从 _extraFields 读取）
   const extraKeys: string[] = objVal._extraFields || []
-  extraKeys.forEach((key) => {
-    // 排除已由 properties 覆盖的 key
+
+  // 自动检测数据中存在的额外 key（仅在启用自定义字段时）
+  const canAddProp = props.field.addedProperty !== false
+  const detectedKeys: string[] = []
+  if (canAddProp) {
+    const allKnownKeys = new Set([
+      ...base.map((f) => f.key),
+      ...extraKeys,
+      '_extraFields',
+      '_extraFieldTypes',
+    ])
+    detectedKeys.push(...Object.keys(objVal).filter((k) => !allKnownKeys.has(k)))
+  }
+
+  ;[...extraKeys, ...detectedKeys].forEach((key) => {
     if (!base.find((f) => f.key === key)) {
       const vt = objVal._extraFieldTypes?.[key] || 'string'
       base.push({ key, label: key, valueType: vt })
@@ -94,23 +111,65 @@ const onAddFieldConfirm = (selects: string[], customName: string, customType: st
 </script>
 
 <template>
-  <div class="object-field">
-    <div class="object-header" v-if="(field.label || (field.addedProperty !== false && !hideAddButton))">
-      <label class="field-label" v-if="field.label">
+  <!-- Card 模式 -->
+  <t-card
+    v-if="isCardMode"
+    :bordered="true"
+    size="small"
+  >
+    <template #header>
+      <div class="card-header-inner">
+        <t-button variant="text" size="small" @click.stop="collapsed = !collapsed">
+          <t-icon :name="collapsed ? 'chevron-down' : 'chevron-up'" />
+        </t-button>
+        <span class="card-title">
+          <span v-if="field.required" class="text-red-500 mr-0.5">*</span>
+          {{ field.label }}
+        </span>
+        <div class="card-header-spacer"></div>
+        <t-button variant="base" size="small" @click="addDialogVisible = true" v-if="field.addedProperty !== false && !hideAddButton">
+          <template #icon><t-icon name="add" /> </template>添加字段
+        </t-button>
+      </div>
+    </template>
+
+    <div v-show="!collapsed">
+      <div class="object-body">
+        <FieldRenderer
+          v-for="f in mergedFields"
+          :key="f.key"
+          :field="f"
+          :model-value="obj"
+          :path="currentPath"
+        />
+      </div>
+
+      <span class="field-help" v-if="field.help">{{ field.help }}</span>
+    </div>
+
+    <AddFieldDialog
+      :visible="addDialogVisible"
+      :properties="field.properties || []"
+      :allow-custom="field.defineProperty !== false"
+      :existing-keys="Object.keys(obj)"
+      @update:visible="addDialogVisible = $event"
+      @confirm="onAddFieldConfirm"
+    />
+  </t-card>
+
+  <!-- Form 模式（简单内联） -->
+  <div v-else class="object-form">
+    <div class="object-form-header" v-if="field.label">
+      <label class="field-label">
         <span v-if="field.required" class="text-red-500 mr-0.5">*</span>
         {{ field.label }}
       </label>
-      <t-button
-        v-if="field.addedProperty !== false && !hideAddButton"
-        variant="text"
-        size="small"
-        @click="addDialogVisible = true"
-      >
+      <t-button variant="text" size="small" @click="addDialogVisible = true" v-if="field.addedProperty !== false && !hideAddButton">
         <t-icon name="add" /> 添加字段
       </t-button>
     </div>
 
-    <div class="object-body">
+    <div class="object-form-body">
       <FieldRenderer
         v-for="f in mergedFields"
         :key="f.key"
@@ -134,19 +193,36 @@ const onAddFieldConfirm = (selects: string[], customName: string, customType: st
 </template>
 
 <style scoped>
-.object-field {
+.card-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4e5969;
+}
+.card-header-spacer {
+  flex: 1;
+}
+.object-body {
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+}
+.object-form {
   margin-bottom: 16px;
 }
-.object-header {
+.object-form-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
-.object-header .field-label {
-  margin-bottom: 0;
-}
-.object-body {
+.object-form-body {
   border: 1px solid #dfe1e6;
   border-radius: 8px;
   padding: 16px;

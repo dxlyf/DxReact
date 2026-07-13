@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import JsonForm from './components/JsonForm.vue'
+
+const arrayFormRef = ref()
 import type { ObjectFieldConfig, ArrayFieldConfig } from './types'
 
 // ====== 对象方案（reactive 支持动态配置） ======
@@ -20,6 +22,7 @@ const objectSchema = reactive<ObjectFieldConfig>({
       valueType: 'string',
       placeholder: '请输入标题',
       required: true,
+      rules:[{required:true,message:'请输入标题'}],
       help: '显示在浏览器标签页和页面顶部',
     },
     {
@@ -72,6 +75,7 @@ const objectSchema = reactive<ObjectFieldConfig>({
       items: {
         valueType: 'object',
         key: 'faqItem',
+        displayType:'form',
         fields: [
           { key: 'question', label: '问题', valueType: 'string', placeholder: '请输入问题' },
           { key: 'answer', label: '答案', valueType: 'string', textarea: true, rows: 3, placeholder: '请输入答案' },
@@ -89,6 +93,7 @@ const objectSchema = reactive<ObjectFieldConfig>({
       items: {
         valueType: 'object',
         key: 'tag',
+        displayType:'form',
         fields: [
           { key: 'name', label: '名称', valueType: 'string', required: true },
           {
@@ -146,6 +151,7 @@ const arraySchema = reactive<ArrayFieldConfig>({
   items: {
     valueType: 'object',
     key: 'card',
+    displayType:'form',
     addedProperty:true,
     fields: [
       { key: 'title', label: '标题', valueType: 'string', required: true, placeholder: '请输入卡片标题' },
@@ -189,7 +195,33 @@ watch(() => arrConfig.cardAddProperty, (v) => {
 
 // ====== 表单数据 ======
 const objectData = reactive<any>({})
-const arrayData = reactive<any>([])
+const arrayData = reactive<any>([
+  {
+    "title": "111",
+    "subtitle": "fd",
+    "type": "video",
+    "imageUrl": "ffff",
+    "linkUrl": "dffdf",
+    "enabled": true,
+    "config": {
+      "showBadge": true,
+      "width": 2,
+      "age": "4343"
+    },
+    "aa": "fdf",
+    "ffff": "ffff"
+  },
+  {
+    "title": "222",
+    "subtitle": "aaa",
+    "type": "image",
+    "imageUrl": "",
+    "linkUrl": "",
+    "enabled": true,
+    "config": {},
+    "yyy": "bb"
+  }
+])
 
 const setObjectExample = () => {
   Object.assign(objectData, {
@@ -231,14 +263,21 @@ const cleanData = (data: any) => JSON.parse(JSON.stringify(data, (key, val) => {
   return val
 }))
 
-const handleObjectSubmit = () => {
-  const clean = cleanData(objectData)
-  alert(JSON.stringify(clean, null, 2))
+const objFormRef = ref()
+const handleObjectSubmit = async () => {
+  const result = await objFormRef.value?.validate()
+  if (result === true) {
+    const clean = cleanData(objectData)
+    alert(JSON.stringify(clean, null, 2))
+  }
 }
 
-const handleArraySubmit = () => {
-  const clean = cleanData(arrayData)
-  alert(JSON.stringify(clean, null, 2))
+const handleArraySubmit = async () => {
+  const result = await arrayFormRef.value?.validate()
+  if (result === true) {
+    const clean = cleanData(arrayData)
+    alert(JSON.stringify(clean, null, 2))
+  }
 }
 </script>
 
@@ -300,6 +339,7 @@ const handleArraySubmit = () => {
       </div>
 
       <JsonForm
+        ref="objFormRef"
         :schema="objectSchema"
         :model-value="objectData"
         @update:model-value="Object.assign(objectData, $event)"
@@ -357,6 +397,7 @@ const handleArraySubmit = () => {
       </div>
 
       <JsonForm
+        ref="arrayFormRef"
         :schema="arraySchema"
         :model-value="arrayData"
         @update:model-value="arrayData.length = 0; arrayData.push(...($event || []))"

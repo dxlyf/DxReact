@@ -16,12 +16,13 @@ const onUpdate = (v: any) => updateValue([...props.path, props.field.key], v)
 </script>
 
 <template>
-  <div class="json-form-field">
-    <label class="field-label" v-if="field.label">
-      <span v-if="field.required" class="text-red-500 mr-0.5">*</span>
-      {{ field.label }}
-    </label>
-
+  <t-form-item
+    :label="field.label"
+    :name="field.key"
+    :rules="field.rules"
+    :required-mark="field.required"
+    class="json-form-field"
+  >
     <t-select
       v-if="field.options?.length"
       :model-value="val"
@@ -52,25 +53,12 @@ const onUpdate = (v: any) => updateValue([...props.path, props.field.key], v)
       :show-limit-number="field.showLimitNumber"
     />
 
-    <span class="field-help" v-if="field.help">{{ field.help }}</span>
-  </div>
+    <template #help v-if="field.help">
+      <span class="field-help">{{ field.help }}</span>
+    </template>
+  </t-form-item>
 </template>
 
 <style scoped>
-.json-form-field {
-  margin-bottom: 16px;
-}
-.field-label {
-  display: block;
-  font-size: 13px;
-  color: #4e5969;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-.field-help {
-  display: block;
-  font-size: 12px;
-  color: #86909c;
-  margin-top: 4px;
-}
+
 </style>

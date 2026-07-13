@@ -82,6 +82,8 @@ export type BooleanFieldConfig = BaseFieldConfig & PrimitiveValueConfig & {
 // ====== 对象字段 ======
 export type ObjectFieldConfig = BaseFieldConfig & {
   valueType: 'object'
+  /** 展示模式：card 或 form，默认为 card */
+  displayType?: 'card' | 'form'
   /** 子字段配置 */
   fields?: FieldConfig[]
   /** 是否允许添加字段（默认 true） */

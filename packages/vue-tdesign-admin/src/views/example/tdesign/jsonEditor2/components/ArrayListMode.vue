@@ -76,7 +76,7 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
             size="small"
             @click.stop="openAddFieldFor(idx)"
           >
-            <t-icon name="add" />
+            <template #icon><t-icon name="add" /></template>
           </t-button>
           <t-button
             v-if="sortable"
@@ -85,7 +85,7 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
             :disabled="idx === 0"
             @click="moveItem(idx, 'up')"
           >
-            <t-icon name="chevron-up" />
+            <template #icon><t-icon name="chevron-up" /></template>
           </t-button>
           <t-button
             v-if="sortable"
@@ -94,7 +94,7 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
             :disabled="idx === items.length - 1"
             @click="moveItem(idx, 'down')"
           >
-            <t-icon name="chevron-down" />
+            <template #icon><t-icon name="chevron-down" /></template>
           </t-button>
           <t-button
             v-if="canRemove"
@@ -109,11 +109,12 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
 
       <div class="item-body" v-show="!collapsed.has(idx)">
         <FieldRenderer
-          ref="setFieldRef(idx)"
+          :ref="setFieldRef(idx)"
           :field="itemObjectField"
-          :model-value="{ [itemObjectField.key || '__item__']: item }"
+          :model-value="item"
           :path="[...path, idx]"
           hide-object-header
+          inline-object
         />
       </div>
     </div>
@@ -148,4 +149,5 @@ const moveItem = (idx: number, dir: 'up' | 'down') => {
 .item-body {
   padding: 12px;
 }
+
 </style>
