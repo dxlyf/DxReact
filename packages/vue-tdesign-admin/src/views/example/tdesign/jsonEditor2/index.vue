@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import JsonForm from './components/JsonForm.vue'
 
 const arrayFormRef = ref()
-import type { ObjectFieldConfig, ArrayFieldConfig } from './types'
+import type { ObjectFieldConfig, ArrayFieldConfig, ArrayObjectConfig } from './types'
 
 // ====== 对象方案（reactive 支持动态配置） ======
 const objConfig = reactive({
@@ -151,7 +151,6 @@ const arraySchema = reactive<ArrayFieldConfig>({
   items: {
     valueType: 'object',
     key: 'card',
-    displayType:'form',
     addedProperty:true,
     fields: [
       { key: 'title', label: '标题', valueType: 'string', required: true, placeholder: '请输入卡片标题' },

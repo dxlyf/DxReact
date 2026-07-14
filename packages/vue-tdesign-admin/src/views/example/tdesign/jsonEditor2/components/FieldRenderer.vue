@@ -18,6 +18,8 @@ const props = defineProps<{
   inlineObject?: boolean
   /** 数组字段内联模式 */
   inlineArray?: boolean
+  /** 根对象 */
+  rootObject?: boolean
 }>()
 
 const objRef = ref<InstanceType<typeof ObjectField>>()
@@ -33,13 +35,13 @@ const visible = computed(() => !isFieldHidden(props.field, props.modelValue || {
     <BooleanField v-else-if="field.valueType === 'boolean'" :field="field" :model-value="modelValue" :path="path" />
     <div v-else-if="field.valueType === 'object'" class="obj-form-field">
     <ObjectField
-      
       ref="objRef"
       :field="field as ObjectFieldConfig"
       :model-value="modelValue"
       :path="path"
       :inline="inlineObject"
       :hide-add-button="hideObjectHeader"
+      :root-object="rootObject"
     />
     </div>
     <div v-else-if="field.valueType === 'array'" class="array-form-field">

@@ -93,7 +93,9 @@ export type ObjectFieldConfig = BaseFieldConfig & {
   /** 预定义的可添加字段模板 */
   properties?: FieldConfig[]
 }
-
+export type ArrayObjectConfig=Omit<ObjectFieldConfig,'display'>&{
+    display?:'form'
+}
 // ====== 数组字段 ======
 export type ArrayFieldConfig = BaseFieldConfig & {
   valueType: 'array'
@@ -108,7 +110,7 @@ export type ArrayFieldConfig = BaseFieldConfig & {
   /** 最大项数 */
   maxItems?: number
   /** 子项字段配置 */
-  items?: ObjectFieldConfig
+  items?: ArrayObjectConfig
 }
 
 // ====== 字段联合类型 ======

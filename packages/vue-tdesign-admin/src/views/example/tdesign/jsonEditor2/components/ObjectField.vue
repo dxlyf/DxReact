@@ -13,12 +13,13 @@ const props = defineProps<{
   hideAddButton?: boolean
   /** 内联模式：modelValue 即为对象自身，不额外添加 field.key 到路径 */
   inline?: boolean
+  /** 根对象（来自 JsonForm 顶层），modelValue 即为完整数据 */
+  rootObject?: boolean
 }>()
 
 const updateValue = inject<UpdateValueFn>(UPDATE_VALUE_KEY)!
 
-/** 是否是根层级（path 为空，说明当前对象就是 modelValue 自身） */
-const isRoot = computed(() => props.path.length === 0 || props.inline === true)
+const isRoot = computed(() => props.rootObject === true || props.inline === true)
 
 const isCardMode = computed(() => (props.field.displayType || 'card') === 'card')
 

@@ -39,6 +39,7 @@ const isArray = computed(() => props.schema.valueType === 'array')
       :model-value="modelValue"
       :path="[]"
       :inline-array="isArray"
+      :root-object="!isArray"
     />
   </t-form>
 </template>

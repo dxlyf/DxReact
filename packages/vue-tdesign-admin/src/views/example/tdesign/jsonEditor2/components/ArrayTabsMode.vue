@@ -15,9 +15,12 @@ const props = defineProps<{
 const updateValue = inject<UpdateValueFn>(UPDATE_VALUE_KEY)!
 const activeTab = ref('0')
 
-const itemObjectField = computed<ObjectFieldConfig>(() => ({
-  ...(props.field.items || { valueType: 'object', key: '__item__' }),
-}))
+const itemObjectField = computed<ObjectFieldConfig>(() => {
+  const items = props.field.items
+  if (!items) return { valueType: 'object', key: '__item__' }
+  const { display, ...rest } = items as any
+  return { ...rest, displayType: display || 'form' } as ObjectFieldConfig
+})
 
 const canAddField = computed(() => itemObjectField.value.addedProperty !== false)
 

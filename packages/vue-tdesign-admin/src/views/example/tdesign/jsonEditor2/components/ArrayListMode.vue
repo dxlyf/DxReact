@@ -16,9 +16,12 @@ const updateValue = inject<UpdateValueFn>(UPDATE_VALUE_KEY)!
 const collapsed = ref<Set<number>>(new Set())
 
 /** 将 items 配置转为 ObjectFieldConfig，用于 ObjectField 渲染 */
-const itemObjectField = computed<ObjectFieldConfig>(() => ({
-  ...(props.field.items || { valueType: 'object', key: '__item__' }),
-}))
+const itemObjectField = computed<ObjectFieldConfig>(() => {
+  const items = props.field.items
+  if (!items) return { valueType: 'object', key: '__item__' }
+  const { display, ...rest } = items as any
+  return { ...rest, displayType: display || 'form' } as ObjectFieldConfig
+})
 
 /** 该项是否支持添加字段 */
 const canAddField = computed(() => itemObjectField.value.addedProperty !== false)
