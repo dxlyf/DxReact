@@ -15,13 +15,16 @@ type Props = {
     },
     valueType?:string
     modelValue?:any
-    defaultSelectedIndex?:number|number[]
+    defaultSelectedIndex?:number|number[],
+    minCollapsedNum?:number
 }
+
 const props = withDefaults(defineProps<Props>(), {
     debounce: 1000,
     multiple: false,
     manualRequest: false,
     defaultSelectedIndex:-1,
+    minCollapsedNum:15,
     defaultOptions:()=>[],
     keys:()=>({
         label:'label',
@@ -168,6 +171,7 @@ const selectProps = computed<TdSelectProps>(() => {
         } : {}),
         clearable:true,
         filterable:true,
+        minCollapsedNum:props.minCollapsedNum,
       //  loading:loading.value,
         keys: props.keys,
         valueType: props.valueType,
@@ -221,8 +225,8 @@ onMounted(()=>{
 
 <template>
     <t-select  :popup-props="{ 'onScrollToBottom': handleScrollToBottom}" v-bind="selectProps"  v-model="modelValue" @popup-visible-change="handlePopVisible">
-     <template v-if="multiple" #valueDisplay="{ value, onClose }">
-        <t-tag v-for="(item, index) in value" :key="index" :closable="true" :on-close="handleClose(index, onClose)">
+     <template v-if="multiple" #valueDisplay="{ value,displayValue, onClose }">
+        <t-tag v-for="(item, index) in (displayValue||value)" :key="index" :closable="true" :on-close="handleClose(index, onClose)">
           {{formatShowLabel(item) }}
         </t-tag>
       </template>
