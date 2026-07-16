@@ -62,6 +62,7 @@ const addForm = (type: string) => {
         isNew: true
     }
     model.value[type].push(item)
+    model.value={...model.value}
     activeType.value = type
     activeFroms[type] = getForms(type).length - 1
   //  console.log('mm', model.value, activeFroms[type], 'activeType', activeType.value)
