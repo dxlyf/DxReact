@@ -20,13 +20,15 @@ export const TransitionLane3 =     0b0000000000000000000000010000000
 
 export const NoLanes = 0b0000000000000000000000000000000
 
+export type Lane = number
+
 // 获取最高优先级 lane
-export function getHighestPriorityLane(lanes) {
+export function getHighestPriorityLane(lanes: Lane): Lane {
   return lanes & -lanes
 }
 
 // lane 转优先级数值（越小越优先）
-export function lanesToPriority(lanes) {
+export function lanesToPriority(lanes: Lane): number {
   if (lanes & SyncLane) return 0
   if (lanes & InputContinuousLane) return 1
   if (lanes & DefaultLane) return 2
@@ -35,11 +37,22 @@ export function lanesToPriority(lanes) {
   return 5
 }
 
-// ---- 任务结构 ----
+// ---- 任务类型 ----
+export interface Task {
+  id: number
+  callback: ((didTimeout: boolean) => any) | null
+  priority: number
+  expirationTime: number
+  startTime: number
+}
+
+type WorkCallback = (currentTime: number) => boolean
+type ContinuationCallback = (didTimeout: boolean) => any
+
 let taskIdCounter = 0
-const taskQueue = []  // 按过期时间排序的任务队列
+const taskQueue: Task[] = []
 let isPerformingWork = false
-let currentTask = null
+let currentTask: Task | null = null
 
 // 根据优先级计算过期时间
 const IMMEDIATE_PRIORITY_TIMEOUT = -1
@@ -48,7 +61,7 @@ const NORMAL_PRIORITY_TIMEOUT = 5000
 const LOW_PRIORITY_TIMEOUT = 10000
 const IDLE_PRIORITY_TIMEOUT = 1073741823
 
-function getTimeoutByPriority(priority) {
+function getTimeoutByPriority(priority: number): number {
   switch (priority) {
     case 0: return IMMEDIATE_PRIORITY_TIMEOUT   // Sync
     case 1: return USER_BLOCKING_PRIORITY_TIMEOUT // Input
@@ -60,12 +73,12 @@ function getTimeoutByPriority(priority) {
   }
 }
 
-export function scheduleCallback(priority, callback) {
+export function scheduleCallback(priority: number, callback: ContinuationCallback): Task {
   const currentTime = performance.now()
   const timeout = getTimeoutByPriority(priority)
   const expirationTime = currentTime + timeout
 
-  const newTask = {
+  const newTask: Task = {
     id: taskIdCounter++,
     callback,
     priority,
@@ -85,7 +98,7 @@ export function scheduleCallback(priority, callback) {
 
   // 设置工作回调并启动消息循环
   if (scheduledHostCallback === null) {
-    scheduledHostCallback = flushWork
+    scheduledHostCallback = flushWork as WorkCallback
   }
 
   if (!isPerformingWork) {
@@ -95,7 +108,7 @@ export function scheduleCallback(priority, callback) {
   return newTask
 }
 
-export function cancelCallback(task) {
+export function cancelCallback(task: Task): void {
   const idx = taskQueue.indexOf(task)
   if (idx !== -1) {
     taskQueue.splice(idx, 1)
@@ -105,10 +118,10 @@ export function cancelCallback(task) {
 // ---- 时间切片 ----
 const FRAME_LENGTH = 5  // 每帧 5ms
 let frameDeadline = 0
-let scheduledHostCallback = null
+let scheduledHostCallback: WorkCallback | null = null
 let isMessageLoopRunning = false
 
-function requestHostCallback() {
+function requestHostCallback(): void {
   if (!isMessageLoopRunning) {
     isMessageLoopRunning = true
     schedulePerformWorkUntilDeadline()
@@ -116,23 +129,23 @@ function requestHostCallback() {
 }
 
 // 使用 MessageChannel 实现微任务调度（比 setTimeout 更精确）
-let channel = null
-let port = null
+let channel: MessageChannel | null = null
+let port: MessagePort | null = null
 
-function schedulePerformWorkUntilDeadline() {
+function schedulePerformWorkUntilDeadline(): void {
   if (typeof MessageChannel !== 'undefined') {
     if (!channel) {
       channel = new MessageChannel()
       port = channel.port2
       channel.port1.onmessage = performWorkUntilDeadline
     }
-    port.postMessage(null)
+    port!.postMessage(null)
   } else {
     setTimeout(performWorkUntilDeadline, 0)
   }
 }
 
-function performWorkUntilDeadline() {
+function performWorkUntilDeadline(): void {
   if (scheduledHostCallback !== null) {
     const currentTime = performance.now()
     frameDeadline = currentTime + FRAME_LENGTH
@@ -159,18 +172,18 @@ function performWorkUntilDeadline() {
 }
 
 // 暴露给外部的 shouldYield 检查
-export function shouldYieldToHost() {
+export function shouldYieldToHost(): boolean {
   const currentTime = performance.now()
   return frameDeadline <= currentTime
 }
 
 // 获取剩余时间
-export function getCurrentTime() {
+export function getCurrentTime(): number {
   return performance.now()
 }
 
 // ---- 工作循环 ----
-function flushWork(currentTime) {
+function flushWork(currentTime: number): boolean {
   isPerformingWork = true
   try {
     return workLoop(currentTime)
@@ -180,7 +193,7 @@ function flushWork(currentTime) {
   }
 }
 
-function workLoop(currentTime) {
+function workLoop(currentTime: number): boolean {
   // 允许在单个 workLoop 中处理更高优先级的任务
   currentTask = peek(taskQueue)
 
@@ -198,7 +211,7 @@ function workLoop(currentTime) {
 
       // 如果回调返回一个函数，说明任务尚未完成
       if (typeof continuationCallback === 'function') {
-        currentTask.callback = continuationCallback
+        currentTask.callback = continuationCallback as ContinuationCallback
         return true
       }
     }
@@ -212,19 +225,19 @@ function workLoop(currentTime) {
   return currentTask !== null
 }
 
-function peek(queue) {
+function peek(queue: Task[]): Task | null {
   return queue[0] || null
 }
 
-function pop(queue) {
+function pop(queue: Task[]): Task | undefined {
   return queue.shift()
 }
 
 // 刷新所有立即过期的任务（同步任务的降级处理）
-export function flushSyncWork() {
+export function flushSyncWork(): void {
   const currentTime = performance.now()
   while (taskQueue.length > 0 && taskQueue[0].expirationTime <= currentTime) {
-    const task = taskQueue.shift()
+    const task = taskQueue.shift()!
     if (typeof task.callback === 'function') {
       task.callback(true)
     }
@@ -236,17 +249,17 @@ export function flushSyncWork() {
 }
 
 // ---- 启动工作循环 ----
-export function startWorkLoop() {
-  scheduledHostCallback = flushWork
+export function startWorkLoop(): void {
+  scheduledHostCallback = flushWork as WorkCallback
   requestHostCallback()
 }
 
 // ---- 暂停/恢复 ----
-export function pauseExecution() {
+export function pauseExecution(): void {
   isPerformingWork = false
 }
 
-export function continueExecution() {
+export function continueExecution(): void {
   if (taskQueue.length > 0) {
     requestHostCallback()
   }

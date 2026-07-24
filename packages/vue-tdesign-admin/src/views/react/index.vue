@@ -1,27 +1,81 @@
 <script setup lang="ts">
-import { onMounted, shallowRef } from 'vue';
+import { ref, onMounted } from 'vue';
 
-const root = shallowRef<HTMLDivElement>()
+const appRef = ref<HTMLDivElement>()
+type ReactElement={
+  type:any,
+  key:any,
+  ref:any,
+  props:any
+}
+function createElement(type: any, config: any, ...children: any[]) {
+  const props: any = {}
+  let key: any = null, ref: any = null
+  if (config) {
+    for (const [name, value] of Object.entries(config)) {
+      if (name === 'key') {
+        key = value + ''
+      } else if (name === 'ref') {
+        ref = value
+      } else {
+        props[name] = value
+      }
+    }
+  }
+  return {
+    type,
+    key,
+    ref,
+    props
+  } as ReactElement
+}
+type FiberTag='hostRoot'|'hostComponent'|'hostText'|'functionComponent'
 
+type Fiber={
+  tag:FiberTag,
+  state:any,
+  props:any,
+  children:any,
+  sibling:any,
+  return:any,
+}
+function createFiber(tag:FiberTag,pendingProps:any){
+  return {
+    tag,
+    state:null,
+    props:pendingProps,
+    children:null,
+    sibling:null,
+    return:null
+  }
+}
+function beginWork(current:Fiber|null,workInProgress:Fiber,renderLanes?:any){
+
+}
+function completeWork(current:Fiber|null,workInProgress:Fiber,renderLanes?:any){
+
+}
+function completeUnitOfWork(unitOfwork:Fiber){
+
+}
+function performUnitOfWork(unitOfwork:Fiber){
+
+}
+function workLoop(){
+
+}
+function render(element: ReactElement, container: HTMLDivElement) {
+  container.appendChild(element)
+}
 onMounted(() => {
-  // 动态加载 Mini React Concurrent 库
-  const script = document.createElement('script')
-  script.src = '/src/views/react/reactLike/react.js'
-  script.type = 'module'
-  root.value?.appendChild(script)
+  render(
+    createElement('div',{},'hello world'),
+    appRef.value!
+  )
 })
 </script>
+
 <template>
-  <div class="react-concurrent-container">
-    <h2 style="text-align:center;padding:20px;color:#1677ff;">
-      Mini React Concurrent - 请直接打开 index.html 查看完整 Demo
-    </h2>
-    <p style="text-align:center;color:#999;">
-      完整 Demo 路径: <code>reactLike/index.html</code> — 包含6个并发特性演示
-    </p>
-    <iframe
-      src="/src/views/react/reactLike/index.html"
-      style="width:100%;height:calc(100vh - 40px);border:none;margin-top:12px;"
-    />
+  <div ref="appRef">
   </div>
 </template>

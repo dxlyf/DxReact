@@ -60,15 +60,15 @@ const fromData = reactive<Record<string, ModelItem[]>>({})
 // }, { immediate: true, deep: true })
 
 // 本地编辑 → 父组件
-watch(fromData, (newVal) => {
-    model.value = {...toRaw}
-}, { deep: true })
+// watch(fromData, (newVal) => {
+//     model.value = {...toRaw}
+// }, { deep: true })
 
 const getForms = (type: string) => {
-    if (!fromData[type]) {
-        fromData[type] = []
+    if (!model.value[type]) {
+        model.value[type] = []
     }
-    return fromData[type]
+    return model.value[type]
 }
 
 const getTypeCount = (type: string) => getForms(type).length
