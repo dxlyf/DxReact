@@ -115,125 +115,176 @@ You can use any element for the list and its elements, not just `ul`/`li`. Here 
 ### Options
 ```js
 var sortable = new Sortable(el, {
-	group: "name",  // or { name: "...", pull: [true, false, 'clone', array], put: [true, false, array] }
-	sort: true,  // sorting inside list
-	delay: 0, // time in milliseconds to define when the sorting should start
-	delayOnTouchOnly: false, // only delay if user is using touch
-	touchStartThreshold: 0, // px, how many pixels the point should move before cancelling a delayed drag event
-	disabled: false, // Disables the sortable if set to true.
-	store: null,  // @see Store
-	animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
-	easing: "cubic-bezier(1, 0, 0, 1)", // Easing for animation. Defaults to null. See https://easings.net/ for examples.
-	handle: ".my-handle",  // Drag handle selector within list items
-	filter: ".ignore-elements",  // Selectors that do not lead to dragging (String or Function)
-	preventOnFilter: true, // Call `event.preventDefault()` when triggered `filter`
-	draggable: ".item",  // Specifies which items inside the element should be draggable
-
-	dataIdAttr: 'data-id', // HTML attribute that is used by the `toArray()` method
-
-	ghostClass: "sortable-ghost",  // Class name for the drop placeholder
-	chosenClass: "sortable-chosen",  // Class name for the chosen item
-	dragClass: "sortable-drag",  // Class name for the dragging item
-
-	swapThreshold: 1, // Threshold of the swap zone
-	invertSwap: false, // Will always use inverted swap zone if set to true
-	invertedSwapThreshold: 1, // Threshold of the inverted swap zone (will be set to swapThreshold value by default)
-	direction: 'horizontal', // Direction of Sortable (will be detected automatically if not given)
-
-	forceFallback: false,  // ignore the HTML5 DnD behaviour and force the fallback to kick in
-
-	fallbackClass: "sortable-fallback",  // Class name for the cloned DOM Element when using forceFallback
-	fallbackOnBody: false,  // Appends the cloned DOM Element into the Document's Body
-	fallbackTolerance: 0, // Specify in pixels how far the mouse should move before it's considered as a drag.
-
+	// 分组配置：用于控制不同列表之间的拖拽行为
+	// 可以是字符串，也可以是对象 { name: "...", pull: [true, false, 'clone', array], put: [true, false, array] }
+	group: "name",
+	
+	// 是否允许在列表内部排序
+	sort: true,
+	
+	// 延迟时间（毫秒），定义拖拽开始前需要等待的时间
+	delay: 0,
+	
+	// 是否仅在触摸设备上启用延迟
+	delayOnTouchOnly: false,
+	
+	// 触发延迟拖拽前，指针需要移动的最小像素数，超过此值将取消延迟拖拽
+	touchStartThreshold: 0,
+	
+	// 是否禁用排序功能（设为 true 时禁用）
+	disabled: false,
+	
+	// 数据存储配置，用于保存排序状态（参见 Store 文档）
+	store: null,
+	
+	// 动画持续时间（毫秒），排序时移动项目的动画速度，设为 0 则无动画
+	animation: 150,
+	
+	// 缓动函数，用于动画效果。默认为 null，可参考 https://easings.net/
+	easing: "cubic-bezier(1, 0, 0, 1)",
+	
+	// 拖拽手柄选择器，只有匹配此选择器的元素才能触发拖拽
+	handle: ".my-handle",
+	
+	// 过滤器，匹配此选择器的元素不会触发拖拽（可以是字符串或函数）
+	filter: ".ignore-elements",
+	
+	// 是否在触发 filter 时调用 event.preventDefault()
+	preventOnFilter: true,
+	
+	// 指定元素内部哪些子项是可拖拽的
+	draggable: ".item",
+	
+	// HTML 属性名，用于 toArray() 方法获取数据 ID
+	dataIdAttr: 'data-id',
+	
+	// 占位元素的 CSS 类名（拖拽时显示在目标位置）
+	ghostClass: "sortable-ghost",
+	
+	// 被选中元素的 CSS 类名
+	chosenClass: "sortable-chosen",
+	
+	// 正在拖拽元素的 CSS 类名
+	dragClass: "sortable-drag",
+	
+	// 交换区域阈值（0-1），决定拖拽元素与目标元素重叠多少时触发交换
+	swapThreshold: 1,
+	
+	// 是否始终使用反转的交换区域
+	invertSwap: false,
+	
+	// 反转交换区域阈值（默认与 swapThreshold 相同）
+	invertedSwapThreshold: 1,
+	
+	// 拖拽方向：'horizontal'（水平）或 'vertical'（垂直），不指定则自动检测
+	direction: 'horizontal',
+	
+	// 是否强制使用降级方案（忽略 HTML5 DnD 行为）
+	forceFallback: false,
+	
+	// 使用 forceFallback 时，克隆 DOM 元素的 CSS 类名
+	fallbackClass: "sortable-fallback",
+	
+	// 是否将克隆的 DOM 元素追加到文档的 body 中
+	fallbackOnBody: false,
+	
+	// 鼠标需要移动多少像素才被视为拖拽开始（用于降级方案）
+	fallbackTolerance: 0,
+	
+	// 是否允许拖拽事件在目标元素上冒泡
 	dragoverBubble: false,
-	removeCloneOnHide: true, // Remove the clone element when it is not showing, rather than just hiding it
-	emptyInsertThreshold: 5, // px, distance mouse must be from empty sortable to insert drag element into it
+	
+	// 当克隆元素隐藏时是否移除它（而不是仅仅隐藏）
+	removeCloneOnHide: true,
+	
+	// 鼠标距离空排序列表多近（像素）时，可以将拖拽元素插入其中
+	emptyInsertThreshold: 5,
 
-
+	// 设置拖拽数据，用于 HTML5 DragEvent 的 dataTransfer 对象
 	setData: function (/** DataTransfer */dataTransfer, /** HTMLElement*/dragEl) {
-		dataTransfer.setData('Text', dragEl.textContent); // `dataTransfer` object of HTML5 DragEvent
+		dataTransfer.setData('Text', dragEl.textContent);
 	},
 
-	// Element is chosen
+	// 元素被选中时触发
 	onChoose: function (/**Event*/evt) {
-		evt.oldIndex;  // element index within parent
+		evt.oldIndex;  // 元素在父容器中的索引
 	},
 
-	// Element is unchosen
+	// 元素取消选中时触发
 	onUnchoose: function(/**Event*/evt) {
-		// same properties as onEnd
+		// 属性与 onEnd 相同
 	},
 
-	// Element dragging started
+	// 拖拽开始时触发
 	onStart: function (/**Event*/evt) {
-		evt.oldIndex;  // element index within parent
+		evt.oldIndex;  // 元素在父容器中的索引
 	},
 
-	// Element dragging ended
+	// 拖拽结束时触发
 	onEnd: function (/**Event*/evt) {
-		var itemEl = evt.item;  // dragged HTMLElement
-		evt.to;    // target list
-		evt.from;  // previous list
-		evt.oldIndex;  // element's old index within old parent
-		evt.newIndex;  // element's new index within new parent
-		evt.oldDraggableIndex; // element's old index within old parent, only counting draggable elements
-		evt.newDraggableIndex; // element's new index within new parent, only counting draggable elements
-		evt.clone // the clone element
-		evt.pullMode;  // when item is in another sortable: `"clone"` if cloning, `true` if moving
+		var itemEl = evt.item;  // 被拖拽的 HTMLElement
+		evt.to;    // 目标列表
+		evt.from;  // 来源列表
+		evt.oldIndex;  // 元素在旧父容器中的索引
+		evt.newIndex;  // 元素在新父容器中的索引
+		evt.oldDraggableIndex; // 元素在旧父容器中的索引（仅计算可拖拽元素）
+		evt.newDraggableIndex; // 元素在新父容器中的索引（仅计算可拖拽元素）
+		evt.clone // 克隆元素
+		evt.pullMode;  // 当元素位于其他 sortable 中时："clone" 表示克隆，true 表示移动
 	},
 
-	// Element is dropped into the list from another list
+	// 元素从其他列表拖入当前列表时触发
 	onAdd: function (/**Event*/evt) {
-		// same properties as onEnd
+		// 属性与 onEnd 相同
 	},
 
-	// Changed sorting within list
+	// 在同一列表内排序发生变化时触发
 	onUpdate: function (/**Event*/evt) {
-		// same properties as onEnd
+		// 属性与 onEnd 相同
 	},
 
-	// Called by any change to the list (add / update / remove)
+	// 列表发生任何变化（添加/更新/移除）时触发
 	onSort: function (/**Event*/evt) {
-		// same properties as onEnd
+		// 属性与 onEnd 相同
 	},
 
-	// Element is removed from the list into another list
+	// 元素从当前列表移除到其他列表时触发
 	onRemove: function (/**Event*/evt) {
-		// same properties as onEnd
+		// 属性与 onEnd 相同
 	},
 
-	// Attempt to drag a filtered element
+	// 尝试拖拽被过滤的元素时触发
 	onFilter: function (/**Event*/evt) {
-		var itemEl = evt.item;  // HTMLElement receiving the `mousedown|tapstart` event.
+		var itemEl = evt.item;  // 接收到 mousedown|tapstart 事件的 HTMLElement
 	},
 
-	// Event when you move an item in the list or between lists
+	// 在列表中或列表间移动元素时触发（用于控制插入位置）
 	onMove: function (/**Event*/evt, /**Event*/originalEvent) {
-		// Example: https://jsbin.com/nawahef/edit?js,output
-		evt.dragged; // dragged HTMLElement
+		// 示例: https://jsbin.com/nawahef/edit?js,output
+		evt.dragged; // 被拖拽的 HTMLElement
 		evt.draggedRect; // DOMRect {left, top, right, bottom}
-		evt.related; // HTMLElement on which have guided
+		evt.related; // 引导拖拽的目标 HTMLElement
 		evt.relatedRect; // DOMRect
-		evt.willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
-		originalEvent.clientY; // mouse position
-		// return false; — for cancel
-		// return -1; — insert before target
-		// return 1; — insert after target
-		// return true; — keep default insertion point based on the direction
-		// return void; — keep default insertion point based on the direction
+		evt.willInsertAfter; // 布尔值，表示 Sortable 是否默认将拖拽元素插入到目标之后
+		originalEvent.clientY; // 鼠标位置
+		// 返回值说明:
+		// return false; — 取消操作
+		// return -1; — 插入到目标之前
+		// return 1; — 插入到目标之后
+		// return true; — 保持基于方向的默认插入点
+		// return void; — 保持基于方向的默认插入点
 	},
 
-	// Called when creating a clone of element
+	// 创建元素克隆时触发
 	onClone: function (/**Event*/evt) {
-		var origEl = evt.item;
-		var cloneEl = evt.clone;
+		var origEl = evt.item;  // 原始元素
+		var cloneEl = evt.clone; // 克隆元素
 	},
 
-	// Called when dragging element changes position
+	// 拖拽元素位置发生变化时触发
 	onChange: function(/**Event*/evt) {
-		evt.newIndex // most likely why this event is used is to get the dragging element's current index
-		// same properties as onEnd
+		evt.newIndex // 拖拽元素当前的索引（这是使用此事件的主要原因）
+		// 其他属性与 onEnd 相同
 	}
 });
 ```

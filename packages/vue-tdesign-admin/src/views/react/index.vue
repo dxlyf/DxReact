@@ -31,34 +31,84 @@ function createElement(type: any, config: any, ...children: any[]) {
 }
 type FiberTag='hostRoot'|'hostComponent'|'hostText'|'functionComponent'
 
-type Fiber={
+interface FiberNode{
   tag:FiberTag,
-  state:any,
-  props:any,
-  children:any,
-  sibling:any,
-  return:any,
+  key:any,
+  type:any,
+  elementType:any,
+  index:number,
+  ref:any,
+  refCleanup:any,
+  pendingProps:any,
+  dependencies:any,
+  memoizedState:any,
+  updateQueue:any,
+  memoizedProps:any,
+  mode:any,
+  subtreeFlags:any,
+  flags:any,
+  deletions:any,
+  childLanes:any,
+  lanes:any,
+  alternate:FiberNode|null,
+
+  sibling:FiberNode|null,
+  child:FiberNode|null,
+  return:FiberNode|null,
+  stateNode:any,
+
 }
-function createFiber(tag:FiberTag,pendingProps:any){
-  return {
-    tag,
-    state:null,
-    props:pendingProps,
-    children:null,
-    sibling:null,
-    return:null
+interface FiberNodeConstructor{
+  new(tag:FiberTag, pendingProps:any, key:any, mode:any):FiberNode
+}
+const FiberNodeClass:FiberNodeConstructor=function (this:FiberNode,tag:FiberTag, pendingProps:any, key:any, mode:any){
+  this.tag = tag;
+  this.key = key;
+  this.sibling =
+    this.child =
+    this.return =
+    this.stateNode =
+    this.type =
+    this.elementType =
+      null;
+  this.index = 0;
+  this.refCleanup = this.ref = null;
+  this.pendingProps = pendingProps;
+  this.dependencies =
+    this.memoizedState =
+    this.updateQueue =
+    this.memoizedProps =
+      null;
+  this.mode = mode;
+  this.subtreeFlags = this.flags = 0;
+  this.deletions = null;
+  this.childLanes = this.lanes = 0;
+  this.alternate = null;
+} as any
+
+function createWorkInProgress(current:FiberNode,pendingProps:any){
+  const alternate = current.alternate
+  if(alternate){
+    const workInProgress = createFiber(current.tag,pendingProps,current.key,current.mode)
+    workInProgress.alternate = current
+    return workInProgress
+  }else{
+    return createFiber(current.tag,pendingProps,current.key,current.mode)
   }
 }
-function beginWork(current:Fiber|null,workInProgress:Fiber,renderLanes?:any){
+function createFiber(tag:FiberTag,pendingProps:any,key:any,mode:any){
+  return new FiberNodeClass(tag,pendingProps,key,mode)
+}
+function beginWork(current:FiberNode|null,workInProgress:FiberNode,renderLanes?:any){
 
 }
-function completeWork(current:Fiber|null,workInProgress:Fiber,renderLanes?:any){
+function completeWork(current:FiberNode|null,workInProgress:FiberNode,renderLanes?:any){
 
 }
-function completeUnitOfWork(unitOfwork:Fiber){
+function completeUnitOfWork(unitOfWork:FiberNode){
 
 }
-function performUnitOfWork(unitOfwork:Fiber){
+function performUnitOfWork(unitOfWork:FiberNode){
 
 }
 function workLoop(){

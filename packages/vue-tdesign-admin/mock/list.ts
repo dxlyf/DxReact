@@ -273,6 +273,20 @@ export default [
         },
       }
     },
+  },{
+    url: '/api/userInfo',
+    method: 'get',
+    response: ({ body }) => {
+      return {
+        code: 0,
+        msg:'success',
+        data: {
+          id:1,
+          name:'admin',
+
+        }
+      }
+    },
   },
   {
     url: '/api/post',
