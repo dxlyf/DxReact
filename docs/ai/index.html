@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API 测试工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 13px; color: #333; background: #f5f6f8;
+  }
+  .app { height: 100vh; display: flex; flex-direction: column; }
+
+  /* ===== 顶部环境栏 ===== */
+  .topbar {
+    background:  #fff; border-bottom: 1px solid #e5e6eb; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .topbar .label { color: #666; }
+  .topbar select, .topbar input {
+    height: 30px; padding: 0 8px; border: 1px solid #dcdfe6; border-radius: 4px; background: #fff; outline: none;
+  }
+  .topbar select:focus, .topbar input:focus { border-color: #3370ff; }
+  .env-info { font-size: 12px; color: #999; margin-left: auto; display: flex; gap: 14px; align-items: center; }
+
+  .btn {
+    height: 30px; padding: 0 14px; border: 1px solid #dcdfe6; border-radius: 4px;
+    background: #fff; color: #333; cursor: pointer; font-size: 13px; line-height: 28px;
+    transition: all .15s;
+  }
+  .btn:hover { border-color: #3370ff; color: #3370ff; }
+  .btn.primary { background: #3370ff; border-color: #3370ff; color: #fff; }
+  .btn.primary:hover { background: #2b5fd9; }
+  .btn.danger:hover { border-color: #e34d59; color: #e34d59; }
+  .btn.sm { height: 24px; padding: 0 8px; font-size: 12px; line-height: 22px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ===== 主体 ===== */
+  .main { flex: 1; display: flex; overflow: hidden; }
+
+  /* 左侧 API 列表 */
+  .left {
+    width: 260px; background: #fff; border-right: 1px solid #e5e6eb;
+    display: flex; flex-direction: column;
+  }
+  .left-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-weight: 600;
+  }
+  .api-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .api-item {
+    padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    margin-bottom: 4px; transition: background .15s;
+  }
+  .api-item:hover { background: #f5f7fa; }
+  .api-item.active { background: #e8f0fe; }
+  .method-tag {
+    font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 3px; color: #fff; flex-shrink: 0;
+    min-width: 44px; text-align: center;
+  }
+  .method-GET    { background: #2ba471; }
+  .method-POST   { background: #3370ff; }
+  .method-PUT    { background: #e8a838; }
+  .method-DELETE { background: #e34d59; }
+  .method-PATCH  { background: #7c63f7; }
+  .api-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .api-item .path { font-size: 11px; color: #999; }
+
+  /* 右侧 */
+  .right { flex: 1; display: flex; flex-direction: column; background: #f5f6f8; }
+  .right-header {
+    background: #fff; border-bottom: 1px solid #e5e6eb; padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .api-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .api-title .desc { color: #999; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; background: #fff; border-bottom: 1px solid #e5e6eb; padding: 0 16px; gap: 4px;
+  }
+  .tab {
+    padding: 10px 14px; cursor: pointer; color: #666; border-bottom: 2px solid transparent;
+    font-size: 13px; user-select: none;
+  }
+  .tab:hover { color: #3370ff; }
+  .tab.active { color: #3370ff; border-bottom-color: #3370ff; font-weight: 600; }
+
+  .tab-content {
+    flex: 1; overflow-y: auto; background: #fff; margin: 12px 16px 0; border-radius: 8px;
+    padding: 16px; border: 1px solid #e5e6eb;
+  }
+  .field { margin-bottom: 14px; }
+  .field > label { display: block; margin-bottom: 6px; color: #666; font-size: 13px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 6px 10px; border: 1px solid #dcdfe6; border-radius: 4px; outline: none; font-size: 13px;
+    font-family: inherit;
+  }
+  .field textarea { font-family: "Consolas", "Monaco", monospace; font-size: 12px; line-height: 1.6; resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: #3370ff; }
+  .field-row { display: flex; gap: 12px; }
+  .field-row .field { flex: 1; }
+  .kv-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .kv-row input { flex: 1; }
+  .kv-row .btn { flex-shrink: 0; }
+  .hint { font-size: 12px; color: #999; margin-bottom: 8px; }
+
+  /* 响应区 */
+  .response-wrap { margin: 12px 16px 16px; border: 1px solid #e5e6eb; border-radius: 8px; overflow: hidden; background: #fff; }
+  .response-bar {
+    padding: 8px 14px; display: flex; gap: 10px; align-items: center;
+    background: #fafafa; border-bottom: 1px solid #f0f0f0;
+  }
+  .status-tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; }
+  .status-ok { background: #2ba471; }
+  .status-err { background: #e34d59; }
+  .meta-tag { font-size: 12px; color: #666; background: #f0f0f0; padding: 2px 8px; border-radius: 4px; }
+  .response-body {
+    padding: 12px 14px; font-size: 12px; font-family: "Consolas", "Monaco", monospace;
+    white-space: pre-wrap; word-break: break-all; max-height: 280px; overflow: auto; margin: 0;
+  }
+  .placeholder { color: #ccc; display: flex; align-items: center; justify-content: center; height: 100%; }
+
+  /* 模态框 */
+  .modal-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: #fff; border-radius: 8px; width: 620px; max-width: 92vw; max-height: 88vh;
+    display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  }
+  .modal-header { padding: 14px 20px; font-size: 15px; font-weight: 600; border-bottom: 1px solid #f0f0f0; }
+  .modal-body { padding: 16px 20px; overflow-y: auto; }
+  .modal-footer { padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f0f0f0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 顶部环境栏 -->
+  <header class="topbar">
+    <span class="label">环境</span>
+    <select id="envSelect" onchange="switchEnv(this.value)"></select>
+    <button class="btn" onclick="openEnvModal(false)">+ 添加环境</button>
+    <button class="btn" onclick="openEnvModal(true)">环境配置</button>
+    <button class="btn danger" onclick="deleteEnv()">删除</button>
+    <div class="env-info" id="envInfo"></div>
+  </header>
+
+  <div class="main">
+    <!-- 左侧 API 列表 -->
+    <aside class="left">
+      <div class="left-header">
+        <span>API 列表</span>
+        <button class="btn sm" onclick="openApiModal(false)">+ 添加</button>
+      </div>
+      <div class="api-list" id="apiList"></div>
+    </aside>
+
+    <!-- 右侧详情 -->
+    <section class="right">
+      <div class="right-header">
+        <div class="api-title" id="apiTitle"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" onclick="openApiModal(true)">编辑</button>
+          <button class="btn danger" onclick="deleteApi()">删除</button>
+          <button class="btn primary" id="sendBtn" onclick="handleSend()">发送请求</button>
+        </div>
+      </div>
+      <div class="tabs" id="tabs"></div>
+      <div class="tab-content" id="tabContent"></div>
+      <div id="responseWrap"></div>
+    </section>
+  </div>
+</div>
+
+<!-- 环境配置弹窗 -->
+<div class="modal-mask" id="envModal" style="display:none;" onclick="if(event.target===this)closeEnvModal()">
+  <div class="modal">
+    <div class="modal-header" id="envModalTitle">添加环境</div>
+    <div class="modal-body">
+      <div class="field"><label>环境名称</label><input id="envName" placeholder="开发环境"></div>
+      <div class="field-row">
+        <div class="field" style="flex:2;"><label>Base URL</label><input id="envBaseURL" placeholder="http://localhost:3000"></div>
+        <div class="field"><label>Timeout (ms)</label><input id="envTimeout" type="number" value="10000"></div>
+        <div class="field"><label>Response Type</label>
+          <select id="envResponseType">
+            <option value="json">json</option>
+            <option value="text">text</option>
+            <option value="blob">blob</option>
+            <option value="arraybuffer">arraybuffer</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>公共 Headers</label>
+        <div id="envHeadersKv"></div>
+        <button class="btn sm" onclick="envKvAdd('headers')">+ 添加</button>
+      </div>
+      <div class="field">
+        <label>公共 Query Params（JSON 对象）</label>
+        <textarea id="envParams" rows="4" placeholder='{"key": "value"}'></textarea>
+      </div>
+      <div class="field">
+        <label>公共 Body（JSON 对象）</label>
+        <textarea id="envBody" rows="4" placeholder='{"key": "value"}'></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeEnvModal()">取消</button>
+      <button class="btn primary" onclick="saveEnv()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- API 编辑弹窗 -->
+<div class="modal-mask" id="apiModal" style="display:none;" onclick="if(event.target===this)closeApiModal()">
+  <div class="modal">
+    <div class="modal-header" id="apiModalTitle">添加 API</div>
+    <div class="modal-body">
+      <div class="field"><label>API 名称</label><input id="apiName" placeholder="获取用户列表"></div>
+      <div class="field-row">
+        <div class="field"><label>请求方法</label>
+          <select id="apiMethod">
+            <option>GET</option><option>POST</option><option>PUT</option>
+            <option>DELETE</option><option>PATCH</option>
+          </select>
+        </div>
+        <div class="field" style="flex:2;"><label>请求路径</label><input id="apiPath" placeholder="/api/v1/users"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Content-Type</label>
+          <select id="apiContentType">
+            <option>application/json</option>
+            <option>application/x-www-form-urlencoded</option>
+            <option>text/plain</option>
+          </select>
+        </div>
+        <div class="field"><label>描述</label><input id="apiDesc" placeholder="可选"></div>
+      </div>
+      <div class="field">
+        <label>自定义 Headers</label>
+        <div id="apiHeadersKv"></div>
+        <button class="btn sm" onclick="apiKvAdd('headers')">+ 添加</button>
+      </div>
+      <div class="field">
+        <label>自定义 Query Params（JSON 对象）</label>
+        <textarea id="apiParams" rows="4" placeholder='{"key": "value"}'></textarea>
+      </div>
+      <div class="field">
+        <label>自定义 Body（JSON 对象）</label>
+        <textarea id="apiBody" rows="4" placeholder='{"key": "value"}'></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeApiModal()">取消</button>
+      <button class="btn primary" onclick="saveApi()">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== IndexedDB ====================
+const DB_NAME = 'ApiTestDB', DB_VERSION = 1;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('environments')) {
+        db.createObjectStore('environments', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains('apis')) {
+        db.createObjectStore('apis', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+function dbGetAll(storeName) {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const req = db.transaction(storeName, 'readonly').objectStore(storeName).getAll();
+    req.onsuccess = () => { db.close(); resolve(req.result); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+function dbPut(storeName, data) {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const req = db.transaction(storeName, 'readwrite').objectStore(storeName).put(data);
+    req.onsuccess = () => { db.close(); resolve(req.result); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+function dbDelete(storeName, id) {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const req = db.transaction(storeName, 'readwrite').objectStore(storeName).delete(id);
+    req.onsuccess = () => { db.close(); resolve(); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+
+// ==================== 数据状态 ====================
+let environments = [];
+let apis = [];
+let activeEnvId = null;
+let activeApiId = null;
+let currentTab = 'base';
+
+// 右侧临时草稿
+let draft = { name: '', method: 'GET', path: '', contentType: 'application/json', description: '' };
+let mergedHeaders = [];       // KV 数组（临时）
+let mergedParams = '';        // JSON 字符串（临时）
+let mergedBody = '';          // JSON 字符串（临时）
+
+// 弹窗草稿
+let envModalDraft = null;   // { id, name, baseURL, timeout, responseType, headers, params, body }
+let envModalIsEdit = false;
+let apiModalDraft = null;   // { id, envId, name, method, path, description, headers, params, body, contentType }
+let apiModalIsEdit = false;
+
+function tryParseJson(str) {
+  try { return JSON.parse(str) || {}; } catch (e) { return {}; }
+}
+function kvArrToObj(arr) {
+  const o = {};
+  (arr || []).forEach(kv => { if (kv && kv.key) o[kv.key] = kv.value; });
+  return o;
+}
+function objToKvArr(obj) {
+  return Object.entries(obj || {}).map(([key, value]) => ({ key, value: String(value) }));
+}
+function defaultEnv() {
+  return { name: '开发环境', baseURL: 'http://localhost:3000', timeout: 10000,
+    responseType: 'json', headers: [{ key: 'Content-Type', value: 'application/json' }],
+    params: '{\n  \n}', body: '{\n  \n}' };
+}
+function defaultApi(envId) {
+  return { envId, name: '', method: 'GET', path: '', description: '',
+    headers: [], params: '{\n  \n}', body: '{\n  \n}', contentType: 'application/json' };
+}
+
+// ==================== 加载 ====================
+async function loadData() {
+  const [envs, apiList] = await Promise.all([dbGetAll('environments'), dbGetAll('apis')]);
+  environments = envs.map(normalizeEnv);
+  apis = apiList.map(normalizeApi);
+  if (environments.length === 0) {
+    const id = await dbPut('environments', defaultEnv());
+    environments.push({ ...defaultEnv(), id });
+  }
+  if (activeEnvId === null || !environments.some(e => e.id === activeEnvId)) {
+    activeEnvId = environments[0].id;
+  }
+  if (!apis.some(a => a.id === activeApiId)) activeApiId = null;
+  if (activeApiId === null && apis.length > 0) activeApiId = apis[0].id;
+  render();
+  buildMergedConfig();
+}
+function normalizeEnv(e) {
+  return {
+    ...e,
+    headers: Array.isArray(e.headers) ? e.headers : [],
+    params: typeof e.params === 'string' ? e.params : '{\n  \n}',
+    body: typeof e.body === 'string' ? e.body : '{\n  \n}',
+  };
+}
+function normalizeApi(a) {
+  return {
+    ...a,
+    headers: Array.isArray(a.headers) ? a.headers : [],
+    params: typeof a.params === 'string' ? a.params : '{\n  \n}',
+    body: typeof a.body === 'string' ? a.body : '{\n  \n}',
+  };
+}
+
+function getEnv(id) { return environments.find(e => e.id === id); }
+function getApi(id) { return apis.find(a => a.id === id); }
+
+// ==================== 合并配置（临时草稿） ====================
+function buildMergedConfig() {
+  const env = getEnv(activeEnvId);
+  const api = getApi(activeApiId);
+  if (!env || !api) {
+    draft = { name: '', method: 'GET', path: '', contentType: 'application/json', description: '' };
+    mergedHeaders = [];
+    mergedParams = '{\n  \n}';
+    mergedBody = '{\n  \n}';
+    return;
+  }
+  // 基础字段草稿
+  draft = {
+    name: api.name, method: api.method, path: api.path,
+    contentType: api.contentType, description: api.description,
+  };
+  // headers 合并：环境 + API（API 覆盖同名）
+  const hMap = new Map();
+  (env.headers || []).forEach(h => hMap.set(h.key, h.value));
+  (api.headers || []).forEach(h => hMap.set(h.key, h.value));
+  mergedHeaders = Array.from(hMap.entries()).map(([key, value]) => ({ key, value }));
+  // params / body 合并：环境 + API（API 覆盖）
+  mergedParams = jsonMerge(env.params, api.params);
+  mergedBody = jsonMerge(env.body, api.body);
+}
+function jsonMerge(envStr, apiStr) {
+  const obj = { ...tryParseJson(envStr), ...tryParseJson(apiStr) };
+  return Object.keys(obj).length ? JSON.stringify(obj, null, 2) : '{\n  \n}';
+}
+
+// ==================== 渲染 ====================
+function render() {
+  renderEnvSelect();
+  renderEnvInfo();
+  renderApiList();
+  renderRight();
+}
+
+function renderEnvSelect() {
+  const sel = document.getElementById('envSelect');
+  sel.innerHTML = environments.map(e =>
+    `<option value="${e.id}" ${e.id === activeEnvId ? 'selected' : ''}>${esc(e.name)}</option>`).join('');
+}
+function renderEnvInfo() {
+  const env = getEnv(activeEnvId);
+  document.getElementById('envInfo').innerHTML = env
+    ? `<span>BaseURL: ${esc(env.baseURL)}</span><span>Timeout: ${env.timeout}ms</span><span>ResponseType: ${esc(env.responseType)}</span>`
+    : '';
+}
+
+function renderApiList() {
+  const list = apis.filter(a => a.envId === activeEnvId);
+  document.getElementById('apiList').innerHTML = list.length === 0
+    ? '<div style="color:#ccc;text-align:center;padding:30px 0;">暂无 API，点击右上角添加</div>'
+    : list.map(a => `
+      <div class="api-item ${a.id === activeApiId ? 'active' : ''}" onclick="selectApi(${a.id})">
+        <span class="method-tag method-${a.method}">${a.method}</span>
+        <div style="flex:1;min-width:0;">
+          <div class="name">${esc(a.name)}</div>
+          <div class="path">${esc(a.path)}</div>
+        </div>
+      </div>`).join('');
+}
+
+function selectApi(id) {
+  activeApiId = id;
+  buildMergedConfig();
+  render();
+}
+
+function switchEnv(id) {
+  activeEnvId = Number(id);
+  activeApiId = null;
+  buildMergedConfig();
+  render();
+}
+
+function renderRight() {
+  const api = getApi(activeApiId);
+  // 标题栏
+  document.getElementById('apiTitle').innerHTML = api
+    ? `<span class="method-tag method-${api.method}">${api.method}</span>
+       <strong style="font-size:15px;">${esc(draft.name)}</strong>
+       <span class="desc">${esc(draft.path)}</span>`
+    : '<span style="color:#ccc;">请选择 API</span>';
+  // tabs
+  const tabs = [
+    ['base', '基础参数'], ['headers', 'Headers'], ['query', 'Query Params'],
+    ['body', 'Body'], ['env', '环境配置'],
+  ];
+  document.getElementById('tabs').innerHTML = tabs.map(([v, label]) =>
+    `<div class="tab ${v === currentTab ? 'active' : ''}" onclick="switchTab('${v}')">${label}</div>`).join('');
+  // tab 内容
+  document.getElementById('tabContent').innerHTML = api ? renderTabContent(api) :
+    '<div class="placeholder">请选择 API</div>';
+  document.getElementById('responseWrap').innerHTML = '';
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  renderRight();
+}
+
+function renderTabContent(api) {
+  switch (currentTab) {
+    case 'base': return renderBaseTab();
+    case 'headers': return renderKvTab('headers');
+    case 'query': return `
+      <div class="hint">环境公共参数 + API 自身参数（API 优先级高），临时编辑不影响原配置</div>
+      <textarea rows="10" oninput="mergedParams=this.value" style="width:100%;font-family:Consolas,monospace;font-size:12px;">${esc(mergedParams)}</textarea>`;
+    case 'body': return `
+      <div class="hint">环境公共 body + API 自身 body（API 优先级高），临时编辑不影响原配置</div>
+      <textarea rows="10" oninput="mergedBody=this.value" style="width:100%;font-family:Consolas,monospace;font-size:12px;">${esc(mergedBody)}</textarea>`;
+    case 'env': return renderEnvTab();
+    default: return '';
+  }
+}
+
+function renderBaseTab() {
+  const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+  return `
+    <div class="field"><label>名称</label>
+      <input value="${esc(draft.name)}" oninput="draft.name=this.value"></div>
+    <div class="field-row">
+      <div class="field"><label>请求方法</label>
+        <select onchange="draft.method=this.value">
+          ${methods.map(m => `<option ${m === draft.method ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="flex:2;"><label>请求路径（相对 baseURL）</label>
+        <input value="${esc(draft.path)}" oninput="draft.path=this.value" placeholder="/api/v1/users"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Content-Type</label>
+        <select onchange="draft.contentType=this.value">
+          ${['application/json', 'application/x-www-form-urlencoded', 'text/plain']
+            .map(c => `<option ${c === draft.contentType ? 'selected' : ''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>描述</label>
+        <input value="${esc(draft.description)}" oninput="draft.description=this.value"></div>
+    </div>`;
+}
+
+function renderKvTab() {
+  return `
+    <div class="hint">环境公共 headers + API 自身 headers，临时编辑不影响原配置</div>
+    ${mergedHeaders.map((h, i) => `
+      <div class="kv-row">
+        <input value="${esc(h.key)}" placeholder="key" oninput="mergedHeaders[${i}].key=this.value">
+        <input value="${esc(h.value)}" placeholder="value" oninput="mergedHeaders[${i}].value=this.value">
+        <button class="btn sm danger" onclick="mergedHeaders.splice(${i},1);renderRight()">✕</button>
+      </div>`).join('')}
+    <button class="btn sm" onclick="mergedHeaders.push({key:'',value:''});renderRight()">+ 添加</button>`;
+}
+
+function renderEnvTab() {
+  const env = getEnv(activeEnvId);
+  if (!env) return '';
+  const empty = s => s && s.trim() !== '{\n  \n}' && s.trim() !== '{}';
+  return `
+    <div class="field"><label>名称</label><div>${esc(env.name)}</div></div>
+    <div class="field"><label>Base URL</label><div>${esc(env.baseURL)}</div></div>
+    <div class="field"><label>Timeout</label><div>${env.timeout}ms</div></div>
+    <div class="field"><label>Response Type</label><div>${esc(env.responseType)}</div></div>
+    <div class="field"><label>公共 Headers</label><pre>${esc(JSON.stringify(env.headers, null, 2))}</pre></div>
+    <div class="field"><label>公共 Params</label><pre>${empty(env.params) ? esc(env.params) : '（无）'}</pre></div>
+    <div class="field"><label>公共 Body</label><pre>${empty(env.body) ? esc(env.body) : '（无）'}</pre></div>`;
+}
+
+// ==================== 发送请求 ====================
+let sending = false;
+async function handleSend() {
+  const env = getEnv(activeEnvId);
+  const api = getApi(activeApiId);
+  if (!env || !api) { alert('请选择 API'); return; }
+  if (sending) return;
+  sending = true;
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true; btn.textContent = '请求中...';
+  document.getElementById('responseWrap').innerHTML = '';
+
+  // headers
+  const headers = {};
+  mergedHeaders.forEach(h => { if (h.key) headers[h.key] = h.value; });
+
+  // URL + query
+  let url = env.baseURL.replace(/\/+$/, '') + '/' + draft.path.replace(/^\/+/, '');
+  const qp = tryParseJson(mergedParams);
+  const qs = new URLSearchParams(qp).toString();
+  if (qs) url += (url.includes('?') ? '&' : '?') + qs;
+
+  // body
+  let body;
+  if (['POST', 'PUT', 'PATCH'].includes(draft.method)) {
+    const bodyObj = tryParseJson(mergedBody);
+    if (Object.keys(bodyObj).length) {
+      if (draft.contentType.includes('json')) body = JSON.stringify(bodyObj);
+      else body = new URLSearchParams(bodyObj).toString();
+    }
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), env.timeout);
+  const start = performance.now();
+  try {
+    const res = await fetch(url, {
+      method: draft.method, headers, body,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const duration = Math.round(performance.now() - start);
+    const text = await res.text();
+    const raw = formatRaw(text);
+    showResponse(res.status, res.statusText, duration, raw);
+  } catch (e) {
+    clearTimeout(timer);
+    const duration = Math.round(performance.now() - start);
+    showResponse(0, e.name === 'AbortError' ? '超时' : 'Error', duration,
+      '请求失败: ' + e.message);
+  } finally {
+    sending = false;
+    btn.disabled = false; btn.textContent = '发送请求';
+  }
+}
+function formatRaw(text) {
+  try { return JSON.stringify(JSON.parse(text), null, 2); } catch (e) { return text; }
+}
+function showResponse(status, statusText, duration, raw) {
+  const ok = status >= 200 && status < 400;
+  const size = (new Blob([raw]).size / 1024).toFixed(1);
+  document.getElementById('responseWrap').innerHTML = `
+    <div class="response-wrap">
+      <div class="response-bar">
+        <span class="status-tag ${ok ? 'status-ok' : 'status-err'}">${status} ${esc(statusText || '')}</span>
+        <span class="meta-tag">${duration}ms</span>
+        <span class="meta-tag">${size} KB</span>
+      </div>
+      <pre class="response-body">${esc(raw)}</pre>
+    </div>`;
+}
+
+// ==================== 环境管理 ====================
+function openEnvModal(isEdit) {
+  envModalIsEdit = isEdit;
+  const env = getEnv(activeEnvId);
+  if (isEdit && !env) { alert('请先选择环境'); return; }
+  envModalDraft = isEdit
+    ? JSON.parse(JSON.stringify(env))
+    : { ...defaultEnv(), headers: [{ key: '', value: '' }] };
+  document.getElementById('envModalTitle').textContent = isEdit ? '编辑环境' : '添加环境';
+  document.getElementById('envName').value = envModalDraft.name;
+  document.getElementById('envBaseURL').value = envModalDraft.baseURL;
+  document.getElementById('envTimeout').value = envModalDraft.timeout;
+  document.getElementById('envResponseType').value = envModalDraft.responseType;
+  document.getElementById('envParams').value = envModalDraft.params;
+  document.getElementById('envBody').value = envModalDraft.body;
+  renderEnvKv();
+  document.getElementById('envModal').style.display = 'flex';
+}
+function renderEnvKv() {
+  document.getElementById('envHeadersKv').innerHTML = envModalDraft.headers.map((h, i) => `
+    <div class="kv-row">
+      <input value="${esc(h.key)}" placeholder="key" oninput="envModalDraft.headers[${i}].key=this.value">
+      <input value="${esc(h.value)}" placeholder="value" oninput="envModalDraft.headers[${i}].value=this.value">
+      <button class="btn sm danger" onclick="envModalDraft.headers.splice(${i},1);renderEnvKv()">✕</button>
+    </div>`).join('');
+}
+function envKvAdd() { envModalDraft.headers.push({ key: '', value: '' }); renderEnvKv(); }
+function closeEnvModal() { document.getElementById('envModal').style.display = 'none'; }
+async function saveEnv() {
+  const d = envModalDraft;
+  if (!d.name.trim()) { alert('请输入环境名称'); return; }
+  d.timeout = Number(document.getElementById('envTimeout').value) || 10000;
+  d.params = document.getElementById('envParams').value;
+  d.body = document.getElementById('envBody').value;
+  if (envModalIsEdit && d.id) {
+    await dbPut('environments', JSON.parse(JSON.stringify(d)));
+    const idx = environments.findIndex(e => e.id === d.id);
+    if (idx >= 0) environments[idx] = normalizeEnv({ ...d });
+  } else {
+    delete d.id;
+    const id = await dbPut('environments', JSON.parse(JSON.stringify(d)));
+    environments.push(normalizeEnv({ ...d, id }));
+    activeEnvId = id;
+  }
+  closeEnvModal();
+  buildMergedConfig();
+  render();
+}
+async function deleteEnv() {
+  const env = getEnv(activeEnvId);
+  if (!env) { alert('请选择环境'); return; }
+  if (!confirm(`确定删除环境「${env.name}」及其所有 API？`)) return;
+  for (const a of apis.filter(a => a.envId === env.id)) {
+    if (a.id) await dbDelete('apis', a.id);
+  }
+  await dbDelete('environments', env.id);
+  environments = environments.filter(e => e.id !== env.id);
+  apis = apis.filter(a => a.envId !== env.id);
+  activeEnvId = environments.length ? environments[0].id : null;
+  activeApiId = null;
+  buildMergedConfig();
+  render();
+}
+
+// ==================== API 管理 ====================
+function openApiModal(isEdit) {
+  apiModalIsEdit = isEdit;
+  if (isEdit) {
+    const api = getApi(activeApiId);
+    if (!api) { alert('请先选择 API'); return; }
+    apiModalDraft = JSON.parse(JSON.stringify(api));
+  } else {
+    apiModalDraft = { ...defaultApi(activeEnvId), headers: [{ key: '', value: '' }] };
+  }
+  document.getElementById('apiModalTitle').textContent = isEdit ? '编辑 API' : '添加 API';
+  document.getElementById('apiName').value = apiModalDraft.name;
+  document.getElementById('apiMethod').value = apiModalDraft.method;
+  document.getElementById('apiPath').value = apiModalDraft.path;
+  document.getElementById('apiContentType').value = apiModalDraft.contentType;
+  document.getElementById('apiDesc').value = apiModalDraft.description;
+  document.getElementById('apiParams').value = apiModalDraft.params;
+  document.getElementById('apiBody').value = apiModalDraft.body;
+  renderApiKv();
+  document.getElementById('apiModal').style.display = 'flex';
+}
+function renderApiKv() {
+  document.getElementById('apiHeadersKv').innerHTML = apiModalDraft.headers.map((h, i) => `
+    <div class="kv-row">
+      <input value="${esc(h.key)}" placeholder="key" oninput="apiModalDraft.headers[${i}].key=this.value">
+      <input value="${esc(h.value)}" placeholder="value" oninput="apiModalDraft.headers[${i}].value=this.value">
+      <button class="btn sm danger" onclick="apiModalDraft.headers.splice(${i},1);renderApiKv()">✕</button>
+    </div>`).join('');
+}
+function apiKvAdd() { apiModalDraft.headers.push({ key: '', value: '' }); renderApiKv(); }
+function closeApiModal() { document.getElementById('apiModal').style.display = 'none'; }
+async function saveApi() {
+  const d = apiModalDraft;
+  if (!d.name.trim()) { alert('请输入 API 名称'); return; }
+  if (!d.path.trim()) { alert('请输入请求路径'); return; }
+  d.params = document.getElementById('apiParams').value;
+  d.body = document.getElementById('apiBody').value;
+  if (apiModalIsEdit && d.id) {
+    await dbPut('apis', JSON.parse(JSON.stringify(d)));
+    const idx = apis.findIndex(a => a.id === d.id);
+    if (idx >= 0) apis[idx] = normalizeApi({ ...d });
+  } else {
+    delete d.id;
+    d.envId = activeEnvId;
+    const id = await dbPut('apis', JSON.parse(JSON.stringify(d)));
+    apis.push(normalizeApi({ ...d, id }));
+    activeApiId = id;
+  }
+  closeApiModal();
+  buildMergedConfig();
+  render();
+}
+async function deleteApi() {
+  const api = getApi(activeApiId);
+  if (!api) { alert('请选择 API'); return; }
+  if (!confirm(`确定删除 API「${api.name}」？`)) return;
+  await dbDelete('apis', api.id);
+  apis = apis.filter(a => a.id !== api.id);
+  activeApiId = null;
+  buildMergedConfig();
+  render();
+}
+
+// ==================== 工具 ====================
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+loadData();
+</script>
+</body>
+</html>
