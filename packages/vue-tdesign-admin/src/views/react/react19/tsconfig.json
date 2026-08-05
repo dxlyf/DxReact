@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "DOM"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react19",
+    "strict": true,
+    "strictNullChecks": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "baseUrl": ".",
+    "paths": {
+      "react19": ["./lib/index.ts"],
+      "react19/*": ["./lib/*"]
+    }
+  },
+  "include": ["./lib/**/*.ts", "./demo/**/*.tsx"]
+}

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { FormInstanceFunctions } from 'tdesign-vue-next'
+import { computed } from 'vue'
 
 export interface SupportLinkItem {
   id: number
@@ -26,18 +25,9 @@ const emit = defineEmits<{
   update: [index: number, field: string, value: any]
 }>()
 
-const formRef = ref<FormInstanceFunctions | null>(null)
-
 function onUpdate(field: string, value: any) {
   emit('update', props.index, field, value)
 }
-
-async function validate(): Promise<boolean> {
-  const result = await formRef.value!.validate()
-  return result === true
-}
-
-defineExpose({ validate })
 
 const linkTypeOptions = [
   { label: '相对链接', value: 'relative' },
@@ -55,7 +45,7 @@ const fieldName = computed(() => (key: string) =>
 </script>
 
 <template>
-  <t-form ref="formRef" :data="item" label-align="top">
+  <t-form :data="item" label-align="top">
     <t-form-item
       label="标题"
       :name="fieldName('title')"

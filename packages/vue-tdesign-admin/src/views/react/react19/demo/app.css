@@ -1,0 +1,137 @@
+/* ============================================================
+   Mini React 19 演示页样式（demo/app.tsx 用到的类名与元素）
+   由 index.vue 引入，需全局生效：React 渲染的 DOM 节点不带
+   Vue scoped 的 data-v 属性，scoped 样式对其不生效
+   ============================================================ */
+
+.react19-app {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.react19-app h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+  color: #111827;
+}
+
+.react19-app .subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ---------- 卡片 ---------- */
+.react19-app .card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.react19-app .card h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #111827;
+}
+
+.react19-app .card p {
+  margin: 6px 0;
+  line-height: 1.6;
+}
+
+/* ---------- 按钮（原生无样式，这里统一美化） ---------- */
+.react19-app button {
+  margin: 0 6px 6px 0;
+  padding: 6px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #1f2937;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.react19-app button:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.react19-app button:active {
+  background: #d1d5db;
+}
+
+/* ---------- 输入框 ---------- */
+.react19-app input[type='text'],
+.react19-app input[type='number'] {
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+}
+
+.react19-app input[type='text']:focus,
+.react19-app input[type='number']:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ---------- TodoList ---------- */
+.react19-app ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.react19-app li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.react19-app li label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* ---------- 提示 / Suspense fallback ---------- */
+.react19-app .hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.react19-app .pending {
+  font-weight: 500;
+  color: #f59e0b;
+}
+
+.react19-app .pending::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border: 2px solid #f59e0b;
+  border-top-color: transparent;
+  border-radius: 50%;
+  vertical-align: -2px;
+  animation: react19-spin 0.8s linear infinite;
+}
+
+@keyframes react19-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

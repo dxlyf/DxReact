@@ -31,5 +31,6 @@
      "src/**/*.vue",
       "node_modules/tdesign-vue-next/global.d.ts",
       "node_modules/vite-svg-loader/index.d.ts"
-  ]
+  ],
+  "exclude": ["src/views/react/react19"]
 }
