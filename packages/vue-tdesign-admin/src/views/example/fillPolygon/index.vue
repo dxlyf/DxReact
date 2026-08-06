@@ -11,9 +11,11 @@ import { fillPolygonSSAA } from './fillScanlineSSAA'
 import { fillPolygonCairo } from './fillCairo'
 import { fillPolygonSkia } from './fillSkia'
 import { fillPolygonFreeType } from './fillFreetype'
+import { fillPolygonCustom } from './fillCustom'
+import { fillTriangleBarycentric } from './fillBarycentric'
 
-type FillMode = 'ssaa' | 'cairo' | 'skia' | 'freetype'
-const fillMode = ref<FillMode>('freetype')
+type FillMode = 'ssaa' | 'cairo' | 'skia' | 'freetype' | 'custom' | 'barycentric'
+const fillMode = ref<FillMode>('custom')
 const FILL_COLOR = { r: 255, g: 64, b: 64 }
 
 const canvasRef = ref<HTMLCanvasElement>()
@@ -232,6 +234,10 @@ const handleFillPolygon = () => {
         fillPolygonCairo(vertices, imageBuffer, FILL_COLOR)
     } else if (fillMode.value === 'skia') {
         fillPolygonSkia(vertices, imageBuffer, FILL_COLOR)
+    } else if (fillMode.value === 'custom') {
+        fillPolygonCustom(vertices, imageBuffer, FILL_COLOR)
+    } else if (fillMode.value === 'barycentric') {
+        fillTriangleBarycentric(vertices, imageBuffer, FILL_COLOR)
     } else {
         fillPolygonFreeType(vertices, imageBuffer, FILL_COLOR)
     }
@@ -250,6 +256,8 @@ const clearPolygon=()=>{
             <t-radio-button value="cairo">Cairo 解析覆盖</t-radio-button>
             <t-radio-button value="skia">Skia 边缘解析</t-radio-button>
             <t-radio-button value="freetype">FreeType 灰度</t-radio-button>
+            <t-radio-button value="custom">自定义填充</t-radio-button>
+            <t-radio-button value="barycentric">重心坐标</t-radio-button>
         </t-radio-group>
         <div class="flex gap-2">
             <t-button theme="primary" @click="handleFillPolygon">填充多边形</t-button>

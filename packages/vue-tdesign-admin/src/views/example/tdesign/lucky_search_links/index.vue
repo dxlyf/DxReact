@@ -7,6 +7,7 @@ import FImportExport, {
   type DownloadMethod,
   type PollingMethod,
 } from '@/views/example/tdesign/components/FImportExport/index.vue'
+import FImportButton from './components/FImportButton.vue'
 import { useTable } from '@/views/example/tdesign/hooks/useTable'
 import { DialogPlugin, type TableProps } from 'tdesign-vue-next'
 
@@ -82,11 +83,20 @@ const importMethod: ImportMethod = async (file) => {
   return { success: true, message: '导入请求已提交', polling: true, data: Date.now() }
 }
 
+let taskIdx=0
+// 导入按钮（弹窗）使用的导入方法
+const importDialogMethod = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  console.log('弹窗导入')
+  taskIdx=0
+  return { success: true, message: '导入请求已提交', polling: true, data:Date.now() }
+}
+
 const pollingMethod: PollingMethod = async (taskId) => {
   await new Promise((resolve) => setTimeout(resolve, 500))
   console.log('轮询任务:', taskId)
-  const statuses: PollingResultStatus[] = ['running', 'running', 'finish']
-  const status = statuses[Math.min((taskId % 3), statuses.length - 1)] as PollingResultStatus
+  const statuses: PollingResultStatus[] = ['running', 'running','running', 'finish']
+  const status = statuses[taskIdx++] as PollingResultStatus
   return {
     status,
     data: null,
@@ -110,7 +120,16 @@ const downloadMethod: DownloadMethod = async () => {
 <template>
   <MainLayout layout="list" title="快速链接" :breadcrumb-options="breadcrumbOptions">
     <template #operation>
-      <t-button theme="primary" @click="handleCreate">新增</t-button>
+      <t-space>
+        <FImportButton :import-method="importDialogMethod" :polling-method="pollingMethod" >
+            <template #result="resultInfo">
+                <div>
+                    导入结果：<span>{{ resultInfo.message }}</span>
+                </div>
+            </template>
+        </FImportButton>
+        <t-button theme="primary" @click="handleCreate">新增</t-button>
+      </t-space>
     </template>
     <FImportExport
       class="mb-4"
