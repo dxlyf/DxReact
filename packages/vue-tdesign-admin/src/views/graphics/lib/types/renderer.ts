@@ -14,6 +14,8 @@ export interface Renderer {
     setSize(width: number, height: number,updateStyle:boolean): void
     destroy():void
     // 绘制
+   // drawPath()
+
 }
 export interface RendererConstructor {
     new(): Renderer

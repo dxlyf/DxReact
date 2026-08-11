@@ -106,6 +106,25 @@ export class Vector2 {
     negate() {
         return this.set(-this.x, -this.y)
     }
+    translate(x:number,y:number){
+        return this.set(this.x+x,this.y+y)
+    }
+    rotate(angle:number,origin:Vector2Like = Vector2.default()){
+        const x = this.x-origin.x
+        const y = this.y-origin.y
+        const cos = Math.cos(angle)
+        const sin = Math.sin(angle)
+        return this.set(x * cos - y * sin+origin.x,x * sin + y * cos+origin.y)
+    }
+    scale(sx:number,sy:number){
+        return this.set(this.x*sx,this.y*sy)
+    }
+    min(a: Vector2Like) {
+        return this.set(Math.min(this.x, a.x), Math.min(this.y, a.y))
+    }
+    max(a: Vector2Like) {
+        return this.set(Math.max(this.x, a.x), Math.max(this.y, a.y))
+    }
     isZero() {
         return this.x === 0 && this.y === 0
     }

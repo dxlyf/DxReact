@@ -119,6 +119,36 @@ export class Matrix2D implements Matrix2DLike {
             (this.b*this.tx-this.a*this.ty)*invDet
         )
     }
+    /**
+     * 线性部分的行列式：det = a·d − b·c。
+     * det ≠ 0 时矩阵可逆；det = 0 表示线性部分退化（如缩放到 0）。
+     */
+    determinant() {
+        return this.a*this.d - this.b*this.c
+    }
+    /**
+     * 分解为平移 + 旋转 + 缩放（TRS），假定无剪切（skew = 0）。
+     * 线性部分 L = [[a, c],[b, d]]（列优先）可写为 R(θ)·S：
+     *   a = cosθ·sx, b = sinθ·sx, c = −sinθ·sy, d = cosθ·sy
+     * 故 sx = √(a²+b²), sy = √(c²+d²), θ = atan2(b, a)。
+     * @returns { tx, ty, rotation, scaleX, scaleY }
+     *   tx/ty 平移量；rotation 旋转角（弧度，逆时针）；scaleX/scaleY 缩放（恒为非负）
+     */
+    decompose() {
+        const scaleX = Math.sqrt(this.a*this.a + this.b*this.b)
+        const scaleY = Math.sqrt(this.c*this.c + this.d*this.d)
+        const rotation = Math.atan2(this.b, this.a)
+        return {
+            tx: this.tx,
+            ty: this.ty,
+            rotation,
+            scaleX,
+            scaleY,
+        }
+    }
+    isIdentity(){
+        return this.a === 1 && this.b === 0 && this.c === 0 && this.d === 1 && this.tx === 0 && this.ty === 0
+    }
     copy(target: Matrix2DLike) {
         return this.set(target.a, target.b, target.c, target.d, target.tx, target.ty)
     }

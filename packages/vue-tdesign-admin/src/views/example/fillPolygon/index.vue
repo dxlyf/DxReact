@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { effect, onMounted, reactive, ref, shallowRef } from 'vue';
 /**
- * 四种填充方式（实现在独立文件中）：
+ * 六种填充方式（实现在独立文件中）：
  *   SSAA     —— fillScanlineSSAA.ts：扫描线 + 超采样抗锯齿（8×8 子采样，采样近似）
  *   Cairo    —— fillCairo.ts：扫描线跨度 + 解析像素覆盖率（Q24.8 定点，不采样）
  *   Skia     —— fillSkia.ts：解析边缘覆盖率（SkFixed 16.16，边缘 ramp + 内部全填）
  *   FreeType —— fillFreetype.ts：精确 cell 覆盖 + 纯定点 26.6（ftgrays 灰度风格）
+ *   TinySkia —— fillTinySkia.ts：winding 边扫描 + 4×4 超采样覆盖率（Skia 光栅器移植）
+ *   Libcg    —— fillLibcg.ts：cell 精确覆盖面积 + 8.8 定点（FreeType ftgrays 原版结构移植）
  */
 import { fillPolygonSSAA } from './fillScanlineSSAA'
 import { fillPolygonCairo } from './fillCairo'
@@ -13,8 +15,10 @@ import { fillPolygonSkia } from './fillSkia'
 import { fillPolygonFreeType } from './fillFreetype'
 import { fillPolygonCustom } from './fillCustom'
 import { fillTriangleBarycentric } from './fillBarycentric'
+import { fillPolygonTinySkia } from './fillTinySkia'
+import { fillPolygonLibcg } from './fillLibcg'
 
-type FillMode = 'ssaa' | 'cairo' | 'skia' | 'freetype' | 'custom' | 'barycentric'
+type FillMode = 'ssaa' | 'cairo' | 'skia' | 'freetype' | 'custom' | 'barycentric' | 'tinyskia' | 'libcg'
 const fillMode = ref<FillMode>('custom')
 const FILL_COLOR = { r: 255, g: 64, b: 64 }
 
@@ -238,6 +242,10 @@ const handleFillPolygon = () => {
         fillPolygonCustom(vertices, imageBuffer, FILL_COLOR)
     } else if (fillMode.value === 'barycentric') {
         fillTriangleBarycentric(vertices, imageBuffer, FILL_COLOR)
+    } else if (fillMode.value === 'tinyskia') {
+        fillPolygonTinySkia(vertices, imageBuffer, FILL_COLOR, 'evenodd')
+    } else if (fillMode.value === 'libcg') {
+        fillPolygonLibcg(vertices, imageBuffer, FILL_COLOR, 'evenodd')
     } else {
         fillPolygonFreeType(vertices, imageBuffer, FILL_COLOR)
     }
@@ -258,6 +266,8 @@ const clearPolygon=()=>{
             <t-radio-button value="freetype">FreeType 灰度</t-radio-button>
             <t-radio-button value="custom">自定义填充</t-radio-button>
             <t-radio-button value="barycentric">重心坐标</t-radio-button>
+            <t-radio-button value="tinyskia">TinySkia 超采样</t-radio-button>
+            <t-radio-button value="libcg">Libcg cell 覆盖</t-radio-button>
         </t-radio-group>
         <div class="flex gap-2">
             <t-button theme="primary" @click="handleFillPolygon">填充多边形</t-button>
