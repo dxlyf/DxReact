@@ -1,3 +1,4 @@
+import type { Vector2Like } from "../vector2"
 import { ShapePrimitive } from "./shape_primitive"
 
 /**
@@ -62,10 +63,9 @@ export class RoundRect extends ShapePrimitive {
     }
 
     /**
-     * 圆角矩形 SDF：
-     *   q = |p − 中心| − (半尺寸 − 圆角半径)，按象限选对应半径，
-     *   sd = |max(q,0)| − r + min(max(qx,qy), 0)。
-     * 矩形内部按最近边距离计，四角按对应圆弧计。
+     * 圆角矩形 SDF（标准 round-box 公式）：
+     *   q = |p − 中心| − (半尺寸 − r)，sd = |max(q,0)| − r + min(max(qx,qy), 0)。
+     * 标准公式「内部为负」，基类约定「内部为正」，故取反。
      */
     signedDistance(x: number, y: number): number {
         const px = x - this.cx
@@ -77,6 +77,45 @@ export class RoundRect extends ShapePrimitive {
         const qy = Math.abs(py) - (hh - r)
         const ax = Math.max(qx, 0)
         const ay = Math.max(qy, 0)
-        return Math.hypot(ax, ay) - r + Math.min(Math.max(qx, qy), 0)
+        return -(Math.hypot(ax, ay) - r + Math.min(Math.max(qx, qy), 0))
+    }
+
+    /**
+     * 轮廓点：顶边起点 → 顺时针过 4 个圆角 → 回到起点前。
+     * 圆角用圆弧近似（默认每角 8 段）。
+     */
+    buildPath(segmentsPerCorner: number = 8): Vector2Like[] {
+        const { x, y, width, height } = this
+        const [tl, tr, br, bl] = this.radii
+        const pts: Vector2Like[] = []
+
+        /** 生成一段圆弧 [a0, a1]（含两端），r ≤ 0 时退化为圆心点 */
+        const pushArc = (cx: number, cy: number, r: number, a0: number, a1: number) => {
+            if (r <= 0) {
+                pts.push({ x: cx, y: cy })
+                return
+            }
+            const n = Math.max(1, Math.floor(segmentsPerCorner))
+            for (let i = 0; i <= n; i++) {
+                const a = a0 + ((a1 - a0) * i) / n
+                pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) })
+            }
+        }
+
+        // 起始点：顶边左端（未进圆角处）
+        pts.push({ x: x + tl, y })
+        // 右上角：-π/2 → 0
+        pushArc(x + width - tr, y + tr, tr, -Math.PI / 2, 0)
+        // 右下角：0 → π/2
+        pushArc(x + width - br, y + height - br, br, 0, Math.PI / 2)
+        // 左下角：π/2 → π
+        pushArc(x + bl, y + height - bl, bl, Math.PI / 2, Math.PI)
+        // 左上角：π → 3π/2（终点与起始点重合，去除避免重复）
+        pushArc(x + tl, y + tl, tl, Math.PI, (Math.PI * 3) / 2)
+        const last = pts[pts.length - 1]
+        if (Math.abs(last.x - pts[0].x) < 1e-9 && Math.abs(last.y - pts[0].y) < 1e-9) {
+            pts.pop()
+        }
+        return pts
     }
 }

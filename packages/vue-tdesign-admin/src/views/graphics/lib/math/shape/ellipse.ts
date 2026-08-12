@@ -1,3 +1,4 @@
+import type { Vector2Like } from "../vector2"
 import { ShapePrimitive } from "./shape_primitive"
 
 /**
@@ -46,5 +47,16 @@ export class Ellipse extends ShapePrimitive {
         const ny = (y - this.cy) / this.ry
         const d = Math.hypot(nx, ny)
         return (1 - d) * Math.min(this.rx, this.ry)
+    }
+
+    /** 轮廓点：椭圆近似多边形（默认 64 段，逆时针），不重复闭合点 */
+    buildPath(segments: number = 64): Vector2Like[] {
+        const pts: Vector2Like[] = []
+        const n = Math.max(3, Math.floor(segments))
+        for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2
+            pts.push({ x: this.cx + this.rx * Math.cos(a), y: this.cy + this.ry * Math.sin(a) })
+        }
+        return pts
     }
 }

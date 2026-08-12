@@ -33,20 +33,34 @@ export class Triangle extends ShapePrimitive {
     }
 
     /**
-     * 三角形 SDF：三条边半平面距离的最小值。
-     * 边 (P0,P1) 的带符号距离 d = cross(P1−P0, P−P0) / |P1−P0|，
-     * 统一为逆时针绕向（内部为正），内部任一点 sd > 0，最小值为 0 即落在边上。
+     * 三角形 SDF：
+     *   三条边半平面距离 d_i（边 P0→P1 左侧为正），内部要求三者与绕向同号。
+     *   内部 → 到最近边的距离（为正）；外部 → 到最近边的距离（为负）。
+     * 正确处理顺/逆时针绕向。
      */
     signedDistance(x: number, y: number): number {
         const { a, b, c } = this
-        // 有向面积 2 倍：< 0 表示顺时针，需要翻转距离符号
+        // 有向面积 2 倍：< 0 表示顺时针
         const area2 = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)
-        const sign = area2 >= 0 ? 1 : -1
+        const ccw = area2 >= 0
 
         const d0 = crossDist(a, b, x, y)
         const d1 = crossDist(b, c, x, y)
         const d2 = crossDist(c, a, x, y)
-        return Math.min(d0, d1, d2) * sign
+
+        // 内部判据：三个带符号距离与绕向同号
+        const inside = ccw ? (d0 >= 0 && d1 >= 0 && d2 >= 0) : (d0 <= 0 && d1 <= 0 && d2 <= 0)
+        if (inside) {
+            // 内部 → 到最近边的距离为正（CW 时各距离为负，取绝对值后为到边距离）
+            return ccw ? Math.min(d0, d1, d2) : Math.min(-d0, -d1, -d2)
+        }
+        // 外部：到最近边的距离取负
+        return -Math.min(Math.abs(d0), Math.abs(d1), Math.abs(d2))
+    }
+
+    /** 轮廓点：3 个顶点（原序，不重复闭合点） */
+    buildPath(): Vector2Like[] {
+        return [this.a, this.b, this.c].map(p => ({ x: p.x, y: p.y }))
     }
 }
 

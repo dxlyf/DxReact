@@ -79,9 +79,10 @@ export class BoundingRect{
         return !(rect.left<this.left||rect.right>this.right||rect.top<this.top||rect.bottom>this.bottom)
     }
     intersection(rect:BoundingRect){
-        this.min.max(rect.min)
-        this.max.min(rect.max)
-        return this
+        return !(rect.left>this.right||rect.right<this.left||rect.top>this.bottom||rect.bottom<this.top)
+    }
+    intersects(rect:BoundingRect){
+        return this.intersection(rect)
     }
     union(rect:BoundingRect){
         this.min.min(rect.min)
@@ -89,13 +90,13 @@ export class BoundingRect{
         return this
     }
     outset(offset:Vector2Like){
-        this.min.subtract(offset)
-        this.max.add(offset)
+        this.min.translate(-offset.x,-offset.y)
+        this.max.translate(offset.x,offset.y)
         return this
     }
     inset(offset:Vector2Like){
-        this.min.add(offset)
-        this.max.subtract(offset)
+        this.min.translate(offset.x,offset.y)
+        this.max.translate(-offset.x,-offset.y)
         return this
     }
     isEmpty(){

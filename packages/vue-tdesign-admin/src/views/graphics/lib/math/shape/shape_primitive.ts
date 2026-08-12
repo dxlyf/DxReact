@@ -1,4 +1,5 @@
 import { BoundingRect } from "../bounding_rect"
+import { Vector2Like } from "../vector2"
 
 /** 描边对齐方式：居中 / 内侧 / 外侧 */
 export const STROKE_ALIGN_CENTER = 0
@@ -59,5 +60,8 @@ export class ShapePrimitive {
 
     getBounds(): BoundingRect {
         return this.bounds
+    }
+    buildPath():Vector2Like[]{
+        return []
     }
 }

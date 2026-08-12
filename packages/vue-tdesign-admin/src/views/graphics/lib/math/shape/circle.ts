@@ -1,3 +1,4 @@
+import type { Vector2Like } from "../vector2"
 import { ShapePrimitive } from "./shape_primitive"
 
 /**
@@ -37,5 +38,16 @@ export class Circle extends ShapePrimitive {
      */
     signedDistance(x: number, y: number): number {
         return this.r - Math.hypot(x - this.cx, y - this.cy)
+    }
+
+    /** 轮廓点：圆周近似多边形（默认 64 段，逆时针），不重复闭合点 */
+    buildPath(segments: number = 64): Vector2Like[] {
+        const pts: Vector2Like[] = []
+        const n = Math.max(3, Math.floor(segments))
+        for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2
+            pts.push({ x: this.cx + this.r * Math.cos(a), y: this.cy + this.r * Math.sin(a) })
+        }
+        return pts
     }
 }

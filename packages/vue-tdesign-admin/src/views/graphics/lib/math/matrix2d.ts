@@ -1,4 +1,5 @@
 import { Pool } from "./pool"
+import { Vector2Like } from "./vector2"
 
 export type Matrix2DLike={
     a:number,
@@ -145,6 +146,19 @@ export class Matrix2D implements Matrix2DLike {
             scaleX,
             scaleY,
         }
+    }
+    mapPoint(out:Vector2Like,point:Vector2Like){
+        const x = this.a*point.x+this.c*point.y+this.tx
+        const y = this.b*point.x+this.d*point.y+this.ty
+        out.x = x
+        out.y = y
+        return out
+    }
+    mapPoints(out:Vector2Like[],points:Vector2Like[]){
+        for(let i=0;i<points.length;i++){
+            this.mapPoint(out[i],points[i])
+        }
+        return out
     }
     isIdentity(){
         return this.a === 1 && this.b === 0 && this.c === 0 && this.d === 1 && this.tx === 0 && this.ty === 0

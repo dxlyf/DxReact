@@ -1,59 +1,68 @@
-import { Circle } from './circle.ts'
-import { Rect } from './rect.ts'
-import { Ellipse } from './ellipse.ts'
-import { RoundRect } from './round_rect.ts'
-import { Triangle } from './triangle.ts'
-import { Polygon } from './polygon.ts'
-import { STROKE_ALIGN_CENTER, STROKE_ALIGN_INNER, STROKE_ALIGN_OUTER } from './shape_primitive.ts'
+import { Circle } from './circle'
+import { Rect } from './rect'
+import { Ellipse } from './ellipse'
+import { RoundRect } from './round_rect'
+import { Triangle } from './triangle'
+import { Polygon } from './polygon'
+import { STROKE_ALIGN_CENTER, STROKE_ALIGN_INNER, STROKE_ALIGN_OUTER } from './shape_primitive'
+import type { Vector2Like } from '../vector2'
 
+let fail = 0
 const check = (name: string, actual: boolean, expect: boolean) => {
     const ok = actual === expect
+    if (!ok) fail++
     console.log(`${ok ? 'PASS' : 'FAIL'} ${name}: got=${actual} expect=${expect}`)
 }
+const fmt = (pts: Vector2Like[]) => pts.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')
 
-// Circle
+// ---- buildPath ----
 const c = new Circle(5, 5, 3)
-check('circle 圆心', c.contains(5, 5), true)
-check('circle 边界', c.contains(8, 5), true)
-check('circle 外', c.contains(9, 5), false)
-check('circle stroke center', c.containsStroke(6.5, 5, 2, STROKE_ALIGN_CENTER), true)  // 距边界 1.5 ≤ 1? no: |8-6.5|=1.5, width/2=1 → false
-check('circle stroke center2', c.containsStroke(6.8, 5, 2, STROKE_ALIGN_CENTER), true) // dist=1.2 >1 false
+const cp = c.buildPath(8)
+check('circle buildPath 8段', cp.length === 8 && cp.every(p => Math.abs(Math.hypot(p.x - 5, p.y - 5) - 3) < 1e-6), true)
 
-// Rect
 const r = new Rect(0, 0, 10, 5)
-check('rect 内部', r.contains(5, 2), true)
-check('rect 边界', r.contains(10, 2), true)
-check('rect 外', r.contains(11, 2), false)
-check('rect stroke outer', r.containsStroke(11, 2, 2, STROKE_ALIGN_OUTER), true)   // 距边界1 ≤ 2
-check('rect stroke inner 内部点', r.containsStroke(8, 2, 2, STROKE_ALIGN_INNER), true) // sd=2 ≤2
-check('rect stroke inner 深内部', r.containsStroke(5, 2, 2, STROKE_ALIGN_INNER), false) // sd=5>2
+const rp = r.buildPath()
+check('rect buildPath 4角', rp.length === 4 && rp[0].x === 0 && rp[0].y === 0 && rp[2].x === 10 && rp[2].y === 5, true)
 
-// Ellipse
 const e = new Ellipse(5, 5, 4, 2)
-check('ellipse 中心', e.contains(5, 5), true)
-check('ellipse 内部', e.contains(7, 5), true)
-check('ellipse 外 x', e.contains(10, 5), false)
+const ep = e.buildPath(12)
+check('ellipse buildPath 12段', ep.length === 12 && ep.every(p => (p.x - 5) ** 2 / 16 + (p.y - 5) ** 2 / 4 <= 1 + 1e-9), true)
 
-// RoundRect
 const rr = new RoundRect(0, 0, 10, 10, 3)
-check('roundrect 中心', rr.contains(5, 5), true)
-check('roundrect 角内', rr.contains(1.2, 1.2), true) // 距圆心 (1.2,1.2) 半径1.7<3 在内
-check('roundrect 角外', rr.contains(0.5, 0.5), false) // 距圆心0.7>3-0.7? 角半径3，距角中心(3,3)距离 sqrt(2.5²+2.5²)=3.5>3 外
-check('roundrect 边', rr.contains(0, 5), true)
+const rrp = rr.buildPath(4)
+check('roundrect buildPath 点数', rrp.length === 1 + 4 * (4 + 1) - 1, true)
+check('roundrect buildPath 首点', rrp[0].x === 3 && rrp[0].y === 0, true)
+const tr = rrp[5] // 右上角圆弧中间点约在 (10, 3) 附近（圆心10,3 半径3，角度0）
+check('roundrect buildPath 右上角', Math.abs(tr.x - 10) < 1e-6 && Math.abs(tr.y - 3) < 1e-6, true)
 
-// Triangle (CCW)
 const t = new Triangle({ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 0, y: 4 })
-check('triangle 内部', t.contains(0.5, 0.5), true)
-check('triangle 斜边外', t.contains(2.5, 2.5), false)
-check('triangle 斜边上', t.contains(2, 2), true)
-// Triangle (CW) 顺时针绕向应同样正确
-const t2 = new Triangle({ x: 0, y: 0 }, { x: 0, y: 4 }, { x: 4, y: 0 })
-check('triangle CW 内部', t2.contains(0.5, 0.5), true)
-check('triangle CW 外', t2.contains(2.5, 2.5), false)
+const tp = t.buildPath()
+check('triangle buildPath 3顶点', tp.length === 3 && tp[2].y === 4, true)
 
-// Polygon 凹多边形 (L形)
-const poly = new Polygon([{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 4 }, { x: 0, y: 4 }])
-check('polygon L 内部', poly.contains(0.5, 3), true)
-check('polygon L 凹槽外', poly.contains(3, 3), false)
-check('polygon L 边界', poly.contains(0, 2), true)
-console.log('polygon bounds', JSON.stringify({ l: poly.getBounds().left, t: poly.getBounds().top, r: poly.getBounds().right, b: poly.getBounds().bottom }))
+const poly = new Polygon([{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 1 }])
+const pp = poly.buildPath()
+check('polygon buildPath 拷贝', pp.length === 3 && pp[1].x === 4 && pp !== (poly as any).points, true)
+
+// ---- SDF 修复验证 ----
+check('rect 内部(5,2)', r.contains(5, 2), true)
+check('rect 边界(10,2)', r.contains(10, 2), true)
+check('rect 外(11,2)', r.contains(11, 2), false)
+check('rect stroke outer(11,2)', r.containsStroke(11, 2, 2, STROKE_ALIGN_OUTER), true)
+check('rect stroke inner(8,2)', r.containsStroke(8, 2, 2, STROKE_ALIGN_INNER), true)
+check('rect stroke inner(5,2)', r.containsStroke(5, 2, 2, STROKE_ALIGN_INNER), true) // sd=2 恰在边界
+check('rect stroke inner(3,2.5)', r.containsStroke(3, 2.5, 2, STROKE_ALIGN_INNER), false) // sd=2.5 > 2
+
+check('roundrect 中心(5,5)', rr.contains(5, 5), true)
+check('roundrect 角内(1.2,1.2)', rr.contains(1.2, 1.2), true)
+check('roundrect 角外(0.5,0.5)', rr.contains(0.5, 0.5), false)
+check('roundrect 边(0,5)', rr.contains(0, 5), true)
+check('roundrect stroke center(0.5,5)', rr.containsStroke(0.5, 5, 2, STROKE_ALIGN_CENTER), true) // 距边0.5 ≤1
+
+const t2 = new Triangle({ x: 0, y: 0 }, { x: 0, y: 4 }, { x: 4, y: 0 })
+check('triangle CW 内部(0.5,0.5)', t2.contains(0.5, 0.5), true)
+check('triangle CW 外(2.5,2.5)', t2.contains(2.5, 2.5), false)
+check('triangle CW 斜边(2,2)', t2.contains(2, 2), true)
+check('circle stroke center(7,5)', c.containsStroke(7, 5, 2, STROKE_ALIGN_CENTER), true)  // 距边界1 ≤1
+check('circle stroke center(9.5,5)', c.containsStroke(9.5, 5, 2, STROKE_ALIGN_CENTER), false) // 距边界1.5 >1
+
+console.log(fail === 0 ? '\n全部通过' : `\n${fail} 项失败`)

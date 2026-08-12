@@ -48,6 +48,11 @@ export class Polygon extends ShapePrimitive {
         return min
     }
 
+    /** 轮廓点：顶点列表（拷贝），不重复闭合点 */
+    buildPath(): Vector2Like[] {
+        return this.points.map(p => ({ x: p.x, y: p.y }))
+    }
+
     /** 射线投射法（even-odd 规则），支持凹多边形与自交 */
     private containsByRayCast(x: number, y: number): boolean {
         const pts = this.points
