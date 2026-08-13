@@ -57,10 +57,15 @@ vec3 linearGradient(vec2 p,vec2 start,vec2 end){
 //   其中 dist = |p - center0|，dir = normalize(p - center0)。
 vec3 radialGradient(vec2 p,vec2 center0,float r0,vec2 center1,float r1){
     vec2 v=p-center0;
-    float dist=length(v);
-    vec2 dir=v/max(dist,1e-6);
-    float denom=dot(center1-center0,dir)+(r1-r0);
-    float t=clamp((dist-r0)/denom,0.,1.);
+    vec2 delta=center1-center0;
+    float dr=r1-r0;
+    // (r0+drt)^2=(r0+drt)(r0+drt)=r0^2+2r0drt+dr^2t^2
+    // (p-(c0-dxt))^2=(p-c0-dxt)(p-c0-dxt)=
+    // =p^2-2pc0-2pdxt+c0^2+2c0dxt+dx^2t^2
+
+    float a=dot(delta,delta)-dr*dr;
+    float b=dot(delta,v)-r0*dr;
+    float c=dot(v,v);
     return gradientColor(t);
 }
 
