@@ -11,7 +11,7 @@ export class ShapePath{
      }
      buildPath(){
          const commands=this.pathData.getCommands()
-         type TypeShapePath=typeof ShapePath
+     //    type TypeShapePath=typeof ShapePath
          for(const command of commands){
            this[command.type](...command.data)
          }
