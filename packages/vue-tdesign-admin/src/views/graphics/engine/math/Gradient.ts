@@ -107,6 +107,7 @@ export class LinearGradient extends Gradient {
     createGradient(ctx: CanvasRenderingContext2D): CanvasGradient {
         return ctx.createLinearGradient(this.x0, this.y0, this.x1, this.y1)
     }
+    
 }
 
 export type RadialGradientLayout = 'circle' | 'ellipse'

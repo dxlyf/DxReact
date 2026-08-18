@@ -98,7 +98,7 @@ export class Path2D {
     }
 
     /**
-     * 命中检测（填充区域）
+     * 命中检测（填充区域） 
      * 使用射线投射算法判断点是否落在任一子路径围成的区域内。
      */
     contains(point: Vector2): boolean {
