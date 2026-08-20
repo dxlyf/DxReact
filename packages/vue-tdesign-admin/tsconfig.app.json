@@ -21,7 +21,9 @@
       "canvaskit-wasm":["./lib/canvaskit/0.41.1"],
       "canvaskit-wasm/*":["./lib/canvaskit/0.41.1/*"],
       "zrender":["./lib/zrender"],
-      "zrender/*":["./lib/zrender/*"]
+      "zrender/*":["./lib/zrender/*"],
+      "lil-gui":["./lib/lil-gui"],
+      "lil-gui/*":["./lib/lil-gui/*"]
     }
   },
   "include": [

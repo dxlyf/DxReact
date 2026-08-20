@@ -49,6 +49,7 @@ export default defineConfig({
       'src': path.resolve(__dirname, 'src'),
       '@': path.resolve(__dirname, 'src'),
       'zrender':path.resolve(__dirname, 'lib/zrender'),
+      'lil-gui':path.resolve(__dirname, 'lib/lil-gui'),
       'canvaskit-wasm': canvaskitDir,
       'react19/jsx-runtime': path.resolve(__dirname, `${react19Dir}/lib/jsx-runtime.ts`),
       'react19': path.resolve(__dirname, `${react19Dir}/lib/index.ts`),

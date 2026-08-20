@@ -43,7 +43,7 @@ function handleReset() {
 }
 
 const RULES:FormProps['rules'] = {
-  name: [{ required: true, message: '请输入姓名', type: 'error' },{max:255,message:'姓名最多255个字符',type:'error'}],
+  name: [{ required: true, message: '请输入姓名', type: 'error' },{whitespace:true,message:'姓名不能包含空格',type:'error'},{max:255,message:'姓名最多255个字符',type:'error'}],
   gender: [{ required: true, message: '请选择性别', type: 'error' }],
   city: [{ required: true, message: '请选择城市', type: 'error' }],
   bio: [{ required: true, message: '请输入个人简介', type: 'error' }],
