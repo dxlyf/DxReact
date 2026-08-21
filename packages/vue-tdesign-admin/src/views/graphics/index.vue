@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { shallowRef, onMounted } from 'vue'
-import { ShapePath,glMatrix, WebGL2Helper, WebGPUHelper, CanvasRenderer } from '@dxyl/math2'
+import { ShapePath,glMatrix, WebGL2Helper, WebGPUHelper, CanvasRenderer,pixijs,curvePaths,PathBuilder,earcut } from '@dxyl/math2'
 import GUI from "lil-gui"
-import {GraphicsPath,buildContextBatches,buildGeometryFromPath,addShapePathToGeometryData} from './engine/pixijs'
+
 const canvasRef = shallowRef<HTMLCanvasElement>()
 
 function initWebgl() {
@@ -17,12 +17,10 @@ function initWebgl() {
     const vertexShader = `#version 300 es
     layout(location = 0) in vec2 aPos;
     layout(location = 1) in vec3 aColor;
-    uniform mat3 projectMatrix;
     out vec3 vColor;
     void main() {
         vColor = aColor;
-        vec3 pos = projectMatrix * vec3(aPos, 1.0);
-        gl_Position = vec4(pos, 1.0);
+        gl_Position = vec4(aPos,0, 1.0);
     }
     `
     const fragmentShader = `#version 300 es
@@ -124,12 +122,13 @@ onMounted(() => {
     })
     gl.setSize(500, 500, window.devicePixelRatio, true)
 
+  
     const vertexShader = `#version 300 es
     layout(location = 0) in vec2 aPos;
-    
+    uniform mat3 projectMatrix;
     void main() {
-
-        gl_Position = vec4(aPos, 0.0, 1.0);
+        vec3 pos = projectMatrix * vec3(aPos, 1.0);
+        gl_Position = vec4(pos, 1.0);
     }
     `
     const fragmentShader = `#version 300 es
@@ -145,46 +144,57 @@ onMounted(() => {
     gl.init([0, 0, 0, 1])
     gl.useProgram(progam2d)
 
-    const vertices = new Float32Array([
-        -0.5, 0.5,
-        0.5, 0.5,
-        -0.5, -0.5,
-        0.5, -0.5,
-    ])
-      const indices = new Int16Array([
+    const vertices = [
+        100, 100,
+        200, 100,
+        100, 200,
+        200, 200,
+    ]
+      const indices =[
         0, 1, 2,
-        2, 3, 1,
-    ])
-      let graphicsPath = new GraphicsPath()
+        3, 2, 1,
+    ]
+    let graphicsPath = new pixijs.GraphicsPath()
     graphicsPath.moveTo(200,200)
-    graphicsPath.lineTo(300,200)
-    graphicsPath.lineTo(250,300)
-    graphicsPath.closePath()
+    graphicsPath.poly([200,200,300,200,300,300],false)
 
 
 
-   const geometryData = buildGeometryFromPath(graphicsPath)
+
+   const geometryData = pixijs.buildGeometryFromPath(graphicsPath)
    const batchs:any[]=[]
-   addShapePathToGeometryData(graphicsPath.shapePath,{},false,batchs,geometryData)
+   pixijs.addShapePathToGeometryData(graphicsPath.shapePath,{
+    color:'#ff0000',
+    width:10,
+    alignment:0.5,
+    cap:'butt',
+    join:'miter',
+    miterLimit:10,
+    //pixelLine:true
 
-    console.log(geometryData)
-    const vertexBuffer = gl.createBuffer(new Float32Array(geometryData.vertices), gl.gl.ARRAY_BUFFER, gl.gl.STATIC_DRAW)
-    const indexBuffer = gl.createBuffer(new Int16Array(geometryData.indices), gl.gl.ELEMENT_ARRAY_BUFFER, gl.gl.STATIC_DRAW)
+   },true,batchs,geometryData)
 
+    console.log('geometryData',geometryData)
+    console.log('batchs',batchs)
+    
+    const vertexBuffer = gl.createBuffer(new Float32Array(batchs[0].geometryData.vertices), gl.gl.ARRAY_BUFFER, gl.gl.STATIC_DRAW)
+    const indecisBuffer = gl.createBuffer(new Int16Array(batchs[0].geometryData.indices), gl.gl.ELEMENT_ARRAY_BUFFER, gl.gl.STATIC_DRAW)
 
-   
+  
+
     let projectMatrix = glMatrix.mat3.create()
   //  glMatrix.mat3.set(projectMatrix,1,0,0,1,0,0,0,0,1,0)
     glMatrix.mat3.projection(projectMatrix,gl.gl.drawingBufferWidth,gl.gl.drawingBufferHeight)
-    console.log('projectMatrix',projectMatrix)
+
     gl.useProgram(progam2d)
     gl.setUniform(progam2d,'uColor',new Float32Array([1,0,0]))
     gl.setUniform(progam2d,'projectMatrix',projectMatrix)
-    gl.setAttributeByLocation(0, 2, gl.gl.FLOAT, false, 0, 0)
+    gl.setAttributeByLocation(0, 2, gl.gl.FLOAT, false, 4*2, 0)
    
 
     gl.clear(gl.gl.COLOR_BUFFER_BIT)
    // gl.drawArrays(gl.gl.TRIANGLES, 0, 3)
+    gl.gl.bindBuffer(gl.gl.ELEMENT_ARRAY_BUFFER, indecisBuffer)
     gl.drawElements(gl.gl.TRIANGLES,geometryData.indices.length, gl.gl.UNSIGNED_SHORT, 0)
   
 
