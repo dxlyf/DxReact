@@ -2,6 +2,7 @@
 import { shallowRef, onMounted } from 'vue'
 import { ShapePath,glMatrix, WebGL2Helper, WebGPUHelper, CanvasRenderer,pixijs,curvePaths,PathBuilder,earcut } from '@dxyl/math2'
 import GUI from "lil-gui"
+import * as PIXIJS from 'pixi'
 
 const canvasRef = shallowRef<HTMLCanvasElement>()
 
@@ -112,7 +113,32 @@ async function initWebgpu() {
     gpu.endRenderPass()
     gpu.submit()
 }
-onMounted(() => {
+onMounted(async () => {
+
+    let app=new PIXIJS.Application()
+
+    await app.init({
+        width:500,
+        height:500,
+        canvas:canvasRef.value,
+        preference:'webgl',
+        antialias:true
+    })
+    
+    const g=new PIXIJS.Graphics()
+    g.moveTo(200,200)
+    g.lineTo(300,200)
+    g.lineTo(300,300)
+    g.stroke({
+        width:10,
+        color:0xff0000,
+        join:'round',
+        cap:'round',
+    })
+    app.stage.addChild(g)
+    
+    app.start()
+    return
     //  initWebgpu()
   const gl = new WebGL2Helper(canvasRef.value, {
         mode: '2d',
@@ -156,7 +182,8 @@ onMounted(() => {
     ]
     let graphicsPath = new pixijs.GraphicsPath()
     graphicsPath.moveTo(200,200)
-    graphicsPath.poly([200,200,300,200,300,300],false)
+    graphicsPath.lineTo(300,200)
+    graphicsPath.lineTo(300,300)
 
 
 
@@ -202,5 +229,6 @@ onMounted(() => {
 </script>
 
 <template>
-    <canvas ref="canvasRef"></canvas>
+
+<canvas ref="canvasRef"></canvas>
 </template>

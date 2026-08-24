@@ -23,7 +23,9 @@
       "zrender":["./lib/zrender"],
       "zrender/*":["./lib/zrender/*"],
       "lil-gui":["./lib/lil-gui"],
-      "lil-gui/*":["./lib/lil-gui/*"]
+      "lil-gui/*":["./lib/lil-gui/*"],
+      "pixi":["./lib/pixijs"],
+      "pixi/*":["./lib/pixijs/*"]
     }
   },
   "include": [
