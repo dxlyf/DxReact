@@ -50,7 +50,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
       'zrender':path.resolve(__dirname, 'lib/zrender'),
       'lil-gui':path.resolve(__dirname, 'lib/lil-gui'),
-      'pixi':path.resolve(__dirname, 'lib/pixijs/dist/pixi.mjs'),
+      'pixi':path.resolve(__dirname, 'lib/pixijs'),
       'canvaskit-wasm': canvaskitDir,
       'react19/jsx-runtime': path.resolve(__dirname, `${react19Dir}/lib/jsx-runtime.ts`),
       'react19': path.resolve(__dirname, `${react19Dir}/lib/index.ts`),
