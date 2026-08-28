@@ -1,6 +1,6 @@
 // 决定性测试：cullMode 'back' + frontFace 'ccw' 是否误剔除（页面用到的组合）
-import { gpu, Vec4, type WGSLCode } from '../src/views/graphics/engine/raster/webgpu/index'
-import { BufferUsage } from '../src/views/graphics/engine/raster/webgpu/Buffer'
+import { gpu, Vec4, type WGSLCode } from '../packages/vue-tdesign-admin/src/views/graphics/engine/raster/webgpu/index'
+import { BufferUsage } from '../packages/vue-tdesign-admin/src/views/graphics/engine/raster/webgpu/Buffer'
 
 const device = await (await gpu.requestAdapter()).requestDevice()
 const SIZE = 200

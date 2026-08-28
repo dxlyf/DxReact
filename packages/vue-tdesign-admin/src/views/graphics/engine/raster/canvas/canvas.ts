@@ -168,8 +168,15 @@ export class CanvasRadialGradient extends GradientBase {
                 const t1 = (-b - s) / (2 * a)
                 const t2 = (-b + s) / (2 * a)
                 // 取最小非负实根：点从内圆向外碰到第一条等比例圆
-                t = t1 >= 0 ? t1 : t2
-                if (t < 0) t = 0
+                if(t1>=0&&t1<=1&&t2>=0&&t2<=1){
+                    t= Math.max(t1,t2)
+                }else if(t1>=0&&t1<=1){
+                    t=t1
+                }else if(t2>=0&&t2<=1){
+                    t=t2
+                }else{
+                    t=Math.max(t1,t2)
+                }
             }
         }
         return this.colorAtT(t)
@@ -338,6 +345,9 @@ export class Canvas2DRenderer implements RasterImage {
     }
     resetTransform(): void {
         this._transform = Mat2D.identity()
+    }
+    getCurrentTransform(){
+        return this._transform
     }
 
     // ==================== 路径 ====================

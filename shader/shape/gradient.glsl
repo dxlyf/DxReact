@@ -122,7 +122,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
             col=linearGradient(p,vec2(0,50),vec2(100,50));
         }else if(p.x<=200.){
             // 中块：径向（内圆心 (150,200) r=20 → 外圆心 (130,200) r=50）
-            col=radialGradient(p,vec2(150,50),50.,vec2(150,50),0.);
+            col=radialGradient(p,vec2(100,50),50.,vec2(150,50),0.);
         }else{
             // 右块：圆锥（绕中心旋转一周）
             col=conicGradient(p,vec2(250,50),0.);

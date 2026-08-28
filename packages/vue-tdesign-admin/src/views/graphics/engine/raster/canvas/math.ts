@@ -18,7 +18,7 @@ export class Mat2D {
         public d = 1,
         public e = 0,
         public f = 0,
-    ) {}
+    ) { }
 
     clone(): Mat2D {
         return new Mat2D(this.a, this.b, this.c, this.d, this.e, this.f)
@@ -77,7 +77,7 @@ export class Mat2D {
             -c * id,
             a * id,
             (c * f - e * d) * id,
-            (e * b - a * f) * id,
+            -(a * f - e * b) * id,
         )
     }
 }

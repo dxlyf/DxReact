@@ -1,30 +1,18 @@
 <script setup lang="ts">
-import { ref,shallowRef ,onMounted,onUnmounted} from 'vue';
-import { init } from 'zrender';
-import {Empty} from 'tdesign-vue-next'
+import { ref, shallowRef, onMounted, onUnmounted } from 'vue';
 
-const canvasref=shallowRef<HTMLCanvasElement>()
-
-class TestExample{
-    canvas:HTMLCanvasElement
-    
-    width:number
-    height:number
-    constructor(){
-        
-    }
-    init(opts:{canvas:HTMLCanvasElement,type:string,width:number,height:number,dpr:number}){
-        const {canvas,width,height,type='canvas',dpr=1}=opts
-        this.canvas=canvas
-        this.width=Math.round(width*dpr)
-        this.height=Math.round(height*dpr)
-        this.canvas.style.width=width+'px'
-        this.canvas.style.height=height+'px'
-    }
-}
+const canvasref = shallowRef<HTMLCanvasElement>();
+onMounted(() => {
+    const ctx = canvasref.value.getContext('2d')
+    let g = ctx.createRadialGradient(-20, 50, 50, 50, 50, 0)
+    g.addColorStop(0, '#ff0000')
+    g.addColorStop(0.5, '#00ff00')
+    g.addColorStop(1, '#0000ff')
+    ctx.fillStyle = g
+    ctx.translate(100,0)
+    ctx.fillRect(0, 0, 100, 100)
+})
 </script>
-
 <template>
-    <canvas ref="canvasref"></canvas>
-    <t-empty>fdafds</t-empty>
+    <canvas ref="canvasref" width="500" height="500"></canvas>
 </template>

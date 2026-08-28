@@ -65,6 +65,24 @@ function renderFrame(ctx2d: CanvasRenderingContext2D, t: number): void {
         r.fill()
         r.restore()
 
+
+        {
+               // 径向：内圆(150,340,5) → 外圆(230,340,45)，随 t 轻微摆动圆心
+        r.save()
+ 
+        let g = r.createRadialGradient(-20, 50, 50, 50, 50, 0)
+        
+            g.addColorStop(0, '#ff0000')
+            g.addColorStop(0.5, '#00ff00')
+            g.addColorStop(1, '#0000ff')
+            r.fillStyle = g
+            r.beginPath()
+            r.translate(300,20)
+            r.rect(0,0,100,100)
+            r.fill()
+            r.restore()
+        }
+
         // 圆锥：彩虹色绕圆心旋转
         r.save()
         const cg = r.createConicGradient(t, 350, 340)

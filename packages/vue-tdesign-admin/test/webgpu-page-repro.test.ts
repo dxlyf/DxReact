@@ -1,6 +1,6 @@
 // 复刻 gpu.vue 页面场景：同一 pass 内 3 个 pipeline（noCull quad → cull quad → line-list wire）
-import { gpu, Vec4, type WGSLCode, type GPUCanvasContext } from '../src/views/graphics/engine/raster/webgpu/index'
-import { BufferUsage } from '../src/views/graphics/engine/raster/webgpu/Buffer'
+import { gpu, Vec4, type WGSLCode, type GPUCanvasContext } from '../packages/vue-tdesign-admin/src/views/graphics/engine/raster/webgpu/index'
+import { BufferUsage } from '../packages/vue-tdesign-admin/src/views/graphics/engine/raster/webgpu/Buffer'
 
 const device = await (await gpu.requestAdapter()).requestDevice()
 const SIZE = 200

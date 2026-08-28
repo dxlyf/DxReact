@@ -1,6 +1,6 @@
 // 实验：quad 写深度 0.2 后，再画 z=0.2 的 line（depthStencil less-equal）是否显示
-import { gpu, Vec4, type WGSLCode } from '../src/views/graphics/engine/raster/webgpu/index'
-import { BufferUsage } from '../src/views/graphics/engine/raster/webgpu/Buffer'
+import { gpu, Vec4, type WGSLCode } from '../packages/vue-tdesign-admin/src/views/graphics/engine/raster/webgpu/index'
+import { BufferUsage } from '../packages/vue-tdesign-admin/src/views/graphics/engine/raster/webgpu/Buffer'
 
 const device = await (await gpu.requestAdapter()).requestDevice()
 const SIZE = 200
