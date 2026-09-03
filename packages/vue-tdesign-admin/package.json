@@ -19,7 +19,7 @@
     "dayjs": "^1.11.19",
     "lodash-es": "^4.17.23",
     "mitt": "^3.0.1",
-    "pathkit-ts": "^0.0.2",
+    "pathkit-ts": "^0.0.4",
     "pinia": "^3.0.4",
     "quill": "^2.0.3",
     "sortablejs": "^1.15.7",

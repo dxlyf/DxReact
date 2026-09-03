@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, onMounted, onUnmounted } from 'vue';
 import { GUI } from 'lil-gui'
+import {Op, Path2D, SkPaint, SkPath, SkPathOp, SkStroke} from 'pathkit-ts'
 import { Stats, EventEmitter, curvePaths, type Vector2Like, Vector2, normalizeAngles, normalizeAnglePositive } from '@dxyl/math2'
 const canvasRef = shallowRef<HTMLCanvasElement>();
 
@@ -8,18 +9,33 @@ Vector2.perp = function (out: Vector2, v: Vector2Like) {
     return out.set(-v.y, v.x)
 }
 curvePaths.Curve.prototype.getStrokePoints = function (options: { miterLimit?: number, width?: number, cap?: 'butt' | 'round' | 'square', join?: 'round' | 'bevel' | 'miter' }) {
+
     let { miterLimit = 10, width = 1, cap = 'butt', join = 'miter' } = options
     const points = this.getPoints()
+    const closed = Vector2.equalsEpsilon(points[0], points[points.length - 1], 1e-6)
     const halfWidth = width / 2
     const invMiterLimit = 1 / miterLimit
 
-    let newLength = points.length
-    let closed = Vector2.equalsEpsilon(points[0], points[newLength - 1], 1e-6)
+    const newPoints: Vector2Like[] = []
+    // 去掉重复点
+    let lastPoint = points[0]
+    for (let i = 1; i < points.length; i++) {
+        if (!Vector2.equalsEpsilon(points[i], lastPoint, 1e-6)) {
+            newPoints.push(points[i])
+            lastPoint = points[i]
+        }
+    }
+    newPoints.unshift(points[0])
+    if(closed){
+        newPoints.push(newPoints[1])
+    }
+    let newLength = newPoints.length
+    if (newPoints.length < 2) {
+        return []
+    }
     let innerPoints: Vector2Like[] = []
     let outerPoints: Vector2Like[] = []
 
-    let first = Vector2.create(points[0])
-    let last = Vector2.create(points[newLength - 1])
     let prev = Vector2.create()
     let cur = Vector2.create()
 
@@ -35,7 +51,7 @@ curvePaths.Curve.prototype.getStrokePoints = function (options: { miterLimit?: n
         if (Math.abs(delta) <= 1e-6) {
             return
         }
-        let segmentCount = Math.ceil(Math.PI / (Math.acos(1 - 0.5 / r)))
+        let segmentCount = Math.max(1, Math.ceil(Math.min(Math.PI, Math.abs(delta)) / (Math.acos(1 - 0.5 / r))))
         let segmentAngle = delta / segmentCount
         let angle = startAngle
         for (let i = 0; i <= segmentCount; i++) {
@@ -45,18 +61,15 @@ curvePaths.Curve.prototype.getStrokePoints = function (options: { miterLimit?: n
             angle += segmentAngle
         }
     }
-
     for (let i = 0; i < newLength; i++) {
-        cur.copy(points[i])
-        if (i === 0) {
-            first.copy(cur)
-        } else {
+        cur.copy(newPoints[i])
+        if (i !== 0) {
             unitNormal.copy(cur).subtract(prev).perp().negate().normalize()
             normal.copy(unitNormal).multiplyScalar(halfWidth)
 
-            if (!cur.equalsEpsilon(last)) {
-                // start
-                if (i === 1 && !closed) {
+            // start
+            if (i === 1) {
+                if (!closed) {
                     // cap
                     if (cap === 'round') {
                         // 圆角
@@ -85,89 +98,131 @@ curvePaths.Curve.prototype.getStrokePoints = function (options: { miterLimit?: n
                     else if (cap === 'butt') {
                         //  butt角
                         outerPoints.push({
-                            x: first.x + normal.x,
-                            y: first.y + normal.y,
+                            x: prev.x + normal.x,
+                            y: prev.y + normal.y,
                         })
                         innerPoints.push({
-                            x: first.x - normal.x,
-                            y: first.y - normal.y,
+                            x: prev.x - normal.x,
+                            y: prev.y - normal.y,
                         })
                     }
+                } else {
+                    outerPoints.push({
+                        x: prev.x + normal.x,
+                        y: prev.y + normal.y,
+                    })
+                    innerPoints.push({
+                        x: prev.x - normal.x,
+                        y: prev.y - normal.y,
+                    })
                 }
-                if (i > 1 && i < newLength && newLength > 2) {
+            }
+            if (i > 1 && newLength > 2) {
 
-                    const cosh = prevUnitNormal.dot(unitNormal)
-                    const sinh = prevUnitNormal.cross(unitNormal)
-                    const isClockwise = sinh > 0
+                const cosh = prevUnitNormal.dot(unitNormal)
+                const sinh = prevUnitNormal.cross(unitNormal)
+                const isClockwise = sinh > 0
 
-                    if (Math.abs(sinh) > 1e-6) {
-                        if (join === 'miter') {
-                            // 锐角
-                            const halfSin = Math.sqrt((1 + cosh) * 0.5)
-                            if (halfSin < invMiterLimit) {
-                                join = 'bevel'
+                if (Math.abs(sinh) > 1e-6) {
+                    if (join === 'miter') {
+                        // 锐角
+                        const halfSin = Math.sqrt((1 + cosh) * 0.5)
+                        if (halfSin < invMiterLimit) {
+                            join = 'bevel'
+                        } else {
+                            const miterNormal = Vector2.from(prevUnitNormal).add(unitNormal).normalize().multiplyScalar(halfWidth / halfSin)
+
+                            if (isClockwise) {
+                                outerPoints.push({
+                                    x: prev.x + miterNormal.x,
+                                    y: prev.y + miterNormal.y,
+                                })
+                                innerPoints.push({
+                                    x: prev.x - prevNormal.x,
+                                    y: prev.y - prevNormal.y,
+                                })
+                                innerPoints.push({
+                                    x: prev.x - normal.x,
+                                    y: prev.y - normal.y,
+                                })
                             } else {
-                                const miterNormal = Vector2.from(prevUnitNormal).add(unitNormal).normalize().multiplyScalar(halfWidth / halfSin)
-
-                                if (isClockwise) {
-                                    outerPoints.push({
-                                        x: prev.x + miterNormal.x,
-                                        y: prev.y + miterNormal.y,
-                                    })
-                                    innerPoints.push({
-                                        x: prev.x - prevNormal.x,
-                                        y: prev.y - prevNormal.y,
-                                    })
-                                    innerPoints.push({
-                                        x: prev.x - normal.x,
-                                        y: prev.y - normal.y,
-                                    })
-                                } else {
-                                    innerPoints.push({
-                                        x: prev.x - miterNormal.x,
-                                        y: prev.y - miterNormal.y,
-                                    })
-                                    outerPoints.push({
-                                        x: prev.x + prevNormal.x,
-                                        y: prev.y + prevNormal.y,
-                                    })
-                                    outerPoints.push({
-                                        x: prev.x + normal.x,
-                                        y: prev.y + normal.y,
-                                    })
-                                }
+                                innerPoints.push({
+                                    x: prev.x - miterNormal.x,
+                                    y: prev.y - miterNormal.y,
+                                })
+                                outerPoints.push({
+                                    x: prev.x + prevNormal.x,
+                                    y: prev.y + prevNormal.y,
+                                })
+                                outerPoints.push({
+                                    x: prev.x + normal.x,
+                                    y: prev.y + normal.y,
+                                })
                             }
                         }
-                        // join
-                        if (join === 'round') {
-                            // 圆角
-                        }
-                        if (join === 'bevel') {
-                            // 锐角
-                            outerPoints.push({
-                                x: prev.x + prevNormal.x,
-                                y: prev.y + prevNormal.y,
-                            })
+                    }
+                    // join
+                    if (join === 'round') {
+                        // 圆角
+
+                        if (isClockwise) {
+                            let v0 = Vector2.from(prevNormal)
+                            let v1 = Vector2.from(normal)
+                            let startAngle = Math.atan2(v0.y, v0.x)
+                            let endAngle = Math.atan2(v1.y, v1.x)
+                            buildArc(outerPoints, prev.x, prev.y, halfWidth, startAngle, endAngle, false)
                             innerPoints.push({
                                 x: prev.x - prevNormal.x,
                                 y: prev.y - prevNormal.y,
-                            })
-
-                            outerPoints.push({
-                                x: prev.x + normal.x,
-                                y: prev.y + normal.y,
                             })
                             innerPoints.push({
                                 x: prev.x - normal.x,
                                 y: prev.y - normal.y,
                             })
+                        } else {
+                            let v0 = Vector2.from(prevNormal).negate()
+                            let v1 = Vector2.from(normal).negate()
+                            let startAngle = Math.atan2(v0.y, v0.x)
+                            let endAngle = Math.atan2(v1.y, v1.x)
+                            buildArc(innerPoints, prev.x, prev.y, halfWidth, startAngle, endAngle, true)
+
+                            outerPoints.push({
+                                x: prev.x + prevNormal.x,
+                                y: prev.y + prevNormal.y,
+                            })
+                            outerPoints.push({
+                                x: prev.x + normal.x,
+                                y: prev.y + normal.y,
+                            })
                         }
                     }
+                    if (join === 'bevel') {
+                        // 锐角
+                        outerPoints.push({
+                            x: prev.x + prevNormal.x,
+                            y: prev.y + prevNormal.y,
+                        })
+                        innerPoints.push({
+                            x: prev.x - prevNormal.x,
+                            y: prev.y - prevNormal.y,
+                        })
 
+                        outerPoints.push({
+                            x: prev.x + normal.x,
+                            y: prev.y + normal.y,
+                        })
+                        innerPoints.push({
+                            x: prev.x - normal.x,
+                            y: prev.y - normal.y,
+                        })
+                    }
                 }
-                // end
-                if (i === newLength - 1 && !closed) {
-                    // cap
+
+            }
+            // end
+            if (i === newLength - 1) {
+                // cap
+                if (!closed) {
                     if (cap === 'round') {
                         // 圆角
                         let v0 = Vector2.from(normal)
@@ -201,28 +256,44 @@ curvePaths.Curve.prototype.getStrokePoints = function (options: { miterLimit?: n
                             y: cur.y - normal.y,
                         })
                     }
-                }
 
+                    // 与外部连接点闭合
+                    innerPoints.unshift({
+                        x: outerPoints[0].x,
+                        y: outerPoints[0].y,
+                    })
+                } else {
+                    outerPoints.push({
+                        x: outerPoints[0].x,
+                        y: outerPoints[0].y,
+                    })
+                    // outerPoints.push({
+                    //     x: prev.x + normal.x,
+                    //     y: prev.y + normal.y,
+                    // })
+                    // innerPoints.push({
+                    //     x: prev.x - normal.x,
+                    //     y: prev.y - normal.y,
+                    // })
+                }
             }
             prevNormal.copy(normal)
             prevUnitNormal.copy(unitNormal)
         }
         prev.copy(cur)
     }
-    if (!closed && outerPoints.length > 0) {
-        innerPoints.unshift({
-            x: outerPoints[0].x,
-            y: outerPoints[0].y,
-        })
+    return {
+        points:outerPoints.concat(innerPoints.slice().reverse()),
+        outerPoints,
+        innerPoints,
     }
-    return outerPoints.concat(innerPoints.reverse())
 }
 let setting = {
     reverse: false,
-    join: 'miter',
+    join: 'round',
     cap: 'butt',
 }
-let circlesData:{r:number,x:number,y:number}[]=[
+let circlesData: { r: number, x: number, y: number }[] = [
     {
         r: 5,
         x: 100,
@@ -237,28 +308,42 @@ let circlesData:{r:number,x:number,y:number}[]=[
         r: 5,
         x: 200,
         y: 200
+    },
+    {
+        r: 5,
+        x: 100,
+        y: 200
+    },
+    {
+        r: 5,
+        x: 100,
+        y: 100
     }
 ]
 function render() {
     const ctx = canvasRef.value.getContext('2d')!
     ctx.save()
     ctx.clearRect(0, 0, 500, 500)
-    let circles=circlesData.slice()
+    let circles = circlesData.slice()
 
     if (setting.reverse) {
         circles.reverse()
     }
-    const colors=['red','green','blue']
-    circles.forEach((circle,i)=>{
+    const colors = ['red', 'green', 'blue', 'yellow', 'orange']
+    circles.forEach((circle, i) => {
         ctx.beginPath()
-        ctx.fillStyle=colors[i]
-        ctx.arc(circle.x,circle.y,circle.r,0,Math.PI*2)
+        ctx.fillStyle = colors[i] || '#000'
+        ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2)
         ctx.fill()
     })
     const path = new curvePaths.Path()
-    path.moveTo(circles[0].x, circles[0].y)
-    path.lineTo(circles[1].x, circles[1].y)
-    path.lineTo(circles[2].x, circles[2].y)
+    for (let i = 0; i < circles.length; i++) {
+        if (i === 0) {
+            path.moveTo(circles[i].x, circles[i].y)
+        } else {
+            path.lineTo(circles[i].x, circles[i].y)
+        }
+    }
     const points = path.getPoints()
 
 
@@ -274,32 +359,43 @@ function render() {
 
     ctx.stroke()
 
-    const strokePoints = path.getStrokePoints({ width: 20, join: setting.join, cap: setting.cap })
-    console.log('strokePoints', strokePoints)
+    const { outerPoints, innerPoints,points:newPoints } = path.getStrokePoints({ width: 20, join: setting.join, cap: setting.cap })
+   
     ctx.beginPath()
     ctx.strokeStyle = '#0000ff'
 
-    for (let [index, point] of strokePoints.entries()) {
+    for (let [index, point] of newPoints.entries()) {
         if (index === 0) {
             ctx.moveTo(point.x, point.y)
         } else {
             ctx.lineTo(point.x, point.y)
         }
     }
+    
+    // for (let [index, point] of innerPoints.entries()) {
+    //     if (index === 0) {
+    //         ctx.moveTo(point.x, point.y)
+    //     } else {
+    //         ctx.lineTo(point.x, point.y)
+    //     }
+    // }
 
     ctx.stroke()
+
     ctx.restore()
 
+
+
 }
-let rending=false
-const requestRender=()=>{
-    if(rending){
+let rending = false
+const requestRender = () => {
+    if (rending) {
         return
     }
-    rending=true
-    requestAnimationFrame(()=>{
+    rending = true
+    requestAnimationFrame(() => {
         render()
-        rending=false
+        rending = false
     })
 }
 
@@ -315,40 +411,40 @@ onMounted(() => {
         requestRender()
     })
     requestRender()
-    let hitCircle:any|undefined,startPoint=Vector2.create()
-    canvasRef.value.addEventListener('pointerdown',(e)=>{
-        const target=e.target as HTMLCanvasElement
-        const rect=target.getBoundingClientRect()
-        const x=e.clientX-rect.left
-        const y=e.clientY-rect.top
-        const circle=circlesData.find(circle=>Math.sqrt((x-circle.x)*(x-circle.x)+(y-circle.y)*(y-circle.y))<=circle.r)
-        if(circle){
-            hitCircle=circle
-            startPoint.set(x-circle.x,y-circle.y)
-            console.log('ffffff')
-        }else{
-            hitCircle=undefined
+    let hitCircle: any | undefined, startPoint = Vector2.create()
+    canvasRef.value.addEventListener('pointerdown', (e) => {
+        const target = e.target as HTMLCanvasElement
+        const rect = target.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const circle = circlesData.find(circle => Math.sqrt((x - circle.x) * (x - circle.x) + (y - circle.y) * (y - circle.y)) <= circle.r)
+        if (circle) {
+            hitCircle = circle
+            startPoint.set(x - circle.x, y - circle.y)
+        } else {
+            hitCircle = undefined
         }
+        
         target.setPointerCapture(e.pointerId)
     })
-    canvasRef.value.addEventListener('pointerup',(e)=>{
-        hitCircle=undefined
-        const target=e.target as HTMLCanvasElement
+    canvasRef.value.addEventListener('pointerup', (e) => {
+        hitCircle = undefined
+        const target = e.target as HTMLCanvasElement
         target.releasePointerCapture(e.pointerId)
     })
-     canvasRef.value.addEventListener('pointermove',(e)=>{
-        const target=e.target as HTMLCanvasElement
-        const rect=target.getBoundingClientRect()
-        const x=e.clientX-rect.left
-        const y=e.clientY-rect.top
-        if(hitCircle){
-            hitCircle.x=x-startPoint.x
-            hitCircle.y=y-startPoint.y
+    canvasRef.value.addEventListener('pointermove', (e) => {
+        const target = e.target as HTMLCanvasElement
+        const rect = target.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        if (hitCircle) {
+            hitCircle.x = x - startPoint.x
+            hitCircle.y = y - startPoint.y
             requestRender()
         }
     })
 })
 </script>
 <template>
-    <canvas  ref="canvasRef" width="500" height="500"></canvas>
+    <canvas ref="canvasRef" width="500" height="500"></canvas>
 </template>
