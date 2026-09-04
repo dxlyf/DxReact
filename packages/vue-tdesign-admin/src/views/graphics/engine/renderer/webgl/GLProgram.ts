@@ -75,7 +75,11 @@ export class GLProgram {
         this.gl.deleteShader(vertexShaderObj)
         this.gl.deleteShader(fragmentShaderObj)
     }
-    initializeAttributes() {
+    fetchActiveProgram() {
+        this.fetchActiveAttributes()
+        this.fetchActiveUniforms()
+    }
+    fetchActiveAttributes() {
         const count = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_ATTRIBUTES)
         for (let i = 0; i < count; i++) {
             const info = this.gl.getActiveAttrib(this.program, i)
@@ -83,7 +87,7 @@ export class GLProgram {
             this.attributes.set(info.name, { location, type: info.type, name: info.name, size: info.size })
         }
     }
-    initializeUniforms() {
+    fetchActiveUniforms() {
         const gl = this.gl, program = this.program
         const count = gl.getProgramParameter(program, this.gl.ACTIVE_UNIFORMS)
         const activeUniformsParameters=[
