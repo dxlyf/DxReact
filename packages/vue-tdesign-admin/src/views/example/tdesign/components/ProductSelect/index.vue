@@ -26,6 +26,7 @@ const selectProps = computed<TdSelectProps>(() => {
     return {
         filterable: true,
         options: productState.data,
+        scroll:{type:'virtual',rowHeight:40},
         ...attrs
     }
 })

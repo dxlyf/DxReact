@@ -38,6 +38,15 @@
         program.fetchActiveProgram()
         console.log('uniforms',program.uniforms)
 
+        let GLTypeInfo=Object.create(null)
+      
+        Object.keys(gl.constructor.prototype).forEach((key) => {
+            if(typeof gl[key] === 'number'){
+                GLTypeInfo[key]=gl[key]
+            }
+        })
+        console.log('GLTypeInfo',JSON.stringify(GLTypeInfo,null,2))
+
   
     })
 </script>

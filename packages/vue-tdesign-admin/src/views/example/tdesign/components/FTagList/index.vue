@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
     ellipsis: true,
     maxTagWidth:'100%'
 })
-
+const getItemText = (item: any) => typeof item === 'string' ? item : item[props.textKey]
 const emit = defineEmits<{
     'item-click': [payload: { item: any; index: number; event: MouseEvent }]
 }>()
@@ -45,12 +45,7 @@ const visibleItems = computed(() => {
     return props.items
 })
 
-const visibleTextItems = computed(() => {
-    if (expanded.value) return textItems.value
-    if (isMaxMode.value) return textItems.value.slice(0, props.max)
-    if (lineCutoff.value !== null) return textItems.value.slice(0, lineCutoff.value)
-    return textItems.value
-})
+
 
 const hasMore = computed(() => {
     return visibleItems.value.length < props.items.length
@@ -134,13 +129,13 @@ onUnmounted(() => {
     <div class="tag-wrapper">
         <div ref="containerRef" class="tag-container" :style="containerStyle">
             <template v-for="(item, i) in visibleItems" :key="i">
-                <slot name="item" :item="item" :index="i" :text="visibleTextItems[i]" :ellipsis="ellipsis" :max-tag-width="maxTagWidth">
-                    <t-tag :title="visibleTextItems[i]"
+                <slot name="item" :item="item" :index="i" :text="getItemText(item)" :ellipsis="ellipsis" :max-tag-width="maxTagWidth">
+                    <t-tag :title="getItemText(item)"
                         variant="light" :theme="theme ?? 'default'" size="small"
                         @click="handleItemClick(item, i, $event)"
                         :class="{ 'tag-ellipsis': ellipsis }"
                     >
-                        {{ visibleTextItems[i] }}
+                        {{ getItemText(item) }}
                     </t-tag>
                 </slot>
             </template>

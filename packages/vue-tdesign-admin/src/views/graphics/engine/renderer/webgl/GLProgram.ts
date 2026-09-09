@@ -1,4 +1,4 @@
-
+import {Option} from '@dxyl/math2'
 // ============================================
 // 1. std140 对齐规则定义
 // ============================================
@@ -784,7 +784,7 @@ export class MagicString {
         this.source = source
     }
     private format(format: string, ...args: any[]) {
-        return format.replace(/\{(\d+)\}/g, (match,index) => args[index])
+        return format.replace(/\{(\d+)\}/g, (match, index) => args[index])
     }
     appendFormat(format: string, ...args: any[]) {
         this.append(this.format(format, ...args))
@@ -799,11 +799,11 @@ export class MagicString {
         this.source += source
     }
     appendLine(source: string) {
-       if(this.source.length){
-         this.source +='\n'+ source
-       }else{
-         this.source = source
-       }
+        if (this.source.length) {
+            this.source += '\n' + source
+        } else {
+            this.source = source
+        }
     }
     lineBreak() {
         this.append('\n')
@@ -812,10 +812,10 @@ export class MagicString {
         this.source = source + this.source
     }
     prependLine(source: string) {
-        if(this.source.length){
-          this.source = '\n'+ source + this.source
-        }else{
-          this.source = source + this.source
+        if (this.source.length) {
+            this.source = '\n' + source + this.source
+        } else {
+            this.source = source + this.source
         }
     }
     replace(start: number, end: number, source: string) {
@@ -1070,7 +1070,7 @@ export class GLSLShaderSource {
     }
     //// 内存布局限定符（std140 / std430 / shared / packed）
     defineUniformBlock(name: string, members: [type: string, name: string][], binding?: number, layout?: 'std140' | 'std430' | 'shared' | 'packed') {
-        this.source.appendLine(`<%=defineUniformBlock('${name}',${JSON.stringify(members)},${binding},${layout !== undefined ? JSON.stringify(layout): undefined})%>`)
+        this.source.appendLine(`<%=defineUniformBlock('${name}',${JSON.stringify(members)},${binding},${layout !== undefined ? JSON.stringify(layout) : undefined})%>`)
         return this
     }
     defineUniformStruct(name: string, members: [type: string, name: string][], varName: string) {
@@ -1091,6 +1091,10 @@ export class GLSLShaderSource {
     }
     defineVariable(type: string, name: string) {
         this.source.appendLine(`<%=defineVariable('${type}','${name}')%>`)
+        return this
+    }
+    defineUniformSampler(type: GLSLStandardSampler, name: string) {
+        this.source.appendLine(`<%=defineUniformSampler('${type}','${name}')%>`)
         return this
     }
     append(source: string) {
@@ -1127,13 +1131,13 @@ export class GLSLShaderSource {
             },
             defineUniformBlock: (name: string, members: [type: string, name: string][], binding?: number, layout?: 'std140' | 'std430' | 'shared' | 'packed') => {
                 return [`layout(${layout !== undefined ? layout : 'std140'}${binding !== undefined ? ',binding = ' + binding : ''}) uniform ${name} {`,
-                    `${members.map(([type, name]) => `${type} ${name};`).join('\n')}`
-                ,`};`].join('\n');
+                `${members.map(([type, name]) => `${type} ${name};`).join('\n')}`
+                    , `};`].join('\n');
             },
             defineUniformStruct: (name: string, members: [type: string, name: string][], varName: string) => {
                 return [`uniform struct ${name} {`,
-                    `${members.map(([type, name]) => `${type} ${name};`).join('\n')}`
-                ,`} ${varName};`].join('\n');
+                `${members.map(([type, name]) => `${type} ${name};`).join('\n')}`
+                    , `} ${varName};`].join('\n');
             },
             defineStruct: (name: string, members: [type: string, name: string][]) => {
                 return `struct ${name} {
@@ -1147,13 +1151,61 @@ export class GLSLShaderSource {
                     return `varying ${type} ${name};`
                 }
             },
+            defineVariable: (type: string, name: string) => {
+                return `${type} ${name};`
+            },
+            defineUniformSampler: (type: GLSLStandardSampler, name: string) => {
+                return `uniform ${type} ${name};`
+            },
             defineMain: (body: string) => {
                 return ['void main() {', body.replace(/^\n+/, ''), '}'].join('\n')
             },
         })
     }
 }
-export class GLProgram {
+export type AttributeBuffer = {
+
+}
+export type UnifromData = {
+
+}
+export type GLDrawObject = {
+    attributes: {
+        [key: string]: AttributeBuffer
+    },
+    uniforms: {
+        [key: string]: UnifromData
+    },
+    uniformBlocks: {
+        [key: string]: UnifromData
+    }
+}
+export interface IDisposable {
+    dispose(): void
+}
+
+
+export class GLContext implements IDisposable {
+    gl: WebGL2RenderingContext
+    resources: Record<string, Set<IDisposable>>
+    constructor(gl: WebGL2RenderingContext) {
+        this.gl = gl
+        this.resources = {
+            programs: new Set(),
+            attributes: new Set(),
+            uniforms: new Set(),
+            uniformBlocks: new Set(),
+        }
+       
+    }
+    dispose(): void {
+        Object.values(this.resources).forEach(resources => {
+            resources.forEach(resource => resource.dispose())
+        })
+    }
+
+}
+export class GLProgram implements IDisposable {
     static programs: Map<string, GLProgram> = new Map()
     static getProgram(gl: WebGL2RenderingContext, options: GLProgramOptions) {
         const key = JSON.stringify(options.vertexShader + ':' + options.fragmentShader)
@@ -1174,6 +1226,7 @@ export class GLProgram {
         this.attributes = new Map()
         this.uniforms = new Map()
         this.compile()
+        this.fetchActiveProgram()
     }
     use() {
         this.gl.useProgram(this.program)
@@ -1292,19 +1345,19 @@ export class GLProgram {
             }
             this.uniforms.set(blockName, uniformMate)
             if (blockIndices) {
-     
+
                 const types = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_TYPE)
                 const sizes = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_SIZE)
                 const offsets = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_OFFSET)
-                uniformMate.members = Array.from(blockIndices).map((i:number, index: number) => {
-                    const info = gl.getActiveUniform(program,i)
-                 //   const location = gl.getUniformLocation(program, info.name)
+                uniformMate.members = Array.from(blockIndices).map((i: number, index: number) => {
+                    const info = gl.getActiveUniform(program, i)
+                    //   const location = gl.getUniformLocation(program, info.name)
                     return {
                         name: info.name,
                         king: 'uniform',
-                      //  location,
+                        //  location,
                         blockIndex,
-                        index:i,
+                        index: i,
                         type: types[index],
                         size: sizes[index],
                         offset: offsets[index],
@@ -1314,32 +1367,23 @@ export class GLProgram {
 
         }
     }
-    createAttributesRWAccessor(attributes: Map<string, AttributeMate>) {
-        const gl = this.gl
-        const program = this.program
-        const accessor: Record<string, any> = {}
-        attributes.forEach((attributeMate, attributeName) => {
-            const attr = {
-                location: attributeMate.location,
-                type: attributeMate.type,
-                size: attributeMate.size,
-                offset: 0,
-                stride: 0,
-                isRowMajor: false,
-                arrayStride: 0,
-                matrixStride: 0,
-            }
-            accessor[attributeName] = attr
-        })
-        return accessor
+   
+    getAttributeLocation(name: string) {
+        const info = this.attributes.get(name)
+        if(info){
+            return info.location
+        }
+        return -1
     }
-    drawArrayObject() {
-        const gl = this.gl, program = this.program
-        gl.bindVertexArray(null)
-        gl.drawArrays(gl.TRIANGLES, 0, 3)
+    getUniformLocation(name: string) {
+        const info = this.uniforms.get(name)
+        if(info){
+            return info.location
+        }
+        return null
     }
-    drawElementObject() {
-
+    dispose(): void {
+        this.gl.deleteProgram(this.program)
     }
 
 }
