@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { onMounted, ref } from 'vue'
-    import { GLSLShaderSource,GLSLPrimitiveType,GLProgram } from '@/views/graphics/engine/renderer/webgl/GLProgram'
+    import { GLSLShaderSource,GLSLPrimitiveType,GLProgram } from 'src/views/graphics/engine/renderer/webgl/program'
     const canvasRef = ref<HTMLCanvasElement>()
 
     const vertGLSL = new GLSLShaderSource('basic_vert')
