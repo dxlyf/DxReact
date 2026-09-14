@@ -4,7 +4,7 @@ type  Context={
     gl: WebGL2RenderingContext;
     bindFramebuffer: BindFrameBuffer;
 }
-export function fastDeepEqual(a: any, b: any) {
+function fastDeepEqual(a: any, b: any) {
     if (a === b) return true;
 
     if (a && b && typeof a == 'object' && typeof b == 'object') {
@@ -44,13 +44,13 @@ export function fastDeepEqual(a: any, b: any) {
     // true if both NaN, false otherwise
     return a !== a && b !== b;
 }
-export function colorEqual(a: ColorValue, b: ColorValue) {
+function colorEqual(a: ColorValue, b: ColorValue) {
     if (a[0] !== b[0] || a[1] !== b[1] || a[2] !== b[2] || a[3] !== b[3]) {
         return false
     }
     return true
 }
-export function arrayEqual(a: any, b: any) {
+function arrayEqual(a: any, b: any) {
     if (a.length !== b.length) {
         return false
     }
@@ -61,10 +61,10 @@ export function arrayEqual(a: any, b: any) {
     return true
 }
 
-export function strictEqual(a: any, b: any) {
+function strictEqual(a: any, b: any) {
     return a === b
 }
-export function objectShallowEqual(a: any, b: any) {
+function objectShallowEqual(a: any, b: any) {
     if (a === b) {
         return true;
     }
@@ -84,7 +84,7 @@ export function objectShallowEqual(a: any, b: any) {
 
     return length === Object.keys(b).length;
 }
-export abstract class Value<Context, T> {
+abstract class Value<Context, T> {
     ctx: Context
     current: T;
     default: T;
@@ -116,7 +116,7 @@ export abstract class Value<Context, T> {
     }
 }
 
-export abstract class GLValue<T> extends Value<Context,T> {
+abstract class GLValue<T> extends Value<Context,T> {
     gl: WebGL2RenderingContext
     constructor(ctx: Context) {
         super(ctx)
@@ -124,7 +124,7 @@ export abstract class GLValue<T> extends Value<Context,T> {
     }
 }
 
-export class ClearColor extends GLValue<ColorValue> {
+class ClearColor extends GLValue<ColorValue> {
     override getDefault(): ColorValue {
         return [0, 0, 0, 0]
     }
@@ -135,7 +135,7 @@ export class ClearColor extends GLValue<ColorValue> {
         this.gl.clearColor(value[0], value[1], value[2], value[3])
     }
 }
-export class ClearDepth extends GLValue<number> {
+class ClearDepth extends GLValue<number> {
     override getDefault(): number {
         return 1
     }
@@ -146,7 +146,7 @@ export class ClearDepth extends GLValue<number> {
         this.gl.clearDepth(value)
     }
 }
-export class ClearStencil extends GLValue<number> {
+class ClearStencil extends GLValue<number> {
     override getDefault(): number {
         return 0
     }
@@ -158,7 +158,7 @@ export class ClearStencil extends GLValue<number> {
     }
 }
 type ColorMaskType=[r:boolean,g:boolean,b:boolean,a:boolean]
-export class ColorMask extends GLValue<ColorMaskType> {
+class ColorMask extends GLValue<ColorMaskType> {
     override getDefault(): ColorMaskType {
         return [true, true, true, true]
     }
@@ -169,7 +169,7 @@ export class ColorMask extends GLValue<ColorMaskType> {
         this.gl.colorMask(value[0], value[1], value[2], value[3])
     }
 }
-export class DepthMask extends GLValue<boolean> {
+class DepthMask extends GLValue<boolean> {
     override getDefault(): boolean {
         return true
     }
@@ -180,7 +180,7 @@ export class DepthMask extends GLValue<boolean> {
         this.gl.depthMask(value)
     }
 }
-export class StencilMask extends GLValue<number> {
+class StencilMask extends GLValue<number> {
     override getDefault(): number {
         return 0xFF
     }
@@ -192,7 +192,7 @@ export class StencilMask extends GLValue<number> {
     }
 }
 type StencilFuncType={ func: number; ref: number; mask: number; }
-export class StencilFunc extends GLValue<StencilFuncType> {
+class StencilFunc extends GLValue<StencilFuncType> {
     override getDefault() {
         return {
             func: this.gl.ALWAYS,
@@ -208,7 +208,7 @@ export class StencilFunc extends GLValue<StencilFuncType> {
     }
 }
 type StencilOpType=[fail:number,zfail:number,pass:number]
-export class StencilOp extends GLValue<StencilOpType> {
+class StencilOp extends GLValue<StencilOpType> {
     override getDefault() {
         const ctx = this.gl
         return [ctx.KEEP, ctx.KEEP, ctx.KEEP] as StencilOpType
@@ -220,7 +220,7 @@ export class StencilOp extends GLValue<StencilOpType> {
         this.gl.stencilOp(value[0], value[1], value[2])
     }
 }
-export class StencilTest extends GLValue<boolean> {
+class StencilTest extends GLValue<boolean> {
     override getDefault(): boolean {
         return false
     }
@@ -236,7 +236,7 @@ export class StencilTest extends GLValue<boolean> {
     }
 }
 type DepthRangeType=[zNear:number,zFar:number]
-export class DepthRange extends GLValue<DepthRangeType> {
+class DepthRange extends GLValue<DepthRangeType> {
     override getDefault() {
         return [0, 1] as DepthRangeType
     }
@@ -248,7 +248,7 @@ export class DepthRange extends GLValue<DepthRangeType> {
     }
 }
 
-export class DepthTest extends GLValue<boolean> {
+class DepthTest extends GLValue<boolean> {
     override getDefault(): boolean {
         return false;
     }
@@ -260,7 +260,7 @@ export class DepthTest extends GLValue<boolean> {
         }
     }
 }
-export class DepthFunc extends GLValue<number> {
+class DepthFunc extends GLValue<number> {
     override getDefault(): number {
         return this.gl.LESS
     }
@@ -271,7 +271,7 @@ export class DepthFunc extends GLValue<number> {
         this.gl.depthFunc(value)
     }
 }
-export class Blend extends GLValue<boolean> {
+class Blend extends GLValue<boolean> {
     override getDefault(): boolean {
         return false
     }
@@ -284,7 +284,7 @@ export class Blend extends GLValue<boolean> {
     }
 }
 type BlendFuncType=[src:number,dst:number,srcAlpha:number,dstAlpha:number]
-export class BlendFunc extends GLValue<BlendFuncType> {
+class BlendFunc extends GLValue<BlendFuncType> {
     override getDefault(): BlendFuncType {
         const ctx = this.gl
         return [ctx.ONE, ctx.ZERO, ctx.ONE, ctx.ZERO] as BlendFuncType
@@ -296,7 +296,7 @@ export class BlendFunc extends GLValue<BlendFuncType> {
         this.gl.blendFuncSeparate(value[0], value[1], value[2], value[3])
     }
 }
-export class BlendColor extends GLValue<ColorValue> {
+class BlendColor extends GLValue<ColorValue> {
     override getDefault(): ColorValue {
         return [0, 0, 0, 0] as ColorValue
     }
@@ -304,7 +304,7 @@ export class BlendColor extends GLValue<ColorValue> {
         this.gl.blendColor(value[0], value[1], value[2], value[3])
     }
 }
-export class CullFace extends GLValue<boolean> {
+class CullFace extends GLValue<boolean> {
     override getDefault(): boolean {
         return false
     }
@@ -319,7 +319,7 @@ export class CullFace extends GLValue<boolean> {
         }
     }
 }
-export class CullFaceSide extends GLValue<number> {
+class CullFaceSide extends GLValue<number> {
     override getDefault(): number {
         return this.gl.BACK
     }
@@ -330,7 +330,7 @@ export class CullFaceSide extends GLValue<number> {
         this.gl.cullFace(value)
     }
 }
-export class FrontFace extends GLValue<number> {
+class FrontFace extends GLValue<number> {
     override getDefault(): number {
         return this.gl.CW
     }
@@ -342,7 +342,7 @@ export class FrontFace extends GLValue<number> {
     }
 }
 
-export class Program extends GLValue<WebGLProgram> {
+class Program extends GLValue<WebGLProgram> {
     override getDefault(): WebGLProgram {
         return null
     }
@@ -353,7 +353,7 @@ export class Program extends GLValue<WebGLProgram> {
         this.gl.useProgram(value)
     }
 }
-export class ActiveTextureUnit extends GLValue<number> {
+class ActiveTextureUnit extends GLValue<number> {
     override getDefault(): number {
         return this.gl.TEXTURE0
     }
@@ -364,7 +364,7 @@ export class ActiveTextureUnit extends GLValue<number> {
         this.gl.activeTexture(value)
     }
 }
-export class Viewport extends GLValue<number[]> {
+class Viewport extends GLValue<number[]> {
     override getDefault(): number[] {
         return [0, 0, 0, 0] as number[]
     }
@@ -375,7 +375,31 @@ export class Viewport extends GLValue<number[]> {
         this.gl.viewport(value[0], value[1], value[2], value[3])
     }
 }
-export class BindFrameBuffer extends GLValue<WebGLFramebuffer> {
+// 裁剪测试
+class ScissorTest extends GLValue<boolean> {
+    override getDefault() {
+        return false
+    }
+    override update(value: boolean): void {
+        if(value){
+            this.gl.enable(this.gl.SCISSOR_TEST)
+        }else{
+            this.gl.disable(this.gl.SCISSOR_TEST)
+        }
+    }
+}
+class Scissor extends GLValue<number[]> {
+    override getDefault(): number[] {
+        return [0, 0, 0, 0] as number[]
+    }
+    override equals(current: number[], prev: number[]): boolean {
+        return arrayEqual(current, prev)
+    }
+    override update(value: number[]): void {
+        this.gl.scissor(value[0], value[1], value[2], value[3])
+    }
+}
+class BindFrameBuffer extends GLValue<WebGLFramebuffer> {
     override getDefault(): WebGLFramebuffer {
         return null
     }
@@ -386,7 +410,7 @@ export class BindFrameBuffer extends GLValue<WebGLFramebuffer> {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, value)
     }
 }
-export class BindRenderbuffer extends GLValue<WebGLRenderbuffer> {
+class BindRenderbuffer extends GLValue<WebGLRenderbuffer> {
     override getDefault(): WebGLRenderbuffer {
         return null
     }
@@ -397,7 +421,7 @@ export class BindRenderbuffer extends GLValue<WebGLRenderbuffer> {
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, value)
     }
 }
-export class BindTexture extends GLValue<WebGLTexture> {
+class BindTexture extends GLValue<WebGLTexture> {
     override getDefault(): WebGLTexture {
         return null
     }
@@ -408,7 +432,7 @@ export class BindTexture extends GLValue<WebGLTexture> {
         this.gl.bindTexture(this.gl.TEXTURE_2D, value)
     }
 }
-export class BindVertexBuffer extends GLValue<WebGLBuffer> {
+class BindVertexBuffer extends GLValue<WebGLBuffer> {
     override getDefault(): WebGLBuffer|null {
         return null
     }
@@ -419,7 +443,7 @@ export class BindVertexBuffer extends GLValue<WebGLBuffer> {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, value)
     }
 }
-export class BindElementBuffer extends GLValue<WebGLBuffer> {
+class BindElementBuffer extends GLValue<WebGLBuffer> {
     override getDefault(): WebGLBuffer|null {
         return null
     }
@@ -430,7 +454,7 @@ export class BindElementBuffer extends GLValue<WebGLBuffer> {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, value)
     }
 }
-export class BindVertexArray extends GLValue<WebGLVertexArrayObject> {
+class BindVertexArray extends GLValue<WebGLVertexArrayObject> {
     override getDefault(): WebGLVertexArrayObject|null {
         return null
     }
@@ -441,7 +465,7 @@ export class BindVertexArray extends GLValue<WebGLVertexArrayObject> {
         this.gl.bindVertexArray(value)
     }
 }
-export class PixelStoreUnpackAlignment extends GLValue<number> {
+class PixelStoreUnpackAlignment extends GLValue<number> {
     override getDefault(): number {
         return 4
     }
@@ -452,7 +476,7 @@ export class PixelStoreUnpackAlignment extends GLValue<number> {
         this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, value)
     }
 }
-export class PixelStoreUnpackPremultiplyAlpha extends GLValue<boolean> {
+class PixelStoreUnpackPremultiplyAlpha extends GLValue<boolean> {
     override getDefault(): boolean {
         return false
     }
@@ -463,7 +487,7 @@ export class PixelStoreUnpackPremultiplyAlpha extends GLValue<boolean> {
         this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, value)
     }
 }
-export class PixelStoreUnpackFlipY extends GLValue<boolean> {
+class PixelStoreUnpackFlipY extends GLValue<boolean> {
     override getDefault(): boolean {
         return false
     }
@@ -474,7 +498,7 @@ export class PixelStoreUnpackFlipY extends GLValue<boolean> {
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, value)
     }
 }
-export abstract class FramebufferAttachment<T> extends GLValue<T> {
+abstract class FramebufferAttachment<T> extends GLValue<T> {
     parent: WebGLFramebuffer;
     constructor(context:any, parent: WebGLFramebuffer) {
         super(context);
@@ -485,7 +509,7 @@ export abstract class FramebufferAttachment<T> extends GLValue<T> {
     }
 }
 
-export class ColorAttachment extends FramebufferAttachment<WebGLTexture> {
+class ColorAttachment extends FramebufferAttachment<WebGLTexture> {
     attachmentPoint: number;
 
     constructor(context: Context, parent: WebGLFramebuffer, attachmentIndex: number = 0) {
@@ -501,7 +525,7 @@ export class ColorAttachment extends FramebufferAttachment<WebGLTexture> {
     }
 }
 
-export class DepthRenderbufferAttachment extends FramebufferAttachment<WebGLRenderbuffer> {
+class DepthRenderbufferAttachment extends FramebufferAttachment<WebGLRenderbuffer> {
     attachment(): number { return this.gl.DEPTH_ATTACHMENT; }
     override update(v: WebGLRenderbuffer | null | undefined | WebGLTexture): void {
         this.ctx.bindFramebuffer.set(this.parent);
@@ -510,7 +534,7 @@ export class DepthRenderbufferAttachment extends FramebufferAttachment<WebGLRend
     }
 }
 
-export class DepthTextureAttachment extends FramebufferAttachment<WebGLTexture> {
+class DepthTextureAttachment extends FramebufferAttachment<WebGLTexture> {
     attachment(): number { return this.gl.DEPTH_ATTACHMENT; }
     override update(v: WebGLTexture | null): void {
         this.ctx.bindFramebuffer.set(this.parent);
@@ -519,6 +543,58 @@ export class DepthTextureAttachment extends FramebufferAttachment<WebGLTexture> 
     }
 }
 
-export class DepthStencilAttachment extends DepthRenderbufferAttachment {
+class DepthStencilAttachment extends DepthRenderbufferAttachment {
     override attachment(): number { return this.gl.DEPTH_STENCIL_ATTACHMENT; }
+}
+export {
+
+    ClearColor, // 清除颜色
+    ClearDepth, // 清除深度
+    ClearStencil, // 清除模板值
+
+    ColorMask, // 颜色掩码
+    DepthMask, // 深度掩码
+    StencilMask, // 模板掩码
+
+    StencilFunc, // 模板测试函数
+    StencilOp, // 模板操作
+    StencilTest, // 模板测试
+    
+    DepthRange, // 深度范围
+    DepthTest, // 深度测试
+    DepthFunc, // 深度测试函数
+
+
+    Blend, // 合成
+    BlendColor, // 合成颜色
+    BlendFunc, // 合成函数
+
+    CullFace, // 裁剪面
+    CullFaceSide, // 裁剪面方向
+    FrontFace, // 正面
+
+
+    BindFrameBuffer, // 绑定帧缓冲区
+    BindRenderbuffer, // 绑定渲染缓冲区
+    BindTexture, // 绑定纹理
+    BindElementBuffer, // 绑定元素缓冲区
+    BindVertexArray, // 绑定顶点数组
+    BindVertexBuffer, // 绑定顶点缓冲区
+
+    FramebufferAttachment, // 帧缓冲区附件
+    ColorAttachment, // 颜色附件
+    DepthRenderbufferAttachment, // 深度渲染缓冲区附件
+    DepthTextureAttachment, // 深度纹理附件
+    DepthStencilAttachment, // 深度模板附件
+    PixelStoreUnpackAlignment, // 像素存储解包对齐
+    PixelStoreUnpackPremultiplyAlpha, // 像素存储解包预乘 alpha
+    PixelStoreUnpackFlipY, // 像素存储解包翻转 y
+    ActiveTextureUnit, // 活动纹理单元
+
+    ScissorTest, // 裁剪测试
+    Scissor, // 裁剪区域
+
+    Program, // 程序
+    Viewport, // 视口
+
 }
