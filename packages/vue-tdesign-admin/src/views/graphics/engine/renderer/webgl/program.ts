@@ -1,9 +1,41 @@
 import { IDisposable } from "./disposable"
 
 
-export type ActiveAttributeInfo={
-    
+export type ActiveAttributeMate = {
+    type: number
+    name: string
+    size: number
+    location: number
 }
+export type ActiveUniformMate = {
+    type: number
+    name: string
+    size: number
+    location: WebGLUniformLocation
+    isArray?: boolean
+    isStruct?: boolean
+    structMembers?: ActiveUniformMate[]
+    arrayMembers?: Omit<ActiveUniformMate,'name'>[]
+}
+export type ActiveUniformBlockMemberMate = {
+    type: number
+    name: string
+    size: number
+    offset:number
+}
+export type ActiveUniformBlockMate = {
+    name: string
+    blockSize: number
+    binding: number
+    blockIndex: number
+    offset:number
+    members: ActiveUniformBlockMemberMate[]
+}
+export type GLProgramOptions = {
+    vertexShader: string
+    fragmentShader: string
+}
+
 
 export class GLProgram implements IDisposable {
     static programs: Map<string, GLProgram> = new Map()
@@ -12,12 +44,13 @@ export class GLProgram implements IDisposable {
         if (!this.programs.has(key)) {
             this.programs.set(key, new GLProgram(gl, options))
         }
-        return this.programs.get(key) 
+        return this.programs.get(key)
     }
     program: WebGLProgram
     gl: WebGL2RenderingContext
-    attributes: Map<string, AttributeMate>
-    uniforms: Map<string, UnifromMate>
+    attributes: Map<string, ActiveAttributeMate>
+    uniforms: Map<string, ActiveUniformMate>
+    unifromBlocks: Map<string, ActiveUniformBlockMate>
     options: GLProgramOptions
     constructor(gl: WebGL2RenderingContext, options?: GLProgramOptions) {
         this.gl = gl
@@ -25,6 +58,7 @@ export class GLProgram implements IDisposable {
         this.program = this.gl.createProgram()
         this.attributes = new Map()
         this.uniforms = new Map()
+        this.unifromBlocks = new Map()
         this.compile()
         this.fetchActiveProgram()
     }
@@ -57,6 +91,7 @@ export class GLProgram implements IDisposable {
     fetchActiveProgram() {
         this.fetchActiveAttributes()
         this.fetchActiveUniforms()
+        this.fetchActiveUniformBlocks()
     }
     fetchActiveAttributes() {
         const count = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_ATTRIBUTES)
@@ -68,8 +103,51 @@ export class GLProgram implements IDisposable {
     }
     fetchActiveUniforms() {
         const gl = this.gl, program = this.program
-        const count = gl.getProgramParameter(program, this.gl.ACTIVE_UNIFORMS)
-        const activeUniformsParameters = [
+        const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)
+        for (let i = 0; i < count; i++) {
+            const info = gl.getActiveUniform(program, i)
+            const uniformName = info.name
+            const location = gl.getUniformLocation(program, uniformName)
+            if (!location) {
+                continue
+            }
+        
+            const isArray = uniformName.indexOf('[') !== -1
+            const isStruct = uniformName.indexOf('.') !== -1
+            if (isArray&&info.size>1) {
+                const arrayStart=uniformName.lastIndexOf('[')
+                const prefixUniformName = uniformName.substring(0,arrayStart)
+                const subfixUniformName = uniformName.substring(uniformName.indexOf(']',arrayStart)+1)
+                for (let j = 0; j < info.size; j++) {
+                    const uniformArrayName = prefixUniformName + '[' + j + ']' + subfixUniformName
+                    const location = gl.getUniformLocation(program, uniformArrayName)
+                    this.uniforms.set(uniformArrayName, {
+                        name: uniformArrayName,
+                        location,
+                        type: info.type,
+                        size: info.size,
+                        isArray,
+                        isStruct,
+                    })
+                }
+
+            } else {
+                this.uniforms.set(uniformName, {
+                    name: uniformName,
+                    location,
+                    type: info.type,
+                    size: info.size,
+                    isStruct,
+                    isArray,
+                })
+            }
+
+        }
+
+    }
+    fetchActiveUniformBlocks() {
+        const gl = this.gl, program = this.program
+          const activeUniformsParameters = [
             ['UNIFORM_TYPE', 'type'],
             ['UNIFORM_SIZE', 'size'],
             ['UNIFORM_BLOCK_INDEX', 'blockIndex'],
@@ -87,97 +165,52 @@ export class GLProgram implements IDisposable {
             ['UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER']
         ]
         const indecis: number[] = []
-        const uniformBlocks: UnifromBlcokMemberMate[] = []
-        for (let i = 0; i < count; i++) {
-            indecis.push(i)
-            const info = gl.getActiveUniform(program, i)
-            let uniformName = info.name
-            const location = gl.getUniformLocation(program, info.name)
-            if (location) {
-                let king = 'uniform'
-                const isArray = uniformName.indexOf('[') !== -1
-                const isStruct = uniformName.indexOf('.') !== -1
-                if (isStruct) {
-                    king = 'struct'
-                }
-                if (isArray) {
-                    king = 'array'
-                }
-                if (isArray) {
-                    uniformName = uniformName.substring(0, uniformName.indexOf('['))
-                    for (let j = 0; j < info.size; j++) {
-                        const uniformArrayName = uniformName + '[' + j + ']'
-                        const location = gl.getUniformLocation(program, uniformArrayName)
-                        this.uniforms.set(uniformArrayName, {
-                            king: 'array',
-                            name: uniformArrayName,
-                            location,
-                            type: info.type,
-                            size: info.size,
-                            index: j
-                        })
-                    }
-
-                } else {
-                    this.uniforms.set(uniformName, {
-                        king,
-                        name: uniformName,
-                        location,
-                        type: info.type,
-                        size: info.size,
-                        index: i
-                    })
-                }
-            }
-        }
-        const blockCount = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_UNIFORM_BLOCKS)
+        const blockCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORM_BLOCKS)
         for (let i = 0; i < blockCount; i++) {
-            const blockName = gl.getActiveUniformBlockName(program, i)
-            const blockIndex = gl.getUniformBlockIndex(program, blockName)
-            const binding = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_BINDING)
-            const blockIndices = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES)
-            const uniformMate: UnifromMate = {
+            const blockName:string = gl.getActiveUniformBlockName(program, i)
+            const blockIndex:number = gl.getUniformBlockIndex(program, blockName)
+            const binding:number = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_BINDING)
+            const blockSize:number=gl.getActiveUniformBlockParameter(program,blockIndex,gl.UNIFORM_BLOCK_DATA_SIZE)
+            const blockIndices:number[] = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES)
+            const uniformMate: ActiveUniformBlockMate = {
                 name: blockName,
-                king: 'block',
                 binding,
                 blockIndex,
-                location: null
+                blockSize,
+                offset:0,
+                members:[]
             }
-            this.uniforms.set(blockName, uniformMate)
+            this.unifromBlocks.set(blockName, uniformMate)
             if (blockIndices) {
-
-                const types = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_TYPE)
-                const sizes = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_SIZE)
+              //  const types = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_TYPE)
+              //  const sizes = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_SIZE)
                 const offsets = gl.getActiveUniforms(program, blockIndices, gl.UNIFORM_OFFSET)
                 uniformMate.members = Array.from(blockIndices).map((i: number, index: number) => {
                     const info = gl.getActiveUniform(program, i)
                     //   const location = gl.getUniformLocation(program, info.name)
+                    uniformMate.offset+=offsets[index]
                     return {
                         name: info.name,
-                        king: 'uniform',
-                        //  location,
-                        blockIndex,
-                        index: i,
-                        type: types[index],
-                        size: sizes[index],
+                        type: info.type,
+                        size: info.size,
                         offset: offsets[index],
-                    }
+                    } as ActiveUniformBlockMemberMate
                 })
             }
 
         }
     }
-   
+
     getAttributeLocation(name: string) {
         const info = this.attributes.get(name)
-        if(info){
+        if (info) {
             return info.location
         }
         return -1
     }
     getUniformLocation(name: string) {
         const info = this.uniforms.get(name)
-        if(info){
+        if (info) {
             return info.location
         }
         return null

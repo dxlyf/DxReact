@@ -144,7 +144,7 @@ onMounted(async ()=>{
     //WebGL2RenderingContext.prototype.scissor
    // pass.setViewport(0,0,750,700)
  //   pass.setScissorRect(0,0,750,750)
-    pass.setViewport(0,0,200,200)
+   // pass.setViewport(0,0,200,200)
     pass.setVertexBuffer(0,buffer,0,vertices.byteLength)
     pass.setBindGroup(0,group)
     pass.setPipeline(pipeline)

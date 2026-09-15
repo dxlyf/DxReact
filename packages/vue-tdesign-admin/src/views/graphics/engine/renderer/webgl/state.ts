@@ -546,6 +546,46 @@ class DepthTextureAttachment extends FramebufferAttachment<WebGLTexture> {
 class DepthStencilAttachment extends DepthRenderbufferAttachment {
     override attachment(): number { return this.gl.DEPTH_STENCIL_ATTACHMENT; }
 }
+
+export interface GLState{
+    clearColor:ClearColor
+    clearDepth:ClearDepth
+    clearStencil:ClearStencil
+    colorMask:ColorMask
+    depthMask:DepthMask
+    stencilMask:StencilMask
+    stencilFunc:StencilFunc
+    stencilOp:StencilOp
+    stencilTest:StencilTest
+    depthRange:DepthRange
+    depthTest:DepthTest
+    depthFunc:DepthFunc
+    blend:Blend
+    blendColor:BlendColor
+    blendFunc:BlendFunc
+    cullFace:CullFace
+    cullFaceSide:CullFaceSide
+    frontFace:FrontFace
+    bindFrameBuffer:BindFrameBuffer
+    bindRenderbuffer:BindRenderbuffer
+    bindTexture:BindTexture
+    bindElementBuffer:BindElementBuffer
+    bindVertexArray:BindVertexArray
+    bindVertexBuffer:BindVertexBuffer
+    activeTextureUnit:ActiveTextureUnit
+    scissorTest:ScissorTest
+    scissor:Scissor
+    program:Program
+    viewport:Viewport
+    pixelStoreUnpackAlignment:PixelStoreUnpackAlignment
+    pixelStoreUnpackPremultiplyAlpha:PixelStoreUnpackPremultiplyAlpha
+    pixelStoreUnpackFlipY:PixelStoreUnpackFlipY
+    ColorAttachment:ColorAttachment
+    DepthRenderbufferAttachment:DepthRenderbufferAttachment
+    DepthTextureAttachment:DepthTextureAttachment
+    DepthStencilAttachment:DepthStencilAttachment
+    
+}
 export {
 
     ClearColor, // 清除颜色

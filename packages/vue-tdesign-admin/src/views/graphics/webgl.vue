@@ -1,30 +1,9 @@
 <script setup lang="ts">
     import { onMounted, ref } from 'vue'
-    import { GLSLShaderSource,GLSLPrimitiveType,GLProgram } from 'src/views/graphics/engine/renderer/webgl/program'
+    import { GLSLShaderSource,GLProgram } from 'src/views/graphics/engine/renderer/webgl'
     const canvasRef = ref<HTMLCanvasElement>()
 
-    const vertGLSL = new GLSLShaderSource('basic_vert')
-    const fragGLSL = new GLSLShaderSource('basic_frag')
-    vertGLSL
-    .version(300)
-    .defineAttribute('vec2','aPosition')
-    .defineUniformBlock('MatricesBlock',[
-        ['mat4','uMatrices'],
-        ['vec3','uType'],
-    ])
-    .defineMain(`
-        vec3 position = vec3(aPosition,0.0);
-        gl_Position = vec4(position,1.0);
-    `);
-
-    fragGLSL.version(300)
-    .definePrecision('float','highp')
-    .defineUniform('vec3','uColor')
-    .defineVarying('vec4','fragColor')
-    .defineMain(`
-        vec4 color = vec4(uColor,1.0);
-        fragColor = color;
-    `)
+   
 
     onMounted(() => {
         const gl = canvasRef.value?.getContext('webgl2')
@@ -32,20 +11,40 @@
             return
         }
         const program = GLProgram.getProgram(gl,{
-            vertexShader:vertGLSL.toString(),
-            fragmentShader:fragGLSL.toString(),
-        })
-        program.fetchActiveProgram()
-        console.log('uniforms',program.uniforms)
-
-        let GLTypeInfo=Object.create(null)
-      
-        Object.keys(gl.constructor.prototype).forEach((key) => {
-            if(typeof gl[key] === 'number'){
-                GLTypeInfo[key]=gl[key]
+            vertexShader:`#version 300 es
+            layout(location=0) in vec2 aPosition;
+            uniform struct Lights{
+                vec3 light;
+                vec3 color;
+                float intensity[4];
+            } lights;
+            uniform MatriceBlock{
+                mat4 model;
+                mat4 view;
+                mat4 projection;
+            } matrices;
+            uniform Lights plotLights[2];
+            out vec3 vLight;
+            void main(){
+                vLight = lights.light*plotLights[1].intensity[0];
+                gl_Position = vec4(aPosition,0.,1.0);
             }
+            `,
+            fragmentShader:`#version 300 es
+            precision highp float;
+            uniform vec3 uColor;
+            out vec4 fragColor;
+            in vec3 vLight;
+            void main(){
+                vec4 color = vec4(uColor,1.0);
+                fragColor = color;
+            }
+            `,
         })
-        console.log('GLTypeInfo',JSON.stringify(GLTypeInfo,null,2))
+
+        console.log('attributes',program.attributes)
+        console.log('uniforms',program.uniforms)
+        console.log('unifromBlocks',program.unifromBlocks)
 
   
     })

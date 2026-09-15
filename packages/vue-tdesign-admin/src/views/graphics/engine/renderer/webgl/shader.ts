@@ -19,7 +19,7 @@ export class GLSLShaderSource {
         this.source.appendLine(`<%=include('${name}')%>`)
         return this
     }
-    definePrecision(precision: 'highp' | 'mediump' | 'lowp',type: GLSLPrimitiveType) {
+    definePrecision(precision: GLSLPrecision,type: GLSLPrimitiveType) {
         this.source.appendLine(`<%=definePrecision('${precision}','${type}')%>`)
         return this
     }
@@ -31,7 +31,7 @@ export class GLSLShaderSource {
         this.source.appendLine(`<%=defineAttribute('${type}','${name}',${location})%>`)
         return this
     }
-    defineUniform<T extends string>(type: T, name: string) {
+    defineUniform<T=GLSLPrimitiveType>(type: T, name: string) {
         this.source.appendLine(`<%=defineUniform('${type}','${name}')%>`)
         return this
     }
@@ -48,7 +48,7 @@ export class GLSLShaderSource {
         this.source.appendLine(`<%=defineStruct('${name}',${JSON.stringify(members)})%>`)
         return this
     }
-    defineVarying(type: string, name: string) {
+    defineVarying<T=GLSLPrimitiveType>(type: T, name: string) {
         this.source.appendLine(`<%=defineVarying('${type}','${name}')%>`)
         return this
     }
