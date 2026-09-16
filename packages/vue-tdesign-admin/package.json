@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dxyl/gpu-device-api": "^0.1.1",
-    "@dxyl/math2": "^1.0.10",
+    "@dxyl/gpu-device-api": "^0.3.0",
+    "@dxyl/math2": "^1.0.11",
     "@tdesign-vue-next/chat": "^0.5.2",
     "@tiptap/starter-kit": "^3.19.0",
     "@tiptap/vue-3": "^3.19.0",

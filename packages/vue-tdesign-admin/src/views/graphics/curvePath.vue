@@ -20,7 +20,8 @@ async function init() {
     const sdfMaterial = renderer.createMaterial({
         name: 'sdfMaterial',
         attributes: {
-            aPos: 'float32x2'
+            aPos: 'float32x2',
+            
         },
         uniforms: {
             projectMatrix: 'mat3x3f',
@@ -30,7 +31,7 @@ async function init() {
         glsl: {
             vs: `
         void main(){
-            vec3 pos =u.projectMatrix*u.modelMatrix*vec3(aPos,1.);
+            vec3 pos =u.projectMatrix*u.modelMatrix*vec3(aPos.xy,1.);
             gl_Position = vec4(pos.xy,0.,1.0);
         }
         `,
@@ -43,23 +44,46 @@ async function init() {
         },
         wgsl: ``,
         topology:'triangle-list',
-        cullMode:'back',
-        frontFace:'cw'
+        cullMode:'none',
+       // frontFace:'cw'
     })
     
-     
+    const path=new curvePaths.Shape()
+    path.moveTo(100,100)
+    path.lineTo(200,100)
+    path.lineTo(200,200)
+   // path.moveTo(100,)
+ //  const points=path.getPoints()
+   
+   const a=new curvePaths.ShapeUtils().addShapes([new curvePaths.Shape(path.getStrokePoints({
+    width:10,
+    cap:'butt',
+    join:'miter',
+   }).map(p=>Vector2.from(p)))])
+   function toCood(v:number[]){
+      let result:number[]=[]
+      for(let i=0;i<v.length;i+=3){
+           result.push(v[i],v[i+1])
+      }
+      return result
+   }
+   const vertices=new Float32Array(toCood(a.vertices))
+   const indices=new Uint16Array(a.indices)
+   console.log('vertices',vertices)
+   console.log('indices',indices)
     const box=renderer.createGeometry({
         attributes:{
             aPos:{
-                data: new Float32Array([-0.5,0.5,0.5,0.5,0,0]),
-                format:'float32x2'
+                data:vertices,        
+                format:'float32x2',
             }
-        }
+        },
+        indices:indices,
     })
     const projMatrix=glMatrix.mat3.create()
     const modelMatrix=glMatrix.mat3.create()
     
-    glMatrix.mat3.identity(projMatrix)
+    glMatrix.mat3.projection(projMatrix,renderer.width,renderer.height)
     glMatrix.mat3.identity(modelMatrix)
     function render(){
         renderer.beginFrame()
@@ -71,6 +95,7 @@ async function init() {
                 modelMatrix: modelMatrix,
                 uColor:[1,0,0],
             },
+          //  count:indices.length,
             //count:3
         })
         renderer.endFrame()
