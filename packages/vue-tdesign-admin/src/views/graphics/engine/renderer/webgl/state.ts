@@ -1,9 +1,6 @@
 
 type ColorValue =[r:number,g:number,b:number,a:number]
-type  Context={
-    gl: WebGL2RenderingContext;
-    bindFramebuffer: BindFrameBuffer;
-}
+
 function fastDeepEqual(a: any, b: any) {
     if (a === b) return true;
 
@@ -104,7 +101,7 @@ abstract class Value<Context, T> {
         return current === prev
     }
     set(value: T) {
-        if (!this.equals(this.current, this.default)) {
+        if (this.dirty||!this.equals(this.current, this.default)) {
             this.update(value)
             this.current = value
             this.dirty = false
@@ -116,9 +113,9 @@ abstract class Value<Context, T> {
     }
 }
 
-abstract class GLValue<T> extends Value<Context,T> {
+abstract class GLValue<T> extends Value<GLState,T> {
     gl: WebGL2RenderingContext
-    constructor(ctx: Context) {
+    constructor(ctx: GLState) {
         super(ctx)
         this.gl = ctx.gl
     }
@@ -512,12 +509,12 @@ abstract class FramebufferAttachment<T> extends GLValue<T> {
 class ColorAttachment extends FramebufferAttachment<WebGLTexture> {
     attachmentPoint: number;
 
-    constructor(context: Context, parent: WebGLFramebuffer, attachmentIndex: number = 0) {
+    constructor(context:any, parent: WebGLFramebuffer, attachmentIndex: number = 0) {
         super(context, parent);
         this.attachmentPoint = context.gl.COLOR_ATTACHMENT0 + attachmentIndex;
     }
     override update(v?: WebGLTexture | null): void {
-        this.ctx.bindFramebuffer.set(this.parent)
+        this.ctx.bindFrameBuffer.set(this.parent)
         // note: it's possible to attach a renderbuffer to the color
         // attachment point, but thus far MBGL only uses textures for color
         const gl = this.gl;
@@ -528,7 +525,7 @@ class ColorAttachment extends FramebufferAttachment<WebGLTexture> {
 class DepthRenderbufferAttachment extends FramebufferAttachment<WebGLRenderbuffer> {
     attachment(): number { return this.gl.DEPTH_ATTACHMENT; }
     override update(v: WebGLRenderbuffer | null | undefined | WebGLTexture): void {
-        this.ctx.bindFramebuffer.set(this.parent);
+        this.ctx.bindFrameBuffer.set(this.parent);
         const gl = this.gl;
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, this.attachment(), gl.RENDERBUFFER,v as WebGLRenderbuffer);
     }
@@ -537,7 +534,7 @@ class DepthRenderbufferAttachment extends FramebufferAttachment<WebGLRenderbuffe
 class DepthTextureAttachment extends FramebufferAttachment<WebGLTexture> {
     attachment(): number { return this.gl.DEPTH_ATTACHMENT; }
     override update(v: WebGLTexture | null): void {
-        this.ctx.bindFramebuffer.set(this.parent);
+        this.ctx.bindFrameBuffer.set(this.parent);
         const gl = this.gl;
         gl.framebufferTexture2D(gl.FRAMEBUFFER, this.attachment(), gl.TEXTURE_2D, v, 0);
     }
@@ -548,6 +545,7 @@ class DepthStencilAttachment extends DepthRenderbufferAttachment {
 }
 
 export interface GLState{
+    gl:WebGL2RenderingContext;
     clearColor:ClearColor
     clearDepth:ClearDepth
     clearStencil:ClearStencil
@@ -580,11 +578,50 @@ export interface GLState{
     pixelStoreUnpackAlignment:PixelStoreUnpackAlignment
     pixelStoreUnpackPremultiplyAlpha:PixelStoreUnpackPremultiplyAlpha
     pixelStoreUnpackFlipY:PixelStoreUnpackFlipY
-    ColorAttachment:ColorAttachment
-    DepthRenderbufferAttachment:DepthRenderbufferAttachment
-    DepthTextureAttachment:DepthTextureAttachment
-    DepthStencilAttachment:DepthStencilAttachment
+    colorAttachment:ColorAttachment
+    depthRenderbufferAttachment:DepthRenderbufferAttachment
+    depthTextureAttachment:DepthTextureAttachment
+    depthStencilAttachment:DepthStencilAttachment
     
+}
+
+export class GLState {
+    constructor(gl: WebGL2RenderingContext) {
+        this.gl = gl;
+        this.clearColor = new ClearColor(this);
+        this.clearDepth = new ClearDepth(this);
+        this.clearStencil = new ClearStencil(this);
+        this.colorMask = new ColorMask(this);
+        this.depthMask = new DepthMask(this);
+        this.stencilMask = new StencilMask(this);
+        this.stencilFunc = new StencilFunc(this);
+        this.stencilOp = new StencilOp(this);
+        this.stencilTest = new StencilTest(this);
+        this.depthRange = new DepthRange(this);
+        this.depthTest = new DepthTest(this);
+        this.depthFunc = new DepthFunc(this);
+        this.blend = new Blend(this);
+        this.blendColor = new BlendColor(this);
+        this.blendFunc = new BlendFunc(this);
+        this.cullFace = new CullFace(this);
+        this.cullFaceSide = new CullFaceSide(this);
+        this.frontFace = new FrontFace(this);
+        this.bindFrameBuffer = new BindFrameBuffer(this);
+        this.bindRenderbuffer = new BindRenderbuffer(this);
+        this.bindTexture = new BindTexture(this);
+        this.bindElementBuffer = new BindElementBuffer(this);
+        this.bindVertexArray = new BindVertexArray(this);
+        this.bindVertexBuffer = new BindVertexBuffer(this);
+        this.activeTextureUnit = new ActiveTextureUnit(this);
+        this.scissorTest = new ScissorTest(this);
+        this.scissor = new Scissor(this);
+        this.colorAttachment = new ColorAttachment(this);
+        this.program = new Program(this);
+        this.viewport = new Viewport(this);
+        this.pixelStoreUnpackAlignment = new PixelStoreUnpackAlignment(this);
+        this.pixelStoreUnpackPremultiplyAlpha = new PixelStoreUnpackPremultiplyAlpha(this);
+        this.pixelStoreUnpackFlipY = new PixelStoreUnpackFlipY(this);
+    }
 }
 export {
 

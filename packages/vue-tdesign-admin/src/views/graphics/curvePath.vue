@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { shallowRef, onMounted, onUnmounted } from 'vue'
-import { curvePaths, normalizeAngles, Vector2, glMatrix } from '@dxyl/math2'
+import { curvePaths, normalizeAngles,earcut, Vector2, glMatrix ,buildStrokePoints} from '@dxyl/math2'
 import { Renderer, defineMaterial, Geometry,OrthographicCamera, defineUniforms, PerspectiveCamera } from '@dxyl/gpu-device-api'
 import GUI from "lil-gui"
 const canvasRef = shallowRef<HTMLCanvasElement>()
@@ -51,15 +51,20 @@ async function init() {
     const path=new curvePaths.Shape()
     path.moveTo(100,100)
     path.lineTo(200,100)
-    path.lineTo(200,200)
-   // path.moveTo(100,)
- //  const points=path.getPoints()
-   
-   const a=new curvePaths.ShapeUtils().addShapes([new curvePaths.Shape(path.getStrokePoints({
-    width:10,
+    
+    path.lineTo(200,0)
+
+ 
+   const strokePoints=buildStrokePoints(path.getPoints(),{
+    width:20,
     cap:'butt',
-    join:'miter',
-   }).map(p=>Vector2.from(p)))])
+    join:'round',
+   }).map(p=>Vector2.from(p))
+   strokePoints.pop()
+   const strokeShape=new curvePaths.Shape()
+   strokeShape.setFromPoints(strokePoints)
+   const a=curvePaths.ShapeUtils.addShapes([strokeShape])
+
    function toCood(v:number[]){
       let result:number[]=[]
       for(let i=0;i<v.length;i+=3){
@@ -71,6 +76,7 @@ async function init() {
    const indices=new Uint16Array(a.indices)
    console.log('vertices',vertices)
    console.log('indices',indices)
+   console.log('strokePoints',strokePoints)
     const box=renderer.createGeometry({
         attributes:{
             aPos:{

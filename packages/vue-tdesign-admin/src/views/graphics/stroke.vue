@@ -3,30 +3,7 @@ import { shallowRef, onMounted } from 'vue'
 import { ShapePath, glMatrix,createWebGLProgram, pixijs,normalizeAngles, curvePaths, PathBuilder,Vector2, tess2, earcut } from '@dxyl/math2'
 import GUI from "lil-gui"
 
-curvePaths.EllipseCurve.prototype.getPoint=function(t: number, optionalTarget: Vector2 = new Vector2()): Vector2 {
-        const point = optionalTarget
 
-        const {startAngle, endAngle}=normalizeAngles(this.aStartAngle, this.aEndAngle, this.aClockwise)
-        let deltaAngle = endAngle- startAngle
-        
-        const angle = this.aStartAngle + t * deltaAngle
-        let x = this.aX + this.xRadius * Math.cos(angle)
-        let y = this.aY + this.yRadius * Math.sin(angle)
-
-        if (this.aRotation !== 0) {
-            const cos = Math.cos(this.aRotation)
-            const sin = Math.sin(this.aRotation)
-
-            const tx = x - this.aX
-            const ty = y - this.aY
-
-            // 绕椭圆中心旋转点
-            x = tx * cos - ty * sin + this.aX
-            y = tx * sin + ty * cos + this.aY
-        }
-
-        return point.set(x, y)
-    }
 const canvasRef = shallowRef<HTMLCanvasElement>()
 
 function initWebgl() {

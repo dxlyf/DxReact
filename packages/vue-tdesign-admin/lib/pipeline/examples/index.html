@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>minigfx · 跨三端示例</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      body {
+        margin: 0;
+        background: #14161c;
+        color: #cdd3de;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 14px;
+        border-bottom: 1px solid #262a33;
+        font-size: 13px;
+      }
+      header strong {
+        color: #e8ecf4;
+      }
+      header a {
+        color: #7fb4ff;
+        text-decoration: none;
+        padding: 3px 9px;
+        border: 1px solid #2c3340;
+        border-radius: 5px;
+      }
+      header a:hover {
+        background: #1d2129;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+      }
+      #view {
+        flex: 1;
+        min-width: 0;
+        display: block;
+      }
+      #hud {
+        width: 380px;
+        margin: 0;
+        padding: 12px 14px;
+        overflow: auto;
+        border-left: 1px solid #262a33;
+        font-size: 12px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        color: #9aa4b8;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>minigfx</strong>
+      <span>同一份场景代码，三种后端：</span>
+      <a href="?api=webgl">WebGL / WebGL2</a>
+      <a href="?api=webgl&amp;gl=1">强制 WebGL1</a>
+      <a href="?api=webgpu">WebGPU</a>
+    </header>
+    <main>
+      <canvas id="view"></canvas>
+      <pre id="hud">正在初始化…</pre>
+    </main>
+    <script type="module">
+      const api = new URLSearchParams(location.search).get('api') ?? 'webgl';
+      // 两个入口都只依赖 dist 的编译产物，切换后端不需要重新打包
+      await import(api === 'webgpu' ? './dist/webgpu.js' : './dist/webgl.js');
+    </script>
+  </body>
+</html>
