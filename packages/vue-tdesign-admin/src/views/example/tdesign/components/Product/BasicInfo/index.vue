@@ -217,26 +217,33 @@ const searchSynonym4Options=computed(()=>{
         }
     })
 })
+const trimSynonymValues=(values:string[])=>{
+    return values.map(v=>v.trim()).filter(v=>v!=='')
+}
 const handleSynonymChange=(values:string[])=>{
      const value=values[values.length-1]
      const list=values.filter(v=>v==value)
      if(list.length>1){
-        formData.searchSynonym4=values.filter(v=>v!==value)
+        formData.searchSynonym4=trimSynonymValues(values.filter(v=>v!==value))
      }else{
-        formData.searchSynonym4=[...values]
+        formData.searchSynonym4=trimSynonymValues(values)
      }
 }
 const handleSynonymEnter=({inputValue})=>{
      const index=formData.searchSynonym4.findIndex(item=>item==inputValue)
      if(index==-1){
-        formData.searchSynonym4=[...formData.searchSynonym4,inputValue]
+        formData.searchSynonym4=trimSynonymValues([...formData.searchSynonym4,inputValue])
      }
+}
+const synonymInputValue=ref('')
+const handleSynonymInputValue=(value:string)=>{
+    synonymInputValue.value=value.trim()
 }
 const handleSynonymPaste=(ctx)=>{
      if(ctx.pasteValue.trim()===''){
     return
    }
-   const values=ctx.pasteValue.split(/,|;/g)
+   const values=trimSynonymValues(ctx.pasteValue.split(/,|;/g))
    values.forEach(value=>{
         handleSynonymEnter({inputValue:value})
    })
@@ -383,6 +390,7 @@ const vvvv=shallowRef({})
                     <t-select :options="searchSynonym4Options" 
                    
                     :input-props="{onPaste:handleSynonymPaste}"
+                    v-model:input-value.trim="synonymInputValue"
                      creatable 
                      multiple
                      clearable
