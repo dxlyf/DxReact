@@ -32,7 +32,7 @@ onMounted(() => {
     context.clear({
         color: [0, 0, 0, 1],
     })
-    context.draw()
+    //context.draw()
 
 
 

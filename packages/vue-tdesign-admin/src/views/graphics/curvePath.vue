@@ -1,10 +1,30 @@
 <script setup lang="ts">
 import { shallowRef, onMounted, onUnmounted } from 'vue'
-import { curvePaths, normalizeAngles,earcut, Vector2, glMatrix ,buildStrokePoints} from '@dxyl/math2'
+import { curvePaths, normalizeAngles,earcut, Vector2, glMatrix ,buildStrokePoints, Vector2Like} from '@dxyl/math2'
 import { Renderer, defineMaterial, Geometry,OrthographicCamera, defineUniforms, PerspectiveCamera } from '@dxyl/gpu-device-api'
 import GUI from "lil-gui"
 const canvasRef = shallowRef<HTMLCanvasElement>()
 
+
+function buildStrokePoints2(points:Vector2Like[],options:{
+    align?:number;// 1:outside 0:inside 0.5:center 
+    width?: number;
+    join?: 'round' | 'bevel' | 'miter';
+    cap?: 'round' | 'butt' | 'square';
+    miterLimit?: number;
+}):Vector2Like[]{
+    const {width=1,cap,join,miterLimit=10}=options
+    const invertMiterLimit=1/miterLimit
+    const isClosed=Vector2.equals(points[0],points[points.length-1])
+    const result:Vector2Like[]=[]
+    const length=points.length
+
+
+    for(let i=0;i<length;i++){
+        
+    }
+    return result
+}
 async function init() {
     const renderer =await Renderer.create({
         backend:'webgl2',
@@ -52,13 +72,13 @@ async function init() {
     path.moveTo(100,100)
     path.lineTo(200,100)
     
-    path.lineTo(200,0)
-
+    path.lineTo(100,200)
+    path.lineTo(200,200)
  
    const strokePoints=buildStrokePoints(path.getPoints(),{
     width:20,
-    cap:'butt',
-    join:'round',
+    cap:'square',
+    join:'bevel',
    }).map(p=>Vector2.from(p))
    strokePoints.pop()
    const strokeShape=new curvePaths.Shape()

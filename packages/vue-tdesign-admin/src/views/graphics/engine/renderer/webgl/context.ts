@@ -1,122 +1,14 @@
+import { Program } from "./program";
+import { BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode } from "./types";
+import {EventEmitter,type IDisposable} from '@dxyl/math2'
 
-
-/*** begin---------------------types */
-
-type ComparisonFunc = 'NEVER'
-    | 'LESS'
-    | 'EQUAL'
-    | 'LEQUAL'
-    | 'GREATER'
-    | 'NOTEQUAL'
-    | 'GEQUAL'
-    | 'ALWAYS';
-type DepthOptions = {
-    func?: ComparisonFunc;
-    mask?: boolean;
-    range?: [number, number];
+type ContextEvents={
+    'dispose':[ctx:Context]
+    'initialize':[ctx:Context]
+    'initcontext':[ctx:Context]
+    'contextlost':[ctx:Context]
+    'contextrestored':[ctx:Context]
 }
-type Capability = 'BLEND'
-    | 'CULL_FACE'
-    | 'DEPTH_TEST'
-    | 'DITHER'
-    | 'POLYGON_OFFSET_FILL'
-    | 'SAMPLE_ALPHA_TO_COVERAGE'
-    | 'SAMPLE_COVERAGE'
-    | 'SCISSOR_TEST'
-    | 'STENCIL_TEST';
-
-type ClearOptions = {
-    color?: [r: number, g: number, b: number, a: number];
-    depth?: number;
-    stencil?: number;
-    colorMask?: [r: boolean, g: boolean, b: boolean, a: boolean];
-}
-type TextureTarget = 'TEXTURE_2D' | 'TEXTURE_CUBE_MAP';
-type BlendEquationMode = 'FUNC_ADD' | 'FUNC_SUBTRACT' | 'FUNC_REVERSE_SUBTRACT';
-type BlendFuncDstFactorNoConstant = 'ZERO'
-    | 'ONE'
-    | 'SRC_COLOR'
-    | 'ONE_MINUS_SRC_COLOR'
-    | 'DST_COLOR'
-    | 'ONE_MINUS_DST_COLOR'
-    | 'SRC_ALPHA'
-    | 'ONE_MINUS_SRC_ALPHA'
-    | 'DST_ALPHA'
-    | 'ONE_MINUS_DST_ALPHA';
-type BlendFuncDstFactorNoConstantColor = BlendFuncDstFactorNoConstant
-    | 'CONSTANT_ALPHA'
-    | 'ONE_MINUS_CONSTANT_ALPHA';
-type BlendFuncDstFactorNoConstantAlpha = BlendFuncDstFactorNoConstant
-    | 'CONSTANT_COLOR'
-    | 'ONE_MINUS_CONSTANT_COLOR';
-type BlendFuncDstFactor = BlendFuncDstFactorNoConstantAlpha | BlendFuncDstFactorNoConstantColor;
-type BlendFuncSrcFactor = BlendFuncDstFactor | 'SRC_ALPHA_SATURATE';
-type BufferDataUsage = 'STREAM_DRAW' | 'STATIC_DRAW' | 'DYNAMIC_DRAW';
-type CubeMapFaces = 'TEXTURE_CUBE_MAP_POSITIVE_X'
-    | 'TEXTURE_CUBE_MAP_NEGATIVE_X'
-    | 'TEXTURE_CUBE_MAP_POSITIVE_Y'
-    | 'TEXTURE_CUBE_MAP_NEGATIVE_Y'
-    | 'TEXTURE_CUBE_MAP_POSITIVE_Z'
-    | 'TEXTURE_CUBE_MAP_NEGATIVE_Z';
-type TexImage2DTarget = 'TEXTURE_2D' | CubeMapFaces;
-type ShaderType = 'FRAGMENT_SHADER' | 'VERTEX_SHADER';
-type CullFaceMode = 'FRONT' | 'BACK' | 'FRONT_AND_BACK';
-type DrawMode = 'POINTS'
-    | 'LINE_STRIP'
-    | 'LINE_LOOP'
-    | 'LINES'
-    | 'TRIANGLE_STRIP'
-    | 'TRIANGLE_FAN'
-    | 'TRIANGLES';
-type ArrayType = 'BYTE'
-    | 'UNSIGNED_BYTE'
-    | 'SHORT'
-    | 'UNSIGNED_SHORT'
-    | 'FLOAT'
-const ArrayTypeMapByteSize = {
-    BYTE: 1,
-    UNSIGNED_BYTE: 1,
-    SHORT: 2,
-    UNSIGNED_SHORT: 2,
-    FLOAT: 4,
-}
-type AttributeDesc = {
-    name: string
-    type: number
-    size: 1 | 2 | 3 | 4
-    normalized?: boolean
-    stride?: number
-    offset?: number
-    location?: number
-}
-type AttributeBufferOptions = {
-    stride: number
-    type: number
-    attributes: AttributeDesc[]
-}
-type BlendOptions = {
-    equation?: BlendEquationMode;
-    color?: [r: number, g: number, b: number, a: number];
-    src?: BlendFuncSrcFactor;
-    dst?: BlendFuncDstFactor;
-    srcAlpha?: BlendFuncSrcFactor;
-    dstAlpha?: BlendFuncDstFactor;
-}
-type ActiveAttributeMate = {
-    name: string
-    type: number
-    size: number
-    location: number
-}
-type ActiveUniformMate = {
-    name: string
-    type: number
-    size: number
-    location: WebGLUniformLocation
-}
-
-
-/****end---------------------types */
 function arrayEquals(a: any[], b: any[]) {
     if (a === undefined) {
         return false;
@@ -131,269 +23,7 @@ function arrayEquals(a: any[], b: any[]) {
     }
     return true;
 }
-interface IDisposable {
-    isDisposed: boolean
-    dispose(): void
-}
-
-class Buffer implements IDisposable {
-    static uid = 0
-    uid: number
-    ctx: Context;
-    buffer: WebGLBuffer;
-    isDisposed: boolean = false
-    constructor(ctx: Context) {
-        this.ctx = ctx;
-        this.buffer = ctx.gl.createBuffer();
-        this.uid = Buffer.uid++
-        ctx.addDisposable(this)
-    }
-    bind() { }
-    dispose() {
-        if (this.isDisposed) {
-            return
-        }
-        this.isDisposed = true;
-        this.ctx.gl.deleteBuffer(this.buffer);
-    }
-}
-class VertexBuffer extends Buffer {
-    override bind() {
-        this.ctx.bindArrayBuffer(this.buffer);
-    }
-}
-class IndexBuffer extends Buffer {
-    override bind() {
-        this.ctx.bindElementBuffer(this.buffer);
-    }
-}
-class FrameBuffer implements IDisposable {
-    static uid = 0
-    uid: number
-    ctx: Context;
-    buffer: WebGLFramebuffer;
-    isDisposed: boolean = false
-    constructor(ctx: Context) {
-        this.ctx = ctx;
-        this.buffer = ctx.gl.createFramebuffer()
-        this.uid = Buffer.uid++
-        ctx.addDisposable(this)
-    }
-    bind() {
-        this.ctx.bindFrameBuffer(this.buffer);
-    }
-    dispose() {
-        if (this.isDisposed) {
-            return
-        }
-        this.isDisposed = true;
-        this.ctx.gl.deleteFramebuffer(this.buffer);
-        this.buffer = null;
-    }
-}
-class RenderBuffer implements IDisposable {
-    static uid = 0
-    uid: number
-    ctx: Context;
-    buffer: WebGLRenderbuffer;
-    isDisposed: boolean = false
-    constructor(ctx: Context) {
-        this.ctx = ctx;
-        this.buffer = ctx.gl.createRenderbuffer()
-        this.uid = Buffer.uid++
-        ctx.addDisposable(this)
-    }
-    bind() {
-        this.ctx.bindRenderBuffer(this.buffer);
-    }
-    dispose() {
-        if (this.isDisposed) {
-            return
-        }
-        this.isDisposed = true;
-        this.ctx.gl.deleteRenderbuffer(this.buffer)
-    }
-}
-class VertexArray implements IDisposable {
-    static uid = 0
-    uid: number
-    ctx: Context;
-    vao: WebGLVertexArrayObject;
-    isDisposed: boolean = false
-    constructor(ctx: Context) {
-        this.ctx = ctx;
-        this.vao = ctx.gl.createVertexArray()
-        this.uid = VertexArray.uid++
-        ctx.addDisposable(this)
-    }
-    dispose() {
-        if (this.isDisposed) {
-            return
-        }
-        this.isDisposed = true;
-        this.ctx.gl.deleteVertexArray(this.vao);
-        this.vao = null;
-    }
-}
-
-class AttributeBuffer {
-    static uid = 0
-    ctx: Context;
-    type: number
-    stride: number
-    buffer: Buffer
-    attributes: AttributeDesc[] = []
-    constructor(ctx: Context, options: AttributeBufferOptions) {
-        this.ctx = ctx;
-        this.type = options.type;
-        this.stride = options.stride;
-        this.buffer = new VertexBuffer(ctx);
-        this.attributes = options.attributes.map((attr, i) => {
-            return {
-                offset: 0,
-                stride: this.stride,
-                type: this.type,
-                location: i,
-                normalized: false,
-                ...attr,
-            }
-        });
-    }
-    bind() {
-        this.buffer.bind();
-        const attribues = this.attributes, gl = this.ctx.gl;
-        for (let i = 0; i < attribues.length; i++) {
-            const attr = attribues[i];
-            this.ctx.enableVertexAttribArray(attr.location);
-            gl.vertexAttribPointer(attr.location, attr.size, attr.type, attr.normalized, attr.stride, attr.offset);
-        }
-    }
-}
-class Program implements IDisposable {
-    static uid = 0
-    static getProgram(ctx: Context, vs: string, fs: string) {
-        const key = vs + fs;
-        if (!ctx.cache.has(key)) {
-            ctx.cache.set(key, new Program(ctx, vs, fs));
-        }
-        return ctx.cache.get(key);
-    }
-    isDisposed: boolean = false
-    ctx: Context;
-    program: WebGLProgram;
-    uid: number
-    attributes = new Map<string, ActiveAttributeMate>()
-    uniforms = new Map<string, ActiveUniformMate>()
-    constructor(ctx: Context, vs: string, fs: string) {
-        this.ctx = ctx;
-        this.program = this.compileProgram(vs, fs);
-        this.uid = Program.uid++
-        ctx.addDisposable(this)
-    }
-    use() {
-        this.ctx.gl.useProgram(this.program);
-    }
-    createShader(type: ShaderType, source: string) {
-        const gl = this.ctx.gl
-        const shader = gl.createShader(gl[type]);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            gl.deleteShader(shader);
-            throw new Error('Failed to compile shader:' + gl.getShaderInfoLog(shader));
-        }
-        return shader;
-    }
-    compileProgram(vertexShaderSource: string, fragmentShaderSource: string) {
-        const gl = this.ctx.gl
-        const program = gl.createProgram()
-        const vertexShader = this.createShader('VERTEX_SHADER', vertexShaderSource);
-        const fragmentShader = this.createShader('FRAGMENT_SHADER', fragmentShaderSource);
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-        gl.linkProgram(program);
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            gl.deleteProgram(program);
-            throw new Error('Failed to link program:' + gl.getProgramInfoLog(program));
-        }
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
-        return program;
-    }
-    fetchAttributes() {
-        const gl = this.ctx.gl, program = this.program
-        const count = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-        for (let i = 0; i < count; i++) {
-            const attr = gl.getActiveAttrib(program, i);
-            const location = gl.getAttribLocation(program, attr.name)
-            if (location >= 0) {
-                this.attributes.set(attr.name, {
-                    name: attr.name,
-                    type: attr.type,
-                    location: location,
-                    size: attr.size,
-                })
-            }
-        }
-    }
-    fetchUniforms() {
-        const gl = this.ctx.gl, program = this.program
-        const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-        for (let i = 0; i < count; i++) {
-            const uniform = gl.getActiveUniform(program, i);
-            const location = gl.getUniformLocation(program, uniform.name)
-            if (location) {
-                const size = uniform.size, type = uniform.type
-                let name = uniform.name
-                const isArray = name.endsWith('[0]')
-                if (isArray&&size>1) {
-                    const prefix=name.slice(0,-3)
-                    for(let j=0;j<size;j++){
-                        name=prefix+`[${j}]`
-                        this.uniforms.set(name,{
-                            name: name,
-                            type: type,
-                            location: location,
-                            size: size,
-                        })
-                    }
-                } else {
-                    this.uniforms.set(name, {
-                        name: name,
-                        type: type,
-                        location: location,
-                        size: size,
-                    })
-                }
-
-            }
-        }
-    }
-    fetchUniformsBlock() {
-        const gl = this.ctx.gl, program = this.program
-        const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORM_BLOCKS);
-        for (let i = 0; i < count; i++) {
-            const blockName = gl.getActiveUniformBlockName(program, i);
-            const uniformBlock = gl.getUniformBlockIndex(program, blockName);
-            const name = uniformBlock.name
-            const size = uniformBlock.size
-            this.uniforms.set(name, {
-                name: name,
-                type: uniformBlock.type,
-                location: uniformBlock.location,
-                size: size,
-            })
-        }
-    }
-    dispose() {
-        if (this.isDisposed) {
-            return
-        }
-        this.isDisposed = true;
-        this.ctx.gl.deleteProgram(this.program);
-    }
-}
-class Context {
+class Context extends EventEmitter<ContextEvents>{
     gl: WebGL2RenderingContext;
     cache = new Map<string, any>();
     capabilities: {
@@ -411,6 +41,7 @@ class Context {
     };
     resources = new Set<IDisposable>()
     constructor(gl: WebGL2RenderingContext) {
+        super()
         this.gl = gl;
         this.capabilities = {
             maxTexture: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
@@ -425,12 +56,23 @@ class Context {
             samples: gl.getParameter(gl.SAMPLES),
             textureUnits: gl.getParameter(gl.TEXTURE0),
         }
+        this.emit('initialize',this)
+        this.initContext()
     }
 
     get currentProgram() {
         return this.cache.get('useProgram') as Program;
     }
-
+    initContext(){
+        
+        this.emit('initcontext',this)
+    }
+    contextLost(){
+        this.emit('contextlost',this)
+    }
+    contextRestored(){
+        this.emit('contextrestored',this)
+    }
     createBuffer() {
         return new Buffer(this)
     }
@@ -704,10 +346,11 @@ class Context {
         this.resources.add(resource)
     }
     dispose() {
+        this.emit('dispose',this)
         this.resources.forEach(resource => resource.dispose())
         this.resources.clear()
     }
 }
 export {
-    Context as GLContext
+    Context
 }
