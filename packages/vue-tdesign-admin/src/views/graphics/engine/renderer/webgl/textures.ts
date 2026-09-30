@@ -82,6 +82,8 @@ export class Texture implements IResource {
 
     /** 是否已经上传过数据，用于判断能否生成 mipmap */
     protected hasData = false
+    /** 是否已生成过 mipmap，用于上下文恢复后重建（如立方体贴图需 6 面齐全后再生成） */
+    protected mipmapGenerated = false
 
     constructor(ctx: Context, target: TextureTarget = 'TEXTURE_2D', options: TextureOptions = {}) {
         this.ctx = ctx
@@ -184,6 +186,7 @@ export class Texture implements IResource {
         if (!this.texture || !this.hasData) { return }
         this.bind()
         this.gl.generateMipmap(this.gl[this.target])
+        this.mipmapGenerated = true
     }
     /** 绑定到指定纹理单元（从 0 开始，内部会转换为 TEXTURE0 + unit） */
     bind(unit = 0) {
@@ -419,6 +422,8 @@ export class TextureCubeMap extends Texture {
                 this.uploadFaceData(face)
             }
         })
+        // 6 面全部重放完成后，若此前生成过 mipmap 需要重建（单面上传时生成会因不完整而失败）
+        if (this.mipmapGenerated) { this.updateMipmaps() }
     }
 }
 
