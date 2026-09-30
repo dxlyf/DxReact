@@ -1,5 +1,12 @@
-import { Program } from "./program";
-import { BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode } from "./types";
+import { arrayEquals } from "../utils";
+import { Program, type ProgramOptions } from "./program";
+import { ArrayType, BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, BufferDataUsage, BufferTarget, Capability, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode, FramebufferAttachment, TexImage2DTarget, TextureTarget } from "./types";
+import { DataTexture, Texture, Texture2D, TextureCubeMap, type TextureOptions } from "./textures";
+import { Buffer, IndexBuffer, VertexBuffer } from "./buffer";
+import { AttributeBuffer, type AttributeBufferOptions } from "./attributes";
+import { FrameBuffer } from "./frame_buffer";
+import { RenderBuffer, type RenderBufferStorageOptions } from "./render_buffer";
+import { UniformBlock, type UniformBlockOptions } from "./uniform_block";
 import {EventEmitter,type IDisposable} from '@dxyl/math2'
 
 type ContextEvents={
@@ -9,25 +16,12 @@ type ContextEvents={
     'contextlost':[ctx:Context]
     'contextrestored':[ctx:Context]
 }
-function arrayEquals(a: any[], b: any[]) {
-    if (a === undefined) {
-        return false;
-    }
-    if (a.length !== b.length) {
-        return false;
-    }
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) {
-            return false;
-        }
-    }
-    return true;
-}
 class Context extends EventEmitter<ContextEvents>{
     gl: WebGL2RenderingContext;
     cache = new Map<string, any>();
+    programCache = new Map<string, Program>();
     capabilities: {
-        maxTexture: number,
+        maxTextures: number,
         maxVertexTextures: number,
         maxTextureSize: number,
         maxCubemapSize: number,
@@ -37,14 +31,22 @@ class Context extends EventEmitter<ContextEvents>{
         maxFragmentUniforms: number,
         maxSamples: number,
         samples: number,
-        textureUnits: number,
+        /** 可用的纹理单元总数（所有着色阶段合计） */
+        maxTextureUnits: number,
     };
     resources = new Set<IDisposable>()
+    /** 纹理单元自增游标，allocateTextureUnit() 使用 */
+    textureUnits = 0;
+    /** 已启用的顶点属性槽位，上下文丢失后清空 */
+    protected enabledAttributes = new Set<number>()
+    /** canvas 上下文事件回调，dispose 时注销 */
+    private onContextLostHandler?: (e: Event) => void
+    private onContextRestoredHandler?: (e: Event) => void
     constructor(gl: WebGL2RenderingContext) {
         super()
         this.gl = gl;
         this.capabilities = {
-            maxTexture: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
+            maxTextures: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
             maxVertexTextures: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS),
             maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
             maxCubemapSize: gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE),
@@ -54,10 +56,43 @@ class Context extends EventEmitter<ContextEvents>{
             maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
             maxSamples: gl.getParameter(gl.MAX_SAMPLES),
             samples: gl.getParameter(gl.SAMPLES),
-            textureUnits: gl.getParameter(gl.TEXTURE0),
+            maxTextureUnits: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
         }
+        this.listenContextEvents()
         this.emit('initialize',this)
         this.initContext()
+    }
+
+    /**
+     * 监听 canvas 的上下文丢失/恢复事件
+     * 注意：必须在 webglcontextlost 里 preventDefault()，浏览器才会派发 webglcontextrestored
+     */
+    private listenContextEvents() {
+        const canvas = this.gl.canvas as HTMLCanvasElement
+        if (!canvas || typeof canvas.addEventListener !== 'function') {
+            return
+        }
+        this.onContextLostHandler = (e: Event) => {
+            e.preventDefault()
+            this.contextLost()
+        }
+        this.onContextRestoredHandler = () => {
+            this.contextRestored()
+        }
+        canvas.addEventListener('webglcontextlost', this.onContextLostHandler, false)
+        canvas.addEventListener('webglcontextrestored', this.onContextRestoredHandler, false)
+    }
+    private removeContextEvents() {
+        const canvas = this.gl.canvas as HTMLCanvasElement
+        if (!canvas || typeof canvas.removeEventListener !== 'function') {
+            return
+        }
+        if (this.onContextLostHandler) {
+            canvas.removeEventListener('webglcontextlost', this.onContextLostHandler, false)
+        }
+        if (this.onContextRestoredHandler) {
+            canvas.removeEventListener('webglcontextrestored', this.onContextRestoredHandler, false)
+        }
     }
 
     get currentProgram() {
@@ -68,22 +103,53 @@ class Context extends EventEmitter<ContextEvents>{
         this.emit('initcontext',this)
     }
     contextLost(){
+        // 上下文丢失后所有 GL 状态缓存与句柄均失效，必须先清空再通知资源
+        this.cache.clear()
+        this.enabledAttributes.clear()
+        this.textureUnits = 0
         this.emit('contextlost',this)
     }
     contextRestored(){
+        // 恢复后 GL 状态回到初始值，缓存同样要清空，避免后续绑定被误判为“无变化”而跳过
+        this.cache.clear()
+        this.textureUnits = 0
         this.emit('contextrestored',this)
     }
-    createBuffer() {
-        return new Buffer(this)
+    createBuffer(target: BufferTarget = 'ARRAY_BUFFER', usage: BufferDataUsage = 'STATIC_DRAW') {
+        return new Buffer(this, target, usage)
     }
-    createRenderBuffer() {
-        return new RenderBuffer(this)
+    createVertexBuffer(usage: BufferDataUsage = 'STATIC_DRAW') {
+        return new VertexBuffer(this, usage)
+    }
+    createIndexBuffer(usage: BufferDataUsage = 'STATIC_DRAW') {
+        return new IndexBuffer(this, usage)
+    }
+    createAttributeBuffer(options: AttributeBufferOptions) {
+        return new AttributeBuffer(this, options)
+    }
+    createUniformBlock(program: Program, options: UniformBlockOptions) {
+        return new UniformBlock(this, program, options)
+    }
+    createRenderBuffer(width: number, height: number, options?: RenderBufferStorageOptions) {
+        return new RenderBuffer(this, width, height, options)
     }
     createFrameBuffer() {
         return new FrameBuffer(this)
     }
-    createProgram(options: { vs: string, fs: string }) {
-        return Program.getProgram(this, options.vs, options.fs) as Program
+    createProgram(options: ProgramOptions) {
+        return Program.getProgram(this, options.vs, options.fs, options) as Program
+    }
+    createTexture(target: TextureTarget = 'TEXTURE_2D', options?: TextureOptions) {
+        return new Texture(this, target, options)
+    }
+    createTexture2D(options?: TextureOptions) {
+        return new Texture2D(this, options)
+    }
+    createTextureCubeMap(options?: TextureOptions) {
+        return new TextureCubeMap(this, options)
+    }
+    createDataTexture(data: ArrayBufferView | null, width: number, height: number, options?: TextureOptions) {
+        return new DataTexture(this, data, width, height, options)
     }
     useProgram(program: Program) {
         if (this.cache.get('useProgram') === program) {
@@ -251,18 +317,30 @@ class Context extends EventEmitter<ContextEvents>{
         }
     }
     disableVertexAttribArray(index: number) {
-        if (this.cache.get('disableVertexAttribArray') === index) {
+        if (!this.enabledAttributes.has(index)) {
             return;
         }
-        this.cache.set('disableVertexAttribArray', index);
+        this.enabledAttributes.delete(index);
         this.gl.disableVertexAttribArray(index);
     }
     enableVertexAttribArray(index: number) {
-        if (this.cache.get('enableVertexAttribArray') === index) {
+        if (this.enabledAttributes.has(index)) {
             return;
         }
-        this.cache.set('enableVertexAttribArray', index);
+        this.enabledAttributes.add(index);
         this.gl.enableVertexAttribArray(index);
+    }
+    /** 查询某个顶点属性槽位当前是否已启用 */
+    isVertexAttribArrayEnabled(index: number) {
+        return this.enabledAttributes.has(index);
+    }
+    /** 设置剔除面（需先 enable('CULL_FACE')） */
+    cullFace(mode: CullFaceMode) {
+        if (this.cache.get('cullFace') === mode) {
+            return;
+        }
+        this.cache.set('cullFace', mode);
+        this.gl.cullFace(this.gl[mode]);
     }
     blend(options: BlendOptions) {
         if (options.equation) {
@@ -303,52 +381,112 @@ class Context extends EventEmitter<ContextEvents>{
             gl.blendFunc(gl[src], gl[dst]);
         }
     }
+    /** 从 0 开始依次分配纹理单元，返回本次分配的单元号 */
+    allocateTextureUnit(){
+        const textureUnit = this.textureUnits;
+        if ( textureUnit >= this.capabilities.maxTextureUnits ) {
+            console.warn( 'Context: Trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.capabilities.maxTextureUnits );
+        }
+        this.textureUnits = textureUnit + 1;
+        return textureUnit;
+    }
+    resetTextureUnits(){
+        this.textureUnits = 0;
+    }
+    /** 激活指定纹理单元（0 起） */
     activeTexture(texture: number) {
         if (this.cache.get('activeTexture') === texture) {
             return;
         }
         this.cache.set('activeTexture', texture);
-        this.gl.activeTexture(this.capabilities.textureUnits + texture);
+        this.gl.activeTexture(this.gl.TEXTURE0 + texture);
     }
-    bindArrayBuffer(buffer: WebGLBuffer) {
-        if (this.cache.get('bindArrayBuffer') === buffer) {
+    /** 通用缓冲区绑定，按 target 分别缓存 */
+    bindBuffer(target: BufferTarget, buffer: WebGLBuffer | null) {
+        const key = 'bindBuffer:' + target;
+        if (this.cache.get(key) === buffer) {
             return;
         }
-        this.cache.set('bindArrayBuffer', buffer);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+        this.cache.set(key, buffer);
+        this.gl.bindBuffer(this.gl[target], buffer);
     }
-    bindElementBuffer(buffer: WebGLBuffer) {
-        if (this.cache.get('bindElementBuffer') === buffer) {
+    bindArrayBuffer(buffer: WebGLBuffer | null) {
+        this.bindBuffer('ARRAY_BUFFER', buffer);
+    }
+    bindElementBuffer(buffer: WebGLBuffer | null) {
+        this.bindBuffer('ELEMENT_ARRAY_BUFFER', buffer);
+    }
+    bindBufferBase(target: 'UNIFORM_BUFFER' | 'TRANSFORM_FEEDBACK_BUFFER', index: number, buffer: WebGLBuffer) {
+        const key = 'bindBufferBase:' + target + ':' + index;
+        if (this.cache.get(key) === buffer) {
             return;
         }
-        this.cache.set('bindElementBuffer', buffer);
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
+        this.cache.set(key, buffer);
+        this.gl.bindBufferBase(this.gl[target], index, buffer);
     }
-    bindFrameBuffer(framebuffer: WebGLFramebuffer) {
+    bindFrameBuffer(framebuffer: WebGLFramebuffer | null) {
         if (this.cache.get('bindFrameBuffer') === framebuffer) {
             return;
         }
         this.cache.set('bindFrameBuffer', framebuffer);
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
     }
-    bindRenderBuffer(renderbuffer: WebGLRenderbuffer) {
+    bindRenderBuffer(renderbuffer: WebGLRenderbuffer | null) {
         if (this.cache.get('bindRenderbuffer') === renderbuffer) {
             return;
         }
         this.cache.set('bindRenderbuffer', renderbuffer);
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
     }
+    bindTexture(target: TextureTarget, texture: WebGLTexture | null) {
+        // 纹理绑定与纹理单元相关，缓存 key 需要带上当前激活的单元
+        const unit = this.cache.get('activeTexture') ?? 0;
+        const key = 'bindTexture:' + target + ':' + unit;
+        if (this.cache.get(key) === texture) {
+            return;
+        }
+        this.cache.set(key, texture);
+        this.gl.bindTexture(this.gl[target], texture);
+    }
+    /** 把纹理挂到当前帧缓冲的附件点上（颜色/深度/模板） */
+    framebufferTexture2D(attachment: FramebufferAttachment, textarget: TexImage2DTarget, texture: WebGLTexture | null, level = 0) {
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl[attachment], this.gl[textarget], texture, level);
+    }
+    /** 把渲染缓冲挂到当前帧缓冲的附件点上（通常用于深度/模板） */
+    framebufferRenderbuffer(attachment: FramebufferAttachment, renderbuffer: WebGLRenderbuffer | null) {
+        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl[attachment], this.gl.RENDERBUFFER, renderbuffer);
+    }
     drawArray(mode: DrawMode, first: number, count: number) {
         const gl = this.gl;
-        this.gl.drawArrays(gl[mode], first, count);
+        gl.drawArrays(gl[mode], first, count);
     }
+    /** 按索引绘制（需先绑定 ELEMENT_ARRAY_BUFFER，或由 AttributeBuffer 绑定过索引） */
+    drawElements(mode: DrawMode, count: number, type: ArrayType = 'UNSIGNED_SHORT', offset = 0) {
+        const gl = this.gl;
+        gl.drawElements(gl[mode], count, gl[type], offset);
+    }
+    /** 实例化绘制（非索引） */
+    drawArrayInstanced(mode: DrawMode, first: number, count: number, instanceCount: number) {
+        const gl = this.gl;
+        gl.drawArraysInstanced(gl[mode], first, count, instanceCount);
+    }
+    /** 实例化绘制（索引） */
+    drawElementsInstanced(mode: DrawMode, count: number, type: ArrayType = 'UNSIGNED_SHORT', offset = 0, instanceCount = 1) {
+        const gl = this.gl;
+        gl.drawElementsInstanced(gl[mode], count, gl[type], offset, instanceCount);
+    }
+    
     addDisposable(resource: IDisposable) {
         this.resources.add(resource)
     }
     dispose() {
+        this.removeContextEvents()
         this.emit('dispose',this)
         this.resources.forEach(resource => resource.dispose())
         this.resources.clear()
+        this.programCache.clear()
+        this.cache.clear()
+        this.enabledAttributes.clear()
     }
 }
 export {

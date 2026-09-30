@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { GLContext } from './engine/types/gl'
+import { Context } from './engine/renderer/webgl/context'
 const canvasRef = ref<HTMLCanvasElement>()
 
 
@@ -10,30 +10,7 @@ onMounted(() => {
     if (!gl) {
         return
     }
-    const context = new GLContext(gl);
-
-    const program = context.createProgram({
-        vs: `#version 300 es
-        void main() {
-            gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
-        }
-        `,
-        fs: `#version 300 es
-        precision highp float;
-        void main() {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-        `
-    })
-
-    context.useProgram(program);
-
-    context.disable('DEPTH_TEST')
-    context.clear({
-        color: [0, 0, 0, 1],
-    })
-    //context.draw()
-
+  
 
 
 })
