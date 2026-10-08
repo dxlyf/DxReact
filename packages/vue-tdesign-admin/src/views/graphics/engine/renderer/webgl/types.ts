@@ -126,6 +126,8 @@ type FramebufferAttachment = 'COLOR_ATTACHMENT0'
     | 'DEPTH_STENCIL_ATTACHMENT';
 type ShaderType = 'FRAGMENT_SHADER' | 'VERTEX_SHADER';
 type CullFaceMode = 'FRONT' | 'BACK' | 'FRONT_AND_BACK';
+/** 正面三角形绕序 */
+type FrontFaceMode = 'CW' | 'CCW';
 type DrawMode = 'POINTS'
     | 'LINE_STRIP'
     | 'LINE_LOOP'
@@ -155,22 +157,13 @@ type BufferTarget = 'ARRAY_BUFFER' | 'ELEMENT_ARRAY_BUFFER' | 'COPY_READ_BUFFER'
     | 'PIXEL_PACK_BUFFER'
     | 'PIXEL_UNPACK_BUFFER';
 
-
-
-type renderPipeOptions={
-    vertexShader:string
-    fragmentShader:string
-    // attributes:Record<string,ActiveAttributeMate>
-    // uniforms:Record<string,ActiveUniformMate>
-    // uniformBlocks:Record<string,ActiveUniformBlockMate>
-}
-
 export type {
     DrawMode,
     ArrayType,
     TexImage2DTarget,
     ShaderType,
     CullFaceMode,
+    FrontFaceMode,
     BlendFuncSrcFactor,
     BlendFuncDstFactor,
     BufferTarget,

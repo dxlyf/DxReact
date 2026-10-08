@@ -1,6 +1,6 @@
 import { arrayEquals } from "../utils";
 import { Program, type ProgramOptions } from "./program";
-import { ArrayType, BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, BufferDataUsage, BufferTarget, Capability, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode, FramebufferAttachment, TexImage2DTarget, TextureTarget } from "./types";
+import { ArrayType, BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, BufferDataUsage, BufferTarget, Capability, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode, FramebufferAttachment, FrontFaceMode, TexImage2DTarget, TextureTarget } from "./types";
 import { DataTexture, Texture, Texture2D, TextureCubeMap, type TextureOptions } from "./textures";
 import { Buffer, IndexBuffer, VertexBuffer } from "./buffer";
 import { AttributeBuffer, type AttributeBufferOptions } from "./attributes";
@@ -229,13 +229,13 @@ class Context extends EventEmitter<ContextEvents>{
                 this.colorMask(options.colorMask);
             }
         }
-        if (options.depth) {
+        if (options.depth !== undefined) {
             mask |= this.gl.DEPTH_BUFFER_BIT;
-            this.gl.clearDepth(options.depth);
+            this.clearDepth(options.depth);
         }
-        if (options.stencil) {
+        if (options.stencil !== undefined) {
             mask |= this.gl.STENCIL_BUFFER_BIT;
-            this.gl.clearStencil(options.stencil);
+            this.clearStencil(options.stencil);
         }
         this.gl.clear(mask);
     }
@@ -342,16 +342,33 @@ class Context extends EventEmitter<ContextEvents>{
         this.cache.set('cullFace', mode);
         this.gl.cullFace(this.gl[mode]);
     }
+    /** 设置正面三角形绕序（CW/CCW），影响 CULL_FACE 剔除方向与 gl_FrontFacing */
+    frontFace(mode: FrontFaceMode) {
+        if (this.cache.get('frontFace') === mode) {
+            return;
+        }
+        this.cache.set('frontFace', mode);
+        this.gl.frontFace(this.gl[mode]);
+    }
+    /** 一次性设置混合相关状态（方程/常量色/混合因子） */
     blend(options: BlendOptions) {
         if (options.equation) {
             this.blendEquation(options.equation);
         }
-        if (options.srcAlpha && options.dstAlpha) {
-            this.blendFunc(options.src, options.dst);
+        if (options.color) {
+            this.blendColor(options.color);
         }
-        if (options.srcAlpha) {
-            this.blendFunc(options.srcAlpha, options.dstAlpha);
+        if (options.src && options.dst) {
+            this.blendFunc(options.src, options.dst, options.srcAlpha, options.dstAlpha);
         }
+    }
+    /** 设置常量混合色，配合 CONSTANT_COLOR / CONSTANT_ALPHA 等因子使用 */
+    blendColor(color: [r: number, g: number, b: number, a: number]) {
+        if (arrayEquals(this.cache.get('blendColor'), color)) {
+            return;
+        }
+        this.cache.set('blendColor', color);
+        this.gl.blendColor(color[0], color[1], color[2], color[3]);
     }
     blendEquation(modeRGB: BlendEquationMode, modeAlpha?: BlendEquationMode) {
         const blendEquation = this.cache.get('blendEquation');
@@ -380,6 +397,32 @@ class Context extends EventEmitter<ContextEvents>{
         else {
             gl.blendFunc(gl[src], gl[dst]);
         }
+    }
+    /** 设置多边形偏移量（需先 enable('POLYGON_OFFSET_FILL')），常用于避免深度冲突 */
+    polygonOffset(factor: number, units: number) {
+        const prev = this.cache.get('polygonOffset');
+        if (prev && prev.factor === factor && prev.units === units) {
+            return;
+        }
+        this.cache.set('polygonOffset', { factor, units });
+        this.gl.polygonOffset(factor, units);
+    }
+    /** 设置多重采样覆盖率（需先 enable('SAMPLE_COVERAGE')） */
+    sampleCoverage(value: number, invert = false) {
+        const prev = this.cache.get('sampleCoverage');
+        if (prev && prev.value === value && prev.invert === invert) {
+            return;
+        }
+        this.cache.set('sampleCoverage', { value, invert });
+        this.gl.sampleCoverage(value, invert);
+    }
+    /** 设置线宽（多数 WebGL 实现仅支持 1.0，设置其它值可能被忽略） */
+    lineWidth(width: number) {
+        if (this.cache.get('lineWidth') === width) {
+            return;
+        }
+        this.cache.set('lineWidth', width);
+        this.gl.lineWidth(width);
     }
     /** 从 0 开始依次分配纹理单元，返回本次分配的单元号 */
     allocateTextureUnit(){
