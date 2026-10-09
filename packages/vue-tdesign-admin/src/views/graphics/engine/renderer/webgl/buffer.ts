@@ -92,12 +92,21 @@ export class Buffer implements IResource {
         }
     }
     /**
-     * 局部更新已分配空间的数据
-     * @param offset 目标字节偏移
+     * 局部更新已分配空间的数据（对应 WebGL2 bufferSubData 的三种重载）
+     * @param offset 目标字节偏移（缓冲区内的字节位置）
+     * @param data 数据源；不传 srcOffset/srcLength 时整段写入
+     * @param srcOffset 源数据起始偏移，单位“元素”而非字节；仅 ArrayBufferView 有效
+     * @param srcLength 从源数据拷贝的元素个数；省略时拷贝到源数据末尾
      */
-    setSubData(offset: number, data: BufferSource) {
+    setSubData(offset: number, data: BufferSource, srcOffset?: number, srcLength?: number) {
         this.bind()
-        this.gl.bufferSubData(this.gl[this.target], offset, data)
+        const gl = this.gl
+        // 裸 ArrayBuffer 只支持整段写入，据此分流到对应的重载
+        if (data instanceof ArrayBuffer || srcOffset === undefined) {
+            gl.bufferSubData(gl[this.target], offset, data)
+        } else {
+            gl.bufferSubData(gl[this.target], offset, data, srcOffset, srcLength)
+        }
     }
     /** 读取已分配/已上传的字节长度 */
     getSize() {

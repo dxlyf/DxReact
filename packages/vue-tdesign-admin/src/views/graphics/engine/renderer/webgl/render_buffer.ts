@@ -81,7 +81,7 @@ export class RenderBuffer implements IResource {
         this.bind()
         const gl = this.gl
         if (this.samples > 1) {
-            const samples = Math.min(this.samples, this.ctx.capabilities.maxSamples)
+            const samples = Math.min(this.samples, this.ctx.limits.maxSamples)
             gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl[this.internalFormat], this.width, this.height)
         } else {
             gl.renderbufferStorage(gl.RENDERBUFFER, gl[this.internalFormat], this.width, this.height)

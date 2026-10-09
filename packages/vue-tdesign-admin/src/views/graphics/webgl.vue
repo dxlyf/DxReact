@@ -440,8 +440,8 @@ onMounted(() => {
         state.contextLost = false
     })
 
-    info.maxTextureUnits = context.capabilities.maxTextureUnits
-    info.maxTextureSize = context.capabilities.maxTextureSize
+    info.maxTextureUnits = context.limits.maxTextureUnits
+    info.maxTextureSize = context.limits.maxTextureSize
 
     // 相机矩阵只需构建一次（相机固定）
     glMatrix.mat4.perspectiveNO(projection, (45 * Math.PI) / 180, CANVAS_WIDTH / CANVAS_HEIGHT, 0.1, 100)

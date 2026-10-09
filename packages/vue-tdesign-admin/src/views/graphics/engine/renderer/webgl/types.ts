@@ -20,7 +20,18 @@ type Capability = 'BLEND'
     | 'SAMPLE_ALPHA_TO_COVERAGE'
     | 'SAMPLE_COVERAGE'
     | 'SCISSOR_TEST'
-    | 'STENCIL_TEST';
+    | 'STENCIL_TEST'
+    | 'RASTERIZER_DISCARD';
+/** 查询对象目标（Query 的 target 参数） */
+type QueryTarget = 'ANY_SAMPLES_PASSED'
+    | 'ANY_SAMPLES_PASSED_CONSERVATIVE'
+    | 'TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN';
+/** 变换反馈捕获的图元类型 */
+type TransformFeedbackMode = 'POINTS' | 'LINES' | 'TRIANGLES';
+/** 渲染上下文类型（WebGL1/2 共用） */
+type GLContext = WebGLRenderingContext | WebGL2RenderingContext;
+/** 上下文版本 */
+type GLVersion = 'webgl1' | 'webgl2';
 
 type ClearOptions = {
     color?: [r: number, g: number, b: number, a: number];
@@ -182,5 +193,9 @@ export type {
     TextureFormat,
     TextureType,
     TextureInternalFormat,
-    FramebufferAttachment
+    FramebufferAttachment,
+    QueryTarget,
+    TransformFeedbackMode,
+    GLContext,
+    GLVersion
 }

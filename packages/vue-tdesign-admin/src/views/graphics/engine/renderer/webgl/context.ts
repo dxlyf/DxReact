@@ -1,12 +1,19 @@
 import { arrayEquals } from "../utils";
 import { Program, type ProgramOptions } from "./program";
-import { ArrayType, BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, BufferDataUsage, BufferTarget, Capability, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode, FramebufferAttachment, FrontFaceMode, TexImage2DTarget, TextureTarget } from "./types";
+import { ArrayType, BlendEquationMode, BlendFuncDstFactor, BlendFuncSrcFactor, BlendOptions, BufferDataUsage, BufferTarget, Capability, ClearOptions, ComparisonFunc, CubeMapFaces, CullFaceMode, DepthOptions, DrawMode, FramebufferAttachment, FrontFaceMode, GLVersion, QueryTarget, TexImage2DTarget, TextureTarget, TransformFeedbackMode } from "./types";
 import { DataTexture, Texture, Texture2D, TextureCubeMap, type TextureOptions } from "./textures";
 import { Buffer, IndexBuffer, VertexBuffer } from "./buffer";
 import { AttributeBuffer, type AttributeBufferOptions } from "./attributes";
 import { FrameBuffer } from "./frame_buffer";
 import { RenderBuffer, type RenderBufferStorageOptions } from "./render_buffer";
 import { UniformBlock, type UniformBlockOptions } from "./uniform_block";
+import { VertexArray } from "./vertex_array";
+import { Query } from "./query";
+import { TransformFeedback } from "./transform_feedback";
+import { Sampler, type SamplerOptions } from "./sampler";
+import { Extensions } from "./extensions";
+import { getLimits, type Limits } from "./limits";
+import { detectVersion, getFeatures, type FeatureFlags, type FeatureName } from "./features";
 import {EventEmitter,type IDisposable} from '@dxyl/math2'
 
 type ContextEvents={
@@ -20,20 +27,14 @@ class Context extends EventEmitter<ContextEvents>{
     gl: WebGL2RenderingContext;
     cache = new Map<string, any>();
     programCache = new Map<string, Program>();
-    capabilities: {
-        maxTextures: number,
-        maxVertexTextures: number,
-        maxTextureSize: number,
-        maxCubemapSize: number,
-        maxAttributes: number,
-        maxVertexUniforms: number,
-        maxVeryings: number,
-        maxFragmentUniforms: number,
-        maxSamples: number,
-        samples: number,
-        /** 可用的纹理单元总数（所有着色阶段合计） */
-        maxTextureUnits: number,
-    };
+    /** 上下文版本（webgl1 / webgl2），由上下文实例判定 */
+    version: GLVersion;
+    /** 扩展探测与缓存 */
+    extensions: Extensions;
+    /** 数值上限（原 capabilities） */
+    limits: Limits;
+    /** 特性开关（依据版本 + 扩展生成） */
+    features: FeatureFlags;
     resources = new Set<IDisposable>()
     /** 纹理单元自增游标，allocateTextureUnit() 使用 */
     textureUnits = 0;
@@ -45,19 +46,10 @@ class Context extends EventEmitter<ContextEvents>{
     constructor(gl: WebGL2RenderingContext) {
         super()
         this.gl = gl;
-        this.capabilities = {
-            maxTextures: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
-            maxVertexTextures: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS),
-            maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
-            maxCubemapSize: gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE),
-            maxAttributes: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
-            maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
-            maxVeryings: gl.getParameter(gl.MAX_VARYING_VECTORS),
-            maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
-            maxSamples: gl.getParameter(gl.MAX_SAMPLES),
-            samples: gl.getParameter(gl.SAMPLES),
-            maxTextureUnits: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
-        }
+        this.version = detectVersion(gl)
+        this.extensions = new Extensions(gl)
+        this.limits = getLimits(gl, this.version)
+        this.features = getFeatures(this.version, this.extensions)
         this.listenContextEvents()
         this.emit('initialize',this)
         this.initContext()
@@ -112,8 +104,14 @@ class Context extends EventEmitter<ContextEvents>{
     contextRestored(){
         // 恢复后 GL 状态回到初始值，缓存同样要清空，避免后续绑定被误判为“无变化”而跳过
         this.cache.clear()
+        // 扩展对象随上下文丢失失效，清空缓存以便重新探测
+        this.extensions.reset()
         this.textureUnits = 0
         this.emit('contextrestored',this)
+    }
+    /** 查询当前上下文是否支持某特性（依据版本与扩展探测结果） */
+    supports(feature: FeatureName) {
+        return this.features[feature]
     }
     createBuffer(target: BufferTarget = 'ARRAY_BUFFER', usage: BufferDataUsage = 'STATIC_DRAW') {
         return new Buffer(this, target, usage)
@@ -150,6 +148,18 @@ class Context extends EventEmitter<ContextEvents>{
     }
     createDataTexture(data: ArrayBufferView | null, width: number, height: number, options?: TextureOptions) {
         return new DataTexture(this, data, width, height, options)
+    }
+    createVertexArray() {
+        return new VertexArray(this)
+    }
+    createQuery(target: QueryTarget = 'ANY_SAMPLES_PASSED') {
+        return new Query(this, target)
+    }
+    createTransformFeedback() {
+        return new TransformFeedback(this)
+    }
+    createSampler(options?: SamplerOptions) {
+        return new Sampler(this, options)
     }
     useProgram(program: Program) {
         if (this.cache.get('useProgram') === program) {
@@ -427,8 +437,8 @@ class Context extends EventEmitter<ContextEvents>{
     /** 从 0 开始依次分配纹理单元，返回本次分配的单元号 */
     allocateTextureUnit(){
         const textureUnit = this.textureUnits;
-        if ( textureUnit >= this.capabilities.maxTextureUnits ) {
-            console.warn( 'Context: Trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.capabilities.maxTextureUnits );
+        if ( textureUnit >= this.limits.maxTextureUnits ) {
+            console.warn( 'Context: Trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.limits.maxTextureUnits );
         }
         this.textureUnits = textureUnit + 1;
         return textureUnit;
@@ -466,6 +476,49 @@ class Context extends EventEmitter<ContextEvents>{
         }
         this.cache.set(key, buffer);
         this.gl.bindBufferBase(this.gl[target], index, buffer);
+    }
+    /** 绑定顶点数组对象（VAO）；传 null 表示解绑回默认 VAO */
+    bindVertexArray(vertexArray: WebGLVertexArrayObject | null) {
+        if (this.cache.get('bindVertexArray') === vertexArray) {
+            return;
+        }
+        this.cache.set('bindVertexArray', vertexArray);
+        // 顶点属性的启用状态保存在 VAO 内，绑定 VAO 后全局属性缓存不再可信
+        this.enabledAttributes.clear();
+        this.gl.bindVertexArray(vertexArray);
+    }
+    /** 绑定变换反馈对象 */
+    bindTransformFeedback(transformFeedback: WebGLTransformFeedback | null) {
+        if (this.cache.get('bindTransformFeedback') === transformFeedback) {
+            return;
+        }
+        this.cache.set('bindTransformFeedback', transformFeedback);
+        this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, transformFeedback);
+    }
+    /** 开始变换反馈捕获（需已绑定反馈对象与反馈缓冲，且顶点着色器声明了 varyings） */
+    beginTransformFeedback(mode: TransformFeedbackMode) {
+        this.gl.beginTransformFeedback(this.gl[mode]);
+    }
+    /** 结束变换反馈捕获 */
+    endTransformFeedback() {
+        this.gl.endTransformFeedback();
+    }
+    /** 暂停变换反馈捕获 */
+    pauseTransformFeedback() {
+        this.gl.pauseTransformFeedback();
+    }
+    /** 恢复变换反馈捕获 */
+    resumeTransformFeedback() {
+        this.gl.resumeTransformFeedback();
+    }
+    /** 把采样器绑定到指定纹理单元（unit 从 0 起） */
+    bindSampler(unit: number, sampler: WebGLSampler | null) {
+        const key = 'bindSampler:' + unit;
+        if (this.cache.get(key) === sampler) {
+            return;
+        }
+        this.cache.set(key, sampler);
+        this.gl.bindSampler(unit, sampler);
     }
     bindFrameBuffer(framebuffer: WebGLFramebuffer | null) {
         if (this.cache.get('bindFrameBuffer') === framebuffer) {
