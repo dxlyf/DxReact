@@ -2,26 +2,26 @@
 import { computed, inject } from 'vue';
 import {
   type FieldPath,
-  type AtomFieldScheme,
+  type AtomFieldSchema,
 } from '../types';
-import { USE_SCHEME_CONTEXT_KEY, UseSchemeFormInstance } from '../composables/useSchemeForm';
+import { USE_SCHEMA_CONTEXT_KEY, UseSchemaFormInstance } from '../composables/useSchemaForm';
 
-const props = defineProps<{ scheme: AtomFieldScheme; path: FieldPath }>();
-const form=inject<UseSchemeFormInstance>(USE_SCHEME_CONTEXT_KEY)
+const props = defineProps<{ schema: AtomFieldSchema; path: FieldPath }>();
+const form=inject<UseSchemaFormInstance>(USE_SCHEMA_CONTEXT_KEY)
 const model= computed({
-        get:()=>form.getValue(props.path,props.scheme.defaultValue),
+        get:()=>form.getValue(props.path,props.schema.defaultValue),
         set:(value)=>form.setValue(props.path,value)
 })
 const label=computed(()=>{
-    return props.scheme.formatLabel?props.scheme.formatLabel(model.value,props.scheme):props.scheme.label
+    return props.schema.formatLabel?props.schema.formatLabel(model.value,props.schema):props.schema.label
 })
 </script>
 <template>
-    <div class="flex flex-col" v-if="scheme.wrapper">
+    <div class="flex flex-col" v-if="schema.wrapper">
         <div class="text-sm font-medium text-gray-700">{{ label }}</div>
         <div class="mt-2">
-            <component :is="scheme.component" v-model="model" v-bind="scheme.props" />
+            <component :is="schema.component" v-model="model" v-bind="schema.props" />
         </div>
     </div>
-    <component v-else :is="scheme.component" v-model="model" v-bind="scheme.props" />
+    <component v-else :is="schema.component" v-model="model" v-bind="schema.props" />
 </template>

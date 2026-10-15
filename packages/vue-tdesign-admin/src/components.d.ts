@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    App: typeof import('./components/SchemaForm/App.vue')['default']
     ArrayField: typeof import('./components/json-editor/fields/ArrayField.vue')['default']
     BooleanField: typeof import('./components/json-editor/fields/BooleanField.vue')['default']
     BoxDimension: typeof import('./components/BoxDimension/index.vue')['default']
@@ -22,6 +23,7 @@ declare module 'vue' {
     Editor: typeof import('./components/quill-editor/Editor.vue')['default']
     ErrorBoundary: typeof import('./components/error-boundary/index.vue')['default']
     FormField: typeof import('./components/form/form-field.vue')['default']
+    FormRenderer: typeof import('./components/SchemaForm/FormRenderer.vue')['default']
     Index_jsx: typeof import('./components/pro-table/index_jsx.vue')['default']
     JsonEditor: typeof import('./components/json-editor/index.vue')['default']
     JsonSchemaForm: typeof import('./components/json-editor2/JsonSchemaForm.vue')['default']
@@ -104,11 +106,13 @@ declare module 'vue' {
     TTreeSelect: typeof import('tdesign-vue-next')['TreeSelect']
     TTypographyParagraph: typeof import('tdesign-vue-next')['Paragraph']
     TUpload: typeof import('tdesign-vue-next')['Upload']
+    WidgetRenderer: typeof import('./components/SchemaForm/WidgetRenderer.vue')['default']
   }
 }
 
 // For TSX support
 declare global {
+  const App: typeof import('./components/SchemaForm/App.vue')['default']
   const ArrayField: typeof import('./components/json-editor/fields/ArrayField.vue')['default']
   const BooleanField: typeof import('./components/json-editor/fields/BooleanField.vue')['default']
   const BoxDimension: typeof import('./components/BoxDimension/index.vue')['default']
@@ -119,6 +123,7 @@ declare global {
   const Editor: typeof import('./components/quill-editor/Editor.vue')['default']
   const ErrorBoundary: typeof import('./components/error-boundary/index.vue')['default']
   const FormField: typeof import('./components/form/form-field.vue')['default']
+  const FormRenderer: typeof import('./components/SchemaForm/FormRenderer.vue')['default']
   const Index_jsx: typeof import('./components/pro-table/index_jsx.vue')['default']
   const JsonEditor: typeof import('./components/json-editor/index.vue')['default']
   const JsonSchemaForm: typeof import('./components/json-editor2/JsonSchemaForm.vue')['default']
@@ -201,4 +206,5 @@ declare global {
   const TTreeSelect: typeof import('tdesign-vue-next')['TreeSelect']
   const TTypographyParagraph: typeof import('tdesign-vue-next')['Paragraph']
   const TUpload: typeof import('tdesign-vue-next')['Upload']
+  const WidgetRenderer: typeof import('./components/SchemaForm/WidgetRenderer.vue')['default']
 }

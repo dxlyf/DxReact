@@ -1,7 +1,7 @@
 import type {Component,ComputedRef,ConcreteComponent} from 'vue'
 export type FieldType='array'|'object'|'atom'
 export type FieldPath=(string|number)[]
-export type FieldScheme={
+export type FieldSchema={
     type:FieldType
     key?:string
     label?:string
@@ -10,30 +10,30 @@ export type FieldScheme={
     isRoot?:boolean // 是否是根字段，默认 false
     visible?:boolean // 是否可见，默认 true
     builtin?:boolean // 是否内置组件，默认 false
-    formatItemLabel?:(item:any,index:number,scheme:FieldScheme)=>string
-    formatLabel?:(label:string,scheme:FieldScheme)=>string
+    formatItemLabel?:(item:any,index:number,Schema:FieldSchema)=>string
+    formatLabel?:(label:string,Schema:FieldSchema)=>string
 }
-export type ArrayFieldScheme = FieldScheme & {
+export type ArrayFieldSchema = FieldSchema & {
     type: 'array'
-    valueType?:'array<object>'|'array<string>' // 不需要指定，根据scheme自动判断
+    valueType?:'array<object>'|'array<string>' // 不需要指定，根据Schema自动判断
     sortable?:boolean // 默认 false
     allowAdded?:boolean // 默认 true ，是否允许添加子项
     allowAddedField?:boolean // 默认 true ，是否允许为子项添加字段
-    schemes: AllFieldScheme[] // 如果valueType array<string>',只能有一个scheme
+    schemas: AllFieldSchema[] // 如果valueType array<string>',只能有一个Schema
 }
-export type ObjectFieldScheme = FieldScheme & {
+export type ObjectFieldSchema = FieldSchema & {
     type: 'object'
     allowAddedField?:boolean // 默认 true ，是否允许为子项添加字段
-    schemes: AllFieldScheme[]
+    schemas: AllFieldSchema[]
 }
-export type AtomFieldScheme = FieldScheme & {
+export type AtomFieldSchema = FieldSchema & {
     type: 'atom'
     wrapper?:boolean // 是否需要包裹，默认，默认 true
     component:string|Component
 }
 
-export type AllFieldScheme=ArrayFieldScheme|ObjectFieldScheme|AtomFieldScheme
+export type AllFieldSchema=ArrayFieldSchema|ObjectFieldSchema|AtomFieldSchema
 
 
-export type FormScheme=AllFieldScheme
+export type FormSchema=AllFieldSchema
 

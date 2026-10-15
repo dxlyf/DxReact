@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, markRaw } from 'vue';
-import { AllFieldScheme, FieldPath } from '../types.ts';
+import { AllFieldSchema, FieldPath } from '../types.ts';
 import ArrayField from './ArrayField.vue';
 import ObjectField from './ObjectField.vue';
 import AtomField from './AtomField.vue';
 
 const props=defineProps<{
-    scheme: AllFieldScheme
+    schema: AllFieldSchema
     path: FieldPath;
 }>()
 const components={
@@ -14,10 +14,10 @@ const components={
     object:ObjectField,
     atom:AtomField,
 } as const;
-const FieldComp=computed(()=>{
-    return markRaw(components[props.scheme.type])
-})
+const renderComponent=(schema:AllFieldSchema)=>{
+    return components[schema.type]
+}
 </script>
 <template>
-     <component :is="FieldComp as any" :scheme="props.scheme" :path="props.path" />
+     <component :is="renderComponent(schema) as any" :schema="props.schema" :path="props.path" />
 </template>

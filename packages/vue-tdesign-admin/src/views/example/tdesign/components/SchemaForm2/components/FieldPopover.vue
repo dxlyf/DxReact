@@ -1,61 +1,109 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue';
-import { AllFieldScheme,FieldPath } from '../types';
+import { AllFieldSchema } from '../types';
+import { createAtomFieldSchema } from '../util';
 
 type Field={
     name:string
     checked:boolean
     canRemove:boolean
+    schema:AllFieldSchema
 }
 const props = defineProps<{
     fields:Field[]
 }>()
-const emit=defineEmits(['change'])
+const emit=defineEmits(['add','change','remove','visibleField'])
 const handleRemove=(field:Field)=>{
-    emitChange(props.fields.filter(f=>f.name!==field.name))
+    emit('remove',field.name)
 }
-const emitChange=(fields:Field[])=>{
-    emit('change',fields)
-}
+
 const handleCheck=(field:Field)=>{
-    emitChange(props.fields.map(f=>{
+    const fields=props.fields
+    emit('change',fields.map(f=>{
         if(f.name===field.name){
+            emit('visibleField',f.name,!f.checked)
             return {
                 ...f,
-                checked:field.checked
+                checked:!f.checked
             }
         }
-        return {...f}
+        return f
     }))
 }
+const inputStatus=shallowRef<any>({
+    status:'default',
+    message:''
+})
 const newFieldName=shallowRef('')
 const handleAdd=()=>{
-    if(newFieldName.value.trim()==''){
+    const key=newFieldName.value.trim()
+    if(key===''){
+        inputStatus.value={
+            status:'error',
+            message:'请输入字段名'
+        }
         return
     }
-    emitChange([...props.fields,{
-        name:newFieldName.value.trim(),
+    if(props.fields.some(f=>f.name===key)){
+        inputStatus.value={
+            status:'error',
+            message:'字段已存在'
+        }
+        return
+    }
+    inputStatus.value={
+        status:'default',
+        message:''
+    }
+    emit('add',[...props.fields,{
+        name:key,
         checked:true,
-        canRemove:true
+        canRemove:true,
+        schema:createAtomFieldSchema({
+            key:key,
+            label:key,
+            component:'t-input',
+            props:{
+                placeholder:`请输入${key}`
+            }
+        })
     }])
     newFieldName.value=''
 }
+const handleFocus=()=>{
+    if(inputStatus.value.status==='error'){
+        inputStatus.value={
+            status:'default',
+            message:''
+        }
+    }
+}
+const handleVisibleChange=(visible:boolean)=>{
+    if(!visible){
+        inputStatus.value={
+            status:'default',
+            message:''
+        }
+        newFieldName.value=''
+    }
+}
 </script>
 <template>
-    <t-popup placement="bottom" show-arrow destroy-on-close trigger="click">
+    <t-popup @visible-change="handleVisibleChange" placement="bottom-left" show-arrow destroy-on-close trigger="click">
         <template #content>
-            <div class="px-6 py-3">
+            <div class="p-2">
                 <div>
-                    <div v-for="field in fields" :key="field.name" class="grid grid-cols-[40px_1fr_80px]">
-                        <div><t-checkbox  @change="handleCheck(field)" :checked="field.checked" /></div>
+                    <div v-for="field in fields" :key="field.name" class="grid grid-cols-[auto_1fr_30px] gap-y-2 items-center">
+                        <t-checkbox  @change="handleCheck(field)" :checked="field.checked" />
                         <div>{{field.name}}</div>
                         <div v-show="field.canRemove"><t-button @click="handleRemove(field)" variant="text" size="small" theme="danger">删除</t-button></div>
                     </div>
                 </div>
-                <div class="border-t border-solid border-gray-200">
-                    <div class="flex">
+                <div class="border-t border-solid border-gray-200 py-2 mt-2">
+                    <div class="flex gap-4">
                         <div class="flex-auto">
-                            <t-input v-model="newFieldName" placeholder="添加字段"  />
+                            <t-input @focus="handleFocus" size="small" :status="inputStatus.status" v-model="newFieldName" placeholder="添加字段"  />
+                            <p v-show="inputStatus.status==='error'" class=" text-red-600 text-xs">{{inputStatus.message}}</p>
                         </div>
                         <div class="flex-none">
                                <t-button theme="primary" size="small" @click="handleAdd">添加</t-button>

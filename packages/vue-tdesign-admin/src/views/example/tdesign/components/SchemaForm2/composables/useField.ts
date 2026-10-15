@@ -1,48 +1,48 @@
 
 import { getDeepValue, setDeepValue } from '../util'
-import  {USE_SCHEME_CONTEXT_KEY,type UseSchemeFormInstance  } from './useSchemeForm'
+import  {USE_Schema_CONTEXT_KEY,type UseSchemaFormInstance  } from './useSchemaForm'
 import  { useVModel } from './useVModel'
 import { computed, inject } from 'vue'
-import type { AllFieldScheme, AtomFieldScheme, FieldPath } from '../types'
+import type { AllFieldSchema, AtomFieldSchema, FieldPath } from '../types'
 export type UseFieldProps={
-    scheme:AllFieldScheme
+    Schema:AllFieldSchema
     path:FieldPath
 }
 export const useField=(props:UseFieldProps)=>{
-    const ctx=inject<UseSchemeFormInstance>(USE_SCHEME_CONTEXT_KEY,null)
+    const ctx=inject<UseSchemaFormInstance>(USE_Schema_CONTEXT_KEY,null)
     if(!ctx){
         throw new Error('useField must be used within a SchemaForm')
     }
     const model= computed({
-        get:()=>ctx.getValue(props.path,props.scheme.defaultValue),
+        get:()=>ctx.getValue(props.path,props.Schema.defaultValue),
         set:(value)=>ctx.setValue(props.path,value)
     })
     const fields=computed(()=>{
-         const type=props.scheme.type
+         const type=props.Schema.type
          const value=model.value
          if(type==='array'){
-            const schemes=props.scheme.schemes as AllFieldScheme[]
-            return schemes
+            const Schemas=props.Schema.Schemas as AllFieldSchema[]
+            return Schemas
          }
          else if(type==='object'){
-            return props.scheme.schemes
+            return props.Schema.Schemas
          }
          else {
-            return [props.scheme]
+            return [props.Schema]
          }
     })
     const createItem=()=>{
-        if(props.scheme.type==='array'){
+        if(props.Schema.type==='array'){
             return {}
         }
-        else if(props.scheme.type==='object'){
+        else if(props.Schema.type==='object'){
             return {}
         }
         else {
-            return props.scheme.defaultValue
+            return props.Schema.defaultValue
         }
     }
-    const getFieldScheme=(key:string)=>{
+    const getFieldSchema=(key:string)=>{
 
     }
     return [model] as const

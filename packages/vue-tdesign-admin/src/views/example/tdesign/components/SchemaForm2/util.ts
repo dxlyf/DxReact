@@ -1,29 +1,30 @@
-import type { AllFieldScheme,FieldScheme,ObjectFieldScheme,AtomFieldScheme,ArrayFieldScheme,FormScheme, FieldPath } from './types'
+import type { AllFieldSchema,FieldSchema,ObjectFieldSchema,AtomFieldSchema,ArrayFieldSchema,FormSchema, FieldPath } from './types'
 
-const normalizeScheme=(scheme:AllFieldScheme):AllFieldScheme=>{
-    if(scheme.type==='array'){
-        return normalizeArrayFieldScheme(scheme)
+const normalizeSchema=(Schema:AllFieldSchema):AllFieldSchema=>{
+    if(Schema.type==='array'){
+        return normalizeArrayFieldSchema(Schema)
     }
-    else if(scheme.type==='object'){
-        return normalizeObjectFieldScheme(scheme)
+    else if(Schema.type==='object'){
+        return normalizeObjectFieldSchema(Schema)
     }
     else {
-        return normalizeAtomFieldScheme(scheme)
+        return normalizeAtomFieldSchema(Schema)
     }
 }
 
-const normalizeAtomFieldScheme=(scheme:AtomFieldScheme)=>{
+const normalizeAtomFieldSchema=(Schema:AtomFieldSchema)=>{
     return {
         type:'atom',
         props:{},
         builtin:true,
         wrapper:true,
         isRoot:false,
-        ...scheme,
+        defaultValue:'',
+        ...Schema,
     }
 }
-const normalizeArrayFieldScheme=(scheme:ArrayFieldScheme)=>{
-    const {schemes,valueType,...restScheme}=scheme
+const normalizeArrayFieldSchema=(Schema:ArrayFieldSchema)=>{
+    const {schemas,valueType,...restSchema}=Schema
     return {
         valueType:'array<object>',
         sortable:false,
@@ -31,22 +32,22 @@ const normalizeArrayFieldScheme=(scheme:ArrayFieldScheme)=>{
         allowAddedField:true,
         isRoot:false,
         defaultValue:[],
-        schemes:(schemes as AllFieldScheme[]).map((item)=>normalizeScheme(item)),
-        ...restScheme
-    } as ArrayFieldScheme
+        schemas:(schemas as AllFieldSchema[]).map((item)=>normalizeSchema(item)),
+        ...restSchema
+    } as ArrayFieldSchema
 }
-const normalizeObjectFieldScheme=(scheme:ObjectFieldScheme)=>{
-    const {schemes,...restScheme}=scheme
+const normalizeObjectFieldSchema=(Schema:ObjectFieldSchema)=>{
+    const {schemas,...restSchema}=Schema
     return {
         sortable:false,
         allowAddedField:true,
         isRoot:false,
         defaultValue:{},
-        schemes:(schemes as AllFieldScheme[]).map((item)=>normalizeScheme(item)),
-        ...restScheme
-    } as ObjectFieldScheme
+        schemas:(schemas as AllFieldSchema[]).map((item)=>normalizeSchema(item)),
+        ...restSchema
+    } as ObjectFieldSchema
 }
-const createAtomFieldScheme=(options:Partial<AtomFieldScheme>)=>{
+const createAtomFieldSchema=(options:Partial<AtomFieldSchema>)=>{
     return {
         type:'atom',
         props:{},
@@ -55,9 +56,9 @@ const createAtomFieldScheme=(options:Partial<AtomFieldScheme>)=>{
         isRoot:false,
         defaultValue:'',
         ...options,
-    } as AtomFieldScheme
+    } as AtomFieldSchema
 }
-const createArrayFieldScheme=(options:Partial<ArrayFieldScheme>)=>{
+const createArrayFieldSchema=(options:Partial<ArrayFieldSchema>)=>{
     return {
         type:'array',
         valueType:'array<object>',
@@ -67,36 +68,36 @@ const createArrayFieldScheme=(options:Partial<ArrayFieldScheme>)=>{
         isRoot:false,
         defaultValue:[],
         ...options,
-    } as ArrayFieldScheme
+    } as ArrayFieldSchema
 }
-const createObjectFieldScheme=(options:Partial<ObjectFieldScheme>)=>{
+const createObjectFieldSchema=(options:Partial<ObjectFieldSchema>)=>{
     return {
         type:'object',
         allowAddedField:true,
         isRoot:false,
         defaultValue:{},
         ...options,
-    } as ObjectFieldScheme
+    } as ObjectFieldSchema
 }
-const createItemByScheme=(scheme:AllFieldScheme):any=>{
-    if(scheme.type==='array'){
-        if(scheme.valueType==='array<string>'){
-            return getDeepValue(scheme.schemes,[0,'defaultValue'],'')
+const createItemBySchema=(schema:AllFieldSchema):any=>{
+    if(schema.type==='array'){
+        if(schema.valueType==='array<string>'){
+            return getDeepValue(schema.schemas,[0,'defaultValue'],'')
         }else{
-            return (scheme.schemes as AllFieldScheme[]).reduce((acc,cur)=>{
-                acc[cur.key]=createItemByScheme(cur)
+            return (schema.schemas as AllFieldSchema[]).reduce((acc,cur)=>{
+                acc[cur.key]=cloneValue(cur.defaultValue)
                 return acc
             },{} as any)
         }
     }
-    else if(scheme.type==='object'){
-        return scheme.schemes.reduce((acc,cur)=>{
-            acc[cur.key]=createItemByScheme(cur)
+    else if(schema.type==='object'){
+        return schema.schemas.reduce((acc,cur)=>{
+            acc[cur.key]=cloneValue(cur.defaultValue)
             return acc
         },{} as Record<string,any>)
     }
     else {
-        return isNullOrUndefined(scheme.defaultValue)?'':scheme.defaultValue
+        return isNullOrUndefined(schema.defaultValue)?'':schema.defaultValue
     }
 }
 const isUndefined = (val: any) => val === undefined
@@ -129,24 +130,72 @@ const getDeepValue = (obj: any, path: (string | number)[],defaultValue?:any) => 
     }
     let currentObj = obj
     for (let i = 0; i < path.length-1; i++) {
+        currentObj = currentObj[path[i]]
         if (!isObject(currentObj)) {
             return defaultValue
         }
-        currentObj = currentObj[path[i]]
     }
     return currentObj[path[path.length - 1]]
 }
+const removeDeepKey=(obj: any, path: (string | number)[]) => {
+    if (path.length <= 0) {
+        return
+    }
+    let currentObj = obj
+    for (let i = 0; i < path.length - 1; i++) {
+        if (!isObject(currentObj)) {
+            return
+        }
+        currentObj = currentObj[path[i]]
+    }
+    delete currentObj[path[path.length - 1]]
+}
+const cloneValue=(value:any)=>{
+    return JSON.parse(JSON.stringify(value))
+}
+/**
+ * 按路径排除字段
+ * @param obj 原始对象
+ * @param excludePaths 要排除的路径，如 ['info.secret', 'user.password']
+ *                    支持数组索引，如 'list.0.password'
+ */
+function omitByPaths<T>(obj: T, excludePaths: string[], currentPath = ''): T {
+  if (Array.isArray(obj)) {
+    return obj.map((item, i) =>
+      omitByPaths(item, excludePaths, currentPath ? `${currentPath}.${i}` : `${i}`)
+    ) as T;
+  }
+
+  if (obj && typeof obj === 'object') {
+    const result: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      const path = currentPath ? `${currentPath}.${k}` : k;
+      // 命中排除路径，跳过
+      if (excludePaths.includes(path)) continue;
+      result[k] = omitByPaths(v, excludePaths, path);
+    }
+    return result;
+  }
+
+  return obj;
+}
+
+
+
 export { 
+    omitByPaths,
+    removeDeepKey,
     setDeepValue, 
     getDeepValue ,
     isNullOrUndefined,
     isObject,
-    normalizeArrayFieldScheme,
-    normalizeAtomFieldScheme,
-    normalizeObjectFieldScheme,
-    normalizeScheme,
-    createAtomFieldScheme,
-    createArrayFieldScheme,
-    createObjectFieldScheme,
-    createItemByScheme
+    cloneValue,
+    normalizeArrayFieldSchema,
+    normalizeAtomFieldSchema,
+    normalizeObjectFieldSchema,
+    normalizeSchema,
+    createAtomFieldSchema,
+    createArrayFieldSchema,
+    createObjectFieldSchema,
+    createItemBySchema,
 }

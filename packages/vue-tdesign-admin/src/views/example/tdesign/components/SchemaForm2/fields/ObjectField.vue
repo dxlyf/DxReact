@@ -2,21 +2,21 @@
 import { computed } from 'vue';
 import CollapseCard from '../components/CollapseCard.vue';
 import { useField } from '../composables/useField';
-import { ObjectFieldScheme, FieldPath } from '../types';
+import { ObjectFieldSchema, FieldPath } from '../types';
 import FieldPopover from '../components/FieldPopover.vue';
 
 const props=defineProps<{
-    scheme: ObjectFieldScheme;
+    Schema: ObjectFieldSchema;
     path: FieldPath;
 }>()
 const title=computed(()=>{
-    return props.scheme.formatLabel?props.scheme.formatLabel(props.scheme.label,props.scheme):props.scheme.label
+    return props.Schema.formatLabel?props.schema.formatLabel(props.Schema.label,props.Schema):props.Schema.label
 })
 </script>
 <template>
     <CollapseCard :title="title">
         <template #extra>
-            <FieldPopover :scheme="props.scheme" :path="props.path" />
+            <FieldPopover :Schema="props.schema" :path="props.path" />
         </template>
     </CollapseCard>
 </template>
