@@ -137,6 +137,24 @@ function addItemField(key: string) {
   ctx.emitSchemaChange();
 }
 
+/**
+ * 删除运行时新增字段：itemFields 为所有项共享，故从所有项的值中移除该字段，
+ * 并从各已物化的可见集合中剔除，最后触发 schema-change。
+ */
+function removeItemField(key: string) {
+  const idx = props.field.itemFields.findIndex((f) => f.key === key);
+  if (idx === -1) return;
+  props.field.itemFields.splice(idx, 1);
+  const nextMap: Record<number, string[]> = {};
+  Object.keys(visibleKeysMap.value).forEach((k) => {
+    const i = Number(k);
+    nextMap[i] = visibleKeysMap.value[i].filter((kk) => kk !== key);
+  });
+  visibleKeysMap.value = nextMap;
+  items.value.forEach((_, i) => ctx.removeValue([...props.path, i, key]));
+  ctx.emitSchemaChange();
+}
+
 /** 删除项后，同步可见字段集合的索引（删除位之后整体前移） */
 function reindexVisibleKeys(removeIndex: number) {
   const next: Record<number, string[]> = {};
@@ -236,6 +254,7 @@ watch(
         @select-all="selectAll"
         @deselect-all="deselectAll"
         @add="addItemField"
+        @remove="removeItemField"
       />
     </template>
 

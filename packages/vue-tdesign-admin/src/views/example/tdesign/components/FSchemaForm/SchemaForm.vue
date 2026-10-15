@@ -31,11 +31,12 @@ import {
 import { deepClone } from './utils/value';
 
 interface Props {
-  schema: FieldSchema[];
+  /** 字段数组，或单个字段（单字段等价于只含该字段的数组） */
+  schema: FieldSchema | FieldSchema[];
   /** 当前渲染层级相对根节点的路径（嵌套时由父级传入） */
   path?: FieldPath;
-  /** 顶层必传：表单值（受控） */
-  modelValue?: Record<string, any>;
+  /** 顶层必传：表单值（受控）；schema 直接传单个 array 字段时直接传数组 */
+  modelValue?: Record<string, any> | any[];
   /** 可选：隐藏值暂存区（受控） */
   hiddenValues?: HiddenValues;
   /** 基础字段标签与控件的排布方式，默认 'vertical' */
@@ -71,12 +72,17 @@ function fieldComponent(field: FieldSchema): Component {
 const parentCtx = inject<SchemaFormContext | null>(SCHEMA_FORM_KEY, null);
 const isRoot = parentCtx === null;
 
+// schema 归一化为字段数组：允许外部直接传单个字段（等价于只含该字段的数组）
+const schemaList = computed<FieldSchema[]>(() =>
+  Array.isArray(props.schema) ? props.schema : [props.schema],
+);
+
 // 顶层持有的 schema 响应式副本（运行时新增字段会写入此处并回传）
 const rootSchema = ref<FieldSchema[] | null>(null);
 let ctx: SchemaFormContext;
 
 if (isRoot) {
-  const formSchema = reactive(deepClone(props.schema)) as FieldSchema[];
+  const formSchema = reactive(deepClone(schemaList.value)) as FieldSchema[];
   rootSchema.value = formSchema;
   const result = useSchemaForm(
     props as unknown as SchemaFormProps,
@@ -91,7 +97,7 @@ if (isRoot) {
 
 // 顶层渲染响应式副本，嵌套直接渲染父级传入的 schema
 const renderSchema = computed<FieldSchema[]>(() =>
-  isRoot && rootSchema.value ? rootSchema.value : props.schema,
+  isRoot && rootSchema.value ? rootSchema.value : schemaList.value,
 );
 
 // 传入 title（且为顶层）时用可折叠卡片包裹，收起状态由组件内部持有

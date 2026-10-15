@@ -82,6 +82,16 @@ function addField(key: string) {
   ctx.setValue([...props.path, key], '');
   ctx.emitSchemaChange();
 }
+
+/** 删除运行时新增字段：从 schema 与值中移除，并触发 schema-change */
+function removeField(key: string) {
+  const idx = props.field.fields.findIndex((f) => f.key === key);
+  if (idx === -1) return;
+  props.field.fields.splice(idx, 1);
+  visibleKeys.value = visibleKeys.value.filter((k) => k !== key);
+  ctx.removeValue([...props.path, key]);
+  ctx.emitSchemaChange();
+}
 </script>
 
 <template>
@@ -89,7 +99,7 @@ function addField(key: string) {
     <template #extra>
       <FieldPopover v-if="togglable" :fields="field.fields" :visible-keys="visibleKeys" :allow-add-field="allowAddField"
         trigger-text="编辑属性" trigger-icon="setting" @toggle="onToggle" @select-all="selectAll"
-        @deselect-all="deselectAll" @add="addField" />
+        @deselect-all="deselectAll" @add="addField" @remove="removeField" />
     </template>
     <SchemaFormComp :schema="visibleFields" :path="path" />
   </CollapseCard>

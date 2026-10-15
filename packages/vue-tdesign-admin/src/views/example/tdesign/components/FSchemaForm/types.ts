@@ -221,12 +221,24 @@ export interface RuntimeAddedField extends StringField {
   __runtimeAdded: true;
 }
 
+/**
+ * schema 入参：既可以是字段数组（多字段表单），
+ * 也可以是单个字段（等价于只含该字段的数组）。
+ * 仅当「直接传入单个 array 字段对象」时，modelValue 走数组根模式；
+ * 若传入的是数组（含 [{ type: 'array' }] 形态），则仍为对象模式。
+ */
+export type SchemaFormSchema = FieldSchema | FieldSchema[];
+
 /** 组件 Props */
 export interface SchemaFormProps {
-  /** 初始 schema */
-  schema: FieldSchema[];
-  /** 表单值（受控），只放「可见字段」的值 */
-  modelValue: Record<string, any>;
+  /** 初始 schema：字段数组，或单个字段 */
+  schema: SchemaFormSchema;
+  /**
+   * 表单值（受控），只放「可见字段」的值。
+   * 通常为与 schema 同构的对象；仅当 schema 直接传入单个 array 字段时，
+   * 直接传该字段的数组（数组根模式）。
+   */
+  modelValue: Record<string, any> | any[];
   /** 隐藏值暂存区（可选，受控）；不传则组件内部维护 */
   hiddenValues?: HiddenValues;
   /** 基础字段标签与控件的排布方式，默认 'vertical' */
@@ -235,8 +247,8 @@ export interface SchemaFormProps {
 
 /** 组件 Emits */
 export interface SchemaFormEmits {
-  /** 表单值变化 */
-  (e: 'update:modelValue', value: Record<string, any>): void;
+  /** 表单值变化（数组根模式下为数组） */
+  (e: 'update:modelValue', value: Record<string, any> | any[]): void;
   /** 隐藏值暂存区变化（仅在传入 hiddenValues 时使用） */
   (e: 'update:hiddenValues', value: HiddenValues): void;
   /** 手输新增字段后回传最新 schema */

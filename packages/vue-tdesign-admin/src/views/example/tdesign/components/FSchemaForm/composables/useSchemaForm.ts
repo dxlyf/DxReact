@@ -26,12 +26,38 @@ export function useSchemaForm(
   const formValue = ref<Record<string, any>>({});
 
   /**
+   * 数组根模式：当 schema 不是数组、而是直接传入单个 array 字段时，
+   * 外部 v-model 直接是该数组（而非 { [key]: [...] }）。
+   * 命中时返回该字段的 key，否则返回 null。
+   * 内部值始终是按 key 组织的对象，路径读写逻辑无需改动。
+   */
+  function rootArrayKey(): string | null {
+    const schema = props.schema;
+    if (Array.isArray(schema)) return null;
+    return schema.type === 'array' ? schema.key : null;
+  }
+
+  /** 外部值 -> 内部值：数组根模式下把数组包到唯一字段的 key 下 */
+  function toInternal(external: any): Record<string, any> {
+    const key = rootArrayKey();
+    if (key === null) return (external ?? {}) as Record<string, any>;
+    return { [key]: Array.isArray(external) ? external : [] };
+  }
+
+  /** 内部值 -> 外部值：数组根模式下取出唯一字段的数组 */
+  function toExternal(internal: Record<string, any>): any {
+    const key = rootArrayKey();
+    if (key === null) return internal;
+    return internal[key] ?? [];
+  }
+
+  /**
    * 归一化外部传入的值：深拷贝 -> 补默认值 -> 按默认显隐剥离隐藏字段。
    * 返回被剥离出来的隐藏值（供批量写入暂存区）。
    */
-  function normalize(input: Record<string, any>): HiddenValues {
+  function normalize(input: any): HiddenValues {
     const schema = getSchema();
-    const value = deepClone(input ?? {});
+    const value = deepClone(toInternal(input));
     applyDefaults(schema, value);
 
     const collected: HiddenValues = {};
@@ -42,9 +68,9 @@ export function useSchemaForm(
     return collected;
   }
 
-  /** 向上冒泡完整表单值 */
+  /** 向上冒泡完整表单值（数组根模式下冒泡的是数组） */
   function commit() {
-    emit('update:modelValue', deepClone(formValue.value));
+    emit('update:modelValue', deepClone(toExternal(formValue.value)));
   }
 
   // 初始化：可能产生一次剥离，延迟到 mounted 再提交，避免在 setup 阶段冒泡
@@ -52,7 +78,7 @@ export function useSchemaForm(
 
   onMounted(() => {
     // 首次挂载若发现 modelValue 含隐藏字段值（或被补默认值），提交一次
-    if (!isEqual(formValue.value, props.modelValue)) commit();
+    if (!isEqual(toExternal(formValue.value), props.modelValue)) commit();
     if (Object.keys(initHidden).length > 0) hidden.mergeHidden(initHidden);
   });
 
@@ -60,7 +86,7 @@ export function useSchemaForm(
   watch(
     () => props.modelValue,
     (val) => {
-      if (isEqual(val, formValue.value)) return;
+      if (isEqual(val, toExternal(formValue.value))) return;
       const collected = normalize(val);
       if (Object.keys(collected).length > 0) hidden.mergeHidden(collected);
     },

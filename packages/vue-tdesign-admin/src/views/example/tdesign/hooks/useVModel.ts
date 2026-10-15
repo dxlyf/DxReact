@@ -11,6 +11,14 @@ type UseControllerValueOptions={
 const isNullOrUndefined=(val:any)=>{
     return val===null||val===undefined
 }
+function myHasOwn(obj:any, key:string) {
+  const desc = Object.getOwnPropertyDescriptor(obj, key);
+  return desc !== undefined;
+}
+const hasProp=(props:any,propName:string)=>{
+    return Object.hasOwn(props,propName)
+   // return Object.prototype.hasOwnProperty.call(props,propName)
+}
 export const  useControllerValue=(options:UseControllerValueOptions={})=>{
     const {controlledType='in',defaultValue:defaultValue,defaultField='defaultValue',valueField='value',modelField='modelValue',trigger='change'}=options
     const current=getCurrentInstance()
@@ -20,13 +28,13 @@ export const  useControllerValue=(options:UseControllerValueOptions={})=>{
     const modelValue=computed(()=>props[modelField])
     const isValueControlled=computed<boolean>(()=>{
         if(controlledType==='in'){
-            return Object.hasOwn(props,valueField)
+            return hasProp(props,valueField)
         }
         return props[valueField]!==undefined
     })
     const isModelControlled=computed<boolean>(()=>{
         if(controlledType==='in'){
-            return Object.hasOwn(props,modelField)
+            return hasProp(props,modelField)
         }
         return props[modelField]!==undefined
     })
