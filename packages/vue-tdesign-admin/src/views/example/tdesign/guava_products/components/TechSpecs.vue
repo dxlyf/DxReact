@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm2'
+import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm3'
 import { computed, onMounted, ref } from 'vue';
 
 const formRef = ref<any>()

@@ -204,30 +204,6 @@ const obj = {
   ]
 };
 
-// Get 示例
-console.log(get(obj, 'a.b.c'));              // 42
-console.log(get(obj, ['a', 'b', 'c']));      // 42
-console.log(get(obj, 'a.b.x', 'default'));   // 'default'
-console.log(get(obj, 'users[0].name'));      // 'Alice'
-console.log(get(obj, 'users.1.age'));        // 25
-
-// Set 示例
-set(obj, 'a.b.c', 100);
-console.log(obj.a.b.c);                      // 100
-
-set(obj, 'x.y.z', 'new value');
-console.log(obj.x.y.z);                      // 'new value'
-
-set(obj, 'arr[0]', 'first');
-console.log(obj.arr[0]);                     // 'first'
-
-// Has 示例
-console.log(has(obj, 'a.b.c'));              // true
-console.log(has(obj, 'a.b.x'));              // false
-
-// Unset 示例
-unset(obj, 'a.b.c');
-console.log(has(obj, 'a.b.c'));              // false
 
 // 更复杂的类型示例
 interface User {
