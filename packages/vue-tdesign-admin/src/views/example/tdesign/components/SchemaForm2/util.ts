@@ -126,17 +126,17 @@ const setDeepValue = (obj: any, path: (string | number)[], value: any) => {
  */
 const getDeepValue = (obj: any, path: (string | number)[], defaultValue?: any) => {
     if (path.length <= 0) {
-        return defaultValue
+        return cloneValue(defaultValue)
     }
     let currentObj = obj
     for (let i = 0, len = path.length; i < len; i++) {
         // 中间层不存在（含 null / 基本类型）时无法继续下钻，直接兜底
         if (!isObject(currentObj)) {
-            return defaultValue
+            return cloneValue(defaultValue)
         }
         currentObj = currentObj[path[i]]
     }
-    return isNullOrUndefined(currentObj) ? defaultValue : currentObj
+    return isNullOrUndefined(currentObj) ? cloneValue(defaultValue) : currentObj
 }
 const removeDeepKey=(obj: any, path: (string | number)[]) => {
     if (path.length <= 0) {
@@ -152,6 +152,9 @@ const removeDeepKey=(obj: any, path: (string | number)[]) => {
     delete currentObj[path[path.length - 1]]
 }
 const cloneValue=(value:any)=>{
+    if(isNullOrUndefined(value)){
+        return value
+    }
     return JSON.parse(JSON.stringify(value))
 }
 /**
@@ -229,9 +232,31 @@ function omitByPaths<T>(obj: T, excludePaths: string[], currentPath = ''): T {
   return obj;
 }
 
-
+function deepEqual(a: any, b: any) {
+    if (a === b) return true
+    if (a === null || b === null) return false
+    if (typeof a !== typeof b) return false
+    if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) return false
+        for (let i = 0; i < a.length; i++) {
+            if (!deepEqual(a[i], b[i])) return false
+        }
+        return true
+    }
+    if (typeof a === 'object' && typeof b === 'object') {
+        const aKeys = Object.keys(a)
+        const bKeys = Object.keys(b)
+        if (aKeys.length !== bKeys.length) return false
+        for (const key of aKeys) {
+            if (!deepEqual(a[key], b[key])) return false
+        }
+        return true
+    }
+    return false
+}
 
 export { 
+    deepEqual,
     omitByPaths,
     removeDeepKey,
     setDeepValue, 

@@ -4,7 +4,7 @@ import { computed, inject, provide, shallowRef, toRaw, watch } from 'vue';
 import { FormSchema } from './types.ts';
 import CollapseCard from './components/CollapseCard.vue';
 import FormField from './fields/FormField.vue';
-import { normalizeSchema } from './util.ts';
+import { deepEqual, normalizeSchema } from './util.ts';
 type SchemaFormProps={
     title?:string;
     schema:FormSchema;
@@ -26,7 +26,7 @@ const form=useSchemaForm({
 })
 provide(USE_SCHEMA_CONTEXT_KEY,form)
 watch(()=>props.modelValue,(newVal)=>{
-    if(newVal!==form.value.value){
+    if(!deepEqual(newVal,form.value.value)){
       form.setValue([],newVal,true)
     }
 })
@@ -34,7 +34,8 @@ watch(()=>props.modelValue,(newVal)=>{
 </script>
 
 <template>
-  <CollapseCard :title="title" class="w-full">
+  <CollapseCard v-if="title" :title="title">
     <FormField :schema="resolveSchema" :path="path"></FormField>
   </CollapseCard>
+  <FormField v-else :schema="resolveSchema" :path="path"></FormField>
 </template>

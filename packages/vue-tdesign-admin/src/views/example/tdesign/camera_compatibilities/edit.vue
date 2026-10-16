@@ -2,41 +2,49 @@
 import { computed, reactive, ref, shallowRef, watch } from 'vue';
 import {SchemaForm,type FormSchema} from '../components/SchemaForm2'
 
-const formValue=shallowRef([])
+const formValue=shallowRef({})
 const formValueStr=computed(()=>{
     return JSON.stringify(formValue.value)
 })
 setTimeout(()=>{
-    formValue.value=[{"title":"fdfd","groups":[{"title":"fdafda"},{"title":"fdasfdasfda"}]}]
+    formValue.value={"remarks":["fdasfda","fdafda"],"tips":"fdasfad","cables":[{"title":"fdfd","cable_name":"fd","buy_link":"fd","setup_method":[{"conent":"fdafda"}],"compatibilities":[{"title":"fd","value":"fdafd"}]}]}
 },1000)
 const schema=computed<FormSchema>(()=>{
         return {
-            type:'array',
-            key:'compatibility',
-            label:'相机兼容性',
+            type:'object',
+            key:'roots',
+            label:'Campatibility',
             sortable:true,
             schemas:[{
-                type:'atom',
-                key:'title',
-                label:'标题',
-                component:'t-input'
-            },{
                 type:'array',
                 valueType:'array<string>',
-                key:'strings',
-                label:'StringList',
+                key:'remarks',
+                label:'备注',
+                formatItemLabel(item, index, Schema) {
+                    return '备注'+(index+1)
+                },
                 schemas:[{
                     type:'atom',
-                    key:'string',
-                    label:'字符串',
-                    component:'t-input'
+                    key:'remark',
+                    label:'备注',        
+                    component:'t-textarea',
+                    props:{
+                        autosize:{
+                            minRows:3,
+                        }
+                    }
                 }]
             },{
-                key:'groups',
+                type:"atom",
+                key:'tips',
+                label:'tips',
+                component:'t-input'
+            },{
+                key:'cables',
                 type:'array',
-                label:'Groups',
+                label:'Cables',
                 formatItemLabel(item, index, Schema) {
-                    return '分组'+(index+1)
+                    return 'Cable'+(index+1)
                 },
                 schemas:[
                     {
@@ -44,6 +52,47 @@ const schema=computed<FormSchema>(()=>{
                         key:'title',
                         label:'标题',
                         component:'t-input'
+                    },{
+                        type:'atom',
+                        key:'cable_name',
+                        label:'CableName',
+                        component:'t-input'
+                    },{
+                        type:'atom',
+                        key:'buy_link',
+                        label:'CableType',
+                        component:'t-input'
+                    },{
+                        type:'array',
+                        key:'setup_method',
+                        label:'SetupMethod',
+                        formatItemLabel(item, index, Schema) {
+                            return 'SetupMethod'+(index+1)
+                        },
+                        schemas:[{
+                            type:'atom',
+                            key:'conent',
+                            label:'conent',
+                            component:'t-input'
+                        }]
+                    },{
+                        type:"array",
+                        key:'compatibilities',
+                        label:'Compatibilities',
+                        formatItemLabel(item, index, Schema) {
+                            return 'Compatibilities'+(index+1)
+                        },
+                        schemas:[{
+                            type:'atom',
+                            key:'title',
+                            label:'title',
+                            component:'t-input'
+                        },{
+                            type:'atom',
+                            key:'value',
+                            label:'value',
+                            component:'t-input'
+                        }]
                     }
                 ]
             }]
@@ -57,7 +106,7 @@ const schema=computed<FormSchema>(()=>{
 
         </t-form-item>
         <t-form-item>
-            <SchemaForm  v-model="formValue"  :schema="schema"  title="兼容性" />
+            <SchemaForm  v-model="formValue"  :schema="schema"   />
         </t-form-item>        
     </t-form>
 </template>

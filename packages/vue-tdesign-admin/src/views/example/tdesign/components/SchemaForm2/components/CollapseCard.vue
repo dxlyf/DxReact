@@ -33,18 +33,18 @@ function toggle() {
 
 <template>
 
-  <div class="border border-solid border-gray-200 rounded-md overflow-hidden bg-white">
+  <div class="border border-solid border-gray-200 rounded-md overflow-hidden bg-white w-full">
     <!-- 头部：点击切换收起/展开；extra 区域阻止冒泡避免误触 -->
     <div
-      class="flex items-center cursor-pointer select-none px-3 py-2 bg-gray-50 hover:bg-gray-100"
+      class="flex items-center select-none px-3 py-2 bg-gray-100"
       
     >
       <t-icon
         name="chevron-down"
-        class="mr-1 shrink-0 transition-transform duration-200"
+        class="mr-1 shrink-0 transition-transform duration-200 cursor-pointer"
         :class="collapsed ? '-rotate-90' : 'rotate-0'" @click="toggle"
       />
-      <span class="font-medium text-sm text-gray-800">{{ title }}</span>
+      <span class="text-sm text-black-600 font-bold">{{ title }}</span>
       <div class="flex-1"></div>
       <!-- 右侧操作区：阻止冒泡，点击不会收起卡片 -->
       <div class="flex items-center gap-2" @click.stop>

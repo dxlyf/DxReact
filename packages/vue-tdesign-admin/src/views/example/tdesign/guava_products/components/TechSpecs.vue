@@ -1,100 +1,137 @@
 <script setup lang="ts">
-import {SchemaForm,type FieldSchema} from 'src/views/example/tdesign/components/FSchemaForm/index'
+import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm2'
 import { computed, ref } from 'vue';
 
-const value=ref({
-  "groups": [
-    {
-      "title": "霏霏",
-      "items": []
-    },
-    {
-      "title": "斯塔克豪斯",
-      "items": [
-        {
-          "img": "aa",
-          "title": "ff",
-          "specs": [
-            {
-              "key": "ff",
-              "value": "ff"
-            },
-            {
-              "key": "aaa",
-              "value": "bbbb"
-            }
-          ]
-        }
-      ],
-      "bb": "fdfdfdafd"
-    }
-  ]
-})
-const schema=computed<FieldSchema[]>(()=>{
-    return [
-                    {
-                        type:'array',
-                        key:'groups',
-                        label:'分组（groups）',
-                        sortable:true,
-                        getItemLabel(index, item) {
-                            return `分组 ${index+1}`
-                        },
-                        itemFields:[
-                            {
-                                type:'string',
-                                key:'title',
-                                label:'标题（title）',
+const value = ref({  })
 
-                            },{
-                                type:"array",
-                                key:'items',
-                                label:'条目（items）',
-                                
-                                sortable:true,
-                                itemFields:[
-                                    {
-                                        type:'string',
-                                        key:'img',
-                                        label:'图片（img）'
-                                    },{
-                                        type:'string',
-                                        key:'title',
-                                        label:'title'
-                                    },{
-                                        type:'array',
-                                        key:'specs',
-                                        label:'规格（specs）',
-                                        itemFields:[
-                                            {
-                                                type:'string',
-                                                key:'key',
-                                                label:'参数（key）'
-                                            },
-                                            {
-                                                type:'string',
-                                                key:'value',
-                                                label:'参数值（value）'
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+setTimeout(() => {
+  value.value = {
+    "groups": [
+      {
+        "title": "霏霏",
+        "items": [
+          {
+            "title": "fdsa",
+            "specs": [
+              {
+                "key": "fd",
+                "value": "fdafds"
+              },
+              {
+                "key": "aaa",
+                "value": "fff"
+              },
+              {
+                "key": "343",
+                "value": "4343"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "斯塔克豪斯",
+        "items": [
+          {
+            "img": "aa",
+            "title": "ff",
+            "specs": [
+              {
+                "key": "ff",
+                "value": "ff"
+              },
+              {
+                "key": "aaa",
+                "value": "bbbb"
+              }
+            ]
+          }
+        ],
+        "bb": "fdfdfdafd"
+      }
+    ]
+  }
+}, 1000)
+const schema = computed<FormSchema>(() => {
+  return {
+    type: 'object',
+    key: 'roots',
+    label: '技术规格(Tech Specs)',
+    schemas: [
+      {
+        type: 'array',
+        key: 'groups',
+        label: '分组（groups）',
+        formatItemLabel: (item, index) => `分组 ${index + 1}`,
+        sortable: true,
+        schemas: [
+          {
+            type: 'atom',
+            key: 'title',
+            label: '标题（title）',
+            component: 't-input',
+          }, {
+            type: 'array',
+            key: 'items',
+            label: '条目（items）',
+            formatItemLabel: (item, index) => `条目 ${index + 1}`,
+            sortable: true,
+            schemas: [
+              {
+                type: 'atom',
+                key: 'img',
+                label: '图片（img）',
+                component: 't-input',
+              }, {
+                type: 'atom',
+                key: 'title',
+                label: '标题（title）',
+                component: 't-input',
+              }, {
+                type: 'array',
+                key: 'specs',
+                label: '规格（specs）',
+                formatItemLabel: (item, index) => `规格 ${index + 1}`,
+                sortable: true,
+                schemas: [
+                  {
+                    type: 'atom',
+                    key: 'key',
+                    label: '参数名（key）',
+                    component: 't-input',
+                  }, {
+                    type: 'atom',
+                    key: 'value',
+                    label: '参数值（value）',
+                    component: 't-input',
+                  }
                 ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 })
-const valueStr=computed(()=>{
-    return JSON.stringify(value.value,null,2)
+const valueStr = computed(() => {
+  return JSON.stringify(value.value, null, 2)
 })
 </script>
 <template>
-    <div class="py-8 text-[var(--td-text-color-placeholder)]">
-        <t-form class="w-full" layout="vertical"  label-align="top" >
-            <t-form-item label="Tech Specs">
-                <t-textarea v-model="valueStr"></t-textarea>
-            </t-form-item>
-            <SchemaForm v-model="value" :schema="schema" title="技术规格(Tech Specs)"></SchemaForm>
-        </t-form>
-    </div>
+  <div>
+    <t-form class="w-full" layout="vertical" label-align="top">
+      <t-form-item label="Tech Specs">
+        <t-textarea v-model="valueStr" style="height:200px;"></t-textarea>
+      </t-form-item>
+      <div>
+        <div class="flex gap-2">
+          <t-button theme="primary">导入技术规格</t-button>
+          <t-button theme="primary">导出技术规格</t-button>
+          <div class="text-xs text-gray-500 self-end">导入/导出仅影响groups属性</div>
+        </div>
+      </div>
+      <SchemaForm v-model="value" :schema="schema"></SchemaForm>
+    </t-form>
+  </div>
 </template>

@@ -56,7 +56,6 @@ const buildVisibleFields = (index: number): VisibleField[] => {
     const extraKeys = isObject(value)
         ? Object.keys(value).filter((key) => !schemas.some((item) => item.key === key))
         : []
-
     const curFields: VisibleField[] = schemas.map((item) => ({
         name: item.key,
         checked: true,
