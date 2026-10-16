@@ -24,7 +24,7 @@ const normalizeAtomFieldSchema=(Schema:AtomFieldSchema)=>{
     }
 }
 const normalizeArrayFieldSchema=(Schema:ArrayFieldSchema)=>{
-    const {schemas,valueType,...restSchema}=Schema
+    const {schemas,...restSchema}=Schema
     return {
         valueType:'array<object>',
         sortable:false,
@@ -120,22 +120,23 @@ const setDeepValue = (obj: any, path: (string | number)[], value: any) => {
     }
     currentObj[path[path.length - 1]] = value
 }
-const getDeepValue = (obj: any, path: (string | number)[],defaultValue?:any) => {
+/**
+ * 按路径读取深层值：路径上任意一层不存在（或取到的值为 null/undefined）时返回 defaultValue。
+ * 路径为空时直接返回 defaultValue。
+ */
+const getDeepValue = (obj: any, path: (string | number)[], defaultValue?: any) => {
     if (path.length <= 0) {
         return defaultValue
     }
-    if (path.length === 1) {
-        const value=obj[path[0]]
-        return isNullOrUndefined(value) ? defaultValue : value
-    }
     let currentObj = obj
-    for (let i = 0; i < path.length-1; i++) {
-        currentObj = currentObj[path[i]]
+    for (let i = 0, len = path.length; i < len; i++) {
+        // 中间层不存在（含 null / 基本类型）时无法继续下钻，直接兜底
         if (!isObject(currentObj)) {
             return defaultValue
         }
+        currentObj = currentObj[path[i]]
     }
-    return currentObj[path[path.length - 1]]
+    return isNullOrUndefined(currentObj) ? defaultValue : currentObj
 }
 const removeDeepKey=(obj: any, path: (string | number)[]) => {
     if (path.length <= 0) {
@@ -152,6 +153,54 @@ const removeDeepKey=(obj: any, path: (string | number)[]) => {
 }
 const cloneValue=(value:any)=>{
     return JSON.parse(JSON.stringify(value))
+}
+/**
+ * 比较两组字段的字段名集合是否一致（顺序无关）。
+ * 用于判断字段列表结构是否变化，未变化时复用缓存，避免在渲染过程中反复写入响应式状态。
+ */
+const hasSameFieldNames = (a: { name: string }[], b: { name: string }[]) => {
+    if (a.length !== b.length) return false
+    const names = new Set(a.map((item) => item.name))
+    return b.every((item) => names.has(item.name))
+}
+/**
+ * 数组项顺序调整：把 from 位置的项移动到 to 位置后，原下标 index 对应的新下标。
+ * 用于同步迁移按下标记录的缓存 / 排除路径。
+ */
+const moveArrayIndex = (index: number, from: number, to: number) => {
+    if (index === from) return to
+    if (from < to && index > from && index <= to) return index - 1
+    if (from > to && index >= to && index < from) return index + 1
+    return index
+}
+/**
+ * 按上一次的字段顺序合并字段列表：
+ * - 复用上一次的勾选状态
+ * - 已从 value 中排除、但需要保留（canRemove）的字段维持在原有位置，避免跳到列表末尾
+ * - 新增字段追加到列表末尾
+ */
+const mergeFieldsByPrevOrder = <T extends { name: string; checked: boolean; canRemove: boolean }>(
+    prev: T[],
+    cur: T[]
+): T[] => {
+    const curMap = new Map(cur.map((item) => [item.name, item]))
+    const result: T[] = []
+    const used = new Set<string>()
+    prev.forEach((item) => {
+        const next = curMap.get(item.name)
+        if (next) {
+            next.checked = item.checked
+            result.push(next)
+            used.add(item.name)
+        } else if (item.canRemove) {
+            result.push(item)
+            used.add(item.name)
+        }
+    })
+    cur.forEach((item) => {
+        if (!used.has(item.name)) result.push(item)
+    })
+    return result
 }
 /**
  * 按路径排除字段
@@ -190,6 +239,9 @@ export {
     isNullOrUndefined,
     isObject,
     cloneValue,
+    hasSameFieldNames,
+    mergeFieldsByPrevOrder,
+    moveArrayIndex,
     normalizeArrayFieldSchema,
     normalizeAtomFieldSchema,
     normalizeObjectFieldSchema,

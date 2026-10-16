@@ -14,15 +14,30 @@ const schema=computed<FormSchema>(()=>{
             type:'array',
             key:'compatibility',
             label:'相机兼容性',
+            sortable:true,
             schemas:[{
                 type:'atom',
                 key:'title',
                 label:'标题',
                 component:'t-input'
             },{
+                type:'array',
+                valueType:'array<string>',
+                key:'strings',
+                label:'StringList',
+                schemas:[{
+                    type:'atom',
+                    key:'string',
+                    label:'字符串',
+                    component:'t-input'
+                }]
+            },{
                 key:'groups',
                 type:'array',
                 label:'Groups',
+                formatItemLabel(item, index, Schema) {
+                    return '分组'+(index+1)
+                },
                 schemas:[
                     {
                         type:'atom',

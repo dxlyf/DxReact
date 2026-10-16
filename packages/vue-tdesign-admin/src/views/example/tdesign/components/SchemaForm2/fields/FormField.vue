@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, markRaw } from 'vue';
 import { AllFieldSchema, FieldPath } from '../types.ts';
 import ArrayField from './ArrayField.vue';
 import ObjectField from './ObjectField.vue';
