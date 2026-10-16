@@ -12,23 +12,13 @@ type Field={
 const props = defineProps<{
     fields:Field[]
 }>()
-const emit=defineEmits(['add','change','remove','visibleField'])
+const emit=defineEmits(['add','remove','visibleField'])
 const handleRemove=(field:Field)=>{
     emit('remove',field.name)
 }
 
-const handleCheck=(field:Field)=>{
-    const fields=props.fields
-    emit('change',fields.map(f=>{
-        if(f.name===field.name){
-            emit('visibleField',f.name,!f.checked)
-            return {
-                ...f,
-                checked:!f.checked
-            }
-        }
-        return f
-    }))
+const handleCheck=(name:string, checked:boolean)=>{
+    emit('visibleField', name, checked)
 }
 const inputStatus=shallowRef<any>({
     status:'default',
@@ -94,7 +84,7 @@ const handleVisibleChange=(visible:boolean)=>{
             <div class="p-2">
                 <div>
                     <div v-for="field in fields" :key="field.name" class="grid grid-cols-[auto_1fr_30px] gap-y-2 items-center">
-                        <t-checkbox  @change="handleCheck(field)" :checked="field.checked" />
+                        <t-checkbox  @change="handleCheck(field.name, $event)" :checked="field.checked" />
                         <div>{{field.name}}</div>
                         <div v-show="field.canRemove"><t-button @click="handleRemove(field)" variant="text" size="small" theme="danger">删除</t-button></div>
                     </div>

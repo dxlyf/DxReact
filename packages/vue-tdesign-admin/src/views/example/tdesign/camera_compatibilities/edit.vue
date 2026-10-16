@@ -2,12 +2,13 @@
 import { computed, reactive, ref, shallowRef, watch } from 'vue';
 import {SchemaForm,type FormSchema} from '../components/SchemaForm2'
 
-const formValue=shallowRef({})
+const formRef=ref<any>()
+const formValue=shallowRef<any>({})
 const formValueStr=computed(()=>{
     return JSON.stringify(formValue.value)
 })
 setTimeout(()=>{
-    formValue.value={"remarks":["fdasfda","fdafda"],"tips":"fdasfad","cables":[{"title":"fdfd","cable_name":"fd","buy_link":"fd","setup_method":[{"conent":"fdafda"}],"compatibilities":[{"title":"fd","value":"fdafd"}]}]}
+    formRef.value?.init({"remarks":["fdasfda","fdafda"],"tips":"fdasfad","cables":[{"title":"fdfd","cable_name":"fd","buy_link":"fd","setup_method":[{"conent":"fdafda"}],"compatibilities":[{"title":"fd","value":"fdafd"}]}]})
 },1000)
 const schema=computed<FormSchema>(()=>{
         return {
@@ -106,7 +107,7 @@ const schema=computed<FormSchema>(()=>{
 
         </t-form-item>
         <t-form-item>
-            <SchemaForm  v-model="formValue"  :schema="schema"   />
+            <SchemaForm ref="formRef" :schema="schema" @change="formValue = $event" />
         </t-form-item>        
     </t-form>
 </template>

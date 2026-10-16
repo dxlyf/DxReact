@@ -28,7 +28,7 @@ export type ObjectFieldSchema = FieldSchema & {
 }
 export type AtomFieldSchema = FieldSchema & {
     type: 'atom'
-    wrapper?:boolean // 是否需要包裹，默认，默认 true
+    wrapper?:'field'|'card'|'none' // 是否需要包裹，默认，默认 true
     component:string|Component
 }
 

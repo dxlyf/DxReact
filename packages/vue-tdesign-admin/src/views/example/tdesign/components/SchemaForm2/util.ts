@@ -17,11 +17,11 @@ const normalizeAtomFieldSchema=(Schema:AtomFieldSchema)=>{
         type:'atom',
         props:{},
         builtin:true,
-        wrapper:true,
+        wrapper:'field',
         isRoot:false,
         defaultValue:'',
         ...Schema,
-    }
+    } as AtomFieldSchema
 }
 const normalizeArrayFieldSchema=(Schema:ArrayFieldSchema)=>{
     const {schemas,...restSchema}=Schema
@@ -52,7 +52,7 @@ const createAtomFieldSchema=(options:Partial<AtomFieldSchema>)=>{
         type:'atom',
         props:{},
         builtin:false,
-        wrapper:true,
+        wrapper:'field',
         isRoot:false,
         defaultValue:'',
         ...options,
@@ -206,6 +206,54 @@ const mergeFieldsByPrevOrder = <T extends { name: string; checked: boolean; canR
     return result
 }
 /**
+ * 遍历一组字段（object 的子字段 / array<object> 项的字段）与对应数据，
+ * 收集「schema 有、数据无」的字段路径。
+ */
+const collectFields = (
+    schemas: AllFieldSchema[],
+    data: any,
+    base: FieldPath,
+    out: string[]
+): string[] => {
+    for (const child of schemas) {
+        const key = child.key
+        if (key === undefined) continue
+        const path = [...base, key]
+        if (!isObject(data) || !(key in data)) {
+            out.push(path.join('.'))
+            continue
+        }
+        collectHiddenPaths(child, (data as any)[key], path, out)
+    }
+    return out
+}
+
+/**
+ * 初始化时收集「初始隐藏」的字段路径：schema 里定义了、但数据里不存在的字段。
+ * - object：子字段不在数据里 → 记录该路径并停止下钻；存在则继续递归
+ * - array<object>：逐项按 schema.schemas（即项的字段列表）递归
+ * - array<string>：无属性面板，跳过
+ * 路径相对值根节点，以 '.' 连接，与 hiddenPaths / omitByPaths 的格式一致。
+ */
+const collectHiddenPaths = (
+    schema: AllFieldSchema,
+    data: any,
+    base: FieldPath = [],
+    out: string[] = []
+): string[] => {
+    if (schema.type === 'object') {
+        return collectFields(schema.schemas, data, base, out)
+    }
+    if (schema.type === 'array') {
+        if (schema.valueType === 'array<string>' || !Array.isArray(data)) return out
+        data.forEach((item, index) => {
+            collectFields(schema.schemas, item, [...base, index], out)
+        })
+    }
+    return out
+}
+
+/**
  * 按路径排除字段
  * @param obj 原始对象
  * @param excludePaths 要排除的路径，如 ['info.secret', 'user.password']
@@ -258,6 +306,7 @@ function deepEqual(a: any, b: any) {
 export { 
     deepEqual,
     omitByPaths,
+    collectHiddenPaths,
     removeDeepKey,
     setDeepValue, 
     getDeepValue ,

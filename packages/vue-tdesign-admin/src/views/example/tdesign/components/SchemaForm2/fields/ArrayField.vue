@@ -6,7 +6,7 @@
 // - 「编辑属性」Popover 可勾选 / 取消勾选字段：取消勾选只把该路径加入排除列表，
 //   提交给 update:modelValue 时排除即可，表单内部数据不变，重新勾选即恢复
 // ============================================================================
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import CollapseCard from '../components/CollapseCard.vue';
 import { type UseSchemaFormInstance, USE_SCHEMA_CONTEXT_KEY } from '../composables/useSchemaForm';
 import { type AllFieldSchema, type ArrayFieldSchema, type FieldPath } from '../types';
@@ -78,16 +78,26 @@ const buildVisibleFields = (index: number): VisibleField[] => {
     return [...curFields, ...extraFields]
 }
 
-/** 读取（首次访问时构建）某项的字段列表，并保留已有的勾选状态 */
+/**
+ * 该字段是否存在于初始化数据中（由 initHiddenPaths 判定）。
+ * - 存在 → 勾选状态交由字段自身的 checked 维护（可被用户勾选 / 取消）；
+ * - 不存在 → 强制未勾选。
+ */
+const isChecked = (index: number, name: string) => !form.isInitHidden([...props.path, index, name])
+
+/** 读取（首次访问时构建）某项的字段列表，并保留已有的顺序 / 缓存 */
 const getOrCreateVisibleFields = (index: number): VisibleField[] => {
     const curFields = buildVisibleFields(index)
     const prev = arrayFieldMap.value[index]
     // 字段名集合没变就复用缓存，避免在渲染过程中反复写入响应式状态
-    if (prev && hasSameFieldNames(prev, curFields)) return prev
-    // 按上次顺序合并：取消勾选的额外字段需要留在原位置以便重新勾选 / 删除
-    const merged = mergeFieldsByPrevOrder(prev ?? [], curFields)
-    arrayFieldMap.value[index] = merged
-    return merged
+    if (!prev || !hasSameFieldNames(prev, curFields)) {
+        arrayFieldMap.value[index] = mergeFieldsByPrevOrder(prev ?? [], curFields)
+    }
+    // 存在于初始数据的字段，勾选状态由字段自身的 checked 维护；初始不存在的字段强制未勾选
+    return (arrayFieldMap.value[index] ?? curFields).map((field) => ({
+        ...field,
+        checked: isChecked(index, field.name) ? field.checked : false,
+    }))
 }
 
 /** 当前项需要渲染的字段（仅勾选中的） */
@@ -143,17 +153,18 @@ const handleDragSort = ({ currentIndex, targetIndex }: { currentIndex: number; t
     activeKey.value = moveArrayIndex(activeKey.value, currentIndex, targetIndex)
 }
 
-const handleVisibleFieldChange = (fields: any[]) => {
-    arrayFieldMap.value[realActiveKey.value] = fields
-
-}
-
-/** 取消勾选：把该路径加入排除列表；重新勾选：移除排除（表单内部数据始终不变） */
+/** 用户手动勾选 / 取消勾选：改写字段自身的 checked，并同步表单的隐藏记录 */
 const handleVisibleField = (name: string, visible: boolean) => {
+    const index = realActiveKey.value
+    const path = [...props.path, index, name]
+    // 字段存在于初始数据时，其勾选状态由自身维护，这里直接改写缓存中的 checked
+    const target = arrayFieldMap.value[index]?.find((field) => field.name === name)
+    if (target) target.checked = visible
+    // 同步表单隐藏状态：勾选恢复、取消勾选排除（表单内部数据不变）
     if (visible) {
-        form.restorePath([...props.path, realActiveKey.value, name])
+        form.restorePath(path)
     } else {
-        form.hidePath([...props.path, realActiveKey.value, name])
+        form.hidePath(path)
     }
 }
 
@@ -170,11 +181,18 @@ const handleAddVisibleField = (fields: VisibleField[]) => {
     form.setValue([...props.path, realActiveKey.value, lastField.name], lastField.schema.defaultValue)
 
 }
+
+/** 数据被重新初始化时，清空页面状态（字段勾选缓存、当前选中项） */
+watch(() => form.initVersion.value, () => {
+    arrayFieldMap.value = {}
+    activeKey.value = 0
+})
+
 </script>
 <template>
     <CollapseCard :title="title" class="mt-4">
         <template #extra>
-            <FieldPopover @add="handleAddVisibleField" @remove="handleRemoveVisibleField" @visibleField="handleVisibleField" @change="handleVisibleFieldChange"
+            <FieldPopover @add="handleAddVisibleField" @remove="handleRemoveVisibleField" @visibleField="handleVisibleField"
                 v-if="fieldValue.length > 0 && schema.valueType === 'array<object>' && schema.allowAddedField"
                 :fields="visibleFields" />
         </template>

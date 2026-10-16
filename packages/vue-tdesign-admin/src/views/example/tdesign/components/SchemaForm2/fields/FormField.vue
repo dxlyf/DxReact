@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AllFieldSchema, FieldPath } from '../types.ts';
+import { AllFieldSchema, FieldPath } from '../types';
 import ArrayField from './ArrayField.vue';
 import ObjectField from './ObjectField.vue';
 import AtomField from './AtomField.vue';
