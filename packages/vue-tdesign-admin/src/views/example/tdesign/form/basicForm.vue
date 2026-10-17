@@ -153,7 +153,7 @@ const handleRequest=async ()=>{
       </t-form-item>
 
       <t-form-item label="颜色" name="color">
-        <t-color-picker v-model="formData.color" />
+        <t-color-picker v-model="formData.color"   :input-props="{autoWidth:false,readonly:true}"/>
       </t-form-item>
 
       <t-form-item label="个人简介" name="bio">
