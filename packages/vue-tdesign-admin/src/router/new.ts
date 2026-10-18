@@ -1,7 +1,7 @@
 import path from 'path'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { getDirTree } from './generate'
-import ret from '../../lib/claygl/src/util/dds'
+
 export type MenuDataItem = {
     title?: string
     menuKey?: string

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm3'
-import { computed, onMounted, ref } from 'vue';
+import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm6'
+import { computed, onMounted, ref, shallowRef } from 'vue';
 
 const formRef = ref<any>()
-const value = ref<any>({})
+const value = shallowRef<any>({})
 
 onMounted(()=>{
   setTimeout(() => {
-  formRef.value?.init({
+  value.value=({
     "groups": [
       {
         "title": "霏霏",
@@ -134,7 +134,7 @@ const valueStr = computed(() => {
           <div class="text-xs text-gray-500 self-end">导入/导出仅影响groups属性</div>
         </div>
       </div>
-      <SchemaForm ref="formRef" :schema="schema" @change="value = $event"></SchemaForm>
+      <SchemaForm v-model="value"  :schema="schema" ></SchemaForm>
     </t-form>
   </div>
 </template>

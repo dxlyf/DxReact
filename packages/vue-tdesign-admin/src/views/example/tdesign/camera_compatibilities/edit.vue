@@ -103,7 +103,7 @@ const schema=computed<FormSchema>(()=>{
 <template>
     <t-form label-align="top">
         <t-form-item label="相机兼容性" prop="compatibility">
-            <t-input :value="formValueStr" />
+            <t-textarea :value="formValueStr" style="height:300px" />
 
         </t-form-item>
         <t-form-item>

@@ -95,7 +95,7 @@ import SchemaField from './fields/SchemaField.vue'
 import { validateSchema, getDefaultValue } from './utils'
 import { Theme } from './theme'
 import { MessagePlugin } from 'tdesign-vue-next'
-
+defineOptions({name:"AJsonEditor"})
 interface Props {
   schema: JsonSchema
   modelValue?: Record<string, unknown>

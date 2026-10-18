@@ -30,7 +30,6 @@
     }
   },
   "include": [
-    "lib",
     "src/**/*.ts",
      "src/**/*.tsx", 
      "src/**/*.vue",

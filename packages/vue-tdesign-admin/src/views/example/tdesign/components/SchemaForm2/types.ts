@@ -32,8 +32,11 @@ export type AtomFieldSchema = FieldSchema & {
     component:string|Component
 }
 
+export type ObjectVisibleField={
+    visible?:boolean
+}
 export type AllFieldSchema=ArrayFieldSchema|ObjectFieldSchema|AtomFieldSchema
 
 
-export type FormSchema=AllFieldSchema
+export type FormSchema=ArrayFieldSchema|ObjectFieldSchema
 
