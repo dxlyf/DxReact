@@ -15,7 +15,6 @@ const props = defineProps<SchemaFormProps>()
 const emit = defineEmits<{ change: [value: any],'update:modelValue': [value: any] }>()
 const resolveSchema=computed(()=>normalizeSchema(props.schema))
 
-console.log('resolveSchema',resolveSchema.value)
 const form=useSchemaForm(props.modelValue,{
     onChange(val){
         isInternalUpdate.value=true;
@@ -33,7 +32,6 @@ watch(()=>props.modelValue,(val)=>{
       isInternalUpdate.value = false
       return
     }
-    console.log('modelValue变化了',val)
     init(val)
 })
 

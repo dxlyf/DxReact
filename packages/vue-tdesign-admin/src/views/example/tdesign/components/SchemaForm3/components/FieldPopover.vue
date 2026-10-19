@@ -74,14 +74,20 @@ const handleVisibleChange=(visible:boolean)=>{
                     <div v-for="field in fields" :key="field.name" class="grid grid-cols-[auto_1fr_30px] gap-y-2 items-center">
                         <t-checkbox  @change="handleCheck(field.name, $event)" :checked="field.checked" />
                         <div>{{field.name}}</div>
-                        <div v-show="field.canRemove"><t-button @click="handleRemove(field)" variant="text" size="small" theme="danger">删除</t-button></div>
+                        <div v-show="field.canRemove">
+                            <t-popconfirm :content="`确认删除字段${field.name}吗？`" theme="danger" @click="handleRemove(field)">
+                                <t-button  variant="text" size="small" theme="danger">删除</t-button>
+                            </t-popconfirm>
+                        </div>
                     </div>
                 </div>
-                <div class="border-t border-solid border-gray-200 py-2 mt-2">
+                <div class="border-t border-solid border-gray-200 py-2 mt-2 pb-">
                     <div class="flex gap-4">
                         <div class="flex-auto">
                             <t-input @focus="handleFocus" size="small" :status="inputStatus.status" v-model="newFieldName" placeholder="添加字段"  />
-                            <p v-show="inputStatus.status==='error'" class=" text-red-600 text-xs">{{inputStatus.message}}</p>
+                            <div class="h-5">
+                                <div v-show="inputStatus.status==='error'" class=" text-red-600 text-xs">{{inputStatus.message}}</div>
+                            </div>
                         </div>
                         <div class="flex-none">
                                <t-button theme="primary" size="small" @click="handleAdd">添加</t-button>

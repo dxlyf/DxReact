@@ -93,7 +93,7 @@ watch(() => form.initVersion.value, () => {
 })
 </script>
 <template>
-    <CollapseCard :title="title" class="mt-4">
+    <CollapseCard :title="title" >
         <template #extra>
             <FieldPopover @add="handleAddVisibleField" @remove="handleRemoveVisibleField" @visibleField="handleVisibleField"
                 v-if="fieldValue.length > 0 && schema.valueType === 'array<object>' && schema.allowAddedField"
@@ -101,16 +101,30 @@ watch(() => form.initVersion.value, () => {
         </template>
         <t-tabs theme="card" :value="realActiveKey" :addable="schema.allowAdded" :drag-sort="!!schema.sortable"
             @change="handleTabChange" @add="handleAdd" @remove="handleRemove" @drag-sort="handleDragSort">
-            <t-tab-panel :label="itemLabel(index as number)" :value="index" removable v-for="(item, index) in fieldValue" :key="index">
-                <div class="p-2" >
-                    <template v-for="(field, fieldIndex) in getFieldSchemas(index as number)"
+            <t-tab-panel :value="index" removable v-for="(item, index) in fieldValue" :key="index">
+                <template #label>
+                   <div class="flex items-center">
+                     <div class="flex-none mr-1 cursor-move" v-if="schema.sortable"><t-icon name="drag-move" size="12" ></t-icon></div>
+                     <div class="flex-auto"> {{ itemLabel(index as number) }}</div>
+                   </div>
+                </template>
+                <div class="sm-array-field-wrap" >
+                    <div v-for="(field, fieldIndex) in getFieldSchemas(index as number)"
                         :key="field.key || fieldIndex">
                         <FormField :schema="field"
                             :path="schema.valueType === 'array<object>' ? [...path, index, field.key] : [...path, index]">
                         </FormField>
-                    </template>
+                    </div>
                 </div>
             </t-tab-panel>
         </t-tabs>
     </CollapseCard>
 </template>
+<style scoped>
+    .sm-array-field-wrap{
+        padding: 6px;
+    }
+    .sm-array-field-wrap>div{
+        margin-top: 6px;
+    }
+</style>

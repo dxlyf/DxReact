@@ -185,9 +185,7 @@ const normalizeAtomFieldSchema = (Schema: AtomFieldSchema) => {
     return {
         type: 'atom',
         props: {},
-        builtin: true,
         wrapper: 'field',
-        isRoot: false,
         defaultValue: '',
         ...Schema,
     } as AtomFieldSchema
@@ -199,7 +197,6 @@ const normalizeArrayFieldSchema = (Schema: ArrayFieldSchema) => {
         sortable: false,
         allowAdded: true,
         allowAddedField: true,
-        isRoot: false,
         defaultValue: [],
         schemas: (schemas as AllFieldSchema[]).map((item) => normalizeSchema(item)),
         ...restSchema,
@@ -210,7 +207,6 @@ const normalizeObjectFieldSchema = (Schema: ObjectFieldSchema) => {
     return {
         sortable: false,
         allowAddedField: true,
-        isRoot: false,
         defaultValue: {},
         schemas: (schemas as AllFieldSchema[]).map((item) => normalizeSchema(item)),
         ...restSchema,
@@ -220,9 +216,7 @@ const createAtomFieldSchema = (options: Partial<AtomFieldSchema>) => {
     return {
         type: 'atom',
         props: {},
-        builtin: false,
         wrapper: 'field',
-        isRoot: false,
         defaultValue: '',
         ...options,
     } as AtomFieldSchema
@@ -234,7 +228,6 @@ const createArrayFieldSchema = (options: Partial<ArrayFieldSchema>) => {
         sortable: false,
         allowAdded: true,
         allowAddedField: true,
-        isRoot: false,
         defaultValue: [],
         ...options,
     } as ArrayFieldSchema
@@ -243,7 +236,6 @@ const createObjectFieldSchema = (options: Partial<ObjectFieldSchema>) => {
     return {
         type: 'object',
         allowAddedField: true,
-        isRoot: false,
         defaultValue: {},
         ...options,
     } as ObjectFieldSchema
@@ -273,6 +265,9 @@ const createItemBySchema = (schema: AllFieldSchema): any => {
 // ============================================================================
 const isUndefined = (val: any) => val === undefined
 const isNullOrUndefined = (val: any) => isUndefined(val) || val === null
+const isPrimitive = (val: any) => {
+    return typeof val !== 'object' && val !== null
+}
 const isObject = (val: any) => {
     return typeof val === 'object' && val !== null
 }
@@ -322,7 +317,7 @@ const removeDeepKey = (obj: any, path: (string | number)[]) => {
     delete currentObj[path[path.length - 1]]
 }
 const cloneValue = (value: any) => {
-    if (isNullOrUndefined(value)) {
+    if (isPrimitive(value)) {
         return value
     }
     return JSON.parse(JSON.stringify(value))
@@ -358,6 +353,7 @@ export {
     setDeepValue,
     getDeepValue,
     isNullOrUndefined,
+    isPrimitive,
     isObject,
     cloneValue,
     moveArrayIndex,

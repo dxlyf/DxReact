@@ -43,13 +43,23 @@ const handleAddVisibleField = (key: string) => {
 }
 </script>
 <template>
-    <CollapseCard :title="title" class="mt-4">
+    <CollapseCard :title="title">
         <template #extra>
             <FieldPopover v-if="schema.allowAddedField" :fields="visibleFields"
                 @add="handleAddVisibleField" @remove="handleRemoveVisibleField" @visibleField="handleVisibleField" />
         </template>
-        <template v-for="(field, fieldIndex) in renderFields" :key="field.key || fieldIndex">
+         <div class="sm-object-field-wrap">
+               <div v-for="(field, fieldIndex) in renderFields" :key="field.key || fieldIndex">
             <FormField :schema="field" :path="[...path, field.key]"></FormField>
-        </template>
+        </div>
+         </div>
     </CollapseCard>
 </template>
+<style scoped>
+    .sm-object-field-wrap{
+        padding: 6px;
+    }
+    .sm-object-field-wrap>div{
+        margin-top: 6px;
+    }
+</style>

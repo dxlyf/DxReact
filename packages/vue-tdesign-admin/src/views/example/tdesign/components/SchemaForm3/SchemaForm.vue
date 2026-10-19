@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import {useSchemaForm,USE_SCHEMA_CONTEXT_KEY} from './composables/useSchemaForm'
-import { computed, provide, shallowRef } from 'vue';
+import { computed, provide, ref, shallowRef,watch } from 'vue';
 import { FormSchema } from './types';
 import CollapseCard from './components/CollapseCard.vue';
 import FormField from './fields/FormField.vue';
 import { normalizeSchema } from './util';
 type SchemaFormProps={
     title?:string;
+    modelValue?:any;
     schema:FormSchema;
 }
-const emit=defineEmits(['change'])
+const emit=defineEmits(['change','update:modelValue'])
 const props=defineProps<SchemaFormProps>() 
 
 
@@ -17,9 +18,13 @@ const resolveSchema=computed(()=>{
  return normalizeSchema(props.schema)
 })
 const path=shallowRef([])
+const innerUpdate=ref(false)
 const form=useSchemaForm({
   onChange(val:any){
-     emit('change',val)
+    innerUpdate.value=true
+    emit('update:modelValue',val)
+    emit('change',val)
+
   }
 })
 provide(USE_SCHEMA_CONTEXT_KEY,form)
@@ -34,6 +39,18 @@ const init=(data:any)=>{
 /** 读取当前对外值（已完成隐藏字段过滤） */
 const getValue=()=>form.value.value
 defineExpose({init,getValue})
+
+watch(()=>props.modelValue,(val)=>{
+    if(innerUpdate.value){
+        innerUpdate.value=false
+        return
+    }
+    if(val){
+       init(val)
+    }
+},{
+  immediate:true
+})
 </script>
 
 <template>

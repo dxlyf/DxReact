@@ -7,9 +7,9 @@ export type FieldSchema={
     label?:string
     props?:any
     defaultValue?:any // 默认值
-    isRoot?:boolean // 是否是根字段，默认 false
-    visible?:boolean // 是否可见，默认 true
-    builtin?:boolean // 是否内置组件，默认 false
+  //  isRoot?:boolean // 是否是根字段，默认 false
+ //   visible?:boolean // 是否可见，默认 true
+//    builtin?:boolean // 是否内置组件，默认 false
     formatItemLabel?:(item:any,index:number,Schema:FieldSchema)=>string
     formatLabel?:(label:string,Schema:FieldSchema)=>string
 }
@@ -35,4 +35,5 @@ export type AtomFieldSchema = FieldSchema & {
 export type AllFieldSchema=ArrayFieldSchema|ObjectFieldSchema|AtomFieldSchema
 
 
-export type FormSchema=AllFieldSchema
+export type FormSchema=ArrayFieldSchema|ObjectFieldSchema
+
