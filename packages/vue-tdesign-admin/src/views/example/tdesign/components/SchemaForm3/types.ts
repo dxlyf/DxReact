@@ -30,6 +30,7 @@ export type AtomFieldSchema = FieldSchema & {
     type: 'atom'
     wrapper?:'field'|'card'|'none' // 是否需要包裹，默认，默认 true
     component:string|Component
+    hideCondition?:(value:any)=>boolean
 }
 
 export type AllFieldSchema=ArrayFieldSchema|ObjectFieldSchema|AtomFieldSchema

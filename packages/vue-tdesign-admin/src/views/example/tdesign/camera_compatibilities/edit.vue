@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef, watch } from 'vue';
-import {SchemaForm,type FormSchema} from '../components/SchemaForm2'
+import {SchemaForm,type FormSchema} from '../components/SchemaForm3'
 
 const formRef=ref<any>()
 const formValue=shallowRef<any>({})
@@ -8,7 +8,7 @@ const formValueStr=computed(()=>{
     return JSON.stringify(formValue.value)
 })
 setTimeout(()=>{
-    formRef.value?.init({"remarks":["fdasfda","fdafda"],"tips":"fdasfad","cables":[{"title":"fdfd","cable_name":"fd","buy_link":"fd","setup_method":[{"conent":"fdafda"}],"compatibilities":[{"title":"fd","value":"fdafd"}]}]})
+    formRef.value?.init({"remarks":["fdasfda","fdafda"],"tips":"fdasfad","cables":[{"title":"fdfd","cable_name":"fd","buy_link":"fd","setup_method":[{"conent":"fdafda"}],"compatibilities":[{"title":"fd","value":true}]}]})
 },1000)
 const schema=computed<FormSchema>(()=>{
         return {
@@ -92,7 +92,12 @@ const schema=computed<FormSchema>(()=>{
                             type:'atom',
                             key:'value',
                             label:'value',
-                            component:'t-input'
+                            component:'t-select',
+                            defaultValue:false,
+                            hideCondition:(value)=>value==='',
+                            props:{
+                                options:[{label:' ',value:''},{label:'true',value:true},{label:'false',value:false}]
+                            }
                         }]
                     }
                 ]

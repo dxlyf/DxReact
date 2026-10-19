@@ -157,12 +157,17 @@ const toPlainValue = (value: any): any => {
         return value
     }
     const fields = getNodeState(value)?.fields
+    const fieldMap=new Map(fields?fields.map(d=>[d.name,d]):[])
     const hidden = fields
         ? new Set(fields.filter((item) => !item.checked).map((item) => item.name))
         : undefined
     const result: Record<string, any> = {}
     for (const key of Object.keys(value)) {
         if (hidden?.has(key)) continue
+        const field=fieldMap.get(key)
+        if(field&&field.schema.type==='atom'&&field.schema.hideCondition&&(field.schema.hideCondition(value[key]))){
+            continue
+        }
         result[key] = toPlainValue((value as any)[key])
     }
     return result
