@@ -20,6 +20,8 @@ const getDirTree = () => {
         '../views/**/*.vue',
         '!../views/**/_*.vue',
         '!../views/**/components/**/*.vue',
+        // 官网是独立全屏页面，在 new.ts 中单独注册，不参与后台自动路由
+        '!../views/example/site/**',
     ],{
         eager:false
     })

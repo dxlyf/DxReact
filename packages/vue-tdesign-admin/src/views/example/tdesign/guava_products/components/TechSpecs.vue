@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm6'
+import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm3'
 import { computed, onMounted, ref, shallowRef } from 'vue';
 
 const formRef = ref<any>()
@@ -59,53 +59,53 @@ const schema = computed<FormSchema>(() => {
   return {
     type: 'object',
     key: 'roots',
-    label: '技术规格(Tech Specs)',
+    label: '技术规格 (Tech Specs)',
     schemas: [
       {
         type: 'array',
         key: 'groups',
-        label: '分组（groups）',
+        label: '分组 (groups)',
         formatItemLabel: (item, index) => `分组 ${index + 1}`,
         sortable: true,
         schemas: [
           {
             type: 'atom',
             key: 'title',
-            label: '标题（title）',
+            label: '标题 (title)',
             component: 't-input',
           }, {
             type: 'array',
             key: 'items',
-            label: '条目（items）',
+            label: '条目 (items)',
             formatItemLabel: (item, index) => `条目 ${index + 1}`,
             sortable: true,
             schemas: [
               {
                 type: 'atom',
                 key: 'img',
-                label: '图片（img）',
+                label: '图片 (img)',
                 component: 't-input',
               }, {
                 type: 'atom',
                 key: 'title',
-                label: '标题（title）',
+                label: '标题 (title)',
                 component: 't-input',
               }, {
                 type: 'array',
                 key: 'specs',
-                label: '规格（specs）',
+                label: '规格 (specs)',
                 formatItemLabel: (item, index) => `规格 ${index + 1}`,
                 sortable: true,
                 schemas: [
                   {
                     type: 'atom',
                     key: 'key',
-                    label: '参数名（key）',
+                    label: '参数名 (key)',
                     component: 't-input',
                   }, {
                     type: 'atom',
                     key: 'value',
-                    label: '参数值（value）',
+                    label: '参数 (value)',
                     component: 't-input',
                   }
                 ]

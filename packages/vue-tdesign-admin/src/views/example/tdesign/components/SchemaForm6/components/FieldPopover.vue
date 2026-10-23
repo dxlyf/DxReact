@@ -65,6 +65,7 @@ const handleVisibleChange=(visible:boolean)=>{
     <t-popup @visible-change="handleVisibleChange" placement="bottom-left" show-arrow destroy-on-close trigger="click">
         <template #content>
             <div class="p-2">
+                <div class="font-bold text-sm pb-2">显示字段</div>
                 <div>
                     <div v-for="field in fields" :key="field.key" class="grid grid-cols-[auto_1fr_30px] gap-y-2 items-center">
                         <t-checkbox  @change="handleCheck(field.key, $event)" :checked="field.visible" />

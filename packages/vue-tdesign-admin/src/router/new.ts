@@ -70,6 +70,12 @@ const buildRoutes = () => {
 }
 const defaultRoutes: RouteRecordRaw[] = buildRoutes()
 
+// 独立全屏页面：产品官网不使用 AdminLayout，也不进入后台菜单
+defaultRoutes.push({
+    path: '/site',
+    component: () => import('../views/example/site/site.vue')
+})
+
 const joinPath = (...paths: string[]) => {
     return paths.map((item) => {
         return item.replace(/\/$/g, '')

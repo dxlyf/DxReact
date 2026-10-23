@@ -58,6 +58,9 @@ function setupApp() {
 
     app.mount('#app')
 
+    // 官网是独立全屏页面，不注入路由切换浮层
+    if (window.location.pathname.startsWith('/site')) return
+
     const div=document.createElement('div')
     div.style.cssText=`
         position:fixed;
