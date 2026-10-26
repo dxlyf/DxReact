@@ -237,9 +237,9 @@ class Program implements IDisposable {
         for (let i = 0; i < count; i++) {
             const blockName = gl.getActiveUniformBlockName(program, i);
             const blockIndex = gl.getUniformBlockIndex(program, blockName)
-            const binding = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_BINDING)
-            const blockSize = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_DATA_SIZE)
-            const indices = gl.getActiveUniformBlockParameter(program, blockIndex, gl.UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES)
+            const binding = gl.getActiveUniformBlockParameter(program, i, gl.UNIFORM_BLOCK_BINDING)
+            const blockSize = gl.getActiveUniformBlockParameter(program, i, gl.UNIFORM_BLOCK_DATA_SIZE)
+            const indices = gl.getActiveUniformBlockParameter(program, i, gl.UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES)
             const offsets = gl.getActiveUniforms(program, indices, gl.UNIFORM_OFFSET)
             const arrayStride = gl.getActiveUniforms(program, indices, gl.UNIFORM_ARRAY_STRIDE)
             const matrixStride = gl.getActiveUniforms(program, indices, gl.UNIFORM_MATRIX_STRIDE)
