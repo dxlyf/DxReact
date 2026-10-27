@@ -207,6 +207,113 @@ function upload(req:IncomingMessage,res:ServerResponse){
 }
 const delay=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms))
 
+/** 读取完整请求体（Buffer，避免二进制文件被字符串转换破坏） */
+function readBodyBuffer(req:IncomingMessage):Promise<Buffer>{
+  return new Promise((resolve,reject)=>{
+    const chunks:Buffer[]=[]
+    req.on('data',chunk=>chunks.push(chunk))
+    req.on('end',()=>resolve(Buffer.concat(chunks)))
+    req.on('error',reject)
+  })
+}
+
+/** 按 Buffer 分隔符切分，用于解析 multipart */
+function splitBuffer(buffer:Buffer,delimiter:Buffer):Buffer[]{
+  const parts:Buffer[]=[]
+  let start=0
+  let index=buffer.indexOf(delimiter,start)
+  while(index!==-1){
+    parts.push(buffer.subarray(start,index))
+    start=index+delimiter.length
+    index=buffer.indexOf(delimiter,start)
+  }
+  parts.push(buffer.subarray(start))
+  return parts
+}
+
+/** 保存附件到 public/uploads，返回访问地址 */
+function saveAttachment(filename:string,content:Buffer){
+  const uploadDir=path.resolve(__dirname,'../public/uploads')
+  if(!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir,{recursive:true})
+  // 加时间戳前缀，避免同名附件互相覆盖
+  const saveName=`${Date.now()}-${Math.random().toString(36).slice(2,8)}${path.extname(filename)}`
+  const savePath=path.join(uploadDir,saveName)
+  fs.writeFileSync(savePath,content)
+  return {url:`/uploads/${saveName}`,saveName,path:savePath}
+}
+
+/**
+ * 附件上传接口：
+ * 1. multipart/form-data 上传文件（字段名不限），文件存入 public/uploads
+ * 2. 直接传超链接：JSON / 表单字段 url、link 或 href（multipart 中同样支持），原样作为附件地址返回
+ * 响应结构与 /api/upload 保持一致：{ code: 0, data: { fields, files: [{ url }] } }
+ */
+async function attachmentfile(req:IncomingMessage,res:ServerResponse){
+  const contentType=req.headers['content-type']||''
+  const body=await readBodyBuffer(req)
+  const boundaryMatch=contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/)
+  const boundary=boundaryMatch?(boundaryMatch[1]||boundaryMatch[2]||'').trim():''
+
+  const fields:Record<string,any>={}
+  const files:any[]=[]
+
+  if(contentType.includes('multipart/form-data')&&boundary){
+    const parts=splitBuffer(body,Buffer.from(`--${boundary}`))
+    parts.forEach(part=>{
+      const headerEnd=part.indexOf('\r\n\r\n')
+      if(headerEnd===-1) return
+
+      const header=part.subarray(0,headerEnd).toString('utf8')
+      let content=part.subarray(headerEnd+4)
+      // 去掉每段末尾的 \r\n
+      if(content.length>=2&&content[content.length-2]===0x0d&&content[content.length-1]===0x0a){
+        content=content.subarray(0,content.length-2)
+      }
+
+      const name=header.match(/name="([^"]*)"/)?.[1]||''
+      const filename=header.match(/filename="([^"]*)"/)?.[1]
+
+      if(filename){
+        const saved=saveAttachment(filename,content)
+        files.push({
+          field:name||'file',
+          originalName:filename,
+          url:saved.url,
+          saveName:saved.saveName,
+          path:saved.path,
+          size:content.length,
+        })
+      }else if(name){
+        fields[name]=content.toString('utf8')
+      }
+    })
+  }else if(contentType.includes('application/json')){
+    Object.assign(fields,JSON.parse(body.toString('utf8')||'{}'))
+  }else if(contentType.includes('application/x-www-form-urlencoded')){
+    Object.assign(fields,querystring.parse(body.toString('utf8')))
+  }
+
+  // 超链接：url / link / href 任选其一，直接作为附件地址
+  const link=fields.url||fields.link||fields.href
+  if(link){
+    files.push({
+      field:'link',
+      originalName:String(link),
+      url:String(link),
+      saveName:'',
+      path:'',
+      size:0,
+    })
+  }
+
+  res.writeHead(files.length?200:400,{ 'Content-Type':'application/json' })
+  res.end(JSON.stringify(
+    files.length
+      ? { success:true, code:0, msg:'success', data:{ fields, files } }
+      : { success:false, code:1, msg:'请上传附件或提供超链接 url', data:{ fields, files:[] } }
+  ))
+}
+
 export default [
   {
     url: '/api/upload',
@@ -222,6 +329,14 @@ export default [
       //     },
       // }))
     
+    },
+  },
+  {
+    url: '/api/attachmentfile',
+    method: 'post',
+    rawResponse: async (req,res) => {
+      await delay(1000)
+      attachmentfile(req,res)
     },
   },
   {

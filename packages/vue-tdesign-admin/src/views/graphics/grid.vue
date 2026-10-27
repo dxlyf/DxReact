@@ -2,7 +2,6 @@
 import { shallowRef, onMounted } from 'vue'
 import { PathBuilder } from '@dxyl/math2'
 import { Pixmap, rasterization2 } from './engine/raster'
-import { R } from 'vue-router/dist/router-CWoNjPRp.mjs'
 
 const canvasRef = shallowRef<HTMLCanvasElement>()
 // 1. 准备像素图（40 × 30 像素），先用 Pixmap 接口铺一层浅色背景
