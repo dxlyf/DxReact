@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { SchemaForm, type FormSchema } from 'src/views/example/tdesign/components/SchemaForm3'
+import { SchemaForm, type FormSchema,useReadWriteJson,parseJsonObject} from 'src/views/example/tdesign/components/SchemaForm3'
 import { computed, onMounted, ref, shallowRef } from 'vue';
 
 const formRef = ref<any>()
 const value = shallowRef<any>({})
-
+const [valueStr,jsonProps]=useReadWriteJson(value,()=>({}))
 onMounted(()=>{
   setTimeout(() => {
   value.value=({
@@ -117,15 +117,13 @@ const schema = computed<FormSchema>(() => {
     ]
   }
 })
-const valueStr = computed(() => {
-  return JSON.stringify(value.value, null, 2)
-})
+
 </script>
 <template>
   <div>
     <t-form class="w-full" layout="vertical" label-align="top">
       <t-form-item label="Tech Specs">
-        <t-textarea v-model="valueStr" style="height:200px;"></t-textarea>
+        <t-textarea v-bind="jsonProps" style="height:200px;"></t-textarea>
       </t-form-item>
       <div>
         <div class="flex gap-2">

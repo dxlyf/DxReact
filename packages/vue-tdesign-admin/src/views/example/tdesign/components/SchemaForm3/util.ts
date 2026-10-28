@@ -276,6 +276,9 @@ const isPrimitive = (val: any) => {
 const isObject = (val: any) => {
     return typeof val === 'object' && val !== null
 }
+const getObjectType=(val:any)=>{
+    return Object.prototype.toString.call(val).slice(8,-1)
+}
 const setDeepValue = (obj: any, path: (string | number)[], value: any) => {
     if (path.length <= 0) {
         return
@@ -334,7 +337,35 @@ const moveArrayIndex = (index: number, from: number, to: number) => {
     if (from > to && index >= to && index < from) return index + 1
     return index
 }
+const parseJsonObject = <T=any>(raw:string|undefined|null,defaultValue:T,onSuccess?:(parsed:T)=>void)=>{
+    if(!raw){   
+        return defaultValue
+    }
+    try{
+        const parsed=JSON.parse(raw);
+        if(!isObject(parsed)||getObjectType(parsed)!==getObjectType(defaultValue)){
+            return defaultValue
+        }
+        onSuccess?.(parsed as T)
+        return parsed as T;
+    }catch{
+        return defaultValue
+    }
+}
+const writeValidJson=<T=any>(raw:string|undefined|null,defaultValue:T,onWrite:(value:T)=>void)=>{
+    if(!raw){
+        onWrite(defaultValue)
+        return
+    }
+    try{
+        const parsed=JSON.parse(raw)
+        if(getObjectType(parsed)===getObjectType(defaultValue)){
+            onWrite(parsed)
+        }
+    }catch{
 
+    }
+}
 export {
     getNodeState,
     ensureNodeState,
@@ -362,4 +393,6 @@ export {
     isObject,
     cloneValue,
     moveArrayIndex,
+    writeValidJson,
+    parseJsonObject
 }

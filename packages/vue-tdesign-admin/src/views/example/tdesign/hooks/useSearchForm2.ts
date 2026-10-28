@@ -1,5 +1,6 @@
 import type { MaybeRefOrGetter } from "vue"
 import { computed, reactive, shallowReactive, shallowRef, toRaw, toValue,watch } from "vue"
+import { useRouter } from "vue-router"
 
 
 
@@ -85,6 +86,7 @@ export const useSearchForm = <T extends Record<string, any> = any>(_props: Maybe
     const defaultParams = shallowRef(cloneValue(props.value.defaultParams))
     // 搜索表单数据
     const searchForm = shallowReactive<T>(cloneValue(props.value.defaultParams))
+    const router = useRouter()
 
     const isSkipValue = (value: any): boolean => {
         if (isArray(value)) {
@@ -123,20 +125,20 @@ export const useSearchForm = <T extends Record<string, any> = any>(_props: Maybe
         if (!props.value.syncParamsToUrl&&!force) {
             return
         }
-        const urlInfo = new URL(window.location.href, window.location.origin)
+        const query: Record<string, any> = { ...router.currentRoute.value.query }
         for (const [key] of Object.entries(searchForm)) {
             let value = searchParams.value[key]
             let valueType=getType(value)
             if (isSkipValue(value)) {
-                urlInfo.searchParams.delete(key)
+                delete query[key]
             } else {
                 if(valueType==='array'){
                     value=value.join(',')
                 }
-                urlInfo.searchParams.set(key, value as any)
+                query[key] = String(value)
             }
         }
-        window.history.replaceState({}, '', urlInfo.toString())
+        router.replace({ query })
     }
     // 从URL中获取参数
     const pullParamsFromUrl = (force:boolean=false) => {
