@@ -104,7 +104,7 @@ let requestRender=()=>{
         rendering=false
     })
 }
-let downTarget=null,downOffset={x:0,y:0}
+let downTarget:any=null,downOffset={x:0,y:0}
 const handlePointer=(e:PointerEvent)=>{
     const type=e.type
     const rect=(e.target as HTMLCanvasElement).getBoundingClientRect()

@@ -2,7 +2,8 @@
  * 像素混合与合成（CPU 手动实现）
  * 输入为直通 alpha（straight alpha）的 RGBA8 像素数据，全部公式手写实现，不使用 canvas / WebGL 的原生混合能力：
  * - canvas：全部 globalCompositeOperation 取值（Porter-Duff 合成 11 种 + 混合模式 15 种），
- *   混合模式含可分离 12 种与不可分离 4 种（hue / saturation / color / luminosity）
+ *   混合模式含可分离 11 种与不可分离 4 种（hue / saturation / color / luminosity）；
+ *   非法取值返回 null
  * - WebGL：固定管线混合，等价 gl.blendEquation / gl.blendEquationSeparate +
  *   gl.blendFunc / gl.blendFuncSeparate + gl.blendColor，覆盖全部方程与因子（含 WebGL2 常量色因子）
  */
@@ -48,8 +49,62 @@ export type CompositeOperator =
     | 'copy'
     | 'xor'
 
-/** canvas globalCompositeOperation 的全部取值（合成操作 + 混合模式，normal 等价 source-over） */
-export type GlobalCompositeOperation = CompositeOperator | BlendMode
+/**
+ * canvas globalCompositeOperation 的全部取值（与 lib.dom 的 GlobalCompositeOperation 一致）：
+ * Porter-Duff 合成 11 种 + 混合模式 15 种（可分离 11 种 + 不可分离 4 种）
+ */
+export type GlobalCompositeOperation = CompositeOperator | Exclude<BlendMode, 'normal'>
+
+/** Porter-Duff 合成操作集合 */
+const COMPOSITE_OPERATORS = [
+    'source-over',
+    'source-in',
+    'source-out',
+    'source-atop',
+    'destination-over',
+    'destination-in',
+    'destination-out',
+    'destination-atop',
+    'lighter',
+    'copy',
+    'xor',
+] as const
+
+/** canvas 的 15 种混合模式（globalCompositeOperation 的取值，不含 CSS 的 normal） */
+const CANVAS_BLEND_MODES = [
+    'multiply',
+    'screen',
+    'overlay',
+    'darken',
+    'lighten',
+    'color-dodge',
+    'color-burn',
+    'hard-light',
+    'soft-light',
+    'difference',
+    'exclusion',
+    'hue',
+    'saturation',
+    'color',
+    'luminosity',
+] as const
+
+/** 混合模式集合（含 CSS 的 normal） */
+const BLEND_MODES = ['normal', ...CANVAS_BLEND_MODES] as const
+
+/** canvas globalCompositeOperation 的全部 26 种合法取值 */
+export const GLOBAL_COMPOSITE_OPERATIONS: readonly GlobalCompositeOperation[] = [
+    ...COMPOSITE_OPERATORS,
+    ...CANVAS_BLEND_MODES,
+]
+
+const COMPOSITE_OPERATOR_SET = new Set<string>(COMPOSITE_OPERATORS)
+const BLEND_MODE_SET = new Set<string>(BLEND_MODES)
+
+/** 该取值是否已实现；非法取值时 compositePixel / compositeCanvas 返回 null */
+export function isSupportedGlobalCompositeOperation(op: string): boolean {
+    return COMPOSITE_OPERATOR_SET.has(op) || BLEND_MODE_SET.has(op)
+}
 
 /** 0~1 浮点三通道 */
 type Vec3 = [number, number, number]
@@ -206,11 +261,11 @@ export function blendColor(mode: BlendMode, dst: RGB, src: RGB): RGB {
 
 /**
  * Porter-Duff 权重 [Fa, Fb]
- * 返回 null 表示该 op 是混合模式，按 source-over 的权重参与合成
+ * 返回 null 表示该 op 不是 Porter-Duff 合成操作（混合模式或未实现的取值），
+ * 混合模式按 source-over 的权重参与合成，未实现的取值由调用方提前拦截并返回 null
  */
 function factors(op: GlobalCompositeOperation, as: number, ab: number): [number, number] | null {
     switch (op) {
-        case 'normal':
         case 'source-over':
             return [1, 1 - as]
         case 'source-in':
@@ -239,18 +294,22 @@ function factors(op: GlobalCompositeOperation, as: number, ab: number): [number,
 }
 
 /**
- * 单像素合成（直通 alpha），结果写入 out 并返回 out
+ * 单像素合成（直通 alpha），结果写入 out 并返回 out；未实现的 op 返回 null
  * 混合模式下先把源色替换为 Cs' = (1-ab)Cs + ab*B(Cb,Cs)，再套 Porter-Duff 权重：
  * ao = as*Fa + ab*Fb
  * co = as*Fa*Cs' + ab*Fb*Cb（预乘），输出直通色 = co / ao
  */
-function composite(dstColor: RGBA, srcColor: RGBA, op: GlobalCompositeOperation, out: RGBA): RGBA {
+function composite(dstColor: RGBA, srcColor: RGBA, op: GlobalCompositeOperation, out: RGBA): RGBA | null {
+    if (!isSupportedGlobalCompositeOperation(op)) {
+        return null
+    }
     const ab = dstColor[3] / 255
     const as = srcColor[3] / 255
     const cb: Vec3 = [dstColor[0] / 255, dstColor[1] / 255, dstColor[2] / 255]
     const cs: Vec3 = [srcColor[0] / 255, srcColor[1] / 255, srcColor[2] / 255]
 
-    const f = factors(op, as, ab)
+    const isBlendMode = BLEND_MODE_SET.has(op)
+    const f = isBlendMode ? null : factors(op, as, ab)
     const fa = f ? f[0] : 1
     const fb = f ? f[1] : 1 - as
 
@@ -284,25 +343,28 @@ function composite(dstColor: RGBA, srcColor: RGBA, op: GlobalCompositeOperation,
 /**
  * 单像素混合 / 合成
  * dstColor 为下层当前像素颜色，srcColor 为上层当前像素颜色，均为直通 alpha 0~255
- * op 为 canvas globalCompositeOperation 取值
+ * op 为 canvas globalCompositeOperation 取值，非法取值返回 null
  */
 export function compositePixel(
     dstColor: RGBA,
     srcColor: RGBA,
     op: GlobalCompositeOperation = 'source-over',
-): RGBA {
+): RGBA | null {
     return composite(dstColor, srcColor, op, [0, 0, 0, 0])
 }
 
 /**
- * 两个 RGBA8 缓冲逐像素合成，原地写回 dstData 并返回
+ * 两个 RGBA8 缓冲逐像素合成，原地写回 dstData 并返回；非法取值返回 null 且不修改 dstData
  * 长度必须相同且为 4 的倍数，行主序排列：data[(y * width + x) * 4 + 0..3] = r, g, b, a
  */
 export function compositeCanvas(
     dstData: Uint8ClampedArray,
     srcData: Uint8ClampedArray,
     op: GlobalCompositeOperation = 'source-over',
-): Uint8ClampedArray {
+): Uint8ClampedArray | null {
+    if (!isSupportedGlobalCompositeOperation(op)) {
+        return null
+    }
     if (dstData.length !== srcData.length || dstData.length % 4 !== 0) {
         throw new Error('dstData 与 srcData 必须是长度相同且为 4 的倍数的 RGBA8 缓冲')
     }
